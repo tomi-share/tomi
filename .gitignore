@@ -55,3 +55,6 @@ design/build/tomi-brand-guidelines.html
 *.aab
 google-services.json
 *service-account*.json
+
+# Private local material (mock-ups, internal notes); never committed
+/.local/
