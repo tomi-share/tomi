@@ -597,20 +597,55 @@ private struct FileRowMenu: ViewModifier {
     let model: FeedViewModel
     let expanded: Bool
     let onOpen: () -> Void
+    /// "Supprimer le fichier partout" waits for its confirmation, which names the file.
+    @State private var confirmDeleteEverywhere = false
+
+    /// The removal of this file only: a batch of 2 or more, readable, already out of the device.
+    private var canRemove: Bool { AttachmentRemovals.canRemoveFromBatch(item) }
 
     func body(content: Content) -> some View {
+        menu(content)
+            .alert(L10n.text("dialog_delete_file_everywhere_title"), isPresented: $confirmDeleteEverywhere) {
+                Button(L10n.text("action_cancel"), role: .cancel) {}
+                Button(L10n.text("file_delete_everywhere"), role: .destructive) {
+                    model.deleteAttachment(item, index: index, everywhere: true)
+                }
+            } message: {
+                Text(deleteEverywhereMessage)
+            }
+    }
+
+    /// A hidden item tells nothing of its file, not even its name.
+    private var deleteEverywhereMessage: String {
+        guard item.attachments.indices.contains(index), !item.secret else {
+            return L10n.text("dialog_delete_file_everywhere_secret")
+        }
+        return L10n.text("dialog_delete_file_everywhere_named", item.attachments[index].name)
+    }
+
+    @ViewBuilder
+    private func menu(_ content: Content) -> some View {
         if !expanded {
             content
         } else if item.secret {
             content.contextMenu {
-                FileActions(item: item, index: index, model: model, onOpen: onOpen)
+                actions
             } preview: {
                 Label(L10n.text("ios_file_number", index + 1), systemImage: TomiIcon.file.systemName)
                     .tomiText(.body)
                     .padding(TomiSpace.s4)
             }
         } else {
-            content.contextMenu { FileActions(item: item, index: index, model: model, onOpen: onOpen) }
+            content.contextMenu { actions }
         }
+    }
+
+    @ViewBuilder
+    private var actions: some View {
+        FileActions(
+            item: item, index: index, model: model, onOpen: onOpen,
+            onDeleteLocal: canRemove ? { model.deleteAttachment(item, index: index, everywhere: false) } : nil,
+            onDeleteEverywhere: canRemove && model.attachmentRemovalEverywhere ? { confirmDeleteEverywhere = true } : nil
+        )
     }
 }

@@ -316,6 +316,15 @@ public struct OutgoingDraft: Hashable, Sendable {
     }
 }
 
+/// What `TomiCore.deleteAttachment` did.
+public enum AttachmentRemoval: Sendable, Hashable {
+    /// The attachment is gone (or already was); the item stays.
+    case attachmentRemoved
+    /// It was the last thing in the item (no other attachment, no text, no URL): the whole item was deleted instead, with
+    /// the same scope.
+    case itemDeleted
+}
+
 public enum DispatchResult: Sendable, Hashable {
     /// The relay accepted the item.
     case sent

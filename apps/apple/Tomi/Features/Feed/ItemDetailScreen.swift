@@ -51,6 +51,8 @@ struct ItemDetailScreen: View {
         }
         .navigationTitle(Text("detail_title"))
         .navigationBarTitleDisplayMode(.inline)
+        // "Supprimer le fichier partout" (rows of a batch) is offered only when the relay can carry it.
+        .task { await model.refreshAttachmentRemovalSupport() }
         // The item may arrive after the screen (loading): it counts as seen as soon as it is there, and the screen goes
         // back by itself only once it has been seen and then disappears.
         .onChange(of: model.item(id: itemId) != nil, initial: true) { _, present in

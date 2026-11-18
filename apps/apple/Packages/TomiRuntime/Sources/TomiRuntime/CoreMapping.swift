@@ -144,6 +144,13 @@ enum CoreMapping {
         )
     }
 
+    static func removal(_ k: AttachmentRemovalKind) -> AttachmentRemoval {
+        switch k {
+        case .attachmentRemoved: .attachmentRemoved
+        case .itemDeleted: .itemDeleted
+        }
+    }
+
     static func dispatch(_ k: DispatchKind) -> DispatchResult {
         switch k {
         case .sent: .sent

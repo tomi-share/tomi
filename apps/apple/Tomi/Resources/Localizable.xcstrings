@@ -1803,6 +1803,72 @@
         }
       }
     },
+    "dialog_delete_file_everywhere_named" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "« %1$@ » sera effacé sur tous tes appareils et sur ton serveur Tomi. Les appareils hors ligne l’effaceront à leur reconnexion. Cette action est définitive."
+          }
+        }
+      }
+    },
+    "dialog_delete_file_everywhere_secret" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce fichier masqué sera effacé sur tous tes appareils et sur ton serveur Tomi. Un appareil qui l’a déjà affiché a pu en garder une copie. Cette action est définitive."
+          }
+        }
+      }
+    },
+    "dialog_delete_file_everywhere_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer le fichier partout ?"
+          }
+        }
+      }
+    },
+    "dialog_delete_image_everywhere_message" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette image sera effacée sur tous tes appareils et sur ton serveur Tomi. Les appareils hors ligne l’effaceront à leur reconnexion. Cette action est définitive."
+          }
+        }
+      }
+    },
+    "dialog_delete_image_everywhere_secret" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette image masquée sera effacée sur tous tes appareils et sur ton serveur Tomi. Un appareil qui l’a déjà affichée a pu en garder une copie. Cette action est définitive."
+          }
+        }
+      }
+    },
+    "dialog_delete_image_everywhere_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer l’image partout ?"
+          }
+        }
+      }
+    },
     "direction_received" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2107,6 +2173,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aucun élément ne correspond."
+          }
+        }
+      }
+    },
+    "file_delete_everywhere" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer le fichier partout"
+          }
+        }
+      }
+    },
+    "file_delete_local" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer le fichier de cet appareil"
+          }
+        }
+      }
+    },
+    "file_row_actions" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actions pour ce fichier"
+          }
+        }
+      }
+    },
+    "file_row_delete" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer ce fichier"
           }
         }
       }
@@ -4981,6 +5091,50 @@
         }
       }
     },
+    "snackbar_file_deleted_everywhere" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fichier supprimé partout"
+          }
+        }
+      }
+    },
+    "snackbar_file_deleted_local" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fichier supprimé de cet appareil"
+          }
+        }
+      }
+    },
+    "snackbar_image_deleted_everywhere" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Image supprimée partout"
+          }
+        }
+      }
+    },
+    "snackbar_image_deleted_local" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Image supprimée de cet appareil"
+          }
+        }
+      }
+    },
     "snackbar_image_failed" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -5384,6 +5538,39 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mise à jour nécessaire pour lire cet élément. Il est conservé et s’affichera après la mise à jour de Tomi."
+          }
+        }
+      }
+    },
+    "viewer_action_delete" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer"
+          }
+        }
+      }
+    },
+    "viewer_delete_everywhere" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer l’image partout"
+          }
+        }
+      }
+    },
+    "viewer_delete_local" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer l’image de cet appareil"
           }
         }
       }
