@@ -4,6 +4,8 @@ description = "Tomi command line client (`tomi`)."
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+# Shipped as binaries from this repository, not published to crates.io (also lets cargo-deny accept the path dependency).
+publish = false
 
 [[bin]]
 name = "tomi"

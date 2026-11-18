@@ -1,0 +1,94 @@
+name: Security audit
+
+# Dependency checks that need no secret: known advisories, licenses compatible with Apache-2.0, allowed
+# registries (cargo-deny, see deny.toml) and npm advisories. A weekly run catches advisories published after
+# the last change to the lockfiles.
+# Complements, and does not replace, GitHub's own Dependabot alerts and secret scanning (repository settings).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "Cargo.lock"
+      - "apps/windows/src-tauri/Cargo.lock"
+      - "apps/windows/package-lock.json"
+      - "design/build/package-lock.json"
+      - "deny.toml"
+      - ".github/workflows/security.yml"
+  pull_request:
+    paths:
+      - "Cargo.lock"
+      - "Cargo.toml"
+      - "**/Cargo.toml"
+      - "apps/windows/src-tauri/Cargo.lock"
+      - "apps/windows/package-lock.json"
+      - "design/build/package-lock.json"
+      - "deny.toml"
+      - ".github/workflows/security.yml"
+  schedule:
+    - cron: "23 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  # Aligned with ci.yml and docs/DEV.md.
+  RUST_VERSION: "1.99"
+  CARGO_DENY_VERSION: "0.21.0"
+
+# Actions pinned by full commit SHA, same pins as ci.yml (the readable tag is in a comment).
+
+jobs:
+  cargo-deny:
+    name: cargo-deny (${{ matrix.manifest }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        manifest:
+          - Cargo.toml
+          - apps/windows/src-tauri/Cargo.toml
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          shared-key: cargo-deny
+          cache-bin: true
+      - name: Install cargo-deny
+        run: cargo install cargo-deny --locked --version "$CARGO_DENY_VERSION"
+      - name: cargo deny check
+        run: cargo deny --manifest-path "${{ matrix.manifest }}" check
+
+  npm-audit:
+    name: npm audit (${{ matrix.dir }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        dir:
+          - apps/windows
+          - design/build
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+      # Production dependencies only; a high or critical advisory fails the job.
+      - name: npm audit
+        working-directory: ${{ matrix.dir }}
+        run: npm audit --omit=dev --audit-level=high

@@ -1,0 +1,59 @@
+# Weekly update PRs, grouped to limit noise. Security updates are opened by GitHub regardless of this schedule
+# once "Dependabot security updates" is enabled in the repository settings.
+# The Swift packages under apps/apple/Packages have no external dependency, so they are not listed.
+version: 2
+
+updates:
+  # Rust workspace: tomi-core, tomi-cli, tomi-relay.
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      rust-minor-patch:
+        update-types: [minor, patch]
+
+  # Windows app (separate Cargo workspace, Tauri).
+  - package-ecosystem: cargo
+    directory: /apps/windows/src-tauri
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      windows-rust-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /apps/windows
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      windows-npm-minor-patch:
+        update-types: [minor, patch]
+
+  # Brand asset export tooling.
+  - package-ecosystem: npm
+    directory: /design/build
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 2
+
+  - package-ecosystem: gradle
+    directory: /apps/android
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      android-minor-patch:
+        update-types: [minor, patch]
+
+  # Actions are pinned by commit SHA; Dependabot updates the SHA and the version comment together.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]

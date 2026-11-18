@@ -1,0 +1,56 @@
+# cargo-deny configuration, run by .github/workflows/security.yml on both Cargo workspaces:
+#   cargo deny --manifest-path Cargo.toml check
+#   cargo deny --manifest-path apps/windows/src-tauri/Cargo.toml check
+# Locally: `cargo install cargo-deny --locked`.
+
+[graph]
+# All targets (Windows, Linux, macOS, Android, iOS): the clients are built for all of them.
+all-features = true
+
+[advisories]
+# Known vulnerabilities (RustSec database) always fail the check.
+# "Unmaintained" notices only fail for crates that a workspace member depends on directly, because those are the
+# ones we can replace. Transitive ones (Tauri's Linux/GTK and D-Bus tree, uniffi's tooling) are not actionable here
+# and are tracked through Dependabot updates of their parents.
+unmaintained = "workspace"
+# To accept an advisory that cannot be fixed yet, list it here WITH a comment explaining why and until when:
+#   { id = "RUSTSEC-0000-0000", reason = "not reachable: ..., revisit when X is released" }
+ignore = []
+
+[licenses]
+# Allow-list of licenses compatible with distributing Tomi under Apache-2.0. A crate with an `OR` expression
+# passes if one of its alternatives is listed here (for example r-efi is "MIT OR Apache-2.0 OR LGPL-2.1-or-later").
+# Strong copyleft (GPL, AGPL, LGPL used alone) is deliberately absent: adding one is a decision to discuss in an issue.
+allow = [
+  "MIT",
+  "MIT-0",
+  "Apache-2.0",
+  "Apache-2.0 WITH LLVM-exception",
+  "BSD-1-Clause",
+  "BSD-2-Clause",
+  "BSD-3-Clause",
+  "ISC",
+  "Zlib",
+  "0BSD",
+  "Unicode-3.0",
+  "Unlicense",
+  "CC0-1.0",
+  "BSL-1.0",
+  "CDLA-Permissive-2.0",
+  "MPL-2.0", # file-level copyleft: fine as an unmodified dependency
+]
+confidence-threshold = 0.9
+
+[bans]
+# Duplicates exist (Windows bindings, Tauri's own tree); they are reported, not blocking.
+multiple-versions = "warn"
+wildcards = "deny"
+# Path dependencies inside this repository are not "wildcards".
+allow-wildcard-paths = true
+
+[sources]
+# Dependencies come from crates.io only: no unknown registry, no git dependency.
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+allow-git = []
