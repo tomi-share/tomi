@@ -15,7 +15,12 @@
 //!   `continue_departure` / ..., mapped one to one. The engine erases on a positive proof of the
 //!   relay and nowhere else; this file only runs the calls off the async threads, reads the
 //!   outcome, and, once the engine says `Erased`, lets go of what the host itself holds in memory
-//!   (the doorbell loop, the decrypted feed, the decrypted copies of files).
+//!   (the doorbell loop, the decrypted feed, the decrypted copies of files);
+//! * the demo space (`runtime::unified`): while this PC is in no space, the pairing screen may
+//!   enter a demo space (in memory, no network, already joined). Every call then goes to the
+//!   demo's engine ([`RealCore::current`]); the real engine, its pairing host and its doorbell
+//!   stay as they were. The pairing calls are refused meanwhile, so that no real space can be
+//!   joined or created from the demo.
 //!
 //! Hidden items ("masqués") are never written in clear at rest. In memory, the bridge
 //! keeps a snapshot of the feed to diff successive passes; it holds the decrypted items,
@@ -33,10 +38,11 @@ use async_trait::async_trait;
 use base64::Engine as _;
 use tokio::sync::{broadcast, Notify};
 
+use tomi_core::runtime::demo::DemoConfig;
 use tomi_core::runtime::http::HttpTransport;
 use tomi_core::runtime::{
     self, DispatchOutcome, DraftAttachment, DraftText, Engine, EngineConfig, ItemContentView,
-    ItemOrigin, OutgoingDraft, RelayTransport, SpaceStatus, Store, SystemClock,
+    ItemOrigin, OutgoingDraft, RelayTransport, SpaceStatus, Store, SystemClock, UnifiedCore,
 };
 use tomi_core::{CoreError as Failure, SourceFormat as CoreFormat, Thumbnail};
 use zeroize::Zeroizing;
@@ -67,6 +73,8 @@ const DB_FILE: &str = "tomi.db";
 const FILES_DIR: &str = "store";
 const WRAP_KEY_FILE: &str = "wrap.key";
 const OPEN_DIR: &str = "open";
+/// The files of the demo space (staged and decrypted attachments), erased when it is left.
+const DEMO_DIR: &str = "demo";
 
 /// Changes arriving together (an import, a sync) become one pass over the feed.
 const BRIDGE_DEBOUNCE: Duration = Duration::from_millis(80);
@@ -91,8 +99,14 @@ pub struct RealCoreConfig {
 }
 
 pub struct RealCore {
-    /// `None` when the local store cannot be opened (see `unavailable`).
+    /// The real engine of this PC. `None` when the local store cannot be opened (see
+    /// `unavailable`). The calls go to [`current`](Self::current), which is the demo's engine
+    /// while a demo is entered; only the pairing host, the doorbell and `start` use this one.
     engine: Option<Arc<Engine>>,
+    /// The real engine and the demo entered from it; `None` with `engine`.
+    hub: Option<Arc<UnifiedCore>>,
+    /// Private directory of the demo files (`DemoConfig::files_dir`).
+    demo_dir: PathBuf,
     unavailable: Option<String>,
     /// Decrypted copies of the attachments the user opened, named like the files.
     open_dir: PathBuf,
@@ -362,11 +376,16 @@ impl RealCore {
         // does the same with its own cache when it opens).
         let open_dir = data_dir.join(OPEN_DIR);
         let _ = wipe_dir(&open_dir);
+        // A demo left open by a crash or a kill does not outlive a restart either.
+        let demo_dir = data_dir.join(DEMO_DIR);
+        let _ = std::fs::remove_dir_all(&demo_dir);
         let (tx, _) = broadcast::channel(256);
         let changed = Arc::new(Notify::new());
-        if let Some(e) = &engine {
+        let hub = engine.clone().map(|e| Arc::new(UnifiedCore::new(e)));
+        if let Some(h) = &hub {
+            // On the real engine and on every demo entered later.
             let n = changed.clone();
-            e.subscribe(Arc::new(move || n.notify_one()));
+            h.subscribe(Arc::new(move || n.notify_one()));
         }
         let stop = Arc::new(AtomicBool::new(false));
         let doorbell = Doorbell::new();
@@ -395,6 +414,8 @@ impl RealCore {
         });
         Arc::new(Self {
             engine,
+            hub,
+            demo_dir,
             unavailable,
             open_dir,
             tx,
@@ -436,8 +457,13 @@ impl RealCore {
         })
     }
 
+    /// The engine the calls go to: the demo's while a demo is entered, the real one otherwise.
+    fn current(&self) -> Option<Arc<Engine>> {
+        self.hub.as_ref().map(|h| h.engine())
+    }
+
     fn engine_or_err(&self) -> Result<Arc<Engine>, CoreError> {
-        self.engine.clone().ok_or_else(|| {
+        self.current().ok_or_else(|| {
             CoreError::Storage(
                 self.unavailable
                     .clone()
@@ -540,7 +566,12 @@ impl RealCore {
     ///   cache); a copy that is still held open stays on the list for the next purge.
     /// * A pairing invitation that was on screen is cancelled: its code (a secret) must not stay in
     ///   memory, nor stay valid at the relay, for a PC that no longer belongs to the space.
+    /// * A demo whose device left its space is over (its files are erased); after "Quitter la
+    ///   démo" this runs too, so that the windows hear that this PC is in no space any more.
     fn after_erasure(&self) {
+        if let Some(h) = &self.hub {
+            h.settle_demo();
+        }
         self.doorbell.stop();
         self.pairing_cancel();
         *lock(&self.snapshot) = None;
@@ -653,7 +684,7 @@ impl RealCore {
     /// safety sync, and the other devices would not hear of it. Fire and forget: offline, the outbox keeps
     /// it and the next sync sends it.
     fn flush_outbox(&self) {
-        if let Some(engine) = self.engine.clone() {
+        if let Some(engine) = self.current() {
             tokio::task::spawn_blocking(move || {
                 let _ = engine.sync();
             });
@@ -1239,7 +1270,7 @@ fn copy_new(src: &Path, dest: &Path) -> std::io::Result<()> {
 #[async_trait]
 impl TomiCore for RealCore {
     fn status(&self) -> CoreStatus {
-        match &self.engine {
+        match &self.current() {
             Some(e) => CoreStatus {
                 paired: e.is_provisioned(),
                 space: map_space(e.space_status()),
@@ -1254,8 +1285,7 @@ impl TomiCore for RealCore {
     }
 
     fn this_device(&self) -> Device {
-        self.engine
-            .as_ref()
+        self.current()
             .and_then(|e| e.local_device().ok())
             .map(to_device)
             .unwrap_or_else(|| Device {
@@ -1534,8 +1564,19 @@ impl TomiCore for RealCore {
     // that reach the relay block, so they run off the async threads.
 
     async fn pairing_options(&self) -> Result<PairingOptions, CoreError> {
-        let host = self.host()?;
         let name = default_device_name();
+        if self.is_demo() {
+            // The demo space is joined; the real pairing host is not asked anything.
+            return Ok(PairingOptions {
+                paired: true,
+                device_name: name,
+                space_initialized: None,
+                pending: false,
+                relay_authority: None,
+                resumed: None,
+            });
+        }
+        let host = self.host()?;
         tokio::task::spawn_blocking(move || host.options(name))
             .await
             .map_err(|_| CoreError::Other("task".into()))
@@ -1553,6 +1594,9 @@ impl TomiCore for RealCore {
         device_name: Option<&str>,
         relay_url: Option<&str>,
     ) -> Result<(), CoreError> {
+        if self.is_demo() {
+            return Err(CoreError::Rejected("demo".into()));
+        }
         let host = self.host()?;
         let relay = relay_url.map(str::to_owned);
         // The install token is a secret: wiped from memory once used, never stored or logged.
@@ -1564,6 +1608,10 @@ impl TomiCore for RealCore {
     }
 
     async fn pairing_invite(&self) -> Result<PairingView, CoreError> {
+        // Inviting a device into the demo space is not offered.
+        if self.is_demo() {
+            return Err(CoreError::Rejected("demo".into()));
+        }
         let host = self.host()?;
         tokio::task::spawn_blocking(move || host.start_invite())
             .await
@@ -1576,6 +1624,11 @@ impl TomiCore for RealCore {
         device_name: Option<&str>,
         relay_url: Option<&str>,
     ) -> Result<PairingView, CoreError> {
+        // The real pairing host stays bound to the real engine: no real space is joined from
+        // the demo.
+        if self.is_demo() {
+            return Err(CoreError::Rejected("demo".into()));
+        }
         let host = self.host()?;
         let relay = relay_url.map(str::to_owned);
         // The code is a secret too.
@@ -1682,13 +1735,11 @@ impl TomiCore for RealCore {
     }
 
     fn departure(&self) -> Option<DepartureView> {
-        self.engine.as_ref()?.departure().map(map_view)
+        self.current()?.departure().map(map_view)
     }
 
     fn can_erase_without_proof(&self) -> bool {
-        self.engine
-            .as_ref()
-            .is_some_and(|e| e.can_erase_without_proof())
+        self.current().is_some_and(|e| e.can_erase_without_proof())
     }
 
     async fn erase_without_proof(&self) -> Result<(), CoreError> {
@@ -1715,10 +1766,71 @@ impl TomiCore for RealCore {
         if let Some(host) = &self.pairing {
             host.shutdown();
         }
+        // The demo space goes with its files (about 45 MB): nothing of it outlives the app.
+        if let Some(h) = &self.hub {
+            h.leave_demo();
+        }
         if let Some(engine) = &self.engine {
             let _ = engine.purge_plaintext_cache();
         }
         let _ = wipe_dir(&self.open_dir);
+    }
+
+    // ---- demo space -----------------------------------------------------------------------
+
+    fn is_demo(&self) -> bool {
+        self.hub.as_ref().is_some_and(|h| h.is_demo())
+    }
+
+    fn can_enter_demo(&self) -> bool {
+        self.hub
+            .as_ref()
+            .is_some_and(|h| !h.is_demo() && !h.real().is_provisioned())
+            && matches!(self.pairing_view(), PairingView::None)
+    }
+
+    async fn enter_demo(&self) -> Result<(), CoreError> {
+        let Some(hub) = self.hub.clone() else {
+            return Err(CoreError::Storage(
+                self.unavailable
+                    .clone()
+                    .unwrap_or_else(|| "unavailable".into()),
+            ));
+        };
+        // A pairing on screen stays bound to the real engine: it is finished or cancelled first.
+        if !matches!(self.pairing_view(), PairingView::None) {
+            return Err(CoreError::Rejected("pairing".into()));
+        }
+        let config = DemoConfig {
+            files_dir: self.demo_dir.clone(),
+            assets_dir: None,
+            platform: "windows".into(),
+            app_version: env!("CARGO_PKG_VERSION").into(),
+            device_name: default_device_name(),
+            start_paired: true,
+        };
+        // Writes the demo history (tens of MB): off the async threads.
+        tokio::task::spawn_blocking(move || hub.enter_demo(config))
+            .await
+            .map_err(|_| CoreError::Other("task".into()))?
+            .map_err(map_failure)?;
+        let _ = self.tx.send(CoreEvent::Changed);
+        Ok(())
+    }
+
+    async fn leave_demo(&self) -> bool {
+        let Some(hub) = self.hub.clone() else {
+            return false;
+        };
+        let left = tokio::task::spawn_blocking(move || hub.leave_demo())
+            .await
+            .unwrap_or(false);
+        if left {
+            // Forgets the decrypted demo feed and tells the windows (`Changed`): the bridge does
+            // not announce a return to "not paired" on its own.
+            self.after_erasure();
+        }
+        left
     }
 }
 
@@ -4400,5 +4512,75 @@ mod tests {
             .code
             .contains(OTHER_DEVICE)
         );
+    }
+
+    // ------------------------------------------------------------ the demo space
+
+    /// Empties the change stream; `true` if a `Changed` was in it.
+    fn drained_changed(rx: &mut broadcast::Receiver<CoreEvent>) -> bool {
+        let mut changed = false;
+        while let Ok(event) = rx.try_recv() {
+            changed |= matches!(event, CoreEvent::Changed);
+        }
+        changed
+    }
+
+    #[tokio::test]
+    async fn the_demo_is_entered_from_an_unpaired_pc_and_left_with_its_files() {
+        let dir = tempfile::tempdir().unwrap();
+        let core =
+            RealCore::with_engine(Arc::new(engine_in(dir.path(), Relay::Offline)), dir.path());
+        let mut rx = core.subscribe();
+        assert!(!core.is_demo());
+        assert!(core.can_enter_demo());
+
+        core.enter_demo().await.unwrap();
+        assert!(core.is_demo());
+        assert!(!core.can_enter_demo());
+        assert!(core.status().paired);
+        assert!(!core.list_items().await.unwrap().is_empty());
+        assert!(drained_changed(&mut rx));
+        // The real engine joined nothing, and no real space can be joined from the demo.
+        assert!(!core.engine.as_ref().unwrap().is_provisioned());
+        assert!(core.pairing_options().await.unwrap().paired);
+        assert_eq!(
+            core.pairing_join("abc-def", None).await.unwrap_err(),
+            CoreError::Rejected("demo".into())
+        );
+        assert_eq!(
+            core.pairing_invite().await.unwrap_err(),
+            CoreError::Rejected("demo".into())
+        );
+
+        assert!(core.leave_demo().await);
+        assert!(!core.is_demo());
+        assert!(!core.status().paired);
+        assert_eq!(core.list_items().await.unwrap_err(), CoreError::NotPaired);
+        assert!(drained_changed(&mut rx), "the windows hear of the way out");
+        assert!(!dir.path().join(DEMO_DIR).join("this").exists());
+        assert!(!core.leave_demo().await, "nothing left to leave");
+        assert!(core.can_enter_demo());
+    }
+
+    #[tokio::test]
+    async fn a_paired_pc_never_enters_the_demo() {
+        let dir = tempfile::tempdir().unwrap();
+        let core = paired(dir.path(), Relay::Offline);
+        assert!(!core.can_enter_demo());
+        assert!(core.enter_demo().await.is_err());
+        assert!(!core.is_demo());
+        assert!(core.status().paired);
+    }
+
+    #[tokio::test]
+    async fn leaving_the_space_inside_the_demo_ends_it() {
+        let dir = tempfile::tempdir().unwrap();
+        let core =
+            RealCore::with_engine(Arc::new(engine_in(dir.path(), Relay::Offline)), dir.path());
+        core.enter_demo().await.unwrap();
+        assert_eq!(core.leave_space().await.unwrap(), DepartureOutcome::Erased);
+        assert!(!core.is_demo());
+        assert!(!core.status().paired);
+        assert!(core.can_enter_demo());
     }
 }

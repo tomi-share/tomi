@@ -2,9 +2,11 @@
 //!
 //! [`crate::real_core::RealCore`] implements [`TomiCore`] on top of the `runtime` of the
 //! `tomi-core` crate (SQLite store, sync engine, outbox, history transfer);
-//! [`crate::fake_core::FakeCore`] is the in-memory stand-in of the demo mode (debug builds
-//! only). This module must stay free of any crypto or protocol detail: everything
-//! sensitive lives in the core, the app only calls this trait.
+//! [`crate::fake_core::FakeCore`] is the in-memory stand-in of `TOMI_DEMO=1` (debug builds
+//! only). The demo space that the pairing screen offers to enter, in every build, is the real
+//! core's ([`TomiCore::enter_demo`], `tomi_core::runtime::unified`). This module must stay free
+//! of any crypto or protocol detail: everything sensitive lives in the core, the app only calls
+//! this trait.
 //!
 //! The trait mirrors the Kotlin `TomiCore` (`apps/android/.../core/TomiCore.kt`): same
 //! operations and the same semantics for what both share (the pin follows
@@ -635,6 +637,35 @@ pub trait TomiCore: Send + Sync {
     /// `resume_pairing`): settles a pairing that a stop interrupted. The stand-in core has nothing
     /// to settle.
     fn resume_pairing(&self) {}
+
+    // ---- demo space (`tomi_core::runtime::unified`) ----
+    //
+    // Default bodies: only the real core can enter a demo; the stand-in core and the test doubles
+    // never do.
+
+    /// A demo space entered with [`TomiCore::enter_demo`] is the active space: fictitious data,
+    /// nothing is sent.
+    fn is_demo(&self) -> bool {
+        false
+    }
+
+    /// The pairing screen may offer the demo: this PC is in no space, has no pairing on screen or
+    /// pending, and is not in the demo already.
+    fn can_enter_demo(&self) -> bool {
+        false
+    }
+
+    /// Enters a fresh demo space, already joined. Blocks a few seconds off the async threads.
+    /// Refused while this PC is in a space or a pairing is under way.
+    async fn enter_demo(&self) -> Result<(), CoreError> {
+        Err(CoreError::Rejected("demo".into()))
+    }
+
+    /// Leaves the demo (its files are erased): the calls go to the real engine again. `false`
+    /// when no demo was entered.
+    async fn leave_demo(&self) -> bool {
+        false
+    }
 
     /// The app quits: stops the background work and erases the decrypted copies.
     fn shutdown(&self);

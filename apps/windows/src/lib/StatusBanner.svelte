@@ -33,6 +33,13 @@
   });
 </script>
 
+{#if feed.demo}
+  <div class="banner row" role="status">
+    <Icon name="info" size={20} />
+    <span class="grow">{fr.status.demo}</span>
+    <button onclick={() => feed.run(() => api.leaveDemo())}>{fr.status.demoLeave}</button>
+  </div>
+{/if}
 {#if state}
   <div class="banner row" class:error={state.tone === "error"} class:waiting={state.tone === "waiting"} role="status">
     <Icon name={state.tone === "error" ? "error" : state.tone === "waiting" ? "schedule" : "info"} size={20} />

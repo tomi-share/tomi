@@ -30,7 +30,9 @@ tauri-plugin-opener = "2"
 # The real core. This client is native Rust, so it calls the core's `runtime` directly
 # (SQLite store, sync engine, outbox, history transfer) with the HTTPS / WebSocket
 # transport (`http`). No `ffi`: UniFFI is the Android binding and would only add weight.
-tomi-core = { path = "../../../crates/core", default-features = false, features = ["runtime", "http"] }
+# `demo`: the demo space the pairing screen offers to enter (`runtime::unified`), in every
+# build, release included (no network, nothing sent).
+tomi-core = { path = "../../../crates/core", default-features = false, features = ["runtime", "http", "demo"] }
 # Random bytes for the key that wraps the secrets of the local database (see wrapkey.rs).
 # Not a cryptographic primitive: it is the operating system random generator.
 getrandom = "0.4"

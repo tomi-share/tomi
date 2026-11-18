@@ -15,7 +15,7 @@ they appear on screen in this document (for example « Se déconnecter », "Log 
 | Real core (`src-tauri/src/real_core.rs`) | wired: sending, receiving through the journal, pin, archive, deletion, read-once, files, history transfer |
 | Pairing / creating a space | wired to `spec/pairing-v1.md`: create the space (first device), add a device (code, QR code, verification code), join (code, link, `tomi-share://pair#…`), resume after an interruption. See "Pairing" below. Known limit: no camera QR code scanning on this PC (type the code, or paste the link). |
 | Leaving a space | wired to the engine (`spec/api-v1.md` §7.9): « Se déconnecter », « Supprimer l'espace », « Effacer quand même », retries, cancellation, resume at start-up. See "Leaving the space" below. |
-| Demo mode | **debug** builds only, `TOMI_DEMO=1`: an in-memory core (`fake_core.rs`); nothing is encrypted, sent or kept. A release build has no access to it. Pairing there is a short scenario (« Ajouter un appareil »: a code, then a "Pixel 9" that shows the verification code `482 913`). |
+| Demo mode | **All builds, release included**: on a PC that is in no space, the « Rejoindre un espace » screen offers a discreet « Essayer avec des données de démonstration » button. The real core then enters a demo space (`tomi_core::runtime::unified`, feature `demo`): in memory, no network, already joined; files under `%LOCALAPPDATA%\eu.shaffe.tomi\demo`, erased on exit and at start-up. The feed shows « Mode démo : données fictives, rien n'est envoyé. » and « Quitter la démo » (back to the welcome screen, like « Se déconnecter »). In the demo, pairing is refused and « Ajouter un appareil » is hidden. In addition, a **debug** build started with `TOMI_DEMO=1` runs on the older in-memory core (`fake_core.rs`); nothing is encrypted, sent or kept; pairing there is a short scenario (« Ajouter un appareil »: a code, then a "Pixel 9" that shows the verification code `482 913`). |
 
 ## Product decisions applied
 
@@ -265,7 +265,7 @@ cargo fmt -- --check ; cargo clippy --all-targets -- -D warnings ; cargo test
 ```
 
 The Cargo workspace of `src-tauri` is standalone (excluded from the root workspace; `Cargo.lock` and `target` are local);
-`tomi-core` is taken with `default-features = false, features = ["runtime", "http"]` (no `ffi`).
+`tomi-core` is taken with `default-features = false, features = ["runtime", "http", "demo"]` (no `ffi`; `demo` for the demo space, in every build).
 
 **The relay is configurable** (`spec/pairing-v1.md` §3.3, §4.3, §4.4, §10): a release build has no default relay. It comes
 from a pairing link `https://<relay>/l/pair#<code>` (pasted or scanned), a creation link `https://<relay>/create#<token>`,

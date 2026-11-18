@@ -175,6 +175,10 @@ export interface AppInfo {
   shortcutRegistered: boolean;
   unread: number;
   downloadDir: string | null;
+  /** The demo space of the real core is the active space: fictitious data, nothing is sent. */
+  demoEntered: boolean;
+  /** The pairing screen may offer to enter the demo space. */
+  canEnterDemo: boolean;
 }
 export interface ExpiryRules {
   options: ExpiryChoice[];
@@ -420,6 +424,10 @@ export const api = {
   takePrefill: () => invoke<PrefillPayload | null>("take_prefill"),
 
   appInfo: () => invoke<AppInfo>("app_info"),
+  /** Enters the demo space of the core (a few seconds), then shows its feed. */
+  enterDemo: () => invoke<void>("enter_demo"),
+  /** Leaves the demo space (its files are erased): back to the welcome screen. */
+  leaveDemo: () => invoke<void>("leave_demo"),
   devices: () => invoke<Device[]>("devices"),
   /** Renames a device of the space, this PC included. The core checks the name (`error.device_name_invalid`). */
   renameDevice: (id: string, name: string) => invoke<void>("rename_device", { id, name }),
