@@ -141,11 +141,11 @@ fn to_i32(p: Position, s: Size) -> Area {
 
 pub fn build(app: &AppHandle) -> tauri::Result<()> {
     let menu = MenuBuilder::new(app)
-        .item(&MenuItemBuilder::with_id("open", strings::TRAY_OPEN).build(app)?)
-        .item(&MenuItemBuilder::with_id("history", strings::TRAY_HISTORY).build(app)?)
-        .item(&MenuItemBuilder::with_id("settings", strings::TRAY_SETTINGS).build(app)?)
+        .item(&MenuItemBuilder::with_id("open", strings::tray_open()).build(app)?)
+        .item(&MenuItemBuilder::with_id("history", strings::tray_history()).build(app)?)
+        .item(&MenuItemBuilder::with_id("settings", strings::tray_settings()).build(app)?)
         .item(&PredefinedMenuItem::separator(app)?)
-        .item(&MenuItemBuilder::with_id("quit", strings::TRAY_QUIT).build(app)?)
+        .item(&MenuItemBuilder::with_id("quit", strings::tray_quit()).build(app)?)
         .build()?;
 
     let look = current_look(app);

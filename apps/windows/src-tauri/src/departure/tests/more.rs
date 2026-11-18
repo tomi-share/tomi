@@ -235,7 +235,7 @@ async fn retrying_a_pending_deletion_asks_windows_hello_every_time() {
     assert_eq!(rig.auth.times_asked(), 2);
     assert_eq!(
         rig.auth.asked.lock().unwrap()[1],
-        strings::HELLO_DELETE_SPACE
+        strings::hello_delete_space()
     );
     rig.flow.retry(Some(1)).await.unwrap();
     assert_eq!(rig.auth.times_asked(), 3);

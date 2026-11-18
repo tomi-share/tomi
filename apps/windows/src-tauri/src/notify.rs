@@ -34,7 +34,10 @@ fn short(s: &str, max: usize) -> String {
 /// Content of the toast for one received item.
 pub fn single_toast(item: &Item) -> ToastContent {
     let from = strings::toast_from(&item.source_device.name);
-    let buttons = vec![(strings::TOAST_COPY, "copy"), (strings::TOAST_OPEN, "open")];
+    let buttons = vec![
+        (strings::toast_copy(), "copy"),
+        (strings::toast_open(), "open"),
+    ];
     if item.unreadable {
         // Nothing of the item is known (and it may well be a hidden one): only the sender and
         // the reason, and nothing to copy.
@@ -45,7 +48,7 @@ pub fn single_toast(item: &Item) -> ToastContent {
         return ToastContent {
             title: strings::toast_title_unreadable(&item.source_device.name),
             body: body.to_string(),
-            buttons: vec![(strings::TOAST_OPEN, "open")],
+            buttons: vec![(strings::toast_open(), "open")],
         };
     }
     if item.secret {
@@ -56,7 +59,7 @@ pub fn single_toast(item: &Item) -> ToastContent {
         return ToastContent {
             title: strings::toast_title_secret().to_string(),
             body: from,
-            buttons: vec![(strings::TOAST_OPEN, "open")],
+            buttons: vec![(strings::toast_open(), "open")],
         };
     }
     let (title, detail) = match item_kind(item) {
@@ -97,7 +100,7 @@ pub fn offer_toast(peer: &str) -> ToastContent {
     ToastContent {
         title: strings::toast_title_offer().to_string(),
         body: strings::toast_from(peer),
-        buttons: vec![(strings::TOAST_OPEN, "open")],
+        buttons: vec![(strings::toast_open(), "open")],
     }
 }
 
@@ -107,7 +110,7 @@ pub fn new_device_toast(name: &str) -> ToastContent {
     ToastContent {
         title: strings::toast_title_new_device().to_string(),
         body: strings::toast_body_new_device(&short(name, 40)),
-        buttons: vec![(strings::TOAST_OPEN, "open")],
+        buttons: vec![(strings::toast_open(), "open")],
     }
 }
 
@@ -116,7 +119,7 @@ pub fn group_toast(count: usize) -> ToastContent {
     ToastContent {
         title: strings::toast_group_title(count),
         body: strings::toast_group_body().to_string(),
-        buttons: vec![(strings::TOAST_OPEN, "open")],
+        buttons: vec![(strings::toast_open(), "open")],
     }
 }
 

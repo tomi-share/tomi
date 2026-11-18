@@ -305,7 +305,7 @@ async fn deleting_the_space_with_windows_hello_erases_on_the_receipt_of_the_rela
     assert_eq!(rig.auth.times_asked(), 1);
     assert_eq!(
         rig.auth.asked.lock().unwrap()[0],
-        strings::HELLO_DELETE_SPACE
+        strings::hello_delete_space()
     );
 }
 
@@ -438,7 +438,7 @@ async fn erasing_anyway_after_not_found_needs_the_checkbox_two_seconds_and_windo
     assert_eq!(snap.ui.screen, LeaveScreen::Hidden);
     assert!(rig.erased());
     assert_eq!(rig.host.erased.load(Ordering::SeqCst), 1);
-    assert_eq!(rig.auth.asked.lock().unwrap()[0], strings::HELLO_ERASE);
+    assert_eq!(rig.auth.asked.lock().unwrap()[0], strings::hello_erase());
     // Never a request to delete or leave: nothing reached the relay.
     assert_eq!(rig.core.relay_state(), (false, false));
 }

@@ -417,7 +417,7 @@ impl LeaveFlow {
     ) -> Result<DepartureSnapshot, AppError> {
         self.check_armed()?;
         self.begin(LeaveScreen::ConfirmDelete)?;
-        if let Err(e) = self.ask_hello(owner, strings::HELLO_DELETE_SPACE).await {
+        if let Err(e) = self.ask_hello(owner, strings::hello_delete_space()).await {
             self.edit_ui(|ui| ui.busy = false);
             return Err(e);
         }
@@ -529,7 +529,7 @@ impl LeaveFlow {
         }
         self.check_armed()?;
         self.begin(LeaveScreen::EraseWithoutProof)?;
-        if let Err(e) = self.ask_hello(owner, strings::HELLO_ERASE).await {
+        if let Err(e) = self.ask_hello(owner, strings::hello_erase()).await {
             self.edit_ui(|ui| ui.busy = false);
             return Err(e);
         }
@@ -571,7 +571,7 @@ impl LeaveFlow {
             return Ok(self.snapshot());
         };
         if view.kind == DepartureKind::DeleteSpace {
-            self.ask_hello(owner, strings::HELLO_DELETE_SPACE).await?;
+            self.ask_hello(owner, strings::hello_delete_space()).await?;
         }
         let epoch = self.epoch.load(Ordering::SeqCst);
         let result = self.core.retry_departure().await;
