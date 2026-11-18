@@ -3,9 +3,21 @@ import Foundation
 // Port of apps/android/app/src/main/java/eu/shaffe/tomi/ui/common/Formatting.kt.
 // TomiKit cannot read the app's strings: labels are returned as structured values (enums carrying numbers and
 // names, with the Android string resource key they stand for), and the app maps them to its own localisation.
-// Dates and sizes, which need no app string, are formatted here in French (`fr_FR`). Time is injected.
+// Dates and sizes, which need no app string, are formatted here in the language of the device (`TomiLocale`). Time
+// is injected.
 
-private let frenchLocale = Locale(identifier: "fr_FR")
+/// The language dates and sizes are written in: the one of the device. The tests pin it.
+public enum TomiLocale {
+    public nonisolated(unsafe) static var current: Locale = .autoupdatingCurrent
+
+    /// French keeps the exact forms of the charter ("6 nov.", "mer. 5 nov. 13:47"); the other languages take the
+    /// form their own conventions give for the same fields.
+    static func pattern(french: String, template: String) -> String {
+        let locale = current
+        if locale.language.languageCode?.identifier == "fr" { return french }
+        return DateFormatter.dateFormat(fromTemplate: template, options: 0, locale: locale) ?? french
+    }
+}
 
 /// Compact timestamp of a card.
 public enum TimestampLabel: Sendable, Hashable {
@@ -16,11 +28,12 @@ public enum TimestampLabel: Sendable, Hashable {
     /// Short date, e.g. "6 nov.".
     case date(String)
 
-    /// French text, with "hier" in lower case as the spec shows it.
-    public var frenchText: String {
+    /// The text to show; `yesterday` is the app's word for it (resource `time_yesterday`), written in lower case
+    /// since the label sits inside a line ("PC · yesterday").
+    public func text(yesterday: String) -> String {
         switch self {
         case let .time(value), let .date(value): value
-        case .yesterday: "hier"
+        case .yesterday: yesterday.lowercased(with: TomiLocale.current)
         }
     }
 }
@@ -28,22 +41,22 @@ public enum TimestampLabel: Sendable, Hashable {
 /// Compact timestamp: time today, "yesterday", otherwise the short date. Days are those of `calendar` (its time zone).
 public func formatTimestamp(_ date: Date, now: Date, calendar: Calendar = .current) -> TimestampLabel {
     if calendar.isDate(date, inSameDayAs: now) {
-        return .time(formatted(date, "HH:mm", calendar))
+        return .time(formatted(date, TomiLocale.pattern(french: "HH:mm", template: "jm"), calendar))
     }
     if let yesterday = calendar.date(byAdding: .day, value: -1, to: now), calendar.isDate(date, inSameDayAs: yesterday) {
         return .yesterday
     }
-    return .date(formatted(date, "d MMM", calendar))
+    return .date(formatted(date, TomiLocale.pattern(french: "d MMM", template: "dMMM"), calendar))
 }
 
 /// Full date and time for the detail screen, e.g. "mer. 5 nov. 13:47".
 public func formatDateTime(_ date: Date, calendar: Calendar = .current) -> String {
-    formatted(date, "EEE d MMM HH:mm", calendar)
+    formatted(date, TomiLocale.pattern(french: "EEE d MMM HH:mm", template: "EEEdMMMjm"), calendar)
 }
 
 /// Exact send date for the detail screen, with seconds, e.g. "5 novembre 2026 à 13:47:09".
 public func formatPreciseDateTime(_ date: Date, calendar: Calendar = .current) -> String {
-    formatted(date, "d MMMM yyyy 'à' HH:mm:ss", calendar)
+    formatted(date, TomiLocale.pattern(french: "d MMMM yyyy 'à' HH:mm:ss", template: "dMMMMyyyyjms"), calendar)
 }
 
 /// Always Gregorian (like Android), in the time zone of `calendar`; the user's calendar only decides "today" and
@@ -59,10 +72,11 @@ private final class FormatterCache: @unchecked Sendable {
 
     func formatter(pattern: String, timeZone: TimeZone) -> DateFormatter {
         lock.withLock {
-            let key = pattern + "|" + timeZone.identifier
+            let locale = TomiLocale.current
+            let key = pattern + "|" + timeZone.identifier + "|" + locale.identifier
             if let cached = formatters[key] { return cached }
             let formatter = DateFormatter()
-            formatter.locale = frenchLocale
+            formatter.locale = locale
             formatter.calendar = Calendar(identifier: .gregorian)
             formatter.timeZone = timeZone
             formatter.dateFormat = pattern
@@ -75,7 +89,10 @@ private final class FormatterCache: @unchecked Sendable {
 /// Short file size in the style of Android's `Formatter.formatShortFileSize` (decimal units, French symbols):
 /// "512 o", "18 ko", "2,4 Mo", "1,0 Go". Less than 10 units keep one decimal (two below 1), more than that none.
 public func formatFileSize(_ bytes: Int64) -> String {
-    let units = ["o", "ko", "Mo", "Go", "To", "Po"]
+    let locale = TomiLocale.current
+    // French writes octets; the other languages the international symbols.
+    let units = locale.language.languageCode?.identifier == "fr"
+        ? ["o", "ko", "Mo", "Go", "To", "Po"] : ["B", "kB", "MB", "GB", "TB", "PB"]
     var value = Double(max(bytes, 0))
     var unit = 0
     while value > 900 && unit < units.count - 1 {
@@ -94,7 +111,7 @@ public func formatFileSize(_ bytes: Int64) -> String {
     }
     let factor = pow(10.0, Double(digits))
     let rounded = (value * factor).rounded(.toNearestOrAwayFromZero) / factor
-    return String(format: "%.\(digits)f", locale: frenchLocale, rounded) + " " + units[unit]
+    return String(format: "%.\(digits)f", locale: locale, rounded) + " " + units[unit]
 }
 
 /// Remaining lifetime of an item, as the plural resource it is shown with (`remaining_days`, `remaining_hours`,

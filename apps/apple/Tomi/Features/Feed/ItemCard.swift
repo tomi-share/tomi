@@ -179,7 +179,7 @@ struct ItemCard: View {
 
     private var sourceAndTime: String {
         let source = outgoing ? L10n.text("source_this_phone") : item.sourceDevice.name
-        return "\(source) · \(formatTimestamp(item.createdAt, now: Date()).frenchText)"
+        return "\(source) · \(formatTimestamp(item.createdAt, now: Date()).text(yesterday: L10n.text("time_yesterday")))"
     }
 
     // MARK: Body
