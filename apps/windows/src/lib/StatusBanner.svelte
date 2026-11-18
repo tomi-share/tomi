@@ -2,7 +2,7 @@
   import { api } from "./api";
   import { departure } from "./departure.svelte";
   import { feed } from "./feed.svelte";
-  import { fr } from "./i18n/fr";
+  import { msg } from "./i18n";
   import Icon from "./Icon.svelte";
 
   /** In the popover: a button leads to the Appareils tab. */
@@ -12,21 +12,21 @@
     const s = feed.status;
     if (!s) return null;
     if (s.unavailable) {
-      return { text: fr.status.storageCodes[s.unavailable] ?? fr.status.storage, tone: "error" };
+      return { text: msg.status.storageCodes[s.unavailable] ?? msg.status.storage, tone: "error" };
     }
-    if (!s.paired) return { text: fr.status.notPaired, tone: "info" };
+    if (!s.paired) return { text: msg.status.notPaired, tone: "info" };
     // When this PC can leave its space, the departure banner owns "retiré" and "introuvable"
     // (it has the button that goes with them); otherwise they are only told here.
     const departureBanner = departure.available;
     switch (s.space) {
       case "revoked":
-        return departureBanner ? null : { text: fr.status.revoked, tone: "error" };
+        return departureBanner ? null : { text: msg.status.revoked, tone: "error" };
       case "notFound":
-        return departureBanner ? null : { text: fr.status.notFound, tone: "error" };
+        return departureBanner ? null : { text: msg.status.notFound, tone: "error" };
       case "updateRequired":
-        return { text: fr.status.updateRequired, tone: "waiting" };
+        return { text: msg.status.updateRequired, tone: "waiting" };
       case "blocked":
-        return { text: fr.status.blocked, tone: "error" };
+        return { text: msg.status.blocked, tone: "error" };
       default:
         return null;
     }
@@ -36,8 +36,8 @@
 {#if feed.demo}
   <div class="banner row" role="status">
     <Icon name="info" size={20} />
-    <span class="grow">{fr.status.demo}</span>
-    <button onclick={() => feed.run(() => api.leaveDemo())}>{fr.status.demoLeave}</button>
+    <span class="grow">{msg.status.demo}</span>
+    <button onclick={() => feed.run(() => api.leaveDemo())}>{msg.status.demoLeave}</button>
   </div>
 {/if}
 {#if state}
@@ -45,7 +45,7 @@
     <Icon name={state.tone === "error" ? "error" : state.tone === "waiting" ? "schedule" : "info"} size={20} />
     <span class="grow">{state.text}</span>
     {#if link}
-      <button onclick={() => api.openWindow("devices")}>{fr.status.seeDevices}</button>
+      <button onclick={() => api.openWindow("devices")}>{msg.status.seeDevices}</button>
     {/if}
   </div>
 {/if}

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { api, type RenderedItem, type ItemView } from "./api";
   import { feed } from "./feed.svelte";
-  import { fr } from "./i18n/fr";
+  import { msg } from "./i18n";
   import { theme } from "./theme.svelte";
 
   /**
@@ -95,7 +95,7 @@
 
 <div class="rich">
   {#if modes.length > 1}
-    <div class="modes" role="group" aria-label={fr.renderModesLabel}>
+    <div class="modes" role="group" aria-label={msg.renderModesLabel}>
       {#each modes as m (m)}
         <button
           class="seg"
@@ -104,7 +104,7 @@
           onclick={(e) => {
             e.stopPropagation();
             void feed.chooseMode(m);
-          }}>{fr.renderModes[m]}</button
+          }}>{msg.renderModes[m]}</button
         >
       {/each}
     </div>
@@ -117,7 +117,7 @@
       class:ready={docReady}
       onload={() => (docReady = true)}
       sandbox=""
-      title={fr.card.details}
+      title={msg.card.details}
       srcdoc={rendered.rendered.srcdoc}
       style:height="{docHeight}px"
     ></iframe>

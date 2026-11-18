@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { PairingSession } from "../api";
-  import { format, formatRemaining, fr, pairingErrorMessage } from "../i18n/fr";
+  import { format, formatRemaining, msg, pairingErrorMessage } from "../i18n";
   import QrCode from "./QrCode.svelte";
   import Verify from "./Verify.svelte";
 
@@ -39,56 +39,56 @@
 
 {#if session.stage === "waiting"}
   <div class="invite">
-    <h3>{fr.pairing.inviteTitle}</h3>
-    <p class="muted">{fr.pairing.inviteIntro}</p>
-    {#if session.renewed}<p class="note">{fr.pairing.renewed}</p>{/if}
+    <h3>{msg.pairing.inviteTitle}</h3>
+    <p class="muted">{msg.pairing.inviteIntro}</p>
+    {#if session.renewed}<p class="note">{msg.pairing.renewed}</p>{/if}
     {#if session.qr && session.code}
       <div class="shown">
-        <QrCode qr={session.qr} label={fr.pairing.qrLabel} />
+        <QrCode qr={session.qr} label={msg.pairing.qrLabel} />
         <div class="code-side">
-          <span class="muted small">{fr.pairing.shortCode}</span>
+          <span class="muted small">{msg.pairing.shortCode}</span>
           <!-- Shown, never copied by the app (spec/pairing-v1.md §12). -->
           <span class="code">{session.code}</span>
           {#if left !== null}
             <!-- Not announced every second. -->
             <span class="muted small" aria-live="off">
-              {left > 0 ? format(fr.pairing.expiresIn, { time: formatRemaining(left) }) : fr.pairing.expired}
+              {left > 0 ? format(msg.pairing.expiresIn, { time: formatRemaining(left) }) : msg.pairing.expired}
             </span>
           {/if}
         </div>
       </div>
     {:else}
-      <progress aria-label={fr.pairing.preparing}></progress>
+      <progress aria-label={msg.pairing.preparing}></progress>
     {/if}
-    {#if session.offline}<p class="warn small">{fr.pairing.offline}</p>{/if}
+    {#if session.offline}<p class="warn small">{msg.pairing.offline}</p>{/if}
     <div class="row">
-      <button onclick={onrefuse}>{fr.pairing.cancel}</button>
+      <button onclick={onrefuse}>{msg.pairing.cancel}</button>
     </div>
   </div>
 {:else if session.stage === "verify"}
   <Verify role="invite" {session} {onconfirm} {onrefuse} />
-  {#if session.offline}<p class="warn small">{fr.pairing.offline}</p>{/if}
+  {#if session.offline}<p class="warn small">{msg.pairing.offline}</p>{/if}
 {:else if session.stage === "provisioning"}
   <div class="invite">
-    <h3>{format(fr.pairing.addingTitle, { device })}</h3>
-    <p>{format(fr.pairing.provisioningInvite, { device })}</p>
-    <progress aria-label={fr.pairing.working}></progress>
-    {#if session.offline}<p class="warn small">{fr.pairing.offline}</p>{/if}
+    <h3>{format(msg.pairing.addingTitle, { device })}</h3>
+    <p>{format(msg.pairing.provisioningInvite, { device })}</p>
+    <progress aria-label={msg.pairing.working}></progress>
+    {#if session.offline}<p class="warn small">{msg.pairing.offline}</p>{/if}
   </div>
 {:else if session.stage === "done"}
   <div class="invite">
-    <p class="done">✓ {format(fr.pairing.doneInvite, { device })}</p>
+    <p class="done">✓ {format(msg.pairing.doneInvite, { device })}</p>
     {#if session.history}
-      <p class="muted">{format(fr.pairing.historyPreparingInvite, { device })}</p>
+      <p class="muted">{format(msg.pairing.historyPreparingInvite, { device })}</p>
     {/if}
-    <div class="row"><button class="primary" onclick={onfinish}>{fr.pairing.finish}</button></div>
+    <div class="row"><button class="primary" onclick={onfinish}>{msg.pairing.finish}</button></div>
   </div>
 {:else}
   <div class="invite">
     <p class="error">{pairingErrorMessage(session.error, "invite")}</p>
     <div class="row">
-      <button class="primary" onclick={onagain}>{fr.pairing.newCode}</button>
-      <button onclick={onfinish}>{fr.pairing.close}</button>
+      <button class="primary" onclick={onagain}>{msg.pairing.newCode}</button>
+      <button onclick={onfinish}>{msg.pairing.close}</button>
     </div>
   </div>
 {/if}

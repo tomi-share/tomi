@@ -3,7 +3,7 @@
   import { api, asAppError, type ItemView } from "./api";
   import Dialog from "./Dialog.svelte";
   import { feed } from "./feed.svelte";
-  import { errorMessage, format, fr } from "./i18n/fr";
+  import { errorMessage, format, msg } from "./i18n";
   import Icon from "./Icon.svelte";
   import { removeAttachment } from "./itemActions";
   import { canRemoveAttachment, isImage } from "./itemLogic";
@@ -119,7 +119,7 @@
 
   function fail(e: unknown) {
     const err = asAppError(e);
-    errorText = err.code === "error.image_too_large" ? fr.viewer.tooLarge : errorMessage(err);
+    errorText = err.code === "error.image_too_large" ? msg.viewer.tooLarge : errorMessage(err);
     status = "error";
   }
 
@@ -186,7 +186,7 @@
   const deleteEntries = $derived.by((): MenuEntry[] => {
     const list: MenuEntry[] = [
       {
-        label: fr.viewer.deleteLocal,
+        label: msg.viewer.deleteLocal,
         icon: "delete",
         onselect: () => void removeSlot(entries[position]?.slot, false),
       },
@@ -194,7 +194,7 @@
     // "Partout" only when the relay can carry it; a confirmation first.
     if (feed.removalEverywhere) {
       list.push({
-        label: fr.viewer.deleteEverywhere,
+        label: msg.viewer.deleteEverywhere,
         icon: "delete_forever",
         danger: true,
         onselect: () => (confirmSlot = entries[position]?.slot ?? null),
@@ -226,7 +226,7 @@
     if (!target) return;
     try {
       const r = await api.saveItem(target.itemId);
-      feed.say(format(fr.card.saved, { dir: r.dir }));
+      feed.say(format(msg.card.saved, { dir: r.dir }));
     } catch (e) {
       feed.fail(e);
     }
@@ -270,38 +270,38 @@
   class="viewer"
   role="dialog"
   aria-modal="true"
-  aria-label={fr.card.viewImage}
+  aria-label={msg.card.viewImage}
   tabindex="-1"
   onkeydown={onKey}
 >
   <header class="bar">
-    <button class="ghost icon" type="button" aria-label={fr.viewer.close} onclick={close}>
+    <button class="ghost icon" type="button" aria-label={msg.viewer.close} onclick={close}>
       <Icon name="close" size={24} />
     </button>
     <span class="mono ellipsis grow name">{name}</span>
     {#if entries.length > 1}
-      <button class="ghost icon" type="button" aria-label={fr.viewer.previous} onclick={() => go(-1)}>
+      <button class="ghost icon" type="button" aria-label={msg.viewer.previous} onclick={() => go(-1)}>
         <span class="flip"><Icon name="chevron_right" size={24} /></span>
       </button>
-      <span class="tnum small" aria-live="polite">{format(fr.viewer.position, { n: position + 1, total: entries.length })}</span>
-      <button class="ghost icon" type="button" aria-label={fr.viewer.next} onclick={() => go(1)}>
+      <span class="tnum small" aria-live="polite">{format(msg.viewer.position, { n: position + 1, total: entries.length })}</span>
+      <button class="ghost icon" type="button" aria-label={msg.viewer.next} onclick={() => go(1)}>
         <Icon name="chevron_right" size={24} />
       </button>
     {/if}
-    <button class="ghost icon" type="button" aria-label={fr.viewer.zoomOut} disabled={status !== "ready" || scale <= MIN} onclick={() => zoom(1 / 1.25)}>
+    <button class="ghost icon" type="button" aria-label={msg.viewer.zoomOut} disabled={status !== "ready" || scale <= MIN} onclick={() => zoom(1 / 1.25)}>
       <span aria-hidden="true">−</span>
     </button>
-    <button class="ghost" type="button" disabled={status !== "ready"} title={fr.viewer.fit} onclick={reset}>
+    <button class="ghost" type="button" disabled={status !== "ready"} title={msg.viewer.fit} onclick={reset}>
       <span class="tnum">{Math.round(scale * 100)} %</span>
     </button>
-    <button class="ghost icon" type="button" aria-label={fr.viewer.zoomIn} disabled={status !== "ready" || scale >= MAX} onclick={() => zoom(1.25)}>
+    <button class="ghost icon" type="button" aria-label={msg.viewer.zoomIn} disabled={status !== "ready" || scale >= MAX} onclick={() => zoom(1.25)}>
       <span aria-hidden="true">+</span>
     </button>
-    <button class="ghost icon" type="button" title={fr.card.save} aria-label={fr.card.save} onclick={save}>
+    <button class="ghost icon" type="button" title={msg.card.save} aria-label={msg.card.save} onclick={save}>
       <Icon name="download" size={24} />
     </button>
     {#if canDelete}
-      <Menu entries={deleteEntries} label={fr.viewer.delete} icon="delete" />
+      <Menu entries={deleteEntries} label={msg.viewer.delete} icon="delete" />
     {/if}
   </header>
 
@@ -319,25 +319,25 @@
     {#if status === "ready" && src}
       <img
         {src}
-        alt={format(fr.viewer.description, { n: position + 1, total: entries.length })}
+        alt={format(msg.viewer.description, { n: position + 1, total: entries.length })}
         draggable="false"
         style:transform="translate({tx}px, {ty}px) scale({scale})"
       />
     {:else if status === "loading"}
-      <p class="state">{fr.viewer.loading}</p>
+      <p class="state">{msg.viewer.loading}</p>
     {:else}
       <p class="state" role="alert">{errorText}</p>
     {/if}
   </div>
 
-  <footer class="hint small">{fr.viewer.hint}</footer>
+  <footer class="hint small">{msg.viewer.hint}</footer>
 </div>
 
 {#if confirmSlot !== null && item}
   <Dialog
-    title={fr.viewer.deleteTitle}
-    message={item.secret ? fr.viewer.deleteSecretMessage : fr.viewer.deleteMessage}
-    confirmLabel={fr.viewer.deleteEverywhere}
+    title={msg.viewer.deleteTitle}
+    message={item.secret ? msg.viewer.deleteSecretMessage : msg.viewer.deleteMessage}
+    confirmLabel={msg.viewer.deleteEverywhere}
     onconfirm={confirmEverywhere}
     oncancel={() => (confirmSlot = null)}
   />

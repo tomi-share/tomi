@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
   import { api, asAppError, type AppError } from "../lib/api";
   import { feed } from "../lib/feed.svelte";
-  import { errorMessage, fr } from "../lib/i18n/fr";
+  import { errorMessage, msg } from "../lib/i18n";
   import { pairing } from "../lib/pairing.svelte";
   import Create from "../lib/pairing/Create.svelte";
   import Invite from "../lib/pairing/Invite.svelte";
@@ -64,7 +64,7 @@
   $effect(() => {
     if (pairing.link === null || options === null) return;
     if (options.paired) {
-      feed.say(fr.pairing.linkIgnored);
+      feed.say(msg.pairing.linkIgnored);
       pairing.link = null;
     } else {
       mode = "join";
@@ -75,7 +75,7 @@
   $effect(() => {
     if (pairing.setup === null || options === null) return;
     if (options.paired) {
-      feed.say(fr.pairing.linkIgnored);
+      feed.say(msg.pairing.linkIgnored);
     } else {
       createSeed = { token: pairing.setup.token, relay: pairing.setup.relayUrl };
       mode = "create";
@@ -134,7 +134,7 @@
     busy = true;
     try {
       await api.pairingCreateSpace(installToken, deviceName, relayUrl);
-      feed.say(fr.pairing.created);
+      feed.say(msg.pairing.created);
       createSeed = null;
       mode = "join";
     } catch (e) {
@@ -199,10 +199,10 @@
     <div class="card notice row">
       <span class="grow">
         {options.resumed === "provisioned"
-          ? fr.pairing.resumedProvisioned
-          : fr.pairing.resumedDiscarded}
+          ? msg.pairing.resumedProvisioned
+          : msg.pairing.resumedDiscarded}
       </span>
-      <button onclick={acknowledge}>{fr.pairing.ok}</button>
+      <button onclick={acknowledge}>{msg.pairing.ok}</button>
     </div>
   {/if}
 
@@ -221,20 +221,20 @@
       <Join session={view} onconfirm={confirm} onrefuse={leave} onfinish={finish} />
     </div>
   {:else if options === null}
-    <p class="muted">{fr.common.loading}</p>
+    <p class="muted">{msg.common.loading}</p>
   {:else if options.paired}
     <!-- Inviting a device into the demo space is not offered. -->
     {#if !feed.demo}
       <div class="row">
         <button class="primary" disabled={busy} onclick={invite}>
-          {busy ? fr.pairing.preparing : fr.pairing.addDevice}
+          {busy ? msg.pairing.preparing : msg.pairing.addDevice}
         </button>
       </div>
       {#if failure}<p class="error" role="alert">{errorMessage(failure)}</p>{/if}
     {/if}
   {:else}
     <div class="card">
-      {#if options.pending}<p class="muted">{fr.pairing.pending}</p>{/if}
+      {#if options.pending}<p class="muted">{msg.pairing.pending}</p>{/if}
       {#if mode === "create"}
         {#key createSeed}
           <Create
@@ -250,7 +250,7 @@
         {/key}
       {:else}
         {#if options.relayAuthority !== null && options.spaceInitialized === null}
-          <p class="muted small">{fr.pairing.relayUnknown}</p>
+          <p class="muted small">{msg.pairing.relayUnknown}</p>
         {/if}
         <!-- A link that arrives while the form is open replaces what is typed. -->
         {#key pairing.link}
@@ -268,11 +268,11 @@
         {/key}
         <!-- Always offered: the first device of a person has nobody to ask for a code. -->
         <div class="create-entry">
-          <span class="muted small">{fr.pairing.createHint}</span>
-          <button disabled={busy} onclick={() => goTo("create")}>{fr.pairing.create}</button>
+          <span class="muted small">{msg.pairing.createHint}</span>
+          <button disabled={busy} onclick={() => goTo("create")}>{msg.pairing.create}</button>
         </div>
         {#if feed.canEnterDemo}
-          <button class="ghost" disabled={busy} onclick={enterDemo}>{fr.pairing.demoEnter}</button>
+          <button class="ghost" disabled={busy} onclick={enterDemo}>{msg.pairing.demoEnter}</button>
         {/if}
       {/if}
     </div>

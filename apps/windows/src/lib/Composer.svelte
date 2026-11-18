@@ -14,7 +14,7 @@
   } from "./api";
   import { feed } from "./feed.svelte";
   import Icon from "./Icon.svelte";
-  import { errorMessage, format, formatBytes, fr } from "./i18n/fr";
+  import { errorMessage, format, formatBytes, msg } from "./i18n";
 
   const MAX_FILE_BYTES = 25 * 1024 * 1024;
 
@@ -135,16 +135,16 @@
       if (title.trim() === "") title = p.title;
       else kept = true;
     }
-    if (kept) feed.say(fr.composer.prefillKept);
+    if (kept) feed.say(msg.composer.prefillKept);
     if (p.text) text = text ? `${text}\n${p.text}` : p.text;
     if (p.files.length) attachments = [...attachments, ...p.files];
     if (p.rejected.length) notes = p.rejected.map(rejectionNote);
-    if (p.truncated) feed.say(fr.truncatedPrefill);
+    if (p.truncated) feed.say(msg.truncatedPrefill);
     focus();
   }
 
   function rejectionNote(r: Rejection): string {
-    return format(fr.rejected[r.reason], { name: r.name });
+    return format(msg.rejected[r.reason], { name: r.name });
   }
 
   function reset(): void {
@@ -182,7 +182,7 @@
     const rejected: string[] = [];
     for (const f of files) {
       if (f.size > MAX_FILE_BYTES) {
-        rejected.push(format(fr.rejected.tooLarge, { name: f.name || "image" }));
+        rejected.push(format(msg.rejected.tooLarge, { name: f.name || "image" }));
         continue;
       }
       try {
@@ -309,8 +309,8 @@
   }
 </script>
 
-<section class="composer" class:dropping aria-label={fr.composer.label}>
-  {#if dropping}<div class="drop">{fr.composer.drop}</div>{/if}
+<section class="composer" class:dropping aria-label={msg.composer.label}>
+  {#if dropping}<div class="drop">{msg.composer.drop}</div>{/if}
 
   <textarea
     bind:this={area}
@@ -318,8 +318,8 @@
     class:masked={secret && !showTyped}
     class:secret
     rows="3"
-    placeholder={secret ? fr.composer.placeholderSecret : fr.composer.placeholder}
-    aria-label={fr.composer.label}
+    placeholder={secret ? msg.composer.placeholderSecret : msg.composer.placeholder}
+    aria-label={msg.composer.label}
     autocomplete="off"
     spellcheck={secret ? false : undefined}
     onpaste={onPaste}
@@ -332,9 +332,9 @@
   {#if secretHint}
     <div class="hint row">
       <Icon name="visibility_off" size={20} />
-      <span class="grow">{fr.composer.looksSecret}</span>
-      <button onclick={() => setSecret(true)}>{fr.composer.markSecret}</button>
-      <button class="ghost icon" onclick={() => (secretHint = false)} aria-label={fr.common.close}>
+      <span class="grow">{msg.composer.looksSecret}</span>
+      <button onclick={() => setSecret(true)}>{msg.composer.markSecret}</button>
+      <button class="ghost icon" onclick={() => (secretHint = false)} aria-label={msg.common.close}>
         <Icon name="close" size={20} />
       </button>
     </div>
@@ -345,8 +345,8 @@
       <input
         type="text"
         bind:value={title}
-        placeholder={secret ? fr.composer.titleSecret : fr.composer.title}
-        aria-label={secret ? fr.composer.titleSecret : fr.composer.title}
+        placeholder={secret ? msg.composer.titleSecret : msg.composer.title}
+        aria-label={secret ? msg.composer.titleSecret : msg.composer.title}
         maxlength="300"
         autocomplete="off"
         spellcheck={secret ? false : undefined}
@@ -354,7 +354,7 @@
       {#if secret}
         <button class="ghost" onclick={() => (showTyped = !showTyped)} aria-pressed={showTyped}>
           <Icon name={showTyped ? "visibility_off" : "visibility"} size={20} />
-          {showTyped ? fr.composer.hideInput : fr.composer.showInput}
+          {showTyped ? msg.composer.hideInput : msg.composer.showInput}
         </button>
       {/if}
     </div>
@@ -365,12 +365,12 @@
         type="text"
         class="mono"
         bind:value={url}
-        placeholder={fr.composer.url}
-        aria-label={fr.composer.url}
+        placeholder={msg.composer.url}
+        aria-label={msg.composer.url}
         autocomplete="off"
         spellcheck={secret ? false : undefined}
       />
-      <button class="ghost icon" onclick={() => (url = "")} aria-label={fr.composer.removeField}>
+      <button class="ghost icon" onclick={() => (url = "")} aria-label={msg.composer.removeField}>
         <Icon name="close" size={20} />
       </button>
     </div>
@@ -386,7 +386,7 @@
           <button
             class="ghost icon"
             onclick={() => removeAttachment(i)}
-            aria-label={format(fr.composer.removeFile, { name: a.name })}
+            aria-label={format(msg.composer.removeFile, { name: a.name })}
           >
             <Icon name="close" size={20} />
           </button>
@@ -403,40 +403,40 @@
     <label class="switch row">
       <input type="checkbox" checked={secret} onchange={(e) => setSecret(e.currentTarget.checked)} />
       <span>
-        {fr.composer.secret}
-        <span class="muted small block">{secret ? fr.composer.secretHint : fr.composer.secretOff}</span>
+        {msg.composer.secret}
+        <span class="muted small block">{secret ? msg.composer.secretHint : msg.composer.secretOff}</span>
       </span>
     </label>
   </div>
 
   <div class="row bar">
-    <button class="ghost icon" onclick={pick} title={fr.composer.addFiles} aria-label={fr.composer.addFiles}>
+    <button class="ghost icon" onclick={pick} title={msg.composer.addFiles} aria-label={msg.composer.addFiles}>
       <Icon name="attach_file" size={20} />
     </button>
     <span class="grow"></span>
-    <label class="row small" title={fr.composer.expires}>
-      <span class="muted">{fr.composer.expires}</span>
-      <select bind:value={expiry} aria-label={fr.composer.expires} aria-invalid={readOnceWithFiles}>
+    <label class="row small" title={msg.composer.expires}>
+      <span class="muted">{msg.composer.expires}</span>
+      <select bind:value={expiry} aria-label={msg.composer.expires} aria-invalid={readOnceWithFiles}>
         {#each options as o (o)}
-          <option value={o}>{fr.expiry[o]}</option>
+          <option value={o}>{msg.expiry[o]}</option>
         {/each}
       </select>
     </label>
     <button class="primary" disabled={!canSend} onclick={send}>
       <Icon name="send" size={20} />
-      {fr.composer.send}
+      {msg.composer.send}
     </button>
   </div>
   {#if expiry === "afterFirstRead" && !readOnceWithFiles}
-    <div class="muted small">{fr.composer.afterReadHint}</div>
+    <div class="muted small">{msg.composer.afterReadHint}</div>
   {/if}
   {#if readOnceWithFiles}
-    <div class="note small" role="alert">{fr.composer.afterReadNoFiles}</div>
+    <div class="note small" role="alert">{msg.composer.afterReadNoFiles}</div>
   {:else if noReadOnce}
-    <div class="muted small">{fr.composer.afterReadNoFiles}</div>
+    <div class="muted small">{msg.composer.afterReadNoFiles}</div>
   {/if}
   {#if targets.length > 0}
-    <div class="muted small">{format(fr.composer.to, { devices: targets.join(", ") })}</div>
+    <div class="muted small">{format(msg.composer.to, { devices: targets.join(", ") })}</div>
   {/if}
 </section>
 

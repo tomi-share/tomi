@@ -3,7 +3,7 @@
   import type { RefusalReason } from "./api";
   import Dialog from "./Dialog.svelte";
   import { departure } from "./departure.svelte";
-  import { fr } from "./i18n/fr";
+  import { msg } from "./i18n";
 
   // The three confirmations of the departure, drawn from the snapshot Rust keeps
   // (`departure.rs`): "Se déconnecter", "Supprimer l'espace" (the last device) and
@@ -26,41 +26,41 @@
   const cancellable = $derived(!authenticating);
 
   function busyLabel(working: string): string {
-    return authenticating ? fr.departure.authenticating : working;
+    return authenticating ? msg.departure.authenticating : working;
   }
 
   function leaveError(reason: RefusalReason | null, failed: boolean): string | null {
     if (departure.dialogError) return departure.dialogError;
-    if (failed) return fr.departure.failed;
-    if (reason === "updateRequired") return fr.departure.leaveErrorUpdate;
-    if (reason) return fr.departure.leaveErrorUnexpected;
+    if (failed) return msg.departure.failed;
+    if (reason === "updateRequired") return msg.departure.leaveErrorUpdate;
+    if (reason) return msg.departure.leaveErrorUnexpected;
     return null;
   }
 
   function deleteError(reason: RefusalReason | null, failed: boolean): string | null {
     if (departure.dialogError) return departure.dialogError;
-    if (failed) return fr.departure.failed;
-    if (reason === "relayTooOld") return fr.departure.deleteErrorRelayTooOld;
-    if (reason === "updateRequired") return fr.departure.deleteErrorUpdate;
-    if (reason) return fr.departure.deleteErrorUnexpected;
+    if (failed) return msg.departure.failed;
+    if (reason === "relayTooOld") return msg.departure.deleteErrorRelayTooOld;
+    if (reason === "updateRequired") return msg.departure.deleteErrorUpdate;
+    if (reason) return msg.departure.deleteErrorUnexpected;
     return null;
   }
 
   function eraseError(): string | null {
     if (departure.dialogError) return departure.dialogError;
-    if (ui?.notAllowed) return fr.departure.eraseNotAllowed;
-    if (ui?.failed) return fr.departure.failed;
+    if (ui?.notAllowed) return msg.departure.eraseNotAllowed;
+    if (ui?.failed) return msg.departure.failed;
     return null;
   }
 </script>
 
 {#if ui && departure.screen === "confirmLeave"}
   <Dialog
-    title={fr.departure.leaveTitle}
-    message={fr.departure.leaveMessage}
-    confirmLabel={fr.departure.leave}
+    title={msg.departure.leaveTitle}
+    message={msg.departure.leaveMessage}
+    confirmLabel={msg.departure.leave}
     busy={ui.busy}
-    busyLabel={fr.departure.leaveInProgress}
+    busyLabel={msg.departure.leaveInProgress}
     cancellable={cancellable}
     oncancelbusy={() => void departure.cancelRunning()}
     inertBackground
@@ -70,50 +70,50 @@
   />
 {:else if ui && departure.screen === "confirmDelete"}
   <Dialog
-    title={fr.departure.deleteTitle}
-    message={fr.departure.deleteMessage}
-    confirmLabel={fr.departure.deleteConfirm}
+    title={msg.departure.deleteTitle}
+    message={msg.departure.deleteMessage}
+    confirmLabel={msg.departure.deleteConfirm}
     confirmDisabled={!armed || ui.error === "relayTooOld"}
     busy={ui.busy}
-    busyLabel={busyLabel(fr.departure.deleteInProgress)}
+    busyLabel={busyLabel(msg.departure.deleteInProgress)}
     cancellable={cancellable}
     oncancelbusy={() => void departure.cancelRunning()}
     inertBackground
-    announce={armed && !ui.busy && ui.error !== "relayTooOld" ? fr.departure.ready : null}
+    announce={armed && !ui.busy && ui.error !== "relayTooOld" ? msg.departure.ready : null}
     error={deleteError(ui.error, ui.failed)}
     onconfirm={() => void departure.confirmDelete()}
     oncancel={() => void departure.dismiss()}
   >
     {#snippet details()}
-      <p class="detail">{fr.departure.deleteDetail}</p>
-      <p class="detail hello">{fr.departure.helloNote}</p>
+      <p class="detail">{msg.departure.deleteDetail}</p>
+      <p class="detail hello">{msg.departure.helloNote}</p>
     {/snippet}
     {#if ui.error === "relayTooOld" && !ui.busy}
       <button class="danger" type="button" onclick={() => void departure.openErase()}>
-        {fr.departure.eraseAnyway}
+        {msg.departure.eraseAnyway}
       </button>
     {/if}
   </Dialog>
 {:else if ui && departure.screen === "eraseWithoutProof"}
   <Dialog
-    title={fr.departure.eraseTitle}
-    message={fr.departure.eraseMessage}
-    confirmLabel={fr.departure.eraseConfirm}
+    title={msg.departure.eraseTitle}
+    message={msg.departure.eraseMessage}
+    confirmLabel={msg.departure.eraseConfirm}
     confirmDisabled={!ui.checked || !armed || ui.checking || ui.notAllowed}
     busy={ui.busy}
-    busyLabel={busyLabel(fr.departure.eraseInProgress)}
+    busyLabel={busyLabel(msg.departure.eraseInProgress)}
     inertBackground
     announce={ui.checked && armed && !ui.busy && !ui.checking && !ui.notAllowed
-      ? fr.departure.ready
+      ? msg.departure.ready
       : null}
     error={eraseError()}
     onconfirm={() => void departure.confirmErase()}
     oncancel={() => void departure.dismiss()}
   >
     {#snippet details()}
-      <p class="detail">{fr.departure.eraseDetail}</p>
-      <p class="detail hello">{fr.departure.helloNote}</p>
-      {#if ui.checking}<p class="detail" role="status">{fr.departure.eraseChecking}</p>{/if}
+      <p class="detail">{msg.departure.eraseDetail}</p>
+      <p class="detail hello">{msg.departure.helloNote}</p>
+      {#if ui.checking}<p class="detail" role="status">{msg.departure.eraseChecking}</p>{/if}
     {/snippet}
     <label class="check">
       <input
@@ -122,7 +122,7 @@
         disabled={ui.busy || ui.checking || ui.notAllowed}
         onchange={(e) => void departure.setEraseChecked(e.currentTarget.checked)}
       />
-      {fr.departure.eraseCheckbox}
+      {msg.departure.eraseCheckbox}
     </label>
   </Dialog>
 {/if}

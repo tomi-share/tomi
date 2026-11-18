@@ -4,7 +4,7 @@
   import { clock } from "./clock.svelte";
   import Dialog from "./Dialog.svelte";
   import { feed } from "./feed.svelte";
-  import { fr, format, formatBytes, formatRemainingTime, formatTimestamp, plural } from "./i18n/fr";
+  import { msg, format, formatBytes, formatRemainingTime, formatTimestamp, plural } from "./i18n";
   import Icon from "./Icon.svelte";
   import { copyItem, deleteItem, openItem, removeAttachment, saveItem } from "./itemActions";
   import {
@@ -77,7 +77,7 @@
   const tap = $derived(tapAction(item, revealed, overflow));
   const readMore = $derived(!expanded && showsReadMore(item, revealed, overflow));
   const kindLabel = $derived(
-    item.unreadable ? fr.card.unreadableShort : item.secret ? fr.card.secret : fr.kinds[item.kind],
+    item.unreadable ? msg.card.unreadableShort : item.secret ? msg.card.secret : msg.kinds[item.kind],
   );
 
   $effect(() => {
@@ -105,17 +105,17 @@
     let tone: "secondary" | "error" | "success" | "muted" = "muted";
     switch (s.state) {
       case "queued":
-        parts.push(fr.card.status.queued);
+        parts.push(msg.card.status.queued);
         icon = "schedule";
         tone = "secondary";
         break;
       case "failed":
-        parts.push(fr.card.status.failed);
+        parts.push(msg.card.status.failed);
         icon = "error";
         tone = "error";
         break;
       case "sent":
-        parts.push(fr.card.status.sent);
+        parts.push(msg.card.status.sent);
         icon = "check";
         break;
       case "delivered":
@@ -124,29 +124,29 @@
           // Complete delivery says nothing new on a feed card: only the detail screen keeps it
           // (Android: CardFooterLogic). The other states stay.
           if (expanded) {
-            parts.push(fr.card.status.deliveredAll);
+            parts.push(msg.card.status.deliveredAll);
             tone = "success";
           } else {
             icon = null;
           }
         } else {
-          parts.push(format(fr.card.status.deliveredSome, { delivered: s.delivered, total: s.total }));
+          parts.push(format(msg.card.status.deliveredSome, { delivered: s.delivered, total: s.total }));
         }
         break;
       case "expired":
         parts.push(
-          format(fr.card.status.expired, { delivered: s.delivered, devices: s.devices.join(", ") }),
+          format(msg.card.status.expired, { delivered: s.delivered, devices: s.devices.join(", ") }),
         );
         icon = "done_all";
         break;
     }
     if (item.readPolicy === "afterFirstRead") {
-      parts.push(fr.card.afterRead);
+      parts.push(msg.card.afterRead);
     } else if (item.expiresAt !== null) {
       parts.push(
         item.expiresAt <= clock.now
-          ? fr.card.expired
-          : format(fr.card.expiresIn, { when: formatRemainingTime(item.expiresAt - clock.now) }),
+          ? msg.card.expired
+          : format(msg.card.expiresIn, { when: formatRemainingTime(item.expiresAt - clock.now) }),
       );
     }
     return parts.length > 0 ? { text: parts.join(" · "), icon, tone } : null;
@@ -279,11 +279,11 @@
 
   function rowEntries(a: AttachmentView): MenuEntry[] {
     const list: MenuEntry[] = [
-      { label: fr.card.fileDeleteLocal, icon: "delete", onselect: () => void removeFile(a.slot, a, false) },
+      { label: msg.card.fileDeleteLocal, icon: "delete", onselect: () => void removeFile(a.slot, a, false) },
     ];
     if (feed.removalEverywhere) {
       list.push({
-        label: fr.card.fileDeleteEverywhere,
+        label: msg.card.fileDeleteEverywhere,
         icon: "delete_forever",
         danger: true,
         onselect: () => (confirmFileSlot = a.slot),
@@ -333,7 +333,7 @@
   const entries = $derived.by((): MenuEntry[] => {
     const list: MenuEntry[] = [
       {
-        label: item.pinned ? fr.card.unpin : fr.card.pin,
+        label: item.pinned ? msg.card.unpin : msg.card.pin,
         icon: item.pinned ? "push_pin_fill1" : "push_pin",
         onselect: () => void feed.togglePin(item),
       },
@@ -341,27 +341,27 @@
     // Right after "Épingler", like Android. A send still queued or failed stays visible: no entry.
     if (canArchive(item)) {
       list.push({
-        label: item.archived ? fr.card.unarchive : fr.card.archive,
+        label: item.archived ? msg.card.unarchive : msg.card.archive,
         icon: item.archived ? "unarchive" : "archive",
         onselect: () => void feed.toggleArchive(item),
       });
     }
     if (canCopy) {
       list.push({
-        label: linkOnly ? fr.card.copyLink : fr.card.copy,
+        label: linkOnly ? msg.card.copyLink : msg.card.copy,
         icon: linkOnly ? "link" : "content_copy",
         onselect: () => void copy(),
       });
     }
     if (canOpen) {
-      list.push({ label: fr.card.open, icon: "open_in_new", onselect: () => void openIt() });
+      list.push({ label: msg.card.open, icon: "open_in_new", onselect: () => void openIt() });
     }
     if (flags.canSave) {
-      list.push({ label: fr.card.save, icon: "download", onselect: () => void save() });
+      list.push({ label: msg.card.save, icon: "download", onselect: () => void save() });
     }
     if (!expanded) {
       list.push({
-        label: fr.card.details,
+        label: msg.card.details,
         icon: "info",
         onselect: () => {
           opened();
@@ -370,13 +370,13 @@
       });
     }
     list.push({
-      label: fr.card.deleteLocal,
+      label: msg.card.deleteLocal,
       icon: "delete",
       separator: true,
       onselect: () => void removeLocal(),
     });
     list.push({
-      label: fr.card.deleteEverywhere,
+      label: msg.card.deleteEverywhere,
       icon: "delete_forever",
       danger: true,
       onselect: () => (confirmEverywhere = true),
@@ -388,17 +388,17 @@
     switch (tap) {
       case "openLink":
       case "openAttachment":
-        return fr.card.open;
+        return msg.card.open;
       case "openImage":
-        return fr.card.viewImage;
+        return msg.card.viewImage;
       case "openCodeFile":
-        return fr.card.viewCode;
+        return msg.card.viewCode;
       case "reveal":
-        return fr.card.reveal;
+        return msg.card.reveal;
       case "hide":
-        return fr.card.hide;
+        return msg.card.hide;
       case "openDetail":
-        return fr.card.details;
+        return msg.card.details;
       case "none":
         return undefined;
     }
@@ -408,7 +408,7 @@
   const MASK = "••••••••••";
 
   function hintOf(act: ReturnType<typeof rowAction>): string {
-    return act === "openImage" ? fr.card.viewImage : act === "openCodeFile" ? fr.card.viewCode : fr.card.dragOut;
+    return act === "openImage" ? msg.card.viewImage : act === "openCodeFile" ? msg.card.viewCode : msg.card.dragOut;
   }
 </script>
 
@@ -459,7 +459,7 @@
     <span class="tx">
       {@render nameText(a.name, 2, emphasizeNames)}
       <span class="muted small tnum sz">
-        {formatBytes(a.size)}{#if !a.available} · {fr.card.fileGone}{/if}
+        {formatBytes(a.size)}{#if !a.available} · {msg.card.fileGone}{/if}
       </span>
     </span>
     {#if tonal}
@@ -495,7 +495,7 @@
     <span class="cap">
       {@render nameText(a.name, 1, emphasizeNames)}
       <span class="muted small tnum sz">
-        {formatBytes(a.size)}{#if !a.available} · {fr.card.fileGone}{/if}
+        {formatBytes(a.size)}{#if !a.available} · {msg.card.fileGone}{/if}
       </span>
       {#if act !== "none"}<span class="tr"><Icon name="chevron_right" size={20} /></span>{/if}
     </span>
@@ -513,8 +513,8 @@
         class="cell"
         class:openable={plus || act !== "none"}
         type={plus || act !== "none" ? "button" : undefined}
-        title={plus ? plural(fr.card.moreFiles, more) : `${a.name} — ${hintOf(act)}`}
-        aria-label={plus ? plural(fr.card.moreFiles, more) : a.name}
+        title={plus ? plural(msg.card.moreFiles, more) : `${a.name} — ${hintOf(act)}`}
+        aria-label={plus ? plural(msg.card.moreFiles, more) : a.name}
         onmousedown={plus ? undefined : dragDown}
         onmousemove={plus ? undefined : dragMove}
         onclick={plus ? openMore : () => onRow(act, a.slot)}
@@ -547,7 +547,7 @@
   {@const allImages = list.every(isImage)}
   {@const summary =
     list.length >= 2
-      ? format(allImages ? fr.card.summaryImages : fr.card.summaryFiles, {
+      ? format(allImages ? msg.card.summaryImages : msg.card.summaryFiles, {
           n: list.length,
           size: formatBytes(list.reduce((n, a) => n + a.size, 0)),
         })
@@ -562,7 +562,7 @@
         {#if rowMenus}
           <div class="frow" class:top={e.look === "frame"}>
             <div class="fgrow">{@render oneFile(list, e, secretShown)}</div>
-            <Menu entries={rowEntries(list[e.index])} label={fr.card.fileActions} />
+            <Menu entries={rowEntries(list[e.index])} label={msg.card.fileActions} />
           </div>
         {:else}
           {@render oneFile(list, e, secretShown)}
@@ -570,11 +570,11 @@
       {/each}
       {#if plan.more > 0}
         {#if readMore}
-          <div class="muted small">{plural(fr.card.moreFilesCaption, plan.more)}</div>
+          <div class="muted small">{plural(msg.card.moreFilesCaption, plan.more)}</div>
         {:else}
           <div class="more">
             <button class="ghost" type="button" onclick={openMore}>
-              {plural(fr.card.moreFiles, plan.more)}
+              {plural(msg.card.moreFiles, plan.more)}
               <Icon name="chevron_right" size={20} />
             </button>
           </div>
@@ -605,23 +605,23 @@
       <Icon name={kindIcon(item)} size={20} label={kindLabel} />
     </span>
     <span class="meta grow ellipsis">
-      {item.outgoing ? fr.card.thisPc : format(fr.card.from, { device: item.sourceDevice.name })}
+      {item.outgoing ? msg.card.thisPc : format(msg.card.from, { device: item.sourceDevice.name })}
       · <span class="tnum">{formatTimestamp(item.createdAt)}</span>
     </span>
     {#if item.pinned}
-      <span class="pin"><Icon name="push_pin_fill1" size={16} label={fr.card.pinned} /></span>
+      <span class="pin"><Icon name="push_pin_fill1" size={16} label={msg.card.pinned} /></span>
     {/if}
     {#if item.archived}
-      <span class="archived"><Icon name="archive" size={16} />{fr.card.archived}</span>
+      <span class="archived"><Icon name="archive" size={16} />{msg.card.archived}</span>
     {/if}
-    {#if showUnread}<span class="dot" role="img" aria-label={fr.card.new}></span>{/if}
+    {#if showUnread}<span class="dot" role="img" aria-label={msg.card.new}></span>{/if}
     {#if showMenu && !gone}
       {#if showsCopyButton(item)}
-        <button class="ghost icon" type="button" title={fr.card.copy} aria-label={fr.card.copy} onclick={copy}>
+        <button class="ghost icon" type="button" title={msg.card.copy} aria-label={msg.card.copy} onclick={copy}>
           <Icon name="content_copy" size={20} />
         </button>
       {/if}
-      <Menu bind:this={menu} {entries} label={fr.card.more} />
+      <Menu bind:this={menu} {entries} label={msg.card.more} />
     {/if}
   </header>
 
@@ -634,16 +634,16 @@
   >
     {#if item.unreadable}
       <p class="muted">
-        {item.unreadableReason === "updateRequired" ? fr.card.unreadableUpdate : fr.card.unreadable}
+        {item.unreadableReason === "updateRequired" ? msg.card.unreadableUpdate : msg.card.unreadable}
       </p>
     {:else if item.secret}
-      <div class="secret-label">{fr.card.secret}</div>
+      <div class="secret-label">{msg.card.secret}</div>
       {#if !revealed}
         <div class="mask">
           <span class="dots mono" aria-hidden="true">{MASK}</span>
           <button class="ghost reveal" type="button" onclick={() => feed.reveal(item)}>
             <Icon name="visibility" size={20} />
-            {fr.card.reveal}
+            {msg.card.reveal}
           </button>
         </div>
         <!-- Name, size, thumbnail and type of a hidden file stay hidden: only the count, with a paperclip. -->
@@ -652,8 +652,8 @@
             <Icon name="attach_file" size={16} />
             <span>
               {item.attachmentCount === 1
-                ? fr.card.fileHidden
-                : format(fr.card.filesHidden, { n: item.attachmentCount })}
+                ? msg.card.fileHidden
+                : format(msg.card.filesHidden, { n: item.attachmentCount })}
             </span>
           </div>
         {/if}
@@ -674,21 +674,21 @@
           {/if}
           <div class="reveal-actions row">
             {#if shown.text}
-              <span class="muted small">{plural(fr.card.characters, shown.text.length)}</span>
+              <span class="muted small">{plural(msg.card.characters, shown.text.length)}</span>
             {/if}
             <span class="grow"></span>
             <!-- In the detail, "Ouvrir" is in the toolbar of the screen. -->
             {#if hasFiles && !gone && !expanded && item.attachmentCount === 1}
               <button class="ghost" type="button" onclick={openIt}>
-                <Icon name="open_in_new" size={20} />{fr.card.open}
+                <Icon name="open_in_new" size={20} />{msg.card.open}
               </button>
             {/if}
             <button class="ghost" type="button" onclick={() => feed.hideValues(item.id)}>
-              <Icon name="visibility_off" size={20} />{fr.card.hide}
+              <Icon name="visibility_off" size={20} />{msg.card.hide}
             </button>
           </div>
         </div>
-        <div class="muted small">{fr.card.revealedHint}</div>
+        <div class="muted small">{msg.card.revealedHint}</div>
       {/if}
     {:else}
       {#if item.title}
@@ -713,7 +713,7 @@
   {#if readMore}
     <div class="more">
       <button class="ghost" type="button" onclick={openMore}>
-        {fr.card.readMore}
+        {msg.card.readMore}
         <Icon name="chevron_right" size={20} />
       </button>
     </div>
@@ -729,9 +729,9 @@
 
 {#if confirmEverywhere}
   <Dialog
-    title={fr.card.deleteTitle}
-    message={item.secret ? fr.card.deleteSecretMessage : fr.card.deleteMessage}
-    confirmLabel={fr.card.deleteEverywhere}
+    title={msg.card.deleteTitle}
+    message={item.secret ? msg.card.deleteSecretMessage : msg.card.deleteMessage}
+    confirmLabel={msg.card.deleteEverywhere}
     onconfirm={removeEverywhere}
     oncancel={() => (confirmEverywhere = false)}
   />
@@ -739,9 +739,9 @@
 
 {#if confirmFileSlot !== null}
   <Dialog
-    title={fr.card.fileDeleteTitle}
-    message={item.secret ? fr.card.fileDeleteSecretMessage : format(fr.card.fileDeleteMessage, { name: confirmFileName })}
-    confirmLabel={fr.card.fileDeleteEverywhere}
+    title={msg.card.fileDeleteTitle}
+    message={item.secret ? msg.card.fileDeleteSecretMessage : format(msg.card.fileDeleteMessage, { name: confirmFileName })}
+    confirmLabel={msg.card.fileDeleteEverywhere}
     onconfirm={confirmFile}
     oncancel={() => (confirmFileSlot = null)}
   />

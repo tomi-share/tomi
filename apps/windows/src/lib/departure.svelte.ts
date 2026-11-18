@@ -5,7 +5,7 @@
 
 import { api, asAppError, events, type Cancelled, type DepartureSnapshot } from "./api";
 import { feed } from "./feed.svelte";
-import { errorMessage, fr } from "./i18n/fr";
+import { errorMessage, msg } from "./i18n";
 
 /** How long the sentence after "Annuler" stays on screen (it is long, and it matters). */
 const CANCEL_SAY_MS = 9000;
@@ -110,7 +110,7 @@ class Departure {
       if (done.cancelled) {
         // Long sentences: they stay long enough to be read.
         feed.say(
-          done.kind === "deleteSpace" ? fr.departure.cancelledDelete : fr.departure.cancelledLeave,
+          done.kind === "deleteSpace" ? msg.departure.cancelledDelete : msg.departure.cancelledLeave,
           "info",
           CANCEL_SAY_MS,
         );

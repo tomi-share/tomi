@@ -2,7 +2,7 @@
   import { tick } from "svelte";
   import { api, asAppError, type ItemView } from "./api";
   import { feed } from "./feed.svelte";
-  import { errorMessage, format, fr, plural } from "./i18n/fr";
+  import { errorMessage, format, msg, plural } from "./i18n";
   import {
     HIGHLIGHT_MAX_BYTES,
     HIGHLIGHT_MAX_LINES,
@@ -122,11 +122,11 @@
     runs = new Map();
     notice = null;
     if (!lang) {
-      notice = fr.code.noColoursLanguage;
+      notice = msg.code.noColoursLanguage;
       return;
     }
     if (lines.length > HIGHLIGHT_MAX_LINES || new TextEncoder().encode(display).length > HIGHLIGHT_MAX_BYTES) {
-      notice = fr.code.noColoursSize;
+      notice = msg.code.noColoursSize;
       return;
     }
     runs = bucket(highlight(display, lang));
@@ -275,7 +275,7 @@
   async function copyFile() {
     try {
       await navigator.clipboard.writeText(original);
-      feed.say(fr.code.copied);
+      feed.say(msg.code.copied);
     } catch {
       feed.say(errorMessage("error.clipboard"), "error");
     }
@@ -310,15 +310,15 @@
   class="screen"
   role="dialog"
   aria-modal="true"
-  aria-label={fr.code.title}
+  aria-label={msg.code.title}
   tabindex="-1"
   onkeydown={onKey}
 >
   <header class="bar">
-    <button class="ghost icon" type="button" aria-label={fr.code.close} onclick={close}>
+    <button class="ghost icon" type="button" aria-label={msg.code.close} onclick={close}>
       <Icon name="arrow_back" size={24} />
     </button>
-    <div class="grow tabs" role="tablist" aria-label={fr.code.title}>
+    <div class="grow tabs" role="tablist" aria-label={msg.code.title}>
       {#if entries.length > 1}
         {#each entries as f, i (f.slot)}
           <button
@@ -329,7 +329,7 @@
             onclick={() => pick(i)}>{f.name}</button
           >
         {/each}
-        <span class="muted small tnum">{format(fr.code.position, { n: position + 1, total: entries.length })}</span>
+        <span class="muted small tnum">{format(msg.code.position, { n: position + 1, total: entries.length })}</span>
       {:else if entries[0]}
         <span class="mono ellipsis name">{entries[0].name}</span>
       {/if}
@@ -338,8 +338,8 @@
       class="ghost icon"
       class:on={searching}
       type="button"
-      title={fr.code.search}
-      aria-label={fr.code.search}
+      title={msg.code.search}
+      aria-label={msg.code.search}
       aria-pressed={searching}
       onclick={() => toggleSearch()}
     >
@@ -349,14 +349,14 @@
       class="chip"
       type="button"
       aria-pressed={wrap}
-      title={fr.code.wrap}
-      onclick={() => setWrap(!wrap)}>{fr.code.wrap}</button
+      title={msg.code.wrap}
+      onclick={() => setWrap(!wrap)}>{msg.code.wrap}</button
     >
     <button
       class="ghost icon"
       type="button"
-      title={fr.code.copyFile}
-      aria-label={fr.code.copyFile}
+      title={msg.code.copyFile}
+      aria-label={msg.code.copyFile}
       disabled={status !== "ready"}
       onclick={copyFile}
     >
@@ -370,25 +370,25 @@
         bind:this={searchInput}
         type="search"
         bind:value={query}
-        placeholder={fr.code.searchPlaceholder}
-        aria-label={fr.code.search}
+        placeholder={msg.code.searchPlaceholder}
+        aria-label={msg.code.search}
       />
       <span class="muted small tnum counter" aria-live="polite">{counter}</span>
-      <button class="ghost icon" type="button" aria-label={fr.code.previous} disabled={hits.length === 0} onclick={() => go(-1)}>
+      <button class="ghost icon" type="button" aria-label={msg.code.previous} disabled={hits.length === 0} onclick={() => go(-1)}>
         <span class="up"><Icon name="expand_more" size={20} /></span>
       </button>
-      <button class="ghost icon" type="button" aria-label={fr.code.next} disabled={hits.length === 0} onclick={() => go(1)}>
+      <button class="ghost icon" type="button" aria-label={msg.code.next} disabled={hits.length === 0} onclick={() => go(1)}>
         <Icon name="expand_more" size={20} />
       </button>
     </div>
   {/if}
 
   {#if status === "loading"}
-    <p class="state muted">{fr.code.loading}</p>
+    <p class="state muted">{msg.code.loading}</p>
   {:else if status === "error"}
     <p class="state" role="alert">{errorText}</p>
   {:else}
-    {#if notice}<p class="notice muted small">{notice} · {plural(fr.code.lines, lines.length)}</p>{/if}
+    {#if notice}<p class="notice muted small">{notice} · {plural(msg.code.lines, lines.length)}</p>{/if}
     <div class="body" class:wrap>
       {#each chunks as c (c)}
         <div class="chunk">
