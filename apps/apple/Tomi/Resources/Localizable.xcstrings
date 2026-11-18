@@ -5209,6 +5209,17 @@
         }
       }
     },
+    "snackbar_file_unavailable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible d’ouvrir ce fichier. Il n’est peut-être pas encore téléchargé, ou aucune application ne peut l’ouvrir."
+          }
+        }
+      }
+    },
     "snackbar_image_deleted_everywhere" : {
       "extractionState" : "manual",
       "localizations" : {
