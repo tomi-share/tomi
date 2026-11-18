@@ -30,7 +30,12 @@ android {
     ndkVersion = "27.0.12077973"
 
     defaultConfig {
-        applicationId = "eu.shaffe.tomi"
+        // `eu.shaffe.tomi` is the identifier of the official build. A fork that distributes its own build must use its own
+        // (and its own name and signing key): `-PtomiApplicationId=com.example.myfork`, see docs/FORKING.md and TRADEMARKS.md.
+        // The Kotlin package (`namespace`) is independent of it and stays as is.
+        val appId = providers.gradleProperty("tomiApplicationId").orElse("eu.shaffe.tomi").get().trim()
+        require(Regex("^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$").matches(appId)) { "tomiApplicationId must be a valid application id such as com.example.app (got '$appId')" }
+        applicationId = appId
         minSdk = 33
         targetSdk = 36
         versionCode = 1
