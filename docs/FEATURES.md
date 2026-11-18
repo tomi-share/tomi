@@ -62,6 +62,7 @@ Protocol: `spec/pairing-v1.md` (CPace, two-word code, QR, verification code). De
 | "Erase anyway" (without proof) | ✅ `erase_without_proof` (verdict "not found" / "relay too old" < 10 min) | ➖ | ➖ | ✅ checkbox + 2 s + strong biometrics | ✅ checkbox + 2 s + strong biometrics | ✅ checkbox + 2 s + Hello | |
 | Pending departure banner + automatic retries | ✅ marker in `meta`, `continue/cancel/retry_departure` | ➖ | ➖ | ✅ `DepartureBanner`, `DepartureRetrier` (2 → 120 s) | ✅ same (`DepartureRetrier`) | ✅ `DepartureBanner.svelte` (2 → 120 s, at most once per minute on network return or focus) | Same delay scale on all three. |
 | Cleanup outside the core after erasure | ➖ | ➖ | ➖ | ✅ `LeftSpaceCleanup` | ✅ `AppContainer` | ✅ `departure_host.rs` | Notifications, Tomi's clipboard, send copies, caches, startup hint. |
+| Contacts: add in person or by live call, two labelled levels (QR or typed code, safety code), search, favourites, block, requests list | ❌ | ❌ | ➖ | ❌ | ❌ | ❌ | **Design only**: `docs/contacts-direct-sharing.md` (§4, §5, §9). Reuses the pairing channel; no directory, no add by handle. |
 
 ---
 
@@ -89,6 +90,7 @@ Format and limits: `spec/format-v1.md`, `spec/api-v1.md` §2.8. App sending cont
 | Incoming system share | ➖ | ➖ | ➖ | ✅ `ShareActivity` (direct send, confirmation if secret) | 🚧 `TomiShare` extension (App Group inbox `ShareInbox`); files being modified | 🟡 "Envoyer vers" (Send to) (`Tomi.lnk`); no entry in the share sheet | Windows has no share extension (see "Imposed gaps" below). iOS: the extension does not open the core; the app sends when it is opened. |
 | Confirmation when the content looks like a secret (share) | ➖ | ➖ | ➖ | ✅ confirmation sheet | ✅ `ShareFlow` state `.confirm` | ➖ | iOS: no source-app identifier, so only the content heuristic applies. |
 | Send shortcut / tile | ➖ | ➖ | ➖ | ✅ Quick Settings tile (`SendTileService`) + sharing shortcut (`SharingShortcut`) | 🟡 App Intents shortcut "Envoyer avec Tomi"; no widget or control | ✅ global shortcut `Ctrl+Shift+Space`, "Envoyer vers", notification-area icon | Whether an iOS tile is useful is still an open design question. |
+| Send to a contact (recipient chosen at send time, accepted by the recipient) | ❌ | ❌ inbox, link and offer routes | ➖ | ❌ | ❌ | ❌ | **Design only, nothing built**: `docs/contacts-direct-sharing.md`. One "Destinataire" section added to the existing send screens (hidden with no contact), default "Mes appareils", no hidden content for a contact in v1, "Supprimer" never reaches the recipient's copy. iPad and Mac follow the iOS column (no macOS target yet). |
 
 ---
 
