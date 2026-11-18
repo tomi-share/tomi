@@ -1,0 +1,10 @@
+# Default reviewer for everything. Pair it with a branch protection rule on `main`
+# ("Require review from Code Owners") so that nothing merges without a review.
+*                       @shaffe-fr
+
+# The protocol, the crypto and the frozen vectors deserve an explicit owner line:
+# a change here is a protocol-level decision (see CONTRIBUTING.md).
+/spec/                  @shaffe-fr
+/crates/core/           @shaffe-fr
+/.github/               @shaffe-fr
+/SECURITY.md            @shaffe-fr

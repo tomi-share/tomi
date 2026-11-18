@@ -1,0 +1,59 @@
+name: Bug report
+description: Something does not work as documented
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. **Security vulnerabilities must not be reported here**: use the private reporting
+        link in the issue chooser (see SECURITY.md).
+
+        Never paste real secrets, keys, pairing codes, relay tokens or the content of your items. Redact addresses
+        you do not want to be public.
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - Core / protocol
+        - Relay
+        - Android
+        - Windows
+        - iOS
+        - CLI
+        - Documentation / specification
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: App version or release tag, or the commit if you build from source.
+      placeholder: "relay-v0.5.2, android-dev, commit abc1234"
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: OS and version, device model, self-hosted relay setup (reverse proxy, TLS), if relevant.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what you got instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. ...
+        2. ...
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: Check that they contain no secret and no item content.
+      render: text
