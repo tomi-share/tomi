@@ -1,0 +1,65 @@
+[versions]
+agp = "8.13.2"
+kotlin = "2.3.21"
+composeBom = "2026.01.01"
+# The floating toolbar (Material 3 Expressive) is not in material3 1.4.0 stable; 1.5.0-alpha18 is the last 1.5 alpha that builds with AGP 8.13 / compileSdk 36 (later ones need AGP 9.1 and compileSdk 37).
+material3 = "1.5.0-alpha18"
+coreKtx = "1.17.0"
+activityCompose = "1.12.4"
+fragment = "1.8.9"
+lifecycle = "2.10.0"
+navigationCompose = "2.9.7"
+work = "2.11.2"
+camerax = "1.5.3"
+biometric = "1.1.0"
+exifinterface = "1.4.2"
+materialIconsExtended = "1.7.8"
+# Enriched Markdown (Software Mansion, MIT): native (non-WebView) markdown renderer + tree-sitter code highlighting. 0.3.0 = latest on Maven Central
+# (2026-10-15). It builds with AGP 8.13 / compileSdk 36 (minCompileSdk 36) but declares compose-bom 2026.06.00 and kotlin-stdlib 2.4.0, which Gradle
+# then resolves above our pins. The "ui" artifact bundles OkHttp and can download http(s) markdown images: see MarkdownGuard (images are never rendered).
+enrichedMarkdown = "0.3.0"
+zxing = "3.5.4"
+jsoup = "1.24.1"
+# JNA: the native-call layer of the UniFFI Kotlin bindings of the Rust core (libtomi_core.so). The AAR flavour carries libjnidispatch.so for
+# every Android ABI (the unused ones are dropped by abiFilters). Bump with the uniffi version of crates/core if the generated code needs it.
+jna = "5.19.1"
+coroutines = "1.11.0"
+junit = "4.13.2"
+
+[libraries]
+androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
+androidx-fragment-ktx = { module = "androidx.fragment:fragment-ktx", version.ref = "fragment" }
+androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" }
+androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle" }
+androidx-lifecycle-process = { module = "androidx.lifecycle:lifecycle-process", version.ref = "lifecycle" }
+androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
+androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "work" }
+androidx-biometric = { module = "androidx.biometric:biometric", version.ref = "biometric" }
+androidx-exifinterface = { module = "androidx.exifinterface:exifinterface", version.ref = "exifinterface" }
+androidx-camera-core = { module = "androidx.camera:camera-core", version.ref = "camerax" }
+androidx-camera-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "camerax" }
+androidx-camera-lifecycle = { module = "androidx.camera:camera-lifecycle", version.ref = "camerax" }
+androidx-camera-view = { module = "androidx.camera:camera-view", version.ref = "camerax" }
+
+androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
+androidx-compose-ui = { module = "androidx.compose.ui:ui" }
+androidx-compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
+androidx-compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
+androidx-compose-foundation = { module = "androidx.compose.foundation:foundation" }
+androidx-compose-material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
+androidx-compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
+
+enriched-markdown-compose = { module = "com.swmansion.enriched.markdown:compose", version.ref = "enrichedMarkdown" }
+enriched-markdown-code-highlight = { module = "com.swmansion.enriched.markdown:code-highlight", version.ref = "enrichedMarkdown" }
+zxing-core = { module = "com.google.zxing:core", version.ref = "zxing" }
+jna = { module = "net.java.dev.jna:jna", version.ref = "jna" }
+jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
+kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
+junit = { module = "junit:junit", version.ref = "junit" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

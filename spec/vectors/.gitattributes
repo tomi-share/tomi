@@ -1,0 +1,2 @@
+# Frozen test vectors: never convert line endings (SHA256SUMS pins the exact bytes).
+* -text

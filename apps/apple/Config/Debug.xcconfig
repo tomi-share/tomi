@@ -1,0 +1,7 @@
+#include "Base.xcconfig"
+// TOMI_DEMO: the app starts on the demo core of tomi-core (no network). Launch with
+// `-TomiCoreMode real` to use the real core against a local relay (`just dev-relay`); the core
+// accepts `http://localhost` only when it is itself a debug build: `just apple-core --debug`.
+SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG TOMI_DEMO
+// The relay of a Debug build is the local one (`just dev-relay`); Config/Local.xcconfig does not override it.
+TOMI_RELAY_URL = http:/$()/localhost:8080

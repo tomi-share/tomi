@@ -1,0 +1,59 @@
+# Tomi — line-ending normalization and binary types.
+# The repository always stores LF. Files executed under Linux (EC2, CI) are also forced to LF
+# in the working tree, even on Windows (otherwise: "bad interpreter: /bin/bash^M").
+
+* text=auto
+
+# --- Forced to LF (executed or read under Linux) ---
+*.sh            text eol=lf
+*.service       text eol=lf
+*.timer         text eol=lf
+*.example       text eol=lf
+Caddyfile       text eol=lf
+justfile        text eol=lf
+.editorconfig   text eol=lf
+.gitattributes  text eol=lf
+*.yml           text eol=lf
+*.yaml          text eol=lf
+gradlew         text eol=lf
+
+# --- Forced to CRLF (interpreted by cmd.exe) ---
+*.bat           text eol=crlf
+*.cmd           text eol=crlf
+
+# --- Source: more readable diffs ---
+*.rs            text diff=rust
+*.kt            text diff=kotlin
+*.kts           text diff=kotlin
+*.md            text diff=markdown
+
+# --- Binaries: never converted, no text diff ---
+*.png           binary
+*.jpg           binary
+*.jpeg          binary
+*.gif           binary
+*.webp          binary
+*.ico           binary
+*.icns          binary
+*.pdf           binary
+*.ttf           binary
+*.otf           binary
+*.woff          binary
+*.woff2         binary
+*.jar           binary
+*.aar           binary
+*.apk           binary
+*.aab           binary
+*.so            binary
+*.dll           binary
+*.exe           binary
+*.msi           binary
+*.zip           binary
+*.gz            binary
+*.tar           binary
+*.7z            binary
+*.jks           binary
+*.keystore      binary
+*.p12           binary
+*.sqlite        binary
+*.db            binary

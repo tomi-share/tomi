@@ -1,0 +1,5 @@
+#include "Release.xcconfig"
+// Dev: what is published (real core, relay of the space, no demo files), plus the developer tools
+// (TOMI_DEV_TOOLS): to test the real cases on an iPhone that is mirrored to the Mac. Never archived
+// for TestFlight / the App Store: those use Release, where none of the TOMI_DEV_TOOLS code exists.
+SWIFT_ACTIVE_COMPILATION_CONDITIONS = TOMI_DEV_TOOLS

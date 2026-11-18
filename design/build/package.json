@@ -1,0 +1,17 @@
+{
+  "name": "tomi-design-build",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Build scripts for the Tomi visual identity: exports the logo files and icons, checks contrast, renders the proofs, and builds the guidelines PDF (design/tomi/brand-guidelines.pdf) locally.",
+  "type": "module",
+  "scripts": {
+    "build": "node tomi-build-pdf.mjs",
+    "verify": "node verify-pdf.mjs",
+    "all": "node tomi-build-pdf.mjs && node verify-pdf.mjs"
+  },
+  "dependencies": {
+    "@resvg/resvg-js": "2.6.2",
+    "markdown-it": "15.0.3",
+    "pdf-to-img": "7.0.2"
+  }
+}

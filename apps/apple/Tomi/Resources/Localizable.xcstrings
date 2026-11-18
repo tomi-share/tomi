@@ -1,0 +1,5547 @@
+{
+  "sourceLanguage" : "fr",
+  "strings" : {
+    "" : {
+
+    },
+    "%lld" : {
+
+    },
+    "action_archive" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Archiver"
+          }
+        }
+      }
+    },
+    "action_attach" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joindre un fichier"
+          }
+        }
+      }
+    },
+    "action_back" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retour"
+          }
+        }
+      }
+    },
+    "action_cancel" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuler"
+          }
+        }
+      }
+    },
+    "action_cancel_send" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuler l’envoi"
+          }
+        }
+      }
+    },
+    "action_clear_filter" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retirer le filtre"
+          }
+        }
+      }
+    },
+    "action_close" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fermer"
+          }
+        }
+      }
+    },
+    "action_close_search" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fermer la recherche"
+          }
+        }
+      }
+    },
+    "action_continue" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continuer"
+          }
+        }
+      }
+    },
+    "action_copy" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copier"
+          }
+        }
+      }
+    },
+    "action_copy_link" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copier le lien"
+          }
+        }
+      }
+    },
+    "action_delete" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer"
+          }
+        }
+      }
+    },
+    "action_delete_everywhere" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer partout"
+          }
+        }
+      }
+    },
+    "action_delete_local" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer de cet appareil"
+          }
+        }
+      }
+    },
+    "action_details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Détails"
+          }
+        }
+      }
+    },
+    "action_done" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminer"
+          }
+        }
+      }
+    },
+    "action_filters" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filtres"
+          }
+        }
+      }
+    },
+    "action_hide" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masquer"
+          }
+        }
+      }
+    },
+    "action_later" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plus tard"
+          }
+        }
+      }
+    },
+    "action_more" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plus d’actions"
+          }
+        }
+      }
+    },
+    "action_open" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir"
+          }
+        }
+      }
+    },
+    "action_options" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Options"
+          }
+        }
+      }
+    },
+    "action_paste" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coller"
+          }
+        }
+      }
+    },
+    "action_pin" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Épingler"
+          }
+        }
+      }
+    },
+    "action_read_more" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lire la suite"
+          }
+        }
+      }
+    },
+    "action_remove_attachment" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retirer %1$@"
+          }
+        }
+      }
+    },
+    "action_reveal" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher"
+          }
+        }
+      }
+    },
+    "action_save" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer"
+          }
+        }
+      }
+    },
+    "action_search" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher"
+          }
+        }
+      }
+    },
+    "action_send" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envoyer"
+          }
+        }
+      }
+    },
+    "action_share" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partager"
+          }
+        }
+      }
+    },
+    "action_unarchive" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désarchiver"
+          }
+        }
+      }
+    },
+    "action_undo" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuler"
+          }
+        }
+      }
+    },
+    "action_unpin" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désépingler"
+          }
+        }
+      }
+    },
+    "action_view_code" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir le fichier"
+          }
+        }
+      }
+    },
+    "action_view_image" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voir l’image"
+          }
+        }
+      }
+    },
+    "app_name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi"
+          }
+        }
+      }
+    },
+    "archived_badge" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Archivé"
+          }
+        }
+      }
+    },
+    "attachments_summary_files" : {
+      "comment" : "Shown from 2 attachments on only (AttachmentLogic.showsSummary): always the plural, so no plural variation (it would vary a string with two arguments).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld fichiers · %2$@"
+          }
+        }
+      }
+    },
+    "attachments_summary_images" : {
+      "comment" : "Shown from 2 attachments on only (AttachmentLogic.showsSummary): always the plural.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld images · %2$@"
+          }
+        }
+      }
+    },
+    "banner_files_skipped" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld fichier(s) ignoré(s) : 25 Mo maximum par fichier"
+          }
+        }
+      }
+    },
+    "banner_offline" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hors ligne · en attente"
+          }
+        }
+      }
+    },
+    "banner_sent" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envoyé"
+          }
+        }
+      }
+    },
+    "biometric_subtitle_delete_space" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Action irréversible : une empreinte ou un visage enregistré est nécessaire."
+          }
+        }
+      }
+    },
+    "biometric_subtitle_erase" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Action irréversible : une empreinte ou un visage enregistré est nécessaire."
+          }
+        }
+      }
+    },
+    "biometric_subtitle_file" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirme ton identité. La validation reste valable 2 minutes."
+          }
+        }
+      }
+    },
+    "biometric_subtitle_from_notification" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le contenu sera copié puis effacé du presse-papiers après 30 s."
+          }
+        }
+      }
+    },
+    "biometric_subtitle_image" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirme ton identité. La validation reste valable 2 minutes."
+          }
+        }
+      }
+    },
+    "biometric_subtitle_revoke" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Action sensible : une empreinte ou un visage enregistré est nécessaire."
+          }
+        }
+      }
+    },
+    "biometric_subtitle_save_image" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirme ton identité avant d’écrire l’image dans la galerie. La validation reste valable 2 minutes."
+          }
+        }
+      }
+    },
+    "biometric_subtitle_secret" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirme ton identité. La validation reste valable 2 minutes."
+          }
+        }
+      }
+    },
+    "biometric_subtitle_share" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirme ton identité avant de l’envoyer à une autre application. La validation reste valable 2 minutes."
+          }
+        }
+      }
+    },
+    "biometric_title_copy_secret" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copier le contenu masqué"
+          }
+        }
+      }
+    },
+    "biometric_title_delete_space" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer ton espace"
+          }
+        }
+      }
+    },
+    "biometric_title_erase" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effacer ce téléphone"
+          }
+        }
+      }
+    },
+    "biometric_title_file" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher le fichier masqué"
+          }
+        }
+      }
+    },
+    "biometric_title_image" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher l’image masquée"
+          }
+        }
+      }
+    },
+    "biometric_title_revoke" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Révoquer l’appareil"
+          }
+        }
+      }
+    },
+    "biometric_title_save_image" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer l’image masquée"
+          }
+        }
+      }
+    },
+    "biometric_title_secret" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher le contenu masqué"
+          }
+        }
+      }
+    },
+    "biometric_title_share" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partager le contenu masqué"
+          }
+        }
+      }
+    },
+    "channel_files" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fichiers"
+          }
+        }
+      }
+    },
+    "channel_files_desc" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fichiers et images reçus de tes autres appareils"
+          }
+        }
+      }
+    },
+    "channel_group_incoming" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Éléments reçus"
+          }
+        }
+      }
+    },
+    "channel_links" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liens"
+          }
+        }
+      }
+    },
+    "channel_links_desc" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liens reçus de tes autres appareils"
+          }
+        }
+      }
+    },
+    "channel_secrets" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masqués"
+          }
+        }
+      }
+    },
+    "channel_secrets_desc" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contenus masqués reçus. Jamais affichés sur l’écran verrouillé, sans aperçu."
+          }
+        }
+      }
+    },
+    "channel_text" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Texte"
+          }
+        }
+      }
+    },
+    "channel_text_desc" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Textes reçus de tes autres appareils"
+          }
+        }
+      }
+    },
+    "characters_count" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$lld caractère"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$lld caractères"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "code_binary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce fichier n’est pas du texte : impossible de l’afficher ici."
+          }
+        }
+      }
+    },
+    "code_copy_file" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copier le fichier"
+          }
+        }
+      }
+    },
+    "code_locked" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fichier masqué. Confirme ton identité pour l’afficher."
+          }
+        }
+      }
+    },
+    "code_no_colours_language" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas de coloration pour ce langage."
+          }
+        }
+      }
+    },
+    "code_no_colours_size" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coloration indisponible : fichier trop long (50 Ko ou 2 000 lignes maximum)."
+          }
+        }
+      }
+    },
+    "code_no_file" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun fichier de code à afficher."
+          }
+        }
+      }
+    },
+    "code_search" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher dans le fichier"
+          }
+        }
+      }
+    },
+    "code_search_next" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Occurrence suivante"
+          }
+        }
+      }
+    },
+    "code_search_placeholder" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher dans le fichier"
+          }
+        }
+      }
+    },
+    "code_search_previous" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Occurrence précédente"
+          }
+        }
+      }
+    },
+    "code_too_large" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce fichier est trop volumineux pour être affiché (2 Mo maximum)."
+          }
+        }
+      }
+    },
+    "code_unavailable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible d’afficher ce fichier pour l’instant."
+          }
+        }
+      }
+    },
+    "code_wrap" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retour à la ligne"
+          }
+        }
+      }
+    },
+    "create_camera_denied" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Caméra refusée. Tu peux coller ou saisir la clé à la place."
+          }
+        }
+      }
+    },
+    "create_done_body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ est le premier appareil de ton espace. Ajoute les autres depuis Appareils."
+          }
+        }
+      }
+    },
+    "create_done_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ton espace est prêt"
+          }
+        }
+      }
+    },
+    "create_error_name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le nom de l’appareil doit faire de 1 à 64 caractères, sans espace au début ni à la fin."
+          }
+        }
+      }
+    },
+    "create_error_qr" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce QR code n’est ni une clé d’installation ni un lien de création. Scanne celui de ton serveur Tomi ou saisis la clé."
+          }
+        }
+      }
+    },
+    "create_error_space_exists" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette clé a déjà servi à créer un espace. Ajoute cet appareil depuis un appareil déjà dans l’espace."
+          }
+        }
+      }
+    },
+    "create_error_token" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clé d’installation incorrecte ou déjà utilisée. Vérifie-la et réessaie."
+          }
+        }
+      }
+    },
+    "create_error_token_empty" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Colle la clé d’installation."
+          }
+        }
+      }
+    },
+    "create_intro" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ton serveur Tomi t’a donné une clé d’installation, en QR code ou en texte."
+          }
+        }
+      }
+    },
+    "create_join_instead" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rejoindre l’espace existant"
+          }
+        }
+      }
+    },
+    "create_name_edit" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifier le nom"
+          }
+        }
+      }
+    },
+    "create_name_label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nom de cet appareil"
+          }
+        }
+      }
+    },
+    "create_or_paste" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ou colle la clé"
+          }
+        }
+      }
+    },
+    "create_relay_check_hint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vérifie que c’est bien ton relais avant de créer ton espace."
+          }
+        }
+      }
+    },
+    "create_relay_check_label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Relais : %1$@"
+          }
+        }
+      }
+    },
+    "create_relay_from_link" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lu dans le lien ou le QR code."
+          }
+        }
+      }
+    },
+    "create_scan_button" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scanner le QR code"
+          }
+        }
+      }
+    },
+    "create_scan_button_description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scanner le QR code de la clé d’installation avec la caméra"
+          }
+        }
+      }
+    },
+    "create_scan_cancel" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fermer le scanner"
+          }
+        }
+      }
+    },
+    "create_scan_preview_description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aperçu de la caméra pour scanner le QR code de la clé d’installation"
+          }
+        }
+      }
+    },
+    "create_submit" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Créer mon espace"
+          }
+        }
+      }
+    },
+    "create_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crée ton espace"
+          }
+        }
+      }
+    },
+    "create_token_label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clé d’installation"
+          }
+        }
+      }
+    },
+    "create_where_body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ton serveur Tomi l’a affichée à l’installation, une seule fois, avec un QR code."
+          }
+        }
+      }
+    },
+    "create_where_button" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Où trouver la clé ?"
+          }
+        }
+      }
+    },
+    "create_where_ok" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compris"
+          }
+        }
+      }
+    },
+    "create_where_other_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pour en obtenir une autre"
+          }
+        }
+      }
+    },
+    "create_where_run" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lance cette commande sur ton serveur :"
+          }
+        }
+      }
+    },
+    "create_where_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Où trouver la clé ?"
+          }
+        }
+      }
+    },
+    "delete_space_confirm" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer l’espace"
+          }
+        }
+      }
+    },
+    "delete_space_detail" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ton serveur Tomi efface l’espace, puis ce téléphone efface tout ce qu’il contient : éléments, secrets, fichiers et clés. Personne ne pourra les récupérer."
+          }
+        }
+      }
+    },
+    "delete_space_error_relay_too_old" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ton serveur Tomi est trop ancien pour supprimer l’espace. Mets-le à jour, puis réessaie. Rien n’a été effacé."
+          }
+        }
+      }
+    },
+    "delete_space_error_unexpected" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ton serveur Tomi a refusé la suppression de l’espace. Rien n’a été effacé."
+          }
+        }
+      }
+    },
+    "delete_space_error_update" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mets Tomi à jour pour pouvoir supprimer ton espace. Rien n’a été effacé."
+          }
+        }
+      }
+    },
+    "delete_space_in_progress" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suppression en cours…"
+          }
+        }
+      }
+    },
+    "delete_space_message" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu es le seul appareil. Se déconnecter supprime ton espace et tout son contenu, définitivement."
+          }
+        }
+      }
+    },
+    "delete_space_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer ton espace ?"
+          }
+        }
+      }
+    },
+    "delete_space_unavailable_biometric" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pour supprimer ton espace, enregistre une empreinte ou un visage dans les réglages du téléphone. Rien n’a été effacé."
+          }
+        }
+      }
+    },
+    "departure_cancel" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuler"
+          }
+        }
+      }
+    },
+    "departure_cancelled_delete" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suppression annulée. Si ton serveur l’avait déjà faite, ton espace n’existe plus que sur ce téléphone."
+          }
+        }
+      }
+    },
+    "departure_cancelled_leave" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déconnexion annulée. Si ton serveur l’avait déjà reçue, ce téléphone apparaîtra comme retiré de l’espace ; ce qu’il contient reste lisible."
+          }
+        }
+      }
+    },
+    "departure_cancelling" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi attend la fin de la demande déjà partie vers ton serveur. Rien ne sera effacé sur ce téléphone."
+          }
+        }
+      }
+    },
+    "departure_cancelling_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annulation en cours"
+          }
+        }
+      }
+    },
+    "departure_failed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’effacement n’a pas abouti. Rien n’a été effacé. Réessaie."
+          }
+        }
+      }
+    },
+    "departure_pending_checking" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi vérifie auprès de ton serveur. Rien n’a été effacé."
+          }
+        }
+      }
+    },
+    "departure_pending_delete_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suppression de l’espace en attente"
+          }
+        }
+      }
+    },
+    "departure_pending_leave_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déconnexion en attente"
+          }
+        }
+      }
+    },
+    "departure_pending_network" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ton serveur Tomi n’a pas encore confirmé. Rien n’a été effacé. Tomi réessaie dès que le réseau revient."
+          }
+        }
+      }
+    },
+    "departure_pending_not_found" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ton serveur Tomi ne trouve plus ton espace, ou ne reconnaît plus ce téléphone. Rien n’a été effacé."
+          }
+        }
+      }
+    },
+    "departure_pending_not_sent" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ta demande n’a pas abouti : ce téléphone fait toujours partie de ton espace. Rien n’a été effacé."
+          }
+        }
+      }
+    },
+    "departure_pending_server" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ton serveur Tomi a un problème passager. Rien n’a été effacé. Tomi réessaie."
+          }
+        }
+      }
+    },
+    "departure_retry" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réessayer"
+          }
+        }
+      }
+    },
+    "departure_wiping" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effacement de ce téléphone…"
+          }
+        }
+      }
+    },
+    "detail_masked_hint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher, Copier et Partager demandent ton empreinte ou ton code."
+          }
+        }
+      }
+    },
+    "detail_not_found" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Élément introuvable. Il a peut-être expiré ou été supprimé."
+          }
+        }
+      }
+    },
+    "detail_revealed_hint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se masque dès que tu quittes l’écran."
+          }
+        }
+      }
+    },
+    "detail_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Détail"
+          }
+        }
+      }
+    },
+    "detect_files" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fichier joint"
+          }
+        }
+      }
+    },
+    "detect_link" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lien détecté"
+          }
+        }
+      }
+    },
+    "detect_masked" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masqué"
+          }
+        }
+      }
+    },
+    "detect_masked_password" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ça ressemble à un mot de passe."
+          }
+        }
+      }
+    },
+    "detect_text" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Texte"
+          }
+        }
+      }
+    },
+    "detect_to_devices" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vers %1$@"
+          }
+        }
+      }
+    },
+    "devices_add" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter un appareil"
+          }
+        }
+      }
+    },
+    "devices_empty" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun appareil dans ton espace pour l’instant."
+          }
+        }
+      }
+    },
+    "devices_rename" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Renommer"
+          }
+        }
+      }
+    },
+    "devices_rename_failed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de renommer l’appareil. Vérifie ta connexion et réessaie."
+          }
+        }
+      }
+    },
+    "devices_revoke" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Révoquer"
+          }
+        }
+      }
+    },
+    "devices_revoke_failed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de révoquer l’appareil. Vérifie ta connexion et réessaie."
+          }
+        }
+      }
+    },
+    "devices_revoke_message" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cet appareil sera retiré de l’espace et la clé de l’espace sera renouvelée. Il ne pourra plus lire les nouveaux éléments. Une biométrie forte te sera demandée."
+          }
+        }
+      }
+    },
+    "devices_revoke_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Révoquer « %1$@ » ?"
+          }
+        }
+      }
+    },
+    "devices_revoke_unavailable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune biométrie forte n’est configurée sur ce téléphone : révocation impossible."
+          }
+        }
+      }
+    },
+    "devices_revoking" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Révocation en cours : la clé de l’espace est renouvelée, ça peut prendre quelques secondes."
+          }
+        }
+      }
+    },
+    "devices_this_device" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cet appareil"
+          }
+        }
+      }
+    },
+    "devices_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appareils"
+          }
+        }
+      }
+    },
+    "dialog_delete_everywhere_message" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’élément sera effacé sur tous tes appareils et sur ton serveur Tomi. Les appareils hors ligne l’effaceront à leur reconnexion. Cette action est définitive."
+          }
+        }
+      }
+    },
+    "dialog_delete_everywhere_secret" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce contenu masqué sera effacé sur tous tes appareils et sur ton serveur Tomi. Un appareil qui l’a déjà affiché a pu en garder une copie. Cette action est définitive."
+          }
+        }
+      }
+    },
+    "dialog_delete_everywhere_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer partout ?"
+          }
+        }
+      }
+    },
+    "direction_received" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reçu"
+          }
+        }
+      }
+    },
+    "direction_sent" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envoyé"
+          }
+        }
+      }
+    },
+    "erase_anyway" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effacer quand même"
+          }
+        }
+      }
+    },
+    "erase_checkbox" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "J’ai compris : c’est définitif."
+          }
+        }
+      }
+    },
+    "erase_checking" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi vérifie auprès de ton serveur…"
+          }
+        }
+      }
+    },
+    "erase_confirm" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effacer ce téléphone"
+          }
+        }
+      }
+    },
+    "erase_detail" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout ce que ce téléphone contient sera effacé définitivement : éléments, secrets, fichiers et clés."
+          }
+        }
+      }
+    },
+    "erase_expired" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La réponse de ton serveur n’est plus valable : elle date de trop longtemps, ou ton serveur a répondu autrement entre-temps. Rien n’a été effacé. Réessaie dans un instant."
+          }
+        }
+      }
+    },
+    "erase_in_progress" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effacement en cours…"
+          }
+        }
+      }
+    },
+    "erase_message" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ton serveur Tomi ne peut pas confirmer que ton espace est supprimé. L’espace n’est peut-être pas supprimé sur ton serveur ; s’il existe encore, ce téléphone n’y aura plus accès."
+          }
+        }
+      }
+    },
+    "erase_not_allowed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi doit d’abord vérifier auprès de ton serveur. Réessaie dans un instant."
+          }
+        }
+      }
+    },
+    "erase_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effacer ce téléphone sans confirmation du serveur ?"
+          }
+        }
+      }
+    },
+    "erase_unavailable_biometric" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pour effacer sans confirmation du serveur, enregistre une empreinte ou un visage dans les réglages du téléphone. Désinstaller Tomi efface aussi tout ce qu’il contient."
+          }
+        }
+      }
+    },
+    "erase_waiting" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une demande vers ton serveur est encore en cours. Tomi attend sa fin avant d’effacer. Rien n’a été effacé."
+          }
+        }
+      }
+    },
+    "expires_after_read" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "disparaît après la première lecture"
+          }
+        }
+      }
+    },
+    "expires_in" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "expire dans %1$@"
+          }
+        }
+      }
+    },
+    "expiry_after_read" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Après lecture"
+          }
+        }
+      }
+    },
+    "expiry_after_read_hint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "« Après lecture » : effacé partout dès la première ouverture."
+          }
+        }
+      }
+    },
+    "expiry_chip" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Expiration : %1$@"
+          }
+        }
+      }
+    },
+    "expiry_day1" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 j"
+          }
+        }
+      }
+    },
+    "expiry_day30" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "30 j"
+          }
+        }
+      }
+    },
+    "expiry_day7" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "7 j"
+          }
+        }
+      }
+    },
+    "expiry_hour1" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 h"
+          }
+        }
+      }
+    },
+    "expiry_label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Expiration"
+          }
+        }
+      }
+    },
+    "expiry_never" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jamais"
+          }
+        }
+      }
+    },
+    "feed_empty" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien pour l’instant. Partage un lien, un texte ou un fichier vers Tomi pour l’envoyer à tes autres appareils."
+          }
+        }
+      }
+    },
+    "feed_empty_archives" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun élément archivé. Glisse une carte de Récents vers la gauche pour l’archiver."
+          }
+        }
+      }
+    },
+    "feed_empty_filtered" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun élément ne correspond."
+          }
+        }
+      }
+    },
+    "filter_all" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tous"
+          }
+        }
+      }
+    },
+    "filter_archives" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Archives"
+          }
+        }
+      }
+    },
+    "filter_files" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fichiers"
+          }
+        }
+      }
+    },
+    "filter_links" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liens"
+          }
+        }
+      }
+    },
+    "filter_secrets" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masqués"
+          }
+        }
+      }
+    },
+    "filter_text" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Texte"
+          }
+        }
+      }
+    },
+    "hint_secret_heuristic" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce contenu ressemble à un mot de passe ou à une clé : il est masqué. Tu peux le modifier."
+          }
+        }
+      }
+    },
+    "hint_secret_sensitive" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’application d’origine a marqué ce contenu comme sensible : il est envoyé masqué."
+          }
+        }
+      }
+    },
+    "invite_add" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter cet appareil"
+          }
+        }
+      }
+    },
+    "invite_adding_body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirme aussi sur %1$@ que les codes sont identiques. L’appareil est ajouté dès que c’est fait."
+          }
+        }
+      }
+    },
+    "invite_adding_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En attente du nouvel appareil"
+          }
+        }
+      }
+    },
+    "invite_done_history" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ va récupérer l’historique de ton espace. Cela peut prendre un moment."
+          }
+        }
+      }
+    },
+    "invite_error_busy" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un ajout d’appareil est déjà en cours. Termine-le ou attends un instant, puis réessaie."
+          }
+        }
+      }
+    },
+    "invite_error_cancelled" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’ajout de l’appareil a été annulé sur l’autre appareil."
+          }
+        }
+      }
+    },
+    "invite_error_expired" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le code a expiré. Génères-en un nouveau."
+          }
+        }
+      }
+    },
+    "invite_error_failed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’ajout de l’appareil n’a pas abouti. Réessaie."
+          }
+        }
+      }
+    },
+    "invite_failed_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appareil non ajouté"
+          }
+        }
+      }
+    },
+    "invite_intro" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sur le nouvel appareil, ouvre Tomi, puis scanne ce QR code ou saisis le code d’invitation."
+          }
+        }
+      }
+    },
+    "invite_new_code" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouveau code"
+          }
+        }
+      }
+    },
+    "invite_notice_failed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’ajout de l’appareil n’a pas abouti. Un nouveau code d’invitation est prêt."
+          }
+        }
+      }
+    },
+    "invite_notice_refused" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajout de l’appareil annulé. Un nouveau code d’invitation est prêt."
+          }
+        }
+      }
+    },
+    "invite_qr_description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "QR code d’invitation"
+          }
+        }
+      }
+    },
+    "invite_single_use" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce code ne sert qu’une fois. Il se renouvelle tout seul tant que cet écran reste ouvert."
+          }
+        }
+      }
+    },
+    "invite_starting" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Préparation du code…"
+          }
+        }
+      }
+    },
+    "invite_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter un appareil"
+          }
+        }
+      }
+    },
+    "invite_verify_body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vérifie que le même code s’affiche sur %1$@."
+          }
+        }
+      }
+    },
+    "invite_verify_hint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si l’autre appareil affiche une erreur au lieu d’un code, appuie sur « Ils sont différents »."
+          }
+        }
+      }
+    },
+    "ios_attach_files" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fichiers"
+          }
+        }
+      }
+    },
+    "ios_attach_photos" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Photos"
+          }
+        }
+      }
+    },
+    "ios_capture_cover" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un contenu masqué est affiché alors que l’écran de cet iPhone est partagé ou enregistré. Tomi le cache pour qu’il n’apparaisse pas dans la copie."
+          }
+        }
+      }
+    },
+    "ios_capture_cover_back" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revenir à l’accueil"
+          }
+        }
+      }
+    },
+    "ios_capture_cover_close" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masquer et revenir au fil"
+          }
+        }
+      }
+    },
+    "ios_capture_cover_pairing" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’écran de cet iPhone est partagé ou enregistré. Tomi cache le code d’appairage pour qu’il n’apparaisse pas dans la copie : quelqu’un qui le verrait pourrait rejoindre ton espace."
+          }
+        }
+      }
+    },
+    "ios_capture_resume" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi reprend tout seul dès que le partage s’arrête."
+          }
+        }
+      }
+    },
+    "ios_capture_share_blocked" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’écran est partagé ou enregistré : un contenu masqué ne se partage pas maintenant."
+          }
+        }
+      }
+    },
+    "ios_capture_step_island" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touche l’icône du partage en haut de l’écran, puis « Arrêter »."
+          }
+        }
+      }
+    },
+    "ios_capture_step_mac" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ou ferme la Recopie de l’iPhone sur ton Mac."
+          }
+        }
+      }
+    },
+    "ios_capture_step_record" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ou arrête l’enregistrement de l’écran dans le Centre de contrôle."
+          }
+        }
+      }
+    },
+    "ios_capture_steps_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pour continuer, arrête le partage :"
+          }
+        }
+      }
+    },
+    "ios_capture_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écran partagé ou enregistré"
+          }
+        }
+      }
+    },
+    "ios_copy_image" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copier l’image"
+          }
+        }
+      }
+    },
+    "ios_create_camera_unavailable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas de caméra disponible ici. Colle ou saisis la clé d’installation."
+          }
+        }
+      }
+    },
+    "ios_debug_departure" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Démo : simuler le serveur au départ"
+          }
+        }
+      }
+    },
+    "ios_debug_departure_last_device" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dernier appareil de l’espace"
+          }
+        }
+      }
+    },
+    "ios_debug_departure_normal" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Serveur normal"
+          }
+        }
+      }
+    },
+    "ios_debug_departure_offline" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hors ligne"
+          }
+        }
+      }
+    },
+    "ios_debug_departure_old_relay" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Serveur trop ancien"
+          }
+        }
+      }
+    },
+    "ios_debug_departure_reset" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Serveur réinitialisé (espace introuvable)"
+          }
+        }
+      }
+    },
+    "ios_debug_departure_server" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erreur passagère du serveur"
+          }
+        }
+      }
+    },
+    "ios_debug_enter_demo" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrer en mode démo"
+          }
+        }
+      }
+    },
+    "ios_debug_enter_demo_hint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Build debug uniquement. Court-circuite l’appairage (aucun réseau, données de démonstration) et ouvre le fil. Sinon, saisis n’importe quel code (ex. 7-crayon-lune) : le code de vérification de démo est 482913."
+          }
+        }
+      }
+    },
+    "ios_debug_simulate_image" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Simuler la réception d’une image"
+          }
+        }
+      }
+    },
+    "ios_debug_simulate_later" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Simuler un Masqué dans 5 s (notification)"
+          }
+        }
+      }
+    },
+    "ios_debug_simulate_link" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Simuler la réception d’un lien"
+          }
+        }
+      }
+    },
+    "ios_debug_simulate_secret" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Simuler la réception d’un contenu masqué"
+          }
+        }
+      }
+    },
+    "ios_debug_simulate_text" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Simuler la réception d’un texte"
+          }
+        }
+      }
+    },
+    "ios_debug_simulate_unreadable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Simuler un élément illisible"
+          }
+        }
+      }
+    },
+    "ios_devices_revoke_reason" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retirer un appareil de ton espace"
+          }
+        }
+      }
+    },
+    "ios_file_hidden" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un fichier masqué ne s’affiche pas dans Tomi : son aperçu échapperait à la protection de l’écran. Tu peux le partager vers une autre app après Face ID."
+          }
+        }
+      }
+    },
+    "ios_file_hidden_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fichier masqué"
+          }
+        }
+      }
+    },
+    "ios_file_load_failed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible d’ouvrir ce fichier. Réessaie dans un instant."
+          }
+        }
+      }
+    },
+    "ios_file_number" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fichier %1$lld"
+          }
+        }
+      }
+    },
+    "ios_file_open_in" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir dans…"
+          }
+        }
+      }
+    },
+    "ios_file_preview_none" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce type de fichier ne s’affiche pas ici. Ouvre-le dans une app qui sait le lire."
+          }
+        }
+      }
+    },
+    "ios_file_preview_none_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas d’aperçu dans Tomi"
+          }
+        }
+      }
+    },
+    "ios_files_menu" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fichiers"
+          }
+        }
+      }
+    },
+    "ios_notice_files_skipped" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Certains fichiers n’ont pas été joints : 25 Mo maximum par fichier, 20 fichiers au plus."
+          }
+        }
+      }
+    },
+    "ios_onboarding_headline" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajoute Tomi à tes favoris de partage"
+          }
+        }
+      }
+    },
+    "ios_onboarding_step_1" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1. Dans n’importe quelle application, appuie sur Partager."
+          }
+        }
+      }
+    },
+    "ios_onboarding_step_2" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2. Fais défiler la rangée des applications jusqu’au bout, puis touche Plus."
+          }
+        }
+      }
+    },
+    "ios_onboarding_step_3" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3. Touche Modifier, puis ajoute Tomi aux favoris : il reste ensuite en tête, à la même place."
+          }
+        }
+      }
+    },
+    "ios_onboarding_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bien démarrer"
+          }
+        }
+      }
+    },
+    "ios_pair_camera_settings" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir les réglages"
+          }
+        }
+      }
+    },
+    "ios_pair_camera_unavailable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas de caméra disponible ici. Saisis le code d’invitation affiché sur l’autre appareil."
+          }
+        }
+      }
+    },
+    "ios_pair_error_unsupported" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette version de Tomi ne sait pas encore rejoindre un espace."
+          }
+        }
+      }
+    },
+    "ios_platform_cli" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ligne de commande"
+          }
+        }
+      }
+    },
+    "ios_platform_ios" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iOS"
+          }
+        }
+      }
+    },
+    "ios_platform_macos" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS"
+          }
+        }
+      }
+    },
+    "ios_save_to_files" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer dans Fichiers"
+          }
+        }
+      }
+    },
+    "ios_share_file" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partager le fichier"
+          }
+        }
+      }
+    },
+    "ios_share_inbox_failed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un partage n’a pas pu être envoyé. Tomi réessaiera."
+          }
+        }
+      }
+    },
+    "ios_unreadable_reset_failed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’effacement a échoué. Réessaie, ou supprime l’app puis réinstalle-la."
+          }
+        }
+      }
+    },
+    "ios_viewer_close" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fermer"
+          }
+        }
+      }
+    },
+    "kind_file" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fichier"
+          }
+        }
+      }
+    },
+    "kind_image" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Image"
+          }
+        }
+      }
+    },
+    "kind_link" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lien"
+          }
+        }
+      }
+    },
+    "kind_rich_text" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Texte riche"
+          }
+        }
+      }
+    },
+    "kind_secret" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masqué"
+          }
+        }
+      }
+    },
+    "kind_text" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Texte"
+          }
+        }
+      }
+    },
+    "kind_unreadable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Illisible"
+          }
+        }
+      }
+    },
+    "label_masked" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masqué"
+          }
+        }
+      }
+    },
+    "label_secret" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masquer le contenu"
+          }
+        }
+      }
+    },
+    "label_secret_off" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aperçu caché partout jusqu’à « Afficher »"
+          }
+        }
+      }
+    },
+    "label_secret_on" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activé d’office. Tu peux le désactiver."
+          }
+        }
+      }
+    },
+    "leave_confirm" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se déconnecter"
+          }
+        }
+      }
+    },
+    "leave_error_unexpected" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ton serveur Tomi a refusé la déconnexion. Rien n’a été effacé : ce téléphone reste dans ton espace."
+          }
+        }
+      }
+    },
+    "leave_error_update" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mets Tomi à jour pour pouvoir te déconnecter. Rien n’a été effacé."
+          }
+        }
+      }
+    },
+    "leave_in_progress" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déconnexion en cours…"
+          }
+        }
+      }
+    },
+    "leave_message" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cet appareil va quitter ton espace. Tout ce qu’il contient sera effacé : éléments, secrets, fichiers et clés, y compris ce qui n’est pas encore envoyé. Tes autres appareils gardent leur copie. Pour revenir, il faudra ajouter de nouveau cet appareil depuis un autre appareil."
+          }
+        }
+      }
+    },
+    "leave_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se déconnecter de ton espace ?"
+          }
+        }
+      }
+    },
+    "menu_leave_space" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se déconnecter"
+          }
+        }
+      }
+    },
+    "menu_share_help" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Épingler Tomi dans le menu Partager"
+          }
+        }
+      }
+    },
+    "meta_after_read" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Après lecture"
+          }
+        }
+      }
+    },
+    "meta_expiry" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Expiration"
+          }
+        }
+      }
+    },
+    "meta_never" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jamais"
+          }
+        }
+      }
+    },
+    "meta_no" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non"
+          }
+        }
+      }
+    },
+    "meta_pinned" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Épinglé"
+          }
+        }
+      }
+    },
+    "meta_sent_at" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Date d’envoi"
+          }
+        }
+      }
+    },
+    "meta_status" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Statut"
+          }
+        }
+      }
+    },
+    "meta_type" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Type"
+          }
+        }
+      }
+    },
+    "meta_yes" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oui"
+          }
+        }
+      }
+    },
+    "more_files" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$lld autre fichier"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$lld autres fichiers"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "more_files_caption" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "+ %1$lld autre fichier"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "+ %1$lld autres fichiers"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "notice_params_dropped" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Certains paramètres du lien ont été ignorés (trop longs ou invalides)."
+          }
+        }
+      }
+    },
+    "notice_paste_empty" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le presse-papiers ne contient pas de texte."
+          }
+        }
+      }
+    },
+    "notice_send_failed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’envoi a échoué. Ton texte est conservé, réessaie."
+          }
+        }
+      }
+    },
+    "notice_too_late" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trop tard : l’élément est déjà parti."
+          }
+        }
+      }
+    },
+    "notice_undo_failed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible d’annuler l’envoi. L’élément est peut-être déjà parti."
+          }
+        }
+      }
+    },
+    "notif_action_copy" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copier"
+          }
+        }
+      }
+    },
+    "notif_action_view" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voir"
+          }
+        }
+      }
+    },
+    "notif_body_generic" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouvel élément"
+          }
+        }
+      }
+    },
+    "notif_body_secret" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touche pour copier (authentification requise)"
+          }
+        }
+      }
+    },
+    "notif_body_unreadable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Illisible pour le moment : mise à jour de Tomi nécessaire"
+          }
+        }
+      }
+    },
+    "notif_public_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi : nouvel élément"
+          }
+        }
+      }
+    },
+    "notif_summary_text" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dernier envoi de %1$@"
+          }
+        }
+      }
+    },
+    "notif_summary_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$lld nouvel élément"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$lld nouveaux éléments"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "notif_title_file" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fichier de %1$@"
+          }
+        }
+      }
+    },
+    "notif_title_image" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Image de %1$@"
+          }
+        }
+      }
+    },
+    "notif_title_link" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lien de %1$@"
+          }
+        }
+      }
+    },
+    "notif_title_secret" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contenu masqué reçu de %1$@"
+          }
+        }
+      }
+    },
+    "notif_title_text" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Texte de %1$@"
+          }
+        }
+      }
+    },
+    "notif_title_unreadable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Élément de %1$@"
+          }
+        }
+      }
+    },
+    "onboarding_check_again" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas encore, rouvrir le menu"
+          }
+        }
+      }
+    },
+    "onboarding_check_body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rouvre le menu Partager si besoin. Tomi doit apparaître en premier, avec une épingle."
+          }
+        }
+      }
+    },
+    "onboarding_check_caption" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voilà ce que tu dois voir"
+          }
+        }
+      }
+    },
+    "onboarding_check_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi est-il en tête ?"
+          }
+        }
+      }
+    },
+    "onboarding_check_yes" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oui, c’est fait"
+          }
+        }
+      }
+    },
+    "onboarding_later" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plus tard"
+          }
+        }
+      }
+    },
+    "onboarding_open_share" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir le menu Partager"
+          }
+        }
+      }
+    },
+    "onboarding_pin_body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appuie longuement sur Tomi, puis choisis « Épingler ». Il restera en premier, toujours à la même place."
+          }
+        }
+      }
+    },
+    "onboarding_pin_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Épingle Tomi en tête de ton menu Partager"
+          }
+        }
+      }
+    },
+    "onboarding_sample_text" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Test de partage Tomi"
+          }
+        }
+      }
+    },
+    "onboarding_scene_browser" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Navigateur"
+          }
+        }
+      }
+    },
+    "onboarding_scene_check_description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Illustration : dans le menu Partager, Tomi apparaît en premier, avec une épingle."
+          }
+        }
+      }
+    },
+    "onboarding_scene_files" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fichiers"
+          }
+        }
+      }
+    },
+    "onboarding_scene_notes" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notes"
+          }
+        }
+      }
+    },
+    "onboarding_scene_pin_description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Illustration : dans le menu Partager, un appui long sur Tomi fait apparaître l’option Épingler."
+          }
+        }
+      }
+    },
+    "onboarding_scene_share_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partager"
+          }
+        }
+      }
+    },
+    "pair_camera_denied" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Caméra refusée. Tu peux saisir le code d’invitation à la place."
+          }
+        }
+      }
+    },
+    "pair_code_hint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deux mots après le numéro. Pas besoin des accents ni des majuscules."
+          }
+        }
+      }
+    },
+    "pair_code_intro" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu le trouves sous le QR code, sur ton autre appareil."
+          }
+        }
+      }
+    },
+    "pair_code_label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Code d’invitation"
+          }
+        }
+      }
+    },
+    "pair_code_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saisis le code d’invitation"
+          }
+        }
+      }
+    },
+    "pair_done_body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ fait partie de ton espace."
+          }
+        }
+      }
+    },
+    "pair_done_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appareil ajouté"
+          }
+        }
+      }
+    },
+    "pair_enter_code_button" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saisir le code d’invitation"
+          }
+        }
+      }
+    },
+    "pair_error_blocked" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cet appareil ne peut plus utiliser ton serveur Tomi. Vérifie qu’il fait toujours partie de ton espace."
+          }
+        }
+      }
+    },
+    "pair_error_cancelled" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’ajout de l’appareil a été annulé sur l’autre appareil."
+          }
+        }
+      }
+    },
+    "pair_error_code_format" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saisis le code d’invitation affiché sur l’autre appareil, par exemple 7-crayon-renard."
+          }
+        }
+      }
+    },
+    "pair_error_expired" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Code expiré. Génères-en un nouveau."
+          }
+        }
+      }
+    },
+    "pair_error_interrupted" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La connexion a été interrompue. Génère un nouveau code d’invitation sur l’autre appareil."
+          }
+        }
+      }
+    },
+    "pair_error_invalid" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce code d’invitation n’est pas valide. Vérifie le numéro et les deux mots."
+          }
+        }
+      }
+    },
+    "pair_error_network" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réseau indisponible. Réessaie."
+          }
+        }
+      }
+    },
+    "pair_error_qr_unknown" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce QR code n’est pas une invitation Tomi."
+          }
+        }
+      }
+    },
+    "pair_error_relay_invalid" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette adresse de relais n’est pas valide. Écris-la comme relay.exemple.org."
+          }
+        }
+      }
+    },
+    "pair_error_relay_required" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indique l’adresse du relais."
+          }
+        }
+      }
+    },
+    "pair_error_space_full" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ton espace a atteint le nombre maximal d’appareils. Retire-en un depuis la liste des appareils."
+          }
+        }
+      }
+    },
+    "pair_error_taken" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce code d’invitation a déjà servi. Génère-en un nouveau sur l’autre appareil."
+          }
+        }
+      }
+    },
+    "pair_error_unexpected" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’ajout de l’appareil n’a pas abouti. Réessaie."
+          }
+        }
+      }
+    },
+    "pair_error_update" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mets Tomi à jour sur les deux appareils pour ajouter celui-ci."
+          }
+        }
+      }
+    },
+    "pair_error_wrong_code" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Code incorrect. Génère un nouveau code d’invitation sur l’autre appareil."
+          }
+        }
+      }
+    },
+    "pair_history_body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Ton espace contient déjà %1$lld élément. Tu peux le retrouver sur ce téléphone."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Ton espace contient déjà %1$lld éléments. Tu peux les retrouver sur ce téléphone."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "pair_history_footer" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu pourras toujours supprimer un élément plus tard."
+          }
+        }
+      }
+    },
+    "pair_history_no" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non, partir d’un fil vide"
+          }
+        }
+      }
+    },
+    "pair_history_no_hint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seuls les prochains envois arriveront ici."
+          }
+        }
+      }
+    },
+    "pair_history_size" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Environ %1$@ à récupérer."
+          }
+        }
+      }
+    },
+    "pair_history_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Récupérer l’historique ?"
+          }
+        }
+      }
+    },
+    "pair_history_yes" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oui, récupérer l’historique"
+          }
+        }
+      }
+    },
+    "pair_history_yes_hint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout ce qui est dans ton espace arrive ici, Masqués et épinglés compris."
+          }
+        }
+      }
+    },
+    "pair_illustration_description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Illustration : sur ton autre appareil, l’écran « Ajouter un appareil » montre un QR code et un code d’invitation, par exemple 7-crayon-renard."
+          }
+        }
+      }
+    },
+    "pair_intro" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sur ton autre appareil, ouvre"
+          }
+        }
+      }
+    },
+    "pair_join" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rejoindre"
+          }
+        }
+      }
+    },
+    "pair_link_received" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lien d’invitation reçu"
+          }
+        }
+      }
+    },
+    "pair_link_received_hint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien n’est fait automatiquement. Appuie sur « Rejoindre » pour continuer."
+          }
+        }
+      }
+    },
+    "pair_link_received_relay" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Relais : %1$@"
+          }
+        }
+      }
+    },
+    "pair_notifications_enable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoriser les notifications"
+          }
+        }
+      }
+    },
+    "pair_notifications_rationale" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autorise les notifications pour savoir quand un appareil t’envoie quelque chose."
+          }
+        }
+      }
+    },
+    "pair_other_device_caption" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sur ton autre appareil"
+          }
+        }
+      }
+    },
+    "pair_scan_button" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scanner le QR code"
+          }
+        }
+      }
+    },
+    "pair_scan_hint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La caméra ne sert qu’à ce scan."
+          }
+        }
+      }
+    },
+    "pair_scan_instead" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scanner le QR code à la place"
+          }
+        }
+      }
+    },
+    "pair_scan_preview_description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aperçu de la caméra pour scanner le QR code de l’autre appareil"
+          }
+        }
+      }
+    },
+    "pair_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rejoins ton espace"
+          }
+        }
+      }
+    },
+    "pair_verify_body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vérifie que le même code s’affiche sur les deux appareils."
+          }
+        }
+      }
+    },
+    "pair_verify_code_description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Code de vérification %1$@"
+          }
+        }
+      }
+    },
+    "pair_verify_different" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ils sont différents"
+          }
+        }
+      }
+    },
+    "pair_verify_mismatch" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les codes ne correspondaient pas : l’ajout de l’appareil a été annulé. Recommence depuis l’autre appareil."
+          }
+        }
+      }
+    },
+    "pair_verify_peer_members" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Ton espace compte %1$lld appareil"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Ton espace compte %1$lld appareils"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "pair_verify_relay_hint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vérifie que c’est bien ton relais avant de continuer."
+          }
+        }
+      }
+    },
+    "pair_verify_relay_label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Relais : %1$@"
+          }
+        }
+      }
+    },
+    "pair_verify_same" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les codes sont identiques"
+          }
+        }
+      }
+    },
+    "pair_verify_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vérifie le code"
+          }
+        }
+      }
+    },
+    "pair_verify_validity" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valable encore %1$@"
+          }
+        }
+      }
+    },
+    "pair_waiting_body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirme aussi sur %1$@ que les codes sont identiques. L’ajout de l’appareil se termine dès que c’est fait."
+          }
+        }
+      }
+    },
+    "pair_waiting_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En attente de l’autre appareil"
+          }
+        }
+      }
+    },
+    "pair_working" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connexion à l’autre appareil…"
+          }
+        }
+      }
+    },
+    "pinned_badge" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Épinglé"
+          }
+        }
+      }
+    },
+    "platform_android" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Android"
+          }
+        }
+      }
+    },
+    "platform_other" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autre"
+          }
+        }
+      }
+    },
+    "platform_windows" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Windows"
+          }
+        }
+      }
+    },
+    "preview_files" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld fichier(s)"
+          }
+        }
+      }
+    },
+    "preview_secret_masked" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "••••••••••"
+          }
+        }
+      }
+    },
+    "relay_current" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Relais : %1$@"
+          }
+        }
+      }
+    },
+    "relay_field_hint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adresse de ton serveur Tomi, par exemple relay.exemple.org."
+          }
+        }
+      }
+    },
+    "relay_field_label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Relais"
+          }
+        }
+      }
+    },
+    "relay_other_button" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autre relais"
+          }
+        }
+      }
+    },
+    "remaining_days" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$lld jour"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$lld jours"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "remaining_hours" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$lld heure"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$lld heures"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "remaining_minutes" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$lld minute"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$lld minutes"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "render_markdown" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Markdown"
+          }
+        }
+      }
+    },
+    "render_preview" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aperçu"
+          }
+        }
+      }
+    },
+    "search_masked_note" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "les Masqués sont cherchés sans leur titre ni leur contenu"
+          }
+        }
+      }
+    },
+    "search_placeholder" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher dans le fil"
+          }
+        }
+      }
+    },
+    "search_results" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$lld résultat"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$lld résultats"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "search_summary_with_note" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$@"
+          }
+        }
+      }
+    },
+    "secret_files_hidden" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$lld fichier masqué"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$lld fichiers masqués"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "section_archives" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Archives"
+          }
+        }
+      }
+    },
+    "section_pinned" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Épinglés"
+          }
+        }
+      }
+    },
+    "section_recent" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Récents"
+          }
+        }
+      }
+    },
+    "send_content_label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Texte ou lien"
+          }
+        }
+      }
+    },
+    "send_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envoyer"
+          }
+        }
+      }
+    },
+    "send_title_label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Titre (facultatif)"
+          }
+        }
+      }
+    },
+    "share_chooser_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partager via"
+          }
+        }
+      }
+    },
+    "share_failed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’envoi a échoué. Réessaie."
+          }
+        }
+      }
+    },
+    "share_no_app" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune application ne peut recevoir ce contenu."
+          }
+        }
+      }
+    },
+    "share_not_paired" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi n’est associé à aucun espace. Ouvre l’application pour rejoindre ton espace."
+          }
+        }
+      }
+    },
+    "share_open_app" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir Tomi"
+          }
+        }
+      }
+    },
+    "share_secret_detected" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce contenu ressemble à un contenu à masquer. Confirme avant l’envoi."
+          }
+        }
+      }
+    },
+    "share_too_late" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trop tard : l’élément est déjà parti. Tu peux le supprimer depuis le fil de Tomi."
+          }
+        }
+      }
+    },
+    "share_unreadable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi ne peut pas ouvrir ses données. Ouvre l’app pour la réparer."
+          }
+        }
+      }
+    },
+    "sheet_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Options d’envoi"
+          }
+        }
+      }
+    },
+    "shortcut_long_label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envoyer à mes appareils avec Tomi"
+          }
+        }
+      }
+    },
+    "shortcut_short_label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi"
+          }
+        }
+      }
+    },
+    "snackbar_action_failed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de terminer l’action. Vérifie ta connexion et réessaie."
+          }
+        }
+      }
+    },
+    "snackbar_archive_failed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de modifier l’archive. Réessaie."
+          }
+        }
+      }
+    },
+    "snackbar_archived" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Archivé"
+          }
+        }
+      }
+    },
+    "snackbar_copied" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copié"
+          }
+        }
+      }
+    },
+    "snackbar_copied_secret" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copié · effacé dans 30 s"
+          }
+        }
+      }
+    },
+    "snackbar_deleted_everywhere" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suppression demandée sur tous les appareils"
+          }
+        }
+      }
+    },
+    "snackbar_deleted_local" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimé de cet appareil"
+          }
+        }
+      }
+    },
+    "snackbar_image_failed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’action a échoué. Réessaie."
+          }
+        }
+      }
+    },
+    "snackbar_image_saved" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Image enregistrée dans la galerie"
+          }
+        }
+      }
+    },
+    "snackbar_image_unavailable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette image n’est pas disponible pour l’instant."
+          }
+        }
+      }
+    },
+    "snackbar_nothing_to_share" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien à partager dans cet élément."
+          }
+        }
+      }
+    },
+    "snackbar_pin_failed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de modifier l’épingle. Réessaie."
+          }
+        }
+      }
+    },
+    "snackbar_unarchived" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désarchivé"
+          }
+        }
+      }
+    },
+    "source_this_phone" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce téléphone"
+          }
+        }
+      }
+    },
+    "space_not_found_message" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ton serveur Tomi ne trouve plus ton espace. S’il a été réinitialisé, tu peux effacer ce téléphone ; sinon, vérifie d’abord ton serveur. Rien n’a été effacé sur ce téléphone."
+          }
+        }
+      }
+    },
+    "space_not_found_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Espace introuvable"
+          }
+        }
+      }
+    },
+    "space_revoked_message" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce téléphone a été retiré de ton espace. Ce qu’il contient reste lisible ici. Te déconnecter l’efface."
+          }
+        }
+      }
+    },
+    "space_revoked_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retiré de l’espace"
+          }
+        }
+      }
+    },
+    "status_delivered_all" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Livré à tous"
+          }
+        }
+      }
+    },
+    "status_delivered_partial" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Livré à %1$lld sur %2$lld"
+          }
+        }
+      }
+    },
+    "status_expired" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Livré à %1$lld · expiré avant livraison à %2$@"
+          }
+        }
+      }
+    },
+    "status_failed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échec de l’envoi"
+          }
+        }
+      }
+    },
+    "status_queued" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En attente d’envoi"
+          }
+        }
+      }
+    },
+    "status_received" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reçu"
+          }
+        }
+      }
+    },
+    "status_sent" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envoyé"
+          }
+        }
+      }
+    },
+    "status_waiting_network" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En attente de réseau"
+          }
+        }
+      }
+    },
+    "tile_label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envoyer"
+          }
+        }
+      }
+    },
+    "time_yesterday" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hier"
+          }
+        }
+      }
+    },
+    "toast_biometric_unavailable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configure un verrouillage d’écran ou une biométrie pour afficher, copier ou partager les contenus masqués."
+          }
+        }
+      }
+    },
+    "toast_item_not_found" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Élément introuvable"
+          }
+        }
+      }
+    },
+    "toolbar_compose" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contenu"
+          }
+        }
+      }
+    },
+    "toolbar_feed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actions du fil"
+          }
+        }
+      }
+    },
+    "toolbar_item" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actions de l’élément"
+          }
+        }
+      }
+    },
+    "unread_badge" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non lu"
+          }
+        }
+      }
+    },
+    "unreadable_decryption_failed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cet élément est illisible pour le moment. Il est conservé : une synchronisation ou une mise à jour peut le rendre lisible."
+          }
+        }
+      }
+    },
+    "unreadable_message" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi n’arrive pas à ouvrir ses données sur ce téléphone. Les données de l’app ont peut-être été effacées ou abîmées (téléphone restauré, stockage de l’app nettoyé), ou la clé qui les protège n’est plus utilisable. Tes autres appareils ne sont pas touchés."
+          }
+        }
+      }
+    },
+    "unreadable_reset" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réinitialiser Tomi"
+          }
+        }
+      }
+    },
+    "unreadable_reset_confirm" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effacer et réinitialiser"
+          }
+        }
+      }
+    },
+    "unreadable_reset_failed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’effacement a échoué. Réessaie, ou efface les données de l’app dans les réglages d’Android."
+          }
+        }
+      }
+    },
+    "unreadable_reset_message" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout ce que Tomi contient ici sera effacé et ce téléphone devra rejoindre ton espace à nouveau. Tes autres appareils gardent leurs éléments ; pense à retirer cet ancien appareil depuis leur liste des appareils."
+          }
+        }
+      }
+    },
+    "unreadable_reset_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effacer les données de Tomi sur ce téléphone ?"
+          }
+        }
+      }
+    },
+    "unreadable_retry" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réessayer"
+          }
+        }
+      }
+    },
+    "unreadable_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Données illisibles"
+          }
+        }
+      }
+    },
+    "unreadable_update_required" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mise à jour nécessaire pour lire cet élément. Il est conservé et s’affichera après la mise à jour de Tomi."
+          }
+        }
+      }
+    },
+    "viewer_image_description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Image %1$lld sur %2$lld"
+          }
+        }
+      }
+    },
+    "viewer_load_failed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible d’afficher cette image."
+          }
+        }
+      }
+    },
+    "viewer_locked" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Image masquée. Confirme ton identité pour l’afficher."
+          }
+        }
+      }
+    },
+    "viewer_no_image" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune image à afficher."
+          }
+        }
+      }
+    },
+    "viewer_position" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld/%2$lld"
+          }
+        }
+      }
+    },
+    "viewer_save" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer dans la galerie"
+          }
+        }
+      }
+    },
+    "welcome_create_hint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "C’est ton premier appareil. Munis-toi du QR code ou de la clé d’installation de ton serveur Tomi."
+          }
+        }
+      }
+    },
+    "welcome_create_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Créer ton espace"
+          }
+        }
+      }
+    },
+    "welcome_door_description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@. %2$@"
+          }
+        }
+      }
+    },
+    "welcome_intro" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envoie-toi des liens, des notes et des mots de passe d’un appareil à l’autre, chiffrés de bout en bout."
+          }
+        }
+      }
+    },
+    "welcome_join_hint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi est déjà sur un autre appareil ? Garde-le ouvert à portée de main."
+          }
+        }
+      }
+    },
+    "welcome_join_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rejoindre ton espace"
+          }
+        }
+      }
+    },
+    "welcome_question" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comment veux-tu commencer ?"
+          }
+        }
+      }
+    },
+    "welcome_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tes appareils, un seul espace"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

@@ -1,0 +1,227 @@
+name: CI
+
+# No secret required: CI signs nothing and publishes nothing (see release-relay.yml).
+# Path filters: the `changes` job computes what changed and each build job is conditioned on it
+# (a `paths:` filter at workflow level would not allow filtering job by job).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# Minimal rights for all jobs; no job needs to write.
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: "0"
+  RUST_BACKTRACE: "1"
+  # Aligned with docs/DEV.md (Rust 1.99). Change it here, in one place only, when upgrading.
+  RUST_VERSION: "1.99"
+  NDK_VERSION: "27.0.12077973"
+
+# Actions pinned by full commit SHA (the readable tag is in a comment).
+#   actions/checkout                 v6.1.0   d23441a48e516b6c34aea4fa41551a30e30af803
+#   dtolnay/rust-toolchain           master   683b588c487a69d01f6c6ddf40f036ff682cc2c8 (no version tags: the SHA + `toolchain:` fix the Rust version)
+#   Swatinem/rust-cache              v2.9.3   d1527c8f67ef9af357290475d4af4b0fab8f12e0
+#   actions/setup-java               v5.7.0   b6effb05e454b25005698d916606bdc6ffcbf961
+#   android-actions/setup-android    v4.0.4   be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd
+#   gradle/actions/setup-gradle      v6.4.1   8da46b539cd8fe6ab27ca75128919a18d757604c
+#   actions/upload-artifact          v7.0.2   cf430e030ddbb5b0abf93d22962f4752f3646cd9
+
+jobs:
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      rust: ${{ steps.filter.outputs.rust }}
+      android: ${{ steps.filter.outputs.android }}
+      spec: ${{ steps.filter.outputs.spec }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Compute changed paths
+        id: filter
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE_SHA: ${{ github.event.before }}
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          run_all() {
+            echo "Full run ($1)"
+            echo "rust=true" >> "$GITHUB_OUTPUT"
+            echo "spec=true" >> "$GITHUB_OUTPUT"
+            if [ -f apps/android/gradlew ]; then echo "android=true" >> "$GITHUB_OUTPUT"; else echo "android=false" >> "$GITHUB_OUTPUT"; fi
+          }
+
+          case "$EVENT_NAME" in
+            pull_request) base="$PR_BASE_SHA" ;;
+            push)         base="$PUSH_BEFORE_SHA" ;;
+            *)            run_all "manual trigger"; exit 0 ;;
+          esac
+
+          # First push of a branch (null SHA) or rewritten history: we cannot compare.
+          if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ] \
+             || ! git cat-file -e "${base}^{commit}" 2>/dev/null; then
+            run_all "comparison base not found"
+            exit 0
+          fi
+
+          git diff --name-only "$base" "$HEAD_SHA" > changed.txt
+          echo "Changed files:"; sed 's/^/  /' changed.txt
+
+          matches() { grep -Eq "$1" changed.txt && echo true || echo false; }
+
+          # Rust: crates, relay, workspace, spec vectors (used by the tests), this workflow.
+          rust="$(matches '^(crates/|apps/relay/|spec/|\.cargo/|Cargo\.(toml|lock)$|rust-toolchain|\.github/workflows/ci\.yml$)')"
+          # Android: only apps/android/** (and this workflow). See the rationale: a change in
+          # crates/core does not trigger this job.
+          android="$(matches '^(apps/android/|\.github/workflows/ci\.yml$)')"
+          # Spec: vectors and the crate that reads them.
+          spec="$(matches '^(spec/|crates/core/|Cargo\.(toml|lock)$|\.github/workflows/ci\.yml$)')"
+
+          # No Android project in the repository: nothing to build.
+          if [ "$android" = "true" ] && [ ! -f apps/android/gradlew ]; then
+            echo "apps/android/gradlew missing: Android job skipped"
+            android=false
+          fi
+
+          { echo "rust=$rust"; echo "android=$android"; echo "spec=$spec"; } >> "$GITHUB_OUTPUT"
+          echo "rust=$rust android=$android spec=$spec"
+
+  rust:
+    name: Rust (fmt, clippy, tests)
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - name: fmt
+        run: cargo fmt --all -- --check
+      - name: clippy
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - name: clippy (core demo mode)
+        run: cargo clippy -p tomi-core --all-targets --features demo --locked -- -D warnings
+      - name: tests
+        run: cargo test --workspace --locked
+      - name: tests (core demo mode)
+        run: cargo test -p tomi-core --features demo --locked
+
+  core-windows:
+    name: Core on Windows (build + tests)
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - name: build core and CLI
+        run: cargo build -p tomi-core -p tomi-cli --locked
+      - name: core tests
+        run: cargo test -p tomi-core --locked
+
+  spec:
+    name: Spec (vectors)
+    needs: changes
+    if: needs.changes.outputs.spec == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - name: Does the spec_vectors test exist?
+        id: detect
+        run: |
+          set -euo pipefail
+          # Cargo knows whether the test target exists (auto-discovered tests/spec_vectors.rs or [[test]]).
+          if cargo metadata --no-deps --format-version 1 --locked \
+            | jq -e '.packages[] | select(.name == "tomi-core") | .targets[] | select(.name == "spec_vectors" and (.kind | index("test")))' > /dev/null; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Spec::The tomi-core/spec_vectors test does not exist yet: step skipped."
+          fi
+      # As soon as the test exists, any error (compilation or wrong vector) fails the job.
+      - name: Spec vectors
+        if: steps.detect.outputs.present == 'true'
+        run: cargo test -p tomi-core --test spec_vectors --locked
+
+  android:
+    name: Android (assembleDebug, unit tests, lint)
+    needs: changes
+    if: needs.changes.outputs.android == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          packages: "platform-tools platforms;android-36 build-tools;36.0.0 ndk;${{ env.NDK_VERSION }}"
+      - name: NDK variables
+        run: echo "ANDROID_NDK_HOME=${ANDROID_HOME}/ndk/${NDK_VERSION}" >> "$GITHUB_ENV"
+      # Native libraries of the core (same command as `just android-ndk-libs`, in debug and for two
+      # ABIs for CI). Remove this if the Gradle build compiles the core itself.
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          targets: aarch64-linux-android,x86_64-linux-android
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - name: cargo-ndk and native libraries
+        run: |
+          cargo install cargo-ndk --locked
+          cargo ndk -t arm64-v8a -t x86_64 -o apps/android/app/src/main/jniLibs build -p tomi-core --locked
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+        with:
+          # Only runs on the main branch write the Gradle cache.
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+      # `bash gradlew`: does not require the executable bit (lost when the file is added from Windows).
+      - name: assembleDebug + unit tests + lint
+        working-directory: apps/android
+        run: bash gradlew --no-daemon --stacktrace assembleDebug testDebugUnitTest lintDebug
+      - name: Reports on failure
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: android-reports
+          path: |
+            apps/android/**/build/reports/
+            apps/android/**/build/test-results/
+          retention-days: 7
+          if-no-files-found: ignore

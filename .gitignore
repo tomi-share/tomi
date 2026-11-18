@@ -1,0 +1,57 @@
+# Rust
+/target/
+**/target/
+
+# Android / Gradle
+apps/android/.gradle/
+apps/android/build/
+apps/android/*/build/
+apps/android/.idea/
+apps/android/local.properties
+*.iml
+.cxx/
+
+# Tauri / Node (frontend tooling)
+node_modules/
+apps/windows/dist/
+apps/windows/src-tauri/target/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+nul
+
+# Secrets / local config
+.env
+.env.local
+infra/secrets/
+*.pem
+*.key
+*.jks
+*.keystore
+
+# Relay runtime data (local dev)
+apps/relay/data/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+
+# Apple build output
+apps/apple/build/
+apps/apple/DerivedData/
+*.xcuserstate
+xcuserdata/
+
+# Generated design exports
+design/tomi/brand-guidelines.pdf
+design/build/tomi-brand-guidelines.html
+
+# Build outputs and credentials that must never be committed
+*.apk
+*.aab
+google-services.json
+*service-account*.json

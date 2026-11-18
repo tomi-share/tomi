@@ -1,0 +1,77 @@
+# Tomi — Caddy (reverse proxy + automatic Let's Encrypt TLS).
+# Installed by infra/install.sh to /etc/caddy/Caddyfile (only if that file is absent or
+# is the package's example file). Prerequisites: DNS A record relay.example.org -> the server's public IP,
+# ports 80 and 443 open in the firewall / security group (port 80 serves the ACME challenge and the redirect).
+{
+	# Protection against slow clients. No write_timeout: it would cut WebSockets and
+	# APK downloads. read_body is generous: a 1 MiB part over a slow mobile upload.
+	servers {
+		timeouts {
+			read_header 10s
+			read_body 10m
+			idle 5m
+		}
+	}
+}
+
+relay.example.org {
+	# Compression: useful for JSON and HTML pages; encrypted blobs are
+	# incompressible, and Caddy only compresses text types by default.
+	encode zstd gzip
+
+	# Maximum request body size: a JSON body of 2 MiB at most (max_json_body_bytes) or a
+	# blob part of 1 MiB (max_upload_part_bytes); 4 MiB leaves some margin. Safety net:
+	# beyond that, Caddy answers 413 without forwarding. The relay applies its own limits,
+	# which are stricter (spec/api-v1.md §2.2). Raise this if those two relay settings are raised.
+	request_body {
+		max_size 4MiB
+	}
+
+	# Security headers. The ? prefix only sets the header if the relay has not already set it.
+	# HSTS without includeSubDomains or preload: the parent domain may host other subdomains.
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "no-referrer"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+		Cross-Origin-Opener-Policy "same-origin"
+		?Content-Security-Policy "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+		# API responses: never cached by intermediaries.
+		?Cache-Control "no-store"
+		-Server
+	}
+
+	# Monitoring probes (/healthz) do not clutter the access log.
+	@healthz path /healthz
+	log_skip @healthz
+
+	# Access log to stderr (hence journald: `journalctl -u caddy`).
+	# Caddy never logs request or response bodies.
+	# In addition, all headers (Authorization, Cookie, any tokens) and the query string of the URI
+	# are removed (a device or WebSocket token could appear there), as well as the segment that follows
+	# /create/: the space creation link may carry the installation token in the path
+	# (/create/<token>). One filter per field: the expression covers both cases
+	# ($1 = "/create/" for the first, empty for the query string).
+	log {
+		output stderr
+		format filter {
+			wrap json
+			fields {
+				request>uri regexp (^/create/)[^?]*|\?.* "$1"
+				request>headers delete
+				request>tls delete
+				resp_headers delete
+			}
+		}
+	}
+
+	# WebSocket (Upgrade) connections are proxied natively by reverse_proxy, no setting needed.
+	reverse_proxy 127.0.0.1:8080 {
+		# Cuts off a relay that no longer responds; no read timeout: WebSockets are long-lived.
+		transport http {
+			dial_timeout 5s
+			response_header_timeout 60s
+		}
+	}
+}

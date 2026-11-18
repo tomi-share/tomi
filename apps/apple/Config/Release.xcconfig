@@ -1,0 +1,3 @@
+#include "Base.xcconfig"
+// The demo files (folder reference `demo`, Android debug assets) stay out of release builds.
+EXCLUDED_SOURCE_FILE_NAMES = demo

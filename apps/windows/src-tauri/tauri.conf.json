@@ -1,0 +1,67 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Tomi",
+  "version": "0.1.0",
+  "identifier": "eu.shaffe.tomi",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://127.0.0.1:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "withGlobalTauri": false,
+    "windows": [
+      {
+        "label": "popover",
+        "title": "Tomi",
+        "url": "index.html?view=popover",
+        "width": 400,
+        "height": 600,
+        "visible": false,
+        "decorations": false,
+        "resizable": false,
+        "maximizable": false,
+        "minimizable": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "shadow": true,
+        "focus": false,
+        "center": false,
+        "contentProtected": true
+      }
+    ],
+    "security": {
+      "freezePrototype": true,
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src ipc: http://ipc.localhost; frame-src about:; object-src 'none'; base-uri 'none'; form-action 'none'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "category": "Productivity",
+    "shortDescription": "Partage chiffré entre tes appareils",
+    "icon": [
+      "icons/tomi-32.png",
+      "icons/tomi-256.png",
+      "icons/tomi.ico"
+    ],
+    "createUpdaterArtifacts": false,
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser",
+        "languages": ["French"],
+        "displayLanguageSelector": false,
+        "startMenuFolder": "",
+        "installerHooks": "installer-hooks.nsh"
+      }
+    }
+  },
+  "plugins": {
+    "deep-link": {
+      "desktop": {
+        "schemes": ["tomi-share"]
+      }
+    }
+  }
+}

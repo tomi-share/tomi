@@ -1,0 +1,73 @@
+[package]
+name = "tomi-core"
+description = "Tomi core: crypto, item format, sync, local storage. Shared by Windows, CLI and Android (UniFFI)."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+# `cdylib`: libtomi_core.so for Android (JNA). The static library of the Apple apps is asked
+# for by apps/apple/tools/build-core.sh only (`cargo rustc --crate-type staticlib`), so other
+# builds (relay, Windows, CLI) do not pay for it.
+crate-type = ["lib", "cdylib"]
+
+[dependencies]
+serde.workspace = true
+# raw_value: the history index embeds the item payload JSON unchanged (spec §8.7.3).
+serde_json = { workspace = true, features = ["raw_value"] }
+thiserror.workspace = true
+uuid.workspace = true
+time.workspace = true
+# Audited / widely reviewed primitives only (see spec/format-v1.md §2). No primitive is
+# implemented in this crate.
+chacha20poly1305 = { version = "0.11", features = ["zeroize"] }
+ed25519-dalek = "3"
+x25519-dalek = { version = "3", features = ["static_secrets"] }
+# ristretto255 for the pairing PAKE (CPace, spec/pairing-v1.md §3). Same version as the one
+# already resolved for x25519-dalek / ed25519-dalek: no new crate enters the tree. Only the
+# group operations are used (decode / encode / element derivation / scalar multiplication);
+# the PAKE composition lives in `pairing::cpace`.
+curve25519-dalek = { version = "5", default-features = false, features = ["zeroize"] }
+hkdf = "0.13"
+sha2 = "0.11"
+getrandom = "0.4"
+zeroize = "1"
+base64 = "0.23"
+hex = "0.4"
+# --- runtime (feature `runtime`): local SQLite store, sync engine, transfers ---
+# `bundled` compiles SQLite from source: no system library (works for Windows MSVC and for
+# Android through the NDK; the Android system SQLite is not linkable from native code).
+rusqlite = { version = "0.41.1", features = ["bundled"], optional = true }
+# --- real transport (feature `http`): blocking HTTPS client + WebSocket doorbell ---
+# rustls with the `ring` provider and bundled webpki roots: no OpenSSL, no JNI verifier.
+ureq = { version = "3.5.1", default-features = false, features = ["rustls", "gzip"], optional = true }
+tungstenite = { version = "0.30.0", default-features = false, features = ["handshake"], optional = true }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"], optional = true }
+webpki-roots = { version = "1", optional = true }
+# --- bindings (feature `ffi`): UniFFI proc-macro bindings for Kotlin / Swift ---
+uniffi = { version = "0.32.2", optional = true }
+http = { version = "1.5.0", optional = true }
+
+[features]
+default = ["runtime", "http", "ffi"]
+runtime = ["dep:rusqlite"]
+http = ["runtime", "dep:ureq", "dep:tungstenite", "dep:rustls", "dep:webpki-roots", "dep:http"]
+ffi = ["runtime", "http", "dep:uniffi"]
+# Adds the `uniffi-bindgen` binary (Kotlin / Swift generation), see docs in src/ffi.rs.
+ffi-bindgen = ["ffi", "uniffi/cli"]
+# Demo mode for the apps (`RustTomiCore::open_demo`): the real engine on in-memory stores,
+# talking to the in-memory relay double of the tests, with a seeded demo space. No network.
+demo = ["runtime"]
+
+[[bin]]
+name = "uniffi-bindgen"
+path = "src/bin/uniffi-bindgen.rs"
+required-features = ["ffi-bindgen"]
+
+[dev-dependencies]
+tempfile = "3.27.0"
+
+# Needs a real HTTP client and an installed relay binary: run by hand (see the file header).
+[[example]]
+name = "e2e_release_relay"
+required-features = ["http"]

@@ -1,0 +1,68 @@
+# Tomi relay — configuration for the example managed-server deployment (see README.md).
+#
+# Versioned copy of /home/deploy/tomi-data/config.toml. The relay is started with
+# `--config /home/deploy/tomi-data/config.toml` by the supervisor daemon (see
+# supervisor-daemon.conf). Nginx terminates TLS and proxies to 127.0.0.1:8080.
+#
+# NO secret here. FCM credentials are a separate JSON file, referenced by
+# fcm_service_account_file, never a plain-text value in this file (see README.md §5).
+# The keys follow spec/api-v1.md §8.6 and apps/relay/src/config.rs. WARNING: an unknown key
+# (typo, obsolete key) makes the relay fail to start (`deny_unknown_fields`).
+
+# LOCAL listen address: Nginx is the only one talking to the outside world. Never expose 8080.
+listen = "127.0.0.1:8080"
+
+# Data directory (the relay is multi-space: one person = one space):
+#   routing.db                        global routing: invitations (tokens per fingerprint), quotas
+#                                     per space, FCM health
+#   spaces/<space_id>/relay.db        one SQLite database (WAL) per space
+#   spaces/<space_id>/blobs/          the encrypted blobs of the space
+#   public/                           public files (assetlinks, /l/ page, updates)
+#   admin.sock, relay.lock            admin socket and lock (ephemeral)
+# An old layout (tomi.db and blobs/ at the root) is migrated automatically on the first start
+# of the multi-space relay; there is no durable install-token file any more (an old file is
+# imported as an invitation, then deleted). Must stay the `directory=` of the daemon.
+data_dir = "/home/deploy/tomi-data"
+
+# "Volume not mounted" guard (relay that already knows the key): true = refuse to start if
+# data_dir contains neither routing.db nor spaces/, instead of assuming it is new. Leave it
+# commented out for a very first installation; the "Tomi relay: init" recipe adds it after a
+# successful start.
+#require_existing_data_dir = true
+
+# Public URL (no trailing slash), as served by Nginx.
+public_url = "https://relay.example.org"
+
+# Logs as JSON on stdout (captured by supervisor / the panel).
+log_format = "json"
+
+# --- Web administration panel (relay >= 0.3.0) ---
+# Disabled by default: any panel path then answers like an unknown resource. To enable it, add
+# `admin_web = true` here, restart the daemon, then follow infra/forge/enable-admin-web.md (secret
+# URL, enrollment code, access key). An unknown key makes startup fail: only add it with a binary
+# >= 0.3.0 deployed.
+#admin_web = true
+
+# --- Disk quotas ---
+# TOTAL relay quota, all spaces together, in bytes: 1 GiB (1 073 741 824), a choice made by the
+# operator. It is also the relay's default; it is written here so the choice is visible.
+# Beyond it, uploads are refused (`relay_full`). A small shared disk can hold only a few GB: a local
+# backup takes up to (TOMI_BACKUP_KEEP + 2) times the data at its peak (see recipes.md §7).
+# After changing it: restart the daemon.
+max_relay_bytes = 1073741824
+
+# PER-SPACE quota (optional): ceiling of each space that has no quota of its own. Absent = NO
+# per-space limit (only the total above applies): this is the production behaviour; leaving the
+# line commented out changes nothing. `0` = no limit either.
+# Priority order: quota set for ONE space with
+# `tomi-relay admin quota --space <id> <bytes|none|default>`, then the default set from the web
+# panel (admin_web, no restart needed), then this key, then no limit.
+# A rollback to an old binary would refuse `0`: remove the key (or set a real limit) first.
+#max_space_bytes = 268435456
+
+# --- Android notifications (FCM) ---
+# Path of a Firebase service account JSON file (HTTP v1). Leave it commented out until Firebase
+# is configured: FCM disabled, the relay works, only background Android notifications are missing
+# (clients catch up at launch through the cursor).
+# Store the file outside the repository, readable by the deploy user only (chmod 0600).
+#fcm_service_account_file = "/home/deploy/.config/tomi/fcm-service-account.json"

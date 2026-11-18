@@ -1,0 +1,383 @@
+{
+  "description": "Word list of the pairing code (appendix B), ranks, PRS and reading of a code or a link (§4.3, §4.4, §14.1). Only the unambiguous behaviors of the spec are frozen here.",
+  "folded": {
+    "bytes": 16001,
+    "distinct_prefix_length": 4,
+    "order": "in the order of the original list, also sorted in byte order",
+    "rule": "NFKD, combining marks (Mn) removed, lowercase",
+    "sha256": "cf8db448ad5ca0b68c3c8f88b51458f20362a5939fef236fac64a303f1485e87",
+    "word_count": 2048,
+    "word_length": [
+      5,
+      8
+    ]
+  },
+  "frozen": "FROZEN as of publication — never modify this file (spec/vectors/pairing-v1/README.md).",
+  "links": {
+    "cases": [
+      {
+        "accepted": true,
+        "channel_id": "4821",
+        "input": "https://relay.example.org/l/pair#4821-crayon-renard",
+        "ranks": [
+          465,
+          1633
+        ]
+      },
+      {
+        "accepted": true,
+        "channel_id": "4821",
+        "input": "tomi-share://pair#4821-crayon-renard",
+        "ranks": [
+          465,
+          1633
+        ]
+      },
+      {
+        "accepted": true,
+        "channel_id": "4821",
+        "input": "https://relay.example.org/l/pair#4821-crayo-rena",
+        "ranks": [
+          465,
+          1633
+        ]
+      },
+      {
+        "accepted": false,
+        "input": "https://evil.example/l/pair#4821-crayon-renard",
+        "why": "another host"
+      },
+      {
+        "accepted": false,
+        "input": "https://relay.example.org.evil.example/l/pair#4821-crayon-renard",
+        "why": "host suffix"
+      },
+      {
+        "accepted": false,
+        "input": "http://relay.example.org/l/pair#4821-crayon-renard",
+        "why": "http"
+      },
+      {
+        "accepted": false,
+        "input": "https://relay.example.org/l/other#4821-crayon-renard",
+        "why": "another path"
+      },
+      {
+        "accepted": false,
+        "input": "https://relay.example.org/l/pair?code=4821-crayon-renard",
+        "why": "code in the query string"
+      },
+      {
+        "accepted": false,
+        "input": "https://relay.example.org/l/pair",
+        "why": "no fragment"
+      },
+      {
+        "accepted": false,
+        "input": "tomi-share://other#4821-crayon-renard",
+        "why": "another host in the tomi-share scheme"
+      }
+    ],
+    "relay_authority": "relay.example.org"
+  },
+  "prs": [
+    {
+      "prs": "01d10661",
+      "ranks": [
+        465,
+        1633
+      ]
+    }
+  ],
+  "ranks": [
+    {
+      "original_nfc": "abaisser",
+      "original_nfc_utf8": "6162616973736572",
+      "rank": 0,
+      "word": "abaisser"
+    },
+    {
+      "original_nfc": "crayon",
+      "original_nfc_utf8": "637261796f6e",
+      "rank": 465,
+      "word": "crayon"
+    },
+    {
+      "original_nfc": "école",
+      "original_nfc_utf8": "c3a9636f6c65",
+      "rank": 616,
+      "word": "ecole"
+    },
+    {
+      "original_nfc": "élève",
+      "original_nfc_utf8": "c3a96cc3a87665",
+      "rank": 642,
+      "word": "eleve"
+    },
+    {
+      "original_nfc": "renard",
+      "original_nfc_utf8": "72656e617264",
+      "rank": 1633,
+      "word": "renard"
+    },
+    {
+      "original_nfc": "tomate",
+      "original_nfc_utf8": "746f6d617465",
+      "rank": 1891,
+      "word": "tomate"
+    },
+    {
+      "original_nfc": "zoologie",
+      "original_nfc_utf8": "7a6f6f6c6f676965",
+      "rank": 2047,
+      "word": "zoologie"
+    }
+  ],
+  "reading": [
+    {
+      "accepted": true,
+      "channel_id": "4821",
+      "input": "4821-crayon-renard",
+      "input_utf8": "343832312d637261796f6e2d72656e617264",
+      "ranks": [
+        465,
+        1633
+      ]
+    },
+    {
+      "accepted": true,
+      "channel_id": "4821",
+      "input": "4821 Crayon RENARD",
+      "input_utf8": "3438323120437261796f6e2052454e415244",
+      "ranks": [
+        465,
+        1633
+      ]
+    },
+    {
+      "accepted": true,
+      "channel_id": "4821",
+      "input": "4821-crayo-rena",
+      "input_utf8": "343832312d637261796f2d72656e61",
+      "ranks": [
+        465,
+        1633
+      ]
+    },
+    {
+      "accepted": true,
+      "channel_id": "4821",
+      "input": "4821_crayon.renard",
+      "input_utf8": "343832315f637261796f6e2e72656e617264",
+      "ranks": [
+        465,
+        1633
+      ]
+    },
+    {
+      "accepted": true,
+      "channel_id": "4821",
+      "input": "4821-crâyon-renard",
+      "input_utf8": "343832312d6372c3a2796f6e2d72656e617264",
+      "ranks": [
+        465,
+        1633
+      ]
+    },
+    {
+      "accepted": true,
+      "channel_id": "4821",
+      "input": "4821-crâyon-renard",
+      "input_utf8": "343832312d637261cc82796f6e2d72656e617264",
+      "ranks": [
+        465,
+        1633
+      ]
+    },
+    {
+      "accepted": true,
+      "channel_id": "4821",
+      "input": "4821-école-élève",
+      "input_utf8": "343832312dc3a9636f6c652dc3a96cc3a87665",
+      "ranks": [
+        616,
+        642
+      ]
+    },
+    {
+      "accepted": true,
+      "channel_id": "4821",
+      "input": "4821-école-élève",
+      "input_utf8": "343832312d65cc81636f6c652d65cc816c65cc807665",
+      "ranks": [
+        616,
+        642
+      ]
+    },
+    {
+      "accepted": true,
+      "channel_id": "4821",
+      "input": "4821-ecole-eleve",
+      "input_utf8": "343832312d65636f6c652d656c657665",
+      "ranks": [
+        616,
+        642
+      ]
+    },
+    {
+      "accepted": true,
+      "channel_id": "4821",
+      "input": "  4821-crayon-renard\n",
+      "input_utf8": "2020343832312d637261796f6e2d72656e6172640a",
+      "ranks": [
+        465,
+        1633
+      ]
+    },
+    {
+      "accepted": true,
+      "channel_id": "1",
+      "input": "1-abai-zool",
+      "input_utf8": "312d616261692d7a6f6f6c",
+      "ranks": [
+        0,
+        2047
+      ]
+    },
+    {
+      "accepted": true,
+      "channel_id": "9999",
+      "input": "9999-abaisser-zoologie",
+      "input_utf8": "393939392d61626169737365722d7a6f6f6c6f676965",
+      "ranks": [
+        0,
+        2047
+      ]
+    },
+    {
+      "accepted": true,
+      "channel_id": "12",
+      "input": "12-crayon-crayon",
+      "input_utf8": "31322d637261796f6e2d637261796f6e",
+      "ranks": [
+        465,
+        465
+      ]
+    },
+    {
+      "accepted": true,
+      "channel_id": "4821",
+      "input": "４８２１-ｃｒａｙｏｎ-ｒｅｎａｒｄ",
+      "input_utf8": "efbc94efbc98efbc92efbc912defbd83efbd92efbd81efbd99efbd8fefbd8e2defbd92efbd85efbd8eefbd81efbd92efbd84",
+      "ranks": [
+        465,
+        1633
+      ]
+    },
+    {
+      "accepted": true,
+      "channel_id": "4821",
+      "input": "4821 crayon—renard",
+      "input_utf8": "34383231c2a0637261796f6ee2809472656e617264",
+      "ranks": [
+        465,
+        1633
+      ]
+    },
+    {
+      "accepted": false,
+      "input": "0-crayon-renard",
+      "input_utf8": "302d637261796f6e2d72656e617264",
+      "why": "channel number with a zero, value 0"
+    },
+    {
+      "accepted": false,
+      "input": "04821-crayon-renard",
+      "input_utf8": "30343832312d637261796f6e2d72656e617264",
+      "why": "channel number with a leading zero"
+    },
+    {
+      "accepted": false,
+      "input": "0482-crayon-renard",
+      "input_utf8": "303438322d637261796f6e2d72656e617264",
+      "why": "channel number with a leading zero"
+    },
+    {
+      "accepted": false,
+      "input": "10000-crayon-renard",
+      "input_utf8": "31303030302d637261796f6e2d72656e617264",
+      "why": "channel number above 9999"
+    },
+    {
+      "accepted": false,
+      "input": "4821-cra-renard",
+      "input_utf8": "343832312d6372612d72656e617264",
+      "why": "word prefix below 4 letters"
+    },
+    {
+      "accepted": false,
+      "input": "4821-crayon",
+      "input_utf8": "343832312d637261796f6e",
+      "why": "two tokens"
+    },
+    {
+      "accepted": false,
+      "input": "4821-crayon-renard-tomate",
+      "input_utf8": "343832312d637261796f6e2d72656e6172642d746f6d617465",
+      "why": "four tokens"
+    },
+    {
+      "accepted": false,
+      "input": "4821-xylophone-renard",
+      "input_utf8": "343832312d78796c6f70686f6e652d72656e617264",
+      "why": "unknown word"
+    },
+    {
+      "accepted": false,
+      "input": "4821-crayonn-renard",
+      "input_utf8": "343832312d637261796f6e6e2d72656e617264",
+      "why": "unknown word, not a prefix"
+    },
+    {
+      "accepted": false,
+      "input": "4821-lune-renard",
+      "input_utf8": "343832312d6c756e652d72656e617264",
+      "why": "unknown word (lune is not in the list)"
+    },
+    {
+      "accepted": false,
+      "input": "4821-cr4yon-renard",
+      "input_utf8": "343832312d637234796f6e2d72656e617264",
+      "why": "a digit inside a word"
+    },
+    {
+      "accepted": false,
+      "input": "٤٨٢١-crayon-renard",
+      "input_utf8": "d9a4d9a8d9a2d9a12d637261796f6e2d72656e617264",
+      "why": "Arabic-Indic digits are not ASCII digits"
+    },
+    {
+      "accepted": false,
+      "input": "१-crayon-renard",
+      "input_utf8": "e0a5a72d637261796f6e2d72656e617264",
+      "why": "Devanagari digit"
+    },
+    {
+      "accepted": false,
+      "input": "",
+      "input_utf8": "",
+      "why": "empty"
+    }
+  ],
+  "shown": {
+    "code": "4821-crayon-renard",
+    "deep_link": "tomi-share://pair#4821-crayon-renard",
+    "link": "https://relay.example.org/l/pair#4821-crayon-renard"
+  },
+  "source": {
+    "file_bytes": 16777,
+    "file_sha256": "ebc3959ab7801a1df6bac4fa7d970652f1df76b683cd2f4003c941c63d517e59",
+    "name": "BIP-39, French list (bip-0039/french.txt, bitcoin/bips repository, MIT license)",
+    "note": "The published file is UTF-8 with decomposed accents (NFD); appendix B says NFC. The fingerprint is that of the published file."
+  }
+}

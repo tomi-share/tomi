@@ -1,0 +1,416 @@
+{
+  "convergence": [
+    {
+      "description": "Pinned at 100, unpinned at 200: unpinned.",
+      "events": [
+        {
+          "at_ms": 100,
+          "pinned": true
+        },
+        {
+          "at_ms": 200,
+          "pinned": false
+        }
+      ],
+      "expected": {
+        "at_ms": 200,
+        "pinned": false
+      },
+      "name": "later_unpin_wins"
+    },
+    {
+      "description": "Same events received in reverse order: same result.",
+      "events": [
+        {
+          "at_ms": 200,
+          "pinned": false
+        },
+        {
+          "at_ms": 100,
+          "pinned": true
+        }
+      ],
+      "expected": {
+        "at_ms": 200,
+        "pinned": false
+      },
+      "name": "order_independent"
+    },
+    {
+      "description": "Same timestamp: pinned wins (keeping is the safest).",
+      "events": [
+        {
+          "at_ms": 300,
+          "pinned": false
+        },
+        {
+          "at_ms": 300,
+          "pinned": true
+        }
+      ],
+      "expected": {
+        "at_ms": 300,
+        "pinned": true
+      },
+      "name": "tie_pinned_wins"
+    },
+    {
+      "description": "Same timestamp, reverse order.",
+      "events": [
+        {
+          "at_ms": 300,
+          "pinned": true
+        },
+        {
+          "at_ms": 300,
+          "pinned": false
+        }
+      ],
+      "expected": {
+        "at_ms": 300,
+        "pinned": true
+      },
+      "name": "tie_pinned_wins_reversed"
+    },
+    {
+      "description": "The relay replays an old event: no effect.",
+      "events": [
+        {
+          "at_ms": 100,
+          "pinned": true
+        },
+        {
+          "at_ms": 200,
+          "pinned": false
+        },
+        {
+          "at_ms": 100,
+          "pinned": true
+        }
+      ],
+      "expected": {
+        "at_ms": 200,
+        "pinned": false
+      },
+      "name": "replayed_old_event_ignored"
+    }
+  ],
+  "description": "Shared, encrypted pin (§8.8): signed pin/unpin statement (153 bytes), item state envelope encrypted under K_state (320 bytes; the relay sees neither the item_id nor the state), last-writer-wins convergence on (at_ms, pinned), epoch ordering rule, pin field of the history transfer index (manifest of history-transfer.json), and failure cases. Devices in device.json, rotation in rotation.json.",
+  "envelopes": [
+    {
+      "aad": "746f6d692f76312f6161642f6974656d2d7374617465000000000100000001e0000000000040008000000000000001",
+      "ciphertext": "10dd45bf5587fc18f30c9ef8d8578030eacc0ee3a2850bd9aea1532811f291eb87523f189bc490815f2a3773666ff738c8674570d137b7b7eef96df53c39d697b5012d20d4a55b91d50f96c4aee26caf10a11519c3a8373a2fe2a0e9c9ae8c183bb476631c07aeaf711b6c5bb60a163b569cd37789be8358f82820156f9fe1bc5bc38f08c4786f4952f831ed2d528b9f31c046aee8f4a5ef61159a8d6ef909f7a74906028cffaeaf0ddec089f17d303fcc9299c3350e80fc5fbdc22cfa0c715a3231d70ca98fa233c5ee1ccf1aa7e3510914f2d8ba9b4c61a1e4aa5b24ad27afa222a8eb04d58e472c86fadf517c76982cdcad7a4303720575d5ce62b2fc1b83709b4fc2f561a3abeeb08fba38aa0652",
+      "envelope": "0000000100000001e0000000000040008000000000000001303132333435363738393a3b3c3d3e3f404142434445464710dd45bf5587fc18f30c9ef8d8578030eacc0ee3a2850bd9aea1532811f291eb87523f189bc490815f2a3773666ff738c8674570d137b7b7eef96df53c39d697b5012d20d4a55b91d50f96c4aee26caf10a11519c3a8373a2fe2a0e9c9ae8c183bb476631c07aeaf711b6c5bb60a163b569cd37789be8358f82820156f9fe1bc5bc38f08c4786f4952f831ed2d528b9f31c046aee8f4a5ef61159a8d6ef909f7a74906028cffaeaf0ddec089f17d303fcc9299c3350e80fc5fbdc22cfa0c715a3231d70ca98fa233c5ee1ccf1aa7e3510914f2d8ba9b4c61a1e4aa5b24ad27afa222a8eb04d58e472c86fadf517c76982cdcad7a4303720575d5ce62b2fc1b83709b4fc2f561a3abeeb08fba38aa0652",
+      "envelope_len": 320,
+      "event_id": "e0000000-0000-4000-8000-000000000001",
+      "format": 1,
+      "item_state_key": "4cc1cf9910b1ebababd5106a1c2721614af121e00d1405c0be86b11c1cbd9737",
+      "key_epoch": 1,
+      "name": "pin_by_b_epoch1",
+      "nonce": "303132333435363738393a3b3c3d3e3f4041424344454647",
+      "padded": "746f6d692f76312f7369672f70696e005e1f0c2a7b3d4e8f9a610c2d4e6f8a100e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d000001a1a42d61c001dde3bccec7f3a66a1115f45d720f4dc135c3ae7c4e22dca38fdb1efd6a495ff89ee55472d08bdc98e7ca0c5423c4802d96aa01947abb263ebaa2d15129fe02537be70c66dd0a11fa14cbb3eefb176d8865817f592e04b8e6235996a0497c810980000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "space_key": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+      "statement": "pin_by_b"
+    },
+    {
+      "aad": "746f6d692f76312f6161642f6974656d2d7374617465000000000100000002e0000000000040008000000000000002",
+      "ciphertext": "9a99f51cfe7067f31d7b455222a00e53035efce34911c940d2e821454bb94dcd9332d8a06b6fc9b7e496e9f2a9e26483c983c20110ee136d0f4d8170059278eb326f749dda83687441b704c9b2d4c3756a7f8c278bebfcd40049ed1563da2b8c8314c00cf9006b99031b4e9e327b6d0b54325316b6daad70bbb292c0f2a55b86a026f2ffd001c5f9c4020ce68865beb98b158b34c4c3ecfac70e725fca0a5aadd70980066f342aa1eaa3745ad60b208a87b3e324277dafcf4df55dac32b389b986c6921b78f1bbd4072f5f9bbf5ac4d46aa8670a2772f4686e9c706ef74db7bcac8e48d236bf17bce3cd1570be961884b6c733a33c54e6dfd35713bea4fcaf10bae354e4cac500662423ca468e421f06",
+      "envelope": "0000000100000002e000000000004000800000000000000248494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f9a99f51cfe7067f31d7b455222a00e53035efce34911c940d2e821454bb94dcd9332d8a06b6fc9b7e496e9f2a9e26483c983c20110ee136d0f4d8170059278eb326f749dda83687441b704c9b2d4c3756a7f8c278bebfcd40049ed1563da2b8c8314c00cf9006b99031b4e9e327b6d0b54325316b6daad70bbb292c0f2a55b86a026f2ffd001c5f9c4020ce68865beb98b158b34c4c3ecfac70e725fca0a5aadd70980066f342aa1eaa3745ad60b208a87b3e324277dafcf4df55dac32b389b986c6921b78f1bbd4072f5f9bbf5ac4d46aa8670a2772f4686e9c706ef74db7bcac8e48d236bf17bce3cd1570be961884b6c733a33c54e6dfd35713bea4fcaf10bae354e4cac500662423ca468e421f06",
+      "envelope_len": 320,
+      "event_id": "e0000000-0000-4000-8000-000000000002",
+      "format": 1,
+      "item_state_key": "93cd510ebadd545e7782ddab07c5b176f550f2f7afb4dd38c090c1c6fd4b53ad",
+      "key_epoch": 2,
+      "name": "unpin_by_a_epoch2",
+      "nonce": "48494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f",
+      "padded": "746f6d692f76312f7369672f70696e005e1f0c2a7b3d4e8f9a610c2d4e6f8a100e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d000001a1a4645040004fd099ccd47d7893dfe9ec24414ecb0d9b5420232aad30d91c465be33cbe65c4c54387a7374dfb9570e52009778a880aeabcb0c1154ff8bb403aadbd9b325963e21f8e234495c48d5a19ce37f82b38a363bf8d45c7d4c52c56b5b8015261130e80000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "space_key": "707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f",
+      "statement": "unpin_by_a"
+    }
+  ],
+  "epoch_rule": {
+    "cases": [
+      {
+        "envelope_of": "pin_by_b_epoch1",
+        "expected": "opened",
+        "name": "epoch1_before_rotation",
+        "seq": 1793757599999
+      },
+      {
+        "envelope_of": "pin_by_b_epoch1",
+        "expected": "suspect_epoch",
+        "name": "epoch1_after_rotation",
+        "seq": 1793757600001
+      },
+      {
+        "envelope_of": "unpin_by_a_epoch2",
+        "expected": "opened",
+        "name": "epoch2_after_rotation",
+        "seq": 1793757600002
+      }
+    ],
+    "key_pending": {
+      "envelope_of": "unpin_by_a_epoch2",
+      "expected": "key_pending",
+      "ring_epochs": [
+        1
+      ]
+    },
+    "rotation": "rotation.json (epoch 1 -> 2)",
+    "rotation_seq": 1793757600000
+  },
+  "failures": {
+    "envelope": [
+      {
+        "announced_event_id": "e0000000-0000-4000-8000-000000000001",
+        "description": "Last byte (tag) modified.",
+        "envelope": "0000000100000001e0000000000040008000000000000001303132333435363738393a3b3c3d3e3f404142434445464710dd45bf5587fc18f30c9ef8d8578030eacc0ee3a2850bd9aea1532811f291eb87523f189bc490815f2a3773666ff738c8674570d137b7b7eef96df53c39d697b5012d20d4a55b91d50f96c4aee26caf10a11519c3a8373a2fe2a0e9c9ae8c183bb476631c07aeaf711b6c5bb60a163b569cd37789be8358f82820156f9fe1bc5bc38f08c4786f4952f831ed2d528b9f31c046aee8f4a5ef61159a8d6ef909f7a74906028cffaeaf0ddec089f17d303fcc9299c3350e80fc5fbdc22cfa0c715a3231d70ca98fa233c5ee1ccf1aa7e3510914f2d8ba9b4c61a1e4aa5b24ad27afa222a8eb04d58e472c86fadf517c76982cdcad7a4303720575d5ce62b2fc1b83709b4fc2f561a3abeeb08fba38aa0653",
+        "expected_error": "decryption_failed",
+        "name": "ciphertext_bit_flip",
+        "open_with_key_epoch": 1
+      },
+      {
+        "announced_event_id": "e0000000-0000-4000-8000-000000000009",
+        "description": "The relay lists the event under a different event_id.",
+        "envelope": "0000000100000001e0000000000040008000000000000001303132333435363738393a3b3c3d3e3f404142434445464710dd45bf5587fc18f30c9ef8d8578030eacc0ee3a2850bd9aea1532811f291eb87523f189bc490815f2a3773666ff738c8674570d137b7b7eef96df53c39d697b5012d20d4a55b91d50f96c4aee26caf10a11519c3a8373a2fe2a0e9c9ae8c183bb476631c07aeaf711b6c5bb60a163b569cd37789be8358f82820156f9fe1bc5bc38f08c4786f4952f831ed2d528b9f31c046aee8f4a5ef61159a8d6ef909f7a74906028cffaeaf0ddec089f17d303fcc9299c3350e80fc5fbdc22cfa0c715a3231d70ca98fa233c5ee1ccf1aa7e3510914f2d8ba9b4c61a1e4aa5b24ad27afa222a8eb04d58e472c86fadf517c76982cdcad7a4303720575d5ce62b2fc1b83709b4fc2f561a3abeeb08fba38aa0652",
+        "expected_error": "event_id_mismatch",
+        "name": "announced_event_id_differs",
+        "open_with_key_epoch": 1
+      },
+      {
+        "announced_event_id": "e0000000-0000-4000-8000-000000000009",
+        "description": "Header event_id rewritten (and announced): the AAD no longer matches.",
+        "envelope": "0000000100000001e0000000000040008000000000000009303132333435363738393a3b3c3d3e3f404142434445464710dd45bf5587fc18f30c9ef8d8578030eacc0ee3a2850bd9aea1532811f291eb87523f189bc490815f2a3773666ff738c8674570d137b7b7eef96df53c39d697b5012d20d4a55b91d50f96c4aee26caf10a11519c3a8373a2fe2a0e9c9ae8c183bb476631c07aeaf711b6c5bb60a163b569cd37789be8358f82820156f9fe1bc5bc38f08c4786f4952f831ed2d528b9f31c046aee8f4a5ef61159a8d6ef909f7a74906028cffaeaf0ddec089f17d303fcc9299c3350e80fc5fbdc22cfa0c715a3231d70ca98fa233c5ee1ccf1aa7e3510914f2d8ba9b4c61a1e4aa5b24ad27afa222a8eb04d58e472c86fadf517c76982cdcad7a4303720575d5ce62b2fc1b83709b4fc2f561a3abeeb08fba38aa0652",
+        "expected_error": "decryption_failed",
+        "name": "header_event_id_rewritten",
+        "open_with_key_epoch": 1
+      },
+      {
+        "announced_event_id": "e0000000-0000-4000-8000-000000000002",
+        "description": "Epoch 2 rewritten to 1 and opened with key 1.",
+        "envelope": "0000000100000001e000000000004000800000000000000248494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f9a99f51cfe7067f31d7b455222a00e53035efce34911c940d2e821454bb94dcd9332d8a06b6fc9b7e496e9f2a9e26483c983c20110ee136d0f4d8170059278eb326f749dda83687441b704c9b2d4c3756a7f8c278bebfcd40049ed1563da2b8c8314c00cf9006b99031b4e9e327b6d0b54325316b6daad70bbb292c0f2a55b86a026f2ffd001c5f9c4020ce68865beb98b158b34c4c3ecfac70e725fca0a5aadd70980066f342aa1eaa3745ad60b208a87b3e324277dafcf4df55dac32b389b986c6921b78f1bbd4072f5f9bbf5ac4d46aa8670a2772f4686e9c706ef74db7bcac8e48d236bf17bce3cd1570be961884b6c733a33c54e6dfd35713bea4fcaf10bae354e4cac500662423ca468e421f06",
+        "expected_error": "decryption_failed",
+        "name": "header_key_epoch_rewritten",
+        "open_with_key_epoch": 1
+      },
+      {
+        "announced_event_id": "e0000000-0000-4000-8000-000000000001",
+        "description": "format = 2: keep raw and retry after an update.",
+        "envelope": "0000000200000001e0000000000040008000000000000001303132333435363738393a3b3c3d3e3f404142434445464710dd45bf5587fc18f30c9ef8d8578030eacc0ee3a2850bd9aea1532811f291eb87523f189bc490815f2a3773666ff738c8674570d137b7b7eef96df53c39d697b5012d20d4a55b91d50f96c4aee26caf10a11519c3a8373a2fe2a0e9c9ae8c183bb476631c07aeaf711b6c5bb60a163b569cd37789be8358f82820156f9fe1bc5bc38f08c4786f4952f831ed2d528b9f31c046aee8f4a5ef61159a8d6ef909f7a74906028cffaeaf0ddec089f17d303fcc9299c3350e80fc5fbdc22cfa0c715a3231d70ca98fa233c5ee1ccf1aa7e3510914f2d8ba9b4c61a1e4aa5b24ad27afa222a8eb04d58e472c86fadf517c76982cdcad7a4303720575d5ce62b2fc1b83709b4fc2f561a3abeeb08fba38aa0652",
+        "expected_error": "unsupported_format",
+        "name": "unknown_format",
+        "open_with_key_epoch": 1
+      },
+      {
+        "announced_event_id": "e0000000-0000-4000-8000-000000000001",
+        "description": "One byte fewer.",
+        "envelope": "0000000100000001e0000000000040008000000000000001303132333435363738393a3b3c3d3e3f404142434445464710dd45bf5587fc18f30c9ef8d8578030eacc0ee3a2850bd9aea1532811f291eb87523f189bc490815f2a3773666ff738c8674570d137b7b7eef96df53c39d697b5012d20d4a55b91d50f96c4aee26caf10a11519c3a8373a2fe2a0e9c9ae8c183bb476631c07aeaf711b6c5bb60a163b569cd37789be8358f82820156f9fe1bc5bc38f08c4786f4952f831ed2d528b9f31c046aee8f4a5ef61159a8d6ef909f7a74906028cffaeaf0ddec089f17d303fcc9299c3350e80fc5fbdc22cfa0c715a3231d70ca98fa233c5ee1ccf1aa7e3510914f2d8ba9b4c61a1e4aa5b24ad27afa222a8eb04d58e472c86fadf517c76982cdcad7a4303720575d5ce62b2fc1b83709b4fc2f561a3abeeb08fba38aa06",
+        "expected_error": "malformed_envelope",
+        "name": "truncated",
+        "open_with_key_epoch": 1
+      },
+      {
+        "announced_event_id": "e0000000-0000-4000-8000-000000000001",
+        "description": "Pin statement truncated by one byte, correctly encrypted.",
+        "envelope": "0000000100000001e0000000000040008000000000000001303132333435363738393a3b3c3d3e3f404142434445464710dd45bf5587fc18f30c9ef8d8578030eacc0ee3a2850bd9aea1532811f291eb87523f189bc490815f2a3773666ff738c8674570d137b7b7eef96df53c39d697b5012d20d4a55b91d50f96c4aee26caf10a11519c3a8373a2fe2a0e9c9ae8c183bb476631c07aeaf711b6c5bb60a163b569cd37789be8358f82820156f9fe1bc5bc38f08c4786f4952f831ed2d528b9f31c046aee8f4a5efe8959a8d6ef909f7a74906028cffaeaf0ddec089f17d303fcc9299c3350e80fc5fbdc22cfa0c715a3231d70ca98fa233c5ee1ccf1aa7e3510914f2d8ba9b4c61a1e4aa5b24ad27afa222a8eb04d58e472c86fadf517c76982cdcad7a4303720575d5ce62b2fc1b832cc5a015df39c941e01dddf52e1bdeb5",
+        "expected_error": "malformed_statement",
+        "name": "inner_pin_wrong_length",
+        "open_with_key_epoch": 1
+      }
+    ],
+    "statement": [
+      {
+        "description": "State byte (offset 56) changed from 01 to 00 after signing.",
+        "expected_error": "invalid_signature",
+        "name": "state_flipped",
+        "trust_setup": {
+          "key_epoch": 1,
+          "members": [
+            "A",
+            "B",
+            "C"
+          ],
+          "self": "B"
+        },
+        "wire": "746f6d692f76312f7369672f70696e005e1f0c2a7b3d4e8f9a610c2d4e6f8a100e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d000001a1a42d61c000dde3bccec7f3a66a1115f45d720f4dc135c3ae7c4e22dca38fdb1efd6a495ff89ee55472d08bdc98e7ca0c5423c4802d96aa01947abb263ebaa2d15129fe02537be70c66dd0a11fa14cbb3eefb176d8865817f592e04b8e6235996a0497c8109"
+      },
+      {
+        "description": "State byte 02.",
+        "expected_error": "malformed_statement",
+        "name": "unknown_state_byte",
+        "trust_setup": {
+          "key_epoch": 1,
+          "members": [
+            "A",
+            "B",
+            "C"
+          ],
+          "self": "B"
+        },
+        "wire": "746f6d692f76312f7369672f70696e005e1f0c2a7b3d4e8f9a610c2d4e6f8a100e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d000001a1a42d61c002dde3bccec7f3a66a1115f45d720f4dc135c3ae7c4e22dca38fdb1efd6a495ff89ee55472d08bdc98e7ca0c5423c4802d96aa01947abb263ebaa2d15129fe02537be70c66dd0a11fa14cbb3eefb176d8865817f592e04b8e6235996a0497c8109"
+      },
+      {
+        "description": "at_ms = 2^53 = 9007199254740992 (offset 48), valid signature by B: bound at_ms <= 2^53 - 1.",
+        "expected_error": "malformed_statement",
+        "name": "at_ms_above_2_53_minus_1",
+        "trust_setup": {
+          "key_epoch": 1,
+          "members": [
+            "A",
+            "B",
+            "C"
+          ],
+          "self": "B"
+        },
+        "wire": "746f6d692f76312f7369672f70696e005e1f0c2a7b3d4e8f9a610c2d4e6f8a100e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d002000000000000001dde3bccec7f3a66a1115f45d720f4dc135c3ae7c4e22dca38fdb1efd6a495ff81cf73ea1eecebfab914ab809f4964f6db5f1ae580f54b593edcb31d5e3a2c6d42b4fe4912e5219eeecc045276422f27bb4e9beb841821e713455629c51131908"
+      },
+      {
+        "description": "Valid pin signed by D, which is not a member.",
+        "expected_error": "untrusted_signer",
+        "name": "untrusted_signer",
+        "trust_setup": {
+          "key_epoch": 1,
+          "members": [
+            "A",
+            "B",
+            "C"
+          ],
+          "self": "B"
+        },
+        "wire": "746f6d692f76312f7369672f70696e005e1f0c2a7b3d4e8f9a610c2d4e6f8a100e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d000001a1a42d61c001ed54a59fb1ac3a51239351362941b868e85a60e3d7b2485d828821dc7a69c27922a5920c1f3659356a4ebc2d103be25b14b2a65eebd299e59adfb1fa4713595e95d0e3465046bdcf7c1addb7f5f4d2d08baf748f4ea3e35d33ad0d2e4e5be806"
+      },
+      {
+        "description": "Pin signed by C, presented to B after rotation.json (C revoked).",
+        "expected_error": "revoked_device",
+        "name": "revoked_signer",
+        "trust_setup": {
+          "apply_rotation": "rotation.json",
+          "key_epoch": 1,
+          "members": [
+            "A",
+            "B",
+            "C"
+          ],
+          "self": "B"
+        },
+        "wire": "746f6d692f76312f7369672f70696e005e1f0c2a7b3d4e8f9a610c2d4e6f8a100e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d000001a1a42d61c00113d9908a70925992ed546007d27f50da68ba7217ef62ac3cca784529ff10471c9e78a75d7568d376049eb0e322ea63a9634f0d3d62e79c540d048575e8cf9965ccadb125f208a32713a86fe83c89a39e23e1fdd504d9882ba6baba56d4091c0c"
+      },
+      {
+        "description": "Pin signed by B for another space.",
+        "expected_error": "space_mismatch",
+        "name": "other_space",
+        "trust_setup": {
+          "key_epoch": 1,
+          "members": [
+            "A",
+            "B",
+            "C"
+          ],
+          "self": "B"
+        },
+        "wire": "746f6d692f76312f7369672f70696e006f2a1d3b8c4e4f908b721d3e5f7a9b210e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d000001a1a42d61c001dde3bccec7f3a66a1115f45d720f4dc135c3ae7c4e22dca38fdb1efd6a495ff8ad54984107304450cac95f49449019217bace3767ea509acb559b9bfc1c4cda73e1c4f81566085cf5ffa80cba0fb36a0293d5df2f47fe0ce93d9dc7c25ca9f0f"
+      }
+    ]
+  },
+  "frozen": "FROZEN as of publication — never modify this file (spec/vectors/v1/README.md).",
+  "history_index": {
+    "expected_pins": [
+      {
+        "item_id": "8a8b8c8d-8e8f-4091-8293-949596979899",
+        "pin": {
+          "at_ms": 1793755800000,
+          "pinned": true
+        }
+      },
+      {
+        "item_id": "5c5d5e5f-6061-4263-8465-666768696a6b",
+        "pin": {
+          "at_ms": 1793759400000,
+          "pinned": false
+        }
+      },
+      {
+        "item_id": "9a9b9c9d-9e9f-40a1-82a3-a4a5a6a7a8a9",
+        "pin": null
+      }
+    ],
+    "index": "{\"kind\":\"header\",\"version\":1,\"space_id\":\"5e1f0c2a-7b3d-4e8f-9a61-0c2d4e6f8a10\",\"transfer_id\":\"c1a7e0d2-5b3f-4e8a-9c61-2d4f6a8b0c1e\",\"as_of_seq\":1793754000123,\"source_device\":\"e983270f3ea7baa8688d15c08d447559\"}\n{\"kind\":\"item\",\"payload\":{\"id\":\"8a8b8c8d-8e8f-4091-8293-949596979899\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000,\"read_policy\":\"until_expiry\",\"secret\":false,\"title\":\"Ticket de caisse\",\"text\":{\"plain\":\"Garantie 2 ans\",\"source_format\":\"plain\"}},\"origin_seq\":1793750400200,\"received_at\":1793750401000,\"read\":true,\"kept\":false,\"files\":[],\"pin\":{\"pinned\":true,\"at\":1793755800000}}\n{\"kind\":\"item\",\"payload\":{\"id\":\"5c5d5e5f-6061-4263-8465-666768696a6b\",\"source_device\":\"6896f283182ae9776ed478f4a300426d\",\"created_at\":1793750400000,\"read_policy\":\"until_expiry\",\"secret\":true,\"title\":\"Code Wi-Fi maison\",\"text\":{\"plain\":\"correct horse battery staple\",\"source_format\":\"plain\"}},\"origin_seq\":1793750400201,\"received_at\":1793750401000,\"read\":true,\"kept\":false,\"files\":[],\"pin\":{\"pinned\":false,\"at\":1793759400000}}\n{\"kind\":\"item\",\"payload\":{\"id\":\"9a9b9c9d-9e9f-40a1-82a3-a4a5a6a7a8a9\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000,\"read_policy\":\"until_expiry\",\"secret\":false,\"title\":\"Sans épingle\",\"text\":{\"plain\":\"jamais épinglé\",\"source_format\":\"plain\"}},\"origin_seq\":1793750400202,\"received_at\":1793750401000,\"read\":true,\"kept\":false,\"files\":[]}\n{\"kind\":\"end\",\"items\":3,\"skipped\":{\"unreadable\":0,\"files_unavailable\":0}}\n",
+    "manifest_from": "history-transfer.json"
+  },
+  "item_state_keys": [
+    {
+      "info": "746f6d692f76312f686b64662f6974656d2d7374617465",
+      "info_ascii": "tomi/v1/hkdf/item-state",
+      "key_epoch": 1,
+      "okm": "4cc1cf9910b1ebababd5106a1c2721614af121e00d1405c0be86b11c1cbd9737",
+      "salt": "",
+      "space_key": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f"
+    },
+    {
+      "info": "746f6d692f76312f686b64662f6974656d2d7374617465",
+      "info_ascii": "tomi/v1/hkdf/item-state",
+      "key_epoch": 2,
+      "okm": "93cd510ebadd545e7782ddab07c5b176f550f2f7afb4dd38c090c1c6fd4b53ad",
+      "salt": "",
+      "space_key": "707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f"
+    }
+  ],
+  "next_at": [
+    {
+      "current": null,
+      "expected_at_ms": 1000,
+      "now_ms": 1000
+    },
+    {
+      "current": {
+        "at_ms": 5000,
+        "pinned": true
+      },
+      "expected_at_ms": 5001,
+      "now_ms": 1000
+    },
+    {
+      "current": {
+        "at_ms": 500,
+        "pinned": false
+      },
+      "expected_at_ms": 1000,
+      "now_ms": 1000
+    }
+  ],
+  "space_id": "5e1f0c2a-7b3d-4e8f-9a61-0c2d4e6f8a10",
+  "statements": [
+    {
+      "at_ms": 1793755800000,
+      "item_id": "0e7b5a3c-1d2f-4a6b-8c9d-0e1f2a3b4c5d",
+      "name": "pin_by_b",
+      "pinned": true,
+      "signature": "9ee55472d08bdc98e7ca0c5423c4802d96aa01947abb263ebaa2d15129fe02537be70c66dd0a11fa14cbb3eefb176d8865817f592e04b8e6235996a0497c8109",
+      "signed_bytes": "746f6d692f76312f7369672f70696e005e1f0c2a7b3d4e8f9a610c2d4e6f8a100e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d000001a1a42d61c001dde3bccec7f3a66a1115f45d720f4dc135c3ae7c4e22dca38fdb1efd6a495ff8",
+      "signer": "B",
+      "space_id": "5e1f0c2a-7b3d-4e8f-9a61-0c2d4e6f8a10",
+      "wire": "746f6d692f76312f7369672f70696e005e1f0c2a7b3d4e8f9a610c2d4e6f8a100e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d000001a1a42d61c001dde3bccec7f3a66a1115f45d720f4dc135c3ae7c4e22dca38fdb1efd6a495ff89ee55472d08bdc98e7ca0c5423c4802d96aa01947abb263ebaa2d15129fe02537be70c66dd0a11fa14cbb3eefb176d8865817f592e04b8e6235996a0497c8109",
+      "wire_len": 153
+    },
+    {
+      "at_ms": 1793759400000,
+      "item_id": "0e7b5a3c-1d2f-4a6b-8c9d-0e1f2a3b4c5d",
+      "name": "unpin_by_a",
+      "pinned": false,
+      "signature": "c54387a7374dfb9570e52009778a880aeabcb0c1154ff8bb403aadbd9b325963e21f8e234495c48d5a19ce37f82b38a363bf8d45c7d4c52c56b5b8015261130e",
+      "signed_bytes": "746f6d692f76312f7369672f70696e005e1f0c2a7b3d4e8f9a610c2d4e6f8a100e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d000001a1a4645040004fd099ccd47d7893dfe9ec24414ecb0d9b5420232aad30d91c465be33cbe65c4",
+      "signer": "A",
+      "space_id": "5e1f0c2a-7b3d-4e8f-9a61-0c2d4e6f8a10",
+      "wire": "746f6d692f76312f7369672f70696e005e1f0c2a7b3d4e8f9a610c2d4e6f8a100e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d000001a1a4645040004fd099ccd47d7893dfe9ec24414ecb0d9b5420232aad30d91c465be33cbe65c4c54387a7374dfb9570e52009778a880aeabcb0c1154ff8bb403aadbd9b325963e21f8e234495c48d5a19ce37f82b38a363bf8d45c7d4c52c56b5b8015261130e",
+      "wire_len": 153
+    }
+  ],
+  "unknown_kind": {
+    "description": "State content of an unknown type (unknown inner label): ignored, without error.",
+    "envelope": "0000000100000001e0000000000040008000000000000001303132333435363738393a3b3c3d3e3f404142434445464710dd45bf5587fc18f30c9ef8ce4b9a45c6b602c8dbbb415332c7570c559617f68726753594f8ceffc5a02175564fa778d67864f05739f252c903a6c9f2fe2531df1038d489d754dc143a556ad2ac4e73b32ece073ec27e65d77c45bdbb7e07c4a353bc6f48246a2f5c8dc65a2270ad1d682671a6d8977d5aab53c7190942ebada1d744bb2a837824da9db092747c8f27d7e31f3848bdd96e68959a8d6ef909f7a74906028cffaeaf0ddec089f17d303fcc9299c3350e80fc5fbdc22cfa0c715a3231d70ca98fa233c5ee1ccf1aa7e3510914f2d8ba9b4c61a1e4aa5b24ad27afa222a8eb04d58e472c86fadf517c76982cdcad7a4303720575d5ce62b2fc1b830d203f433399aa93b613c0bcdcc162de",
+    "event_id": "e0000000-0000-4000-8000-000000000001",
+    "expected": "unknown",
+    "inner": "746f6d692f76312f7369672f667574757265000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728",
+    "key_epoch": 1
+  }
+}

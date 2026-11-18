@@ -1,0 +1,420 @@
+/*
+ * Tomi, Windows client: design tokens and base components.
+ *
+ * Values come from design/tomi/tokens.json (charter section 4 to 6). The theme is chosen by
+ * `data-theme="light" | "dark"` on <html>, set by lib/theme.svelte.ts from the system theme or
+ * from the setting (Système / Clair / Sombre). Night #24324A and sun #FFC85C are identity colours,
+ * kept for the symbol: the interface uses `brand` (see the comment of each token).
+ */
+
+/* Fonts are embedded (charter 5: no network). Inter and JetBrains Mono, SIL OFL 1.1: the licence
+   texts are next to the files in ./assets/fonts. */
+@font-face {
+  font-family: "Inter";
+  src: url("./assets/fonts/Inter-Variable.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("./assets/fonts/JetBrainsMono-Variable.ttf") format("truetype");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* Typography (font.family.*, font.size.*, font.line.*) */
+  --font-ui: "Inter", "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Mono", Consolas, monospace;
+  --fs-title: 20px;
+  --lh-title: 26px;
+  --fs-subtitle: 16px;
+  --lh-subtitle: 22px;
+  --fs-body: 15px;
+  --lh-body: 22px;
+  --fs-label: 14px;
+  --lh-label: 20px;
+  --fs-caption: 12px;
+  --lh-caption: 16px;
+  --fs-mono: 14px;
+  --lh-mono: 20px;
+  --fs-pairing-code: 28px;
+
+  /* Spacing (space.1 to space.6) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  /* Radii (radius.*) and borders */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 999px;
+  --radius: var(--radius-md);
+  --border-width: 1px;
+  --secret-accent-width: 3px;
+  --focus-width: 2px;
+
+  /* Motion (motion.duration.*) */
+  --dur-short: 150ms;
+  --dur-medium: 250ms;
+
+  /* Light theme (color.light.*) */
+  --bg: #f6f4ef;
+  --surface: #ffffff;
+  --surface-alt: #ece9e2;
+  --text: #1b2130;
+  --muted: #565c6b;
+  --border: #d5d1c7;
+  --border-strong: #858996;
+  --brand: #2e4c80;
+  --on-brand: #ffffff;
+  --brand-container: #e3e9f4;
+  --secondary: #8c5f14;
+  --secret: #6f4f7c;
+  --secret-container: #efe8f1;
+  --success: #2e6b45;
+  --error: #b3261e;
+  /* Text on a filled error surface: derived, the charter has no token for it. */
+  --on-error: #ffffff;
+  /* Colour of the symbol on this background (charter 9: night on light, brand on dark). */
+  --logo: #24324a;
+
+  color-scheme: light;
+  font-family: var(--font-ui);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+:root[data-theme="dark"] {
+  --bg: #121620;
+  --surface: #1a1f2b;
+  --surface-alt: #242a38;
+  --text: #e9e7e1;
+  --muted: #a6abb8;
+  --border: #383e4c;
+  --border-strong: #6f7587;
+  --brand: #a9bfea;
+  --on-brand: #121620;
+  --brand-container: #24324a;
+  --secondary: #e0b160;
+  --secret: #cdb3d9;
+  --secret-container: #2e2636;
+  --success: #8fcfa6;
+  --error: #f2b8b5;
+  --on-error: #121620;
+  --logo: #a9bfea;
+
+  color-scheme: dark;
+}
+
+:root {
+  /* Derived from tokens: a tinted surface for notices (waiting states use `secondary`). */
+  --notice-bg: color-mix(in srgb, var(--secondary) 14%, var(--surface));
+  --error-bg: color-mix(in srgb, var(--error) 12%, var(--surface));
+  --hover: color-mix(in srgb, var(--text) 8%, transparent);
+  --pressed: color-mix(in srgb, var(--text) 14%, transparent);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+  font-optical-sizing: auto;
+}
+
+::selection {
+  background: var(--brand-container);
+  color: var(--text);
+}
+
+input,
+textarea,
+.selectable {
+  user-select: text;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+/* ---- text styles (charter 5) ---- */
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-weight: 600;
+}
+h1 {
+  font-size: var(--fs-title);
+  line-height: var(--lh-title);
+}
+h2 {
+  font-size: var(--fs-subtitle);
+  line-height: var(--lh-subtitle);
+}
+h3 {
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+}
+.muted {
+  color: var(--muted);
+}
+.small {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+.mono {
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono);
+  line-height: var(--lh-mono);
+  /* Exact text (URL, token, command): JetBrains Mono draws "://" through `calt` ("https: //"). */
+  font-feature-settings: "calt" 0, "liga" 0;
+}
+/* Figures of times, sizes, counters and codes: fixed width. */
+.tnum {
+  font-feature-settings: "tnum" 1;
+}
+/* A revealed password: slashed zero. */
+.password {
+  font-feature-settings: "zero" 1, "calt" 0, "liga" 0;
+}
+
+/* ---- buttons ---- */
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  background: var(--surface);
+  color: var(--text);
+  border: var(--border-width) solid var(--border-strong);
+  border-radius: var(--radius-md);
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background-color var(--dur-short),
+    border-color var(--dur-short);
+}
+button:hover:not(:disabled) {
+  background: var(--surface-alt);
+}
+button:active:not(:disabled) {
+  background: var(--pressed);
+}
+button:disabled {
+  color: var(--muted);
+  opacity: 0.6;
+  cursor: default;
+}
+button.primary {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--on-brand);
+}
+button.primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--brand) 88%, var(--text));
+}
+button.primary:active:not(:disabled) {
+  background: color-mix(in srgb, var(--brand) 78%, var(--text));
+}
+button.ghost {
+  background: transparent;
+  border-color: transparent;
+}
+button.ghost:hover:not(:disabled) {
+  background: var(--hover);
+}
+button.ghost:active:not(:disabled) {
+  background: var(--pressed);
+}
+button.danger {
+  color: var(--error);
+}
+button.danger:not(.ghost) {
+  border-color: var(--error);
+}
+/* A square button holding one icon. */
+button.icon {
+  width: 36px;
+  padding: 0;
+  color: var(--muted);
+}
+button.icon:hover:not(:disabled),
+button.icon[aria-expanded="true"] {
+  color: var(--text);
+}
+button.icon.on {
+  color: var(--brand);
+}
+
+/* Filter and mode chips: pill, filled with brand-container when selected. */
+button.chip {
+  min-height: 32px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-full);
+  border-color: var(--border-strong);
+  background: transparent;
+}
+button.chip[aria-pressed="true"],
+button.chip[aria-checked="true"],
+button.chip[aria-selected="true"],
+button.chip.active {
+  background: var(--brand-container);
+  border-color: var(--brand-container);
+  color: var(--brand);
+}
+button.chip.secret[aria-pressed="true"] {
+  background: var(--secret-container);
+  border-color: var(--secret-container);
+  color: var(--secret);
+}
+
+/* ---- fields ---- */
+input[type="text"],
+input[type="search"],
+input[type="password"],
+select,
+textarea {
+  width: 100%;
+  min-height: 36px;
+  background: var(--surface);
+  color: var(--text);
+  border: var(--border-width) solid var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: 6px var(--space-3);
+}
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+textarea {
+  resize: none;
+  line-height: var(--lh-body);
+}
+input:disabled,
+select:disabled,
+textarea:disabled {
+  opacity: 0.6;
+}
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--brand);
+  width: 16px;
+  height: 16px;
+  margin: 0;
+}
+
+/* Keyboard focus: a 2 px ring in brand, 2 px away (focus.ring.width). */
+:focus-visible {
+  outline: var(--focus-width) solid var(--brand);
+  outline-offset: 2px;
+}
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline-offset: 0;
+  border-color: var(--brand);
+}
+
+/* Linear progress only (charter 6.3: never a circular indicator). */
+progress {
+  appearance: none;
+  -webkit-appearance: none;
+  height: 4px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--border);
+  overflow: hidden;
+}
+progress::-webkit-progress-bar {
+  background: var(--border);
+}
+progress::-webkit-progress-value {
+  background: var(--brand);
+  transition: width var(--dur-short);
+}
+
+/* ---- layout helpers ---- */
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.grow {
+  flex: 1;
+  min-width: 0;
+}
+.ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.scroll {
+  overflow-y: auto;
+}
+
+/* ---- surfaces ---- */
+.card-surface {
+  background: var(--surface);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+/* Thin scrollbars that follow the theme. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (forced-colors: active) {
+  button.primary {
+    border-color: ButtonText;
+  }
+}

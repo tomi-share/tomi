@@ -1,0 +1,13 @@
+# Tomi — scheduling of the local backup (every night).
+
+[Unit]
+Description=Tomi relay nightly data backup
+
+[Timer]
+OnCalendar=*-*-* 03:30:00
+RandomizedDelaySec=15min
+Persistent=true
+Unit=tomi-backup.service
+
+[Install]
+WantedBy=timers.target

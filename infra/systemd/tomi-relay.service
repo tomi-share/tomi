@@ -1,0 +1,76 @@
+# Tomi relay — systemd unit.
+# Installed by infra/install.sh to /etc/systemd/system/tomi-relay.service.
+# To customize without editing this file: `systemctl edit tomi-relay` (drop-in).
+# Documentation: see infra/README.md in the repository (the relay runbook).
+
+[Unit]
+Description=Tomi relay (blind store-and-forward for end-to-end encrypted items)
+Documentation=https://relay.example.org/
+After=network-online.target
+Wants=network-online.target
+# Do not start until the data volume is mounted: a relay started on an empty directory
+# would treat itself as new (see also TOMI_RELAY_REQUIRE_EXISTING_DATA_DIR in /etc/tomi/relay.env).
+RequiresMountsFor=/var/lib/tomi
+# No more than 10 restarts per minute, otherwise the unit enters "failed" (visible in systemctl).
+StartLimitIntervalSec=60
+StartLimitBurst=10
+
+[Service]
+Type=simple
+User=tomi
+Group=tomi
+
+# Configuration: KEY=value, without quotes (see /etc/tomi/relay.env).
+# The file is created by install.sh from relay.env.example; if it is missing, the unit fails.
+EnvironmentFile=/etc/tomi/relay.env
+WorkingDirectory=/var/lib/tomi
+# Without arguments, the binary starts the server. The `admin` subcommand is used through tomi-admin.
+ExecStart=/usr/local/bin/tomi-relay
+
+Restart=always
+RestartSec=2
+TimeoutStopSec=30
+KillSignal=SIGTERM
+
+# Logs: stdout/stderr go to journald (`journalctl -u tomi-relay`).
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=tomi-relay
+
+LimitNOFILE=65536
+UMask=0077
+
+# --- Hardening ---
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+# File system: everything read-only except the data directory.
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ReadWritePaths=/var/lib/tomi
+ProtectProc=invisible
+ProcSubset=pid
+# Kernel and system
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+# Network: IPv4/IPv6 (clients, FCM) and Unix sockets (local DNS resolver).
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+RemoveIPC=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged @resources
+SystemCallErrorNumber=EPERM
+
+[Install]
+WantedBy=multi-user.target

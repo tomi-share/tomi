@@ -1,0 +1,3 @@
+# The embedded word list is hashed byte for byte (a test checks its SHA-256, spec/pairing-v1.md
+# Annex B): never convert its line endings, whatever core.autocrlf says.
+wordlist_fr.txt -text

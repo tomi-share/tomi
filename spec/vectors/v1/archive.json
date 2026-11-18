@@ -1,0 +1,434 @@
+{
+  "convergence": [
+    {
+      "description": "Archived at 100, unarchived at 200: unarchived.",
+      "events": [
+        {
+          "archived": true,
+          "at_ms": 100
+        },
+        {
+          "archived": false,
+          "at_ms": 200
+        }
+      ],
+      "expected": {
+        "archived": false,
+        "at_ms": 200
+      },
+      "name": "later_unarchive_wins"
+    },
+    {
+      "description": "Same events received in reverse order: same result.",
+      "events": [
+        {
+          "archived": false,
+          "at_ms": 200
+        },
+        {
+          "archived": true,
+          "at_ms": 100
+        }
+      ],
+      "expected": {
+        "archived": false,
+        "at_ms": 200
+      },
+      "name": "order_independent"
+    },
+    {
+      "description": "Same timestamp: archived wins.",
+      "events": [
+        {
+          "archived": false,
+          "at_ms": 300
+        },
+        {
+          "archived": true,
+          "at_ms": 300
+        }
+      ],
+      "expected": {
+        "archived": true,
+        "at_ms": 300
+      },
+      "name": "tie_archived_wins"
+    },
+    {
+      "description": "Same timestamp, reverse order.",
+      "events": [
+        {
+          "archived": true,
+          "at_ms": 300
+        },
+        {
+          "archived": false,
+          "at_ms": 300
+        }
+      ],
+      "expected": {
+        "archived": true,
+        "at_ms": 300
+      },
+      "name": "tie_archived_wins_reversed"
+    },
+    {
+      "description": "The relay replays an old event: no effect.",
+      "events": [
+        {
+          "archived": true,
+          "at_ms": 100
+        },
+        {
+          "archived": false,
+          "at_ms": 200
+        },
+        {
+          "archived": true,
+          "at_ms": 100
+        }
+      ],
+      "expected": {
+        "archived": false,
+        "at_ms": 200
+      },
+      "name": "replayed_old_event_ignored"
+    }
+  ],
+  "description": "Shared, encrypted archive (§8.9), twin of pin.json: signed archive/unarchive statement (157 bytes, label tomi/v1/sig/archive), item state envelope encrypted under K_state (320 bytes, identical to a pin's for the relay), last-writer-wins convergence on (at_ms, archived), epoch ordering rule, archive field of the history transfer index (manifest of history-transfer.json), distinction of types by the inner label, and failure cases. Devices in device.json, rotation in rotation.json.",
+  "envelopes": [
+    {
+      "aad": "746f6d692f76312f6161642f6974656d2d7374617465000000000100000001e00000000000400080000000000000a1",
+      "ciphertext": "415cf77360df244234886f88655f5d2a7045b3449b7ec133d8ebf80c50eea325c74740f99b204e3dc75d8db9bf1e69a041a9c90f8d7ac406b024bd3ffc2352cee63c267714c336b4a9c6497f3e8b2f53a840a68f6ef94e6136e72dc3a4fcc020d312e3bddaaac13695e5a5acb0b0da4a831b4d8b6c0fc2e428ef15fe6eb84fc490ea87e407790872ac632fca65aef0f48ea97168fbf1d167c01f41a7fb97b70f8920cbe28d38d3ff4d9c0dfb16efe57875458d3df2603f370e270b2d7d1c1fb35f4ed0e4b94fdb071456e5e33104f5c6512b4f7e952d69d3df812f63001b413337bbbd159b3b5918a1ee5837aba70cad750c1c12ad8341126c78d6c6d6ea878b21e7c64aece115895d9e35abd282c3d1",
+      "envelope": "0000000100000001e00000000000400080000000000000a1606162636465666768696a6b6c6d6e6f7071727374757677415cf77360df244234886f88655f5d2a7045b3449b7ec133d8ebf80c50eea325c74740f99b204e3dc75d8db9bf1e69a041a9c90f8d7ac406b024bd3ffc2352cee63c267714c336b4a9c6497f3e8b2f53a840a68f6ef94e6136e72dc3a4fcc020d312e3bddaaac13695e5a5acb0b0da4a831b4d8b6c0fc2e428ef15fe6eb84fc490ea87e407790872ac632fca65aef0f48ea97168fbf1d167c01f41a7fb97b70f8920cbe28d38d3ff4d9c0dfb16efe57875458d3df2603f370e270b2d7d1c1fb35f4ed0e4b94fdb071456e5e33104f5c6512b4f7e952d69d3df812f63001b413337bbbd159b3b5918a1ee5837aba70cad750c1c12ad8341126c78d6c6d6ea878b21e7c64aece115895d9e35abd282c3d1",
+      "envelope_len": 320,
+      "event_id": "e0000000-0000-4000-8000-0000000000a1",
+      "format": 1,
+      "item_state_key": "4cc1cf9910b1ebababd5106a1c2721614af121e00d1405c0be86b11c1cbd9737",
+      "key_epoch": 1,
+      "name": "archive_by_b_epoch1",
+      "nonce": "606162636465666768696a6b6c6d6e6f7071727374757677",
+      "padded": "746f6d692f76312f7369672f61726368697665005e1f0c2a7b3d4e8f9a610c2d4e6f8a100e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d000001a1a436898001dde3bccec7f3a66a1115f45d720f4dc135c3ae7c4e22dca38fdb1efd6a495ff8086d8811aa949d1bafae961a1b149da9ba94e530e5e200901b8d92a8f1d16b5d576298674c6ff5af9691db114af6f9852986e082e1efbc6c1e53ff20ab309c0e800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "space_key": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+      "statement": "archive_by_b"
+    },
+    {
+      "aad": "746f6d692f76312f6161642f6974656d2d7374617465000000000100000002e00000000000400080000000000000a2",
+      "ciphertext": "235dd4a54483e3bad6367ab301272a9d4f38de1536aba15c7dd9803e672c25f331837ecddc0e860b8fc9e5022add7d07bcd730f1bf0722cb0c29586706e7c1a9e5b96530476b57150659d28adb15d46f8fcddd848af094bddbbe2f2b895a20c1bfa71be26142b1951efa7f66725fac3b9b431826110634ac530fefc3654be6d4b8bef4776f7d73ea0154903f9ad178ae2abbc8bdabf16d49c2e82b03bd676d0e0b1551208bf3b327e5d6f12ea3e29680c6d55bb517f85debd6e46fa57df775e6b8519a14792893e17b9252459b5c4e9c668e0a1df202aa1ccf508bcd3ae0211a32aa6b93348ece8fc11446ca8fb0007bbe49b0b5893e2b4af6ce4795d7d86b6a0faa5cf533e584d0296fb9bd9c1bebe8",
+      "envelope": "0000000100000002e00000000000400080000000000000a278797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f235dd4a54483e3bad6367ab301272a9d4f38de1536aba15c7dd9803e672c25f331837ecddc0e860b8fc9e5022add7d07bcd730f1bf0722cb0c29586706e7c1a9e5b96530476b57150659d28adb15d46f8fcddd848af094bddbbe2f2b895a20c1bfa71be26142b1951efa7f66725fac3b9b431826110634ac530fefc3654be6d4b8bef4776f7d73ea0154903f9ad178ae2abbc8bdabf16d49c2e82b03bd676d0e0b1551208bf3b327e5d6f12ea3e29680c6d55bb517f85debd6e46fa57df775e6b8519a14792893e17b9252459b5c4e9c668e0a1df202aa1ccf508bcd3ae0211a32aa6b93348ece8fc11446ca8fb0007bbe49b0b5893e2b4af6ce4795d7d86b6a0faa5cf533e584d0296fb9bd9c1bebe8",
+      "envelope_len": 320,
+      "event_id": "e0000000-0000-4000-8000-0000000000a2",
+      "format": 1,
+      "item_state_key": "93cd510ebadd545e7782ddab07c5b176f550f2f7afb4dd38c090c1c6fd4b53ad",
+      "key_epoch": 2,
+      "name": "unarchive_by_a_epoch2",
+      "nonce": "78797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f",
+      "padded": "746f6d692f76312f7369672f61726368697665005e1f0c2a7b3d4e8f9a610c2d4e6f8a100e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d000001a1a46d7800004fd099ccd47d7893dfe9ec24414ecb0d9b5420232aad30d91c465be33cbe65c4ed2eac3deb8b8391090e0f3592c35144840c4c964c63929f344cc94c362718f13b6b9bf64ac856b1129d888928d7cbe042a915941776fb5bc1ba0d56f433740a800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "space_key": "707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f",
+      "statement": "unarchive_by_a"
+    }
+  ],
+  "epoch_rule": {
+    "cases": [
+      {
+        "envelope_of": "archive_by_b_epoch1",
+        "expected": "opened",
+        "name": "epoch1_before_rotation",
+        "seq": 1793757599999
+      },
+      {
+        "envelope_of": "archive_by_b_epoch1",
+        "expected": "suspect_epoch",
+        "name": "epoch1_after_rotation",
+        "seq": 1793757600001
+      },
+      {
+        "envelope_of": "unarchive_by_a_epoch2",
+        "expected": "opened",
+        "name": "epoch2_after_rotation",
+        "seq": 1793757600002
+      }
+    ],
+    "key_pending": {
+      "envelope_of": "unarchive_by_a_epoch2",
+      "expected": "key_pending",
+      "ring_epochs": [
+        1
+      ]
+    },
+    "rotation": "rotation.json (epoch 1 -> 2)",
+    "rotation_seq": 1793757600000
+  },
+  "failures": {
+    "envelope": [
+      {
+        "announced_event_id": "e0000000-0000-4000-8000-0000000000a1",
+        "description": "Last byte (tag) modified.",
+        "envelope": "0000000100000001e00000000000400080000000000000a1606162636465666768696a6b6c6d6e6f7071727374757677415cf77360df244234886f88655f5d2a7045b3449b7ec133d8ebf80c50eea325c74740f99b204e3dc75d8db9bf1e69a041a9c90f8d7ac406b024bd3ffc2352cee63c267714c336b4a9c6497f3e8b2f53a840a68f6ef94e6136e72dc3a4fcc020d312e3bddaaac13695e5a5acb0b0da4a831b4d8b6c0fc2e428ef15fe6eb84fc490ea87e407790872ac632fca65aef0f48ea97168fbf1d167c01f41a7fb97b70f8920cbe28d38d3ff4d9c0dfb16efe57875458d3df2603f370e270b2d7d1c1fb35f4ed0e4b94fdb071456e5e33104f5c6512b4f7e952d69d3df812f63001b413337bbbd159b3b5918a1ee5837aba70cad750c1c12ad8341126c78d6c6d6ea878b21e7c64aece115895d9e35abd282c3d0",
+        "expected_error": "decryption_failed",
+        "name": "ciphertext_bit_flip",
+        "open_with_key_epoch": 1
+      },
+      {
+        "announced_event_id": "e0000000-0000-4000-8000-000000000009",
+        "description": "The relay lists the event under a different event_id.",
+        "envelope": "0000000100000001e00000000000400080000000000000a1606162636465666768696a6b6c6d6e6f7071727374757677415cf77360df244234886f88655f5d2a7045b3449b7ec133d8ebf80c50eea325c74740f99b204e3dc75d8db9bf1e69a041a9c90f8d7ac406b024bd3ffc2352cee63c267714c336b4a9c6497f3e8b2f53a840a68f6ef94e6136e72dc3a4fcc020d312e3bddaaac13695e5a5acb0b0da4a831b4d8b6c0fc2e428ef15fe6eb84fc490ea87e407790872ac632fca65aef0f48ea97168fbf1d167c01f41a7fb97b70f8920cbe28d38d3ff4d9c0dfb16efe57875458d3df2603f370e270b2d7d1c1fb35f4ed0e4b94fdb071456e5e33104f5c6512b4f7e952d69d3df812f63001b413337bbbd159b3b5918a1ee5837aba70cad750c1c12ad8341126c78d6c6d6ea878b21e7c64aece115895d9e35abd282c3d1",
+        "expected_error": "event_id_mismatch",
+        "name": "announced_event_id_differs",
+        "open_with_key_epoch": 1
+      },
+      {
+        "announced_event_id": "e0000000-0000-4000-8000-000000000009",
+        "description": "Header event_id rewritten (and announced): the AAD no longer matches.",
+        "envelope": "0000000100000001e0000000000040008000000000000009606162636465666768696a6b6c6d6e6f7071727374757677415cf77360df244234886f88655f5d2a7045b3449b7ec133d8ebf80c50eea325c74740f99b204e3dc75d8db9bf1e69a041a9c90f8d7ac406b024bd3ffc2352cee63c267714c336b4a9c6497f3e8b2f53a840a68f6ef94e6136e72dc3a4fcc020d312e3bddaaac13695e5a5acb0b0da4a831b4d8b6c0fc2e428ef15fe6eb84fc490ea87e407790872ac632fca65aef0f48ea97168fbf1d167c01f41a7fb97b70f8920cbe28d38d3ff4d9c0dfb16efe57875458d3df2603f370e270b2d7d1c1fb35f4ed0e4b94fdb071456e5e33104f5c6512b4f7e952d69d3df812f63001b413337bbbd159b3b5918a1ee5837aba70cad750c1c12ad8341126c78d6c6d6ea878b21e7c64aece115895d9e35abd282c3d1",
+        "expected_error": "decryption_failed",
+        "name": "header_event_id_rewritten",
+        "open_with_key_epoch": 1
+      },
+      {
+        "announced_event_id": "e0000000-0000-4000-8000-0000000000a1",
+        "description": "One byte fewer.",
+        "envelope": "0000000100000001e00000000000400080000000000000a1606162636465666768696a6b6c6d6e6f7071727374757677415cf77360df244234886f88655f5d2a7045b3449b7ec133d8ebf80c50eea325c74740f99b204e3dc75d8db9bf1e69a041a9c90f8d7ac406b024bd3ffc2352cee63c267714c336b4a9c6497f3e8b2f53a840a68f6ef94e6136e72dc3a4fcc020d312e3bddaaac13695e5a5acb0b0da4a831b4d8b6c0fc2e428ef15fe6eb84fc490ea87e407790872ac632fca65aef0f48ea97168fbf1d167c01f41a7fb97b70f8920cbe28d38d3ff4d9c0dfb16efe57875458d3df2603f370e270b2d7d1c1fb35f4ed0e4b94fdb071456e5e33104f5c6512b4f7e952d69d3df812f63001b413337bbbd159b3b5918a1ee5837aba70cad750c1c12ad8341126c78d6c6d6ea878b21e7c64aece115895d9e35abd282c3",
+        "expected_error": "malformed_envelope",
+        "name": "truncated",
+        "open_with_key_epoch": 1
+      },
+      {
+        "announced_event_id": "e0000000-0000-4000-8000-0000000000a1",
+        "description": "Archive statement truncated by one byte, correctly encrypted.",
+        "envelope": "0000000100000001e00000000000400080000000000000a1606162636465666768696a6b6c6d6e6f7071727374757677415cf77360df244234886f88655f5d2a7045b3449b7ec133d8ebf80c50eea325c74740f99b204e3dc75d8db9bf1e69a041a9c90f8d7ac406b024bd3ffc2352cee63c267714c336b4a9c6497f3e8b2f53a840a68f6ef94e6136e72dc3a4fcc020d312e3bddaaac13695e5a5acb0b0da4a831b4d8b6c0fc2e428ef15fe6eb84fc490ea87e407790872ac632fca65aef0f48ea97168fbf1d167c01f41a77517b70f8920cbe28d38d3ff4d9c0dfb16efe57875458d3df2603f370e270b2d7d1c1fb35f4ed0e4b94fdb071456e5e33104f5c6512b4f7e952d69d3df812f63001b413337bbbd159b3b5918a1ee5837aba70cad750c1c12ad8341126c78d6c6d6ea878b4e7bf40b4d13686e45d69a2cbbf8bde1",
+        "expected_error": "malformed_statement",
+        "name": "inner_archive_wrong_length",
+        "open_with_key_epoch": 1
+      }
+    ],
+    "statement": [
+      {
+        "description": "State byte (offset 60) changed from 01 to 00 after signing.",
+        "expected_error": "invalid_signature",
+        "name": "state_flipped",
+        "trust_setup": {
+          "key_epoch": 1,
+          "members": [
+            "A",
+            "B",
+            "C"
+          ],
+          "self": "B"
+        },
+        "wire": "746f6d692f76312f7369672f61726368697665005e1f0c2a7b3d4e8f9a610c2d4e6f8a100e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d000001a1a436898000dde3bccec7f3a66a1115f45d720f4dc135c3ae7c4e22dca38fdb1efd6a495ff8086d8811aa949d1bafae961a1b149da9ba94e530e5e200901b8d92a8f1d16b5d576298674c6ff5af9691db114af6f9852986e082e1efbc6c1e53ff20ab309c0e"
+      },
+      {
+        "description": "State byte 02.",
+        "expected_error": "malformed_statement",
+        "name": "unknown_state_byte",
+        "trust_setup": {
+          "key_epoch": 1,
+          "members": [
+            "A",
+            "B",
+            "C"
+          ],
+          "self": "B"
+        },
+        "wire": "746f6d692f76312f7369672f61726368697665005e1f0c2a7b3d4e8f9a610c2d4e6f8a100e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d000001a1a436898002dde3bccec7f3a66a1115f45d720f4dc135c3ae7c4e22dca38fdb1efd6a495ff8086d8811aa949d1bafae961a1b149da9ba94e530e5e200901b8d92a8f1d16b5d576298674c6ff5af9691db114af6f9852986e082e1efbc6c1e53ff20ab309c0e"
+      },
+      {
+        "description": "at_ms = 2^53 = 9007199254740992 (offset 52), valid signature by B: bound at_ms <= 2^53 - 1.",
+        "expected_error": "malformed_statement",
+        "name": "at_ms_above_2_53_minus_1",
+        "trust_setup": {
+          "key_epoch": 1,
+          "members": [
+            "A",
+            "B",
+            "C"
+          ],
+          "self": "B"
+        },
+        "wire": "746f6d692f76312f7369672f61726368697665005e1f0c2a7b3d4e8f9a610c2d4e6f8a100e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d002000000000000001dde3bccec7f3a66a1115f45d720f4dc135c3ae7c4e22dca38fdb1efd6a495ff8904cc081c5627bb7bf6202d1b4c844938af76f947e43d9eb1cb6be3b1e355e88701d58ad0c01fa2e4f136dd46d5c533f41086a9640f18bf62100a6827bb85906"
+      },
+      {
+        "description": "Valid archive signed by D, which is not a member.",
+        "expected_error": "untrusted_signer",
+        "name": "untrusted_signer",
+        "trust_setup": {
+          "key_epoch": 1,
+          "members": [
+            "A",
+            "B",
+            "C"
+          ],
+          "self": "B"
+        },
+        "wire": "746f6d692f76312f7369672f61726368697665005e1f0c2a7b3d4e8f9a610c2d4e6f8a100e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d000001a1a436898001ed54a59fb1ac3a51239351362941b868e85a60e3d7b2485d828821dc7a69c2798e9085fd87c86564d2e8b0c320117158199e2eaebe7c0a8280d00ed76f7113aef9fd3f92fee486d4f222e3ff4be62a3edaa594bb5df86234905c7abf58b77205"
+      },
+      {
+        "description": "Archive signed by C, presented to B after rotation.json (C revoked).",
+        "expected_error": "revoked_device",
+        "name": "revoked_signer",
+        "trust_setup": {
+          "apply_rotation": "rotation.json",
+          "key_epoch": 1,
+          "members": [
+            "A",
+            "B",
+            "C"
+          ],
+          "self": "B"
+        },
+        "wire": "746f6d692f76312f7369672f61726368697665005e1f0c2a7b3d4e8f9a610c2d4e6f8a100e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d000001a1a43689800113d9908a70925992ed546007d27f50da68ba7217ef62ac3cca784529ff10471c615ba8d5af9876f2ffe8a855a3db2e7f3bee9281a724e9858d03cdfc2169d98340cf3b62e9d9ced76d3cfd6dbd6109911843d850758f0c803fcd258c2d16400f"
+      },
+      {
+        "description": "Archive signed by B for another space.",
+        "expected_error": "space_mismatch",
+        "name": "other_space",
+        "trust_setup": {
+          "key_epoch": 1,
+          "members": [
+            "A",
+            "B",
+            "C"
+          ],
+          "self": "B"
+        },
+        "wire": "746f6d692f76312f7369672f61726368697665006f2a1d3b8c4e4f908b721d3e5f7a9b210e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d000001a1a436898001dde3bccec7f3a66a1115f45d720f4dc135c3ae7c4e22dca38fdb1efd6a495ff89b83ccff2dfd5f36ca8edb56960c5fe3d8373075fb26ce5b6943c5fabf4ae6a20e9354ed6493c132b937f1cf3d1314bab56bdbd4d2f99213a36963c239ab7906"
+      },
+      {
+        "description": "A pin statement (label tomi/v1/sig/pin) read as an archive statement.",
+        "expected_error": "malformed_statement",
+        "name": "pin_statement_is_not_an_archive",
+        "trust_setup": {
+          "key_epoch": 1,
+          "members": [
+            "A",
+            "B",
+            "C"
+          ],
+          "self": "B"
+        },
+        "wire": "746f6d692f76312f7369672f70696e005e1f0c2a7b3d4e8f9a610c2d4e6f8a100e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d000001a1a436898001dde3bccec7f3a66a1115f45d720f4dc135c3ae7c4e22dca38fdb1efd6a495ff8713a0cd43c64a62526e4a14b969db62c48d0175c7d225809db2290257348de35e3ce8c00eaf5cdcbfa7c6f0dcd817618154496ed64e52a353db37f88e34c3005"
+      }
+    ]
+  },
+  "frozen": "FROZEN as of publication — never modify this file (spec/vectors/v1/README.md).",
+  "history_index": {
+    "expected_states": [
+      {
+        "archive": {
+          "archived": true,
+          "at_ms": 1793756400000
+        },
+        "item_id": "8a8b8c8d-8e8f-4091-8293-949596979899",
+        "pin": null
+      },
+      {
+        "archive": {
+          "archived": false,
+          "at_ms": 1793760000000
+        },
+        "item_id": "5c5d5e5f-6061-4263-8465-666768696a6b",
+        "pin": null
+      },
+      {
+        "archive": null,
+        "item_id": "9a9b9c9d-9e9f-40a1-82a3-a4a5a6a7a8a9",
+        "pin": null
+      },
+      {
+        "archive": {
+          "archived": true,
+          "at_ms": 1793756400001
+        },
+        "item_id": "7a7b7c7d-7e7f-4081-8283-848586878889",
+        "pin": {
+          "at_ms": 1793756400000,
+          "pinned": true
+        }
+      }
+    ],
+    "index": "{\"kind\":\"header\",\"version\":1,\"space_id\":\"5e1f0c2a-7b3d-4e8f-9a61-0c2d4e6f8a10\",\"transfer_id\":\"c1a7e0d2-5b3f-4e8a-9c61-2d4f6a8b0c1e\",\"as_of_seq\":1793754000123,\"source_device\":\"e983270f3ea7baa8688d15c08d447559\"}\n{\"kind\":\"item\",\"payload\":{\"id\":\"8a8b8c8d-8e8f-4091-8293-949596979899\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000,\"read_policy\":\"until_expiry\",\"secret\":false,\"title\":\"Ticket de caisse\",\"text\":{\"plain\":\"Garantie 2 ans\",\"source_format\":\"plain\"}},\"origin_seq\":1793750400300,\"received_at\":1793750401000,\"read\":true,\"kept\":false,\"files\":[],\"archive\":{\"archived\":true,\"at\":1793756400000}}\n{\"kind\":\"item\",\"payload\":{\"id\":\"5c5d5e5f-6061-4263-8465-666768696a6b\",\"source_device\":\"6896f283182ae9776ed478f4a300426d\",\"created_at\":1793750400000,\"read_policy\":\"until_expiry\",\"secret\":true,\"title\":\"Code Wi-Fi maison\",\"text\":{\"plain\":\"correct horse battery staple\",\"source_format\":\"plain\"}},\"origin_seq\":1793750400301,\"received_at\":1793750401000,\"read\":true,\"kept\":false,\"files\":[],\"archive\":{\"archived\":false,\"at\":1793760000000}}\n{\"kind\":\"item\",\"payload\":{\"id\":\"9a9b9c9d-9e9f-40a1-82a3-a4a5a6a7a8a9\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000,\"read_policy\":\"until_expiry\",\"secret\":false,\"title\":\"Sans archive\",\"text\":{\"plain\":\"jamais archivé\",\"source_format\":\"plain\"}},\"origin_seq\":1793750400302,\"received_at\":1793750401000,\"read\":true,\"kept\":false,\"files\":[]}\n{\"kind\":\"item\",\"payload\":{\"id\":\"7a7b7c7d-7e7f-4081-8283-848586878889\",\"source_device\":\"d2daf28457ef3d14c9c58d6f488e1844\",\"created_at\":1793750400000,\"read_policy\":\"until_expiry\",\"secret\":false,\"title\":\"Épinglé et archivé\",\"text\":{\"plain\":\"croisement de décisions\",\"source_format\":\"plain\"}},\"origin_seq\":1793750400303,\"received_at\":1793750401000,\"read\":true,\"kept\":false,\"files\":[],\"pin\":{\"pinned\":true,\"at\":1793756400000},\"archive\":{\"archived\":true,\"at\":1793756400001}}\n{\"kind\":\"end\",\"items\":4,\"skipped\":{\"unreadable\":0,\"files_unavailable\":0}}\n",
+    "manifest_from": "history-transfer.json"
+  },
+  "item_state_keys": [
+    {
+      "info": "746f6d692f76312f686b64662f6974656d2d7374617465",
+      "info_ascii": "tomi/v1/hkdf/item-state",
+      "key_epoch": 1,
+      "okm": "4cc1cf9910b1ebababd5106a1c2721614af121e00d1405c0be86b11c1cbd9737",
+      "salt": "",
+      "space_key": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f"
+    },
+    {
+      "info": "746f6d692f76312f686b64662f6974656d2d7374617465",
+      "info_ascii": "tomi/v1/hkdf/item-state",
+      "key_epoch": 2,
+      "okm": "93cd510ebadd545e7782ddab07c5b176f550f2f7afb4dd38c090c1c6fd4b53ad",
+      "salt": "",
+      "space_key": "707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f"
+    }
+  ],
+  "kinds": {
+    "description": "The type of an item state is given by the inner label of the decrypted content. A pin encrypted with the same keys opens as a Pin; a state with an unknown label is ignored without error, as a device that predates archiving does when it meets an archive.",
+    "pin_event_id": "e0000000-0000-4000-8000-0000000000a1",
+    "pin_in_state_envelope": "0000000100000001e00000000000400080000000000000a1606162636465666768696a6b6c6d6e6f7071727374757677415cf77360df244234886f8874445042472cda6ebe5c839639b7baae84e02518875390d588745e6a56efc9cd19b82be26b9284f3294c4c2715cfd703333942d442eac02523a02c0d3581859c83f0ce2177815f4d301cdc2033fc5e9088c8c90ee79e93818a93f216a3b6612645776cf7ba258d1bd96707a8b5fd0a193305d8913c5c947ea52218dfa53c9da50de3933e39752dab1f0ccea8e534713bf517b70f8920cbe28d38d3ff4d9c0dfb16efe57875458d3df2603f370e270b2d7d1c1fb35f4ed0e4b94fdb071456e5e33104f5c6512b4f7e952d69d3df812f63001b413337bbbd159b3b5918a1ee5837aba70cad750c1c12ad8341126c78d6c6d6ea878b1bd0a129fb32959bb35aad6436e297fa",
+    "pin_key_epoch": 1,
+    "unknown_kind": {
+      "envelope": "0000000100000001e00000000000400080000000000000a1606162636465666768696a6b6c6d6e6f7071727374757677415cf77360df244234886f8862584a376b56d645c762c91ca5d1be8ac084a3058727daf887480014cc65dfcb29987ba2758da573af59e18232351c3ffdfeb17228fbd5d17ed22340f4b44632ffbeecfdd40e8453cd76957fcb8d649c5cf4ada8c2b87720c1056fa08ffeb131190a4eafb3feaf8bfc144f76801ec49533ef2d5cf7a6e811a8ef99a9bd29d933e08776140c489ed497ef8298e0b4713bf517b70f8920cbe28d38d3ff4d9c0dfb16efe57875458d3df2603f370e270b2d7d1c1fb35f4ed0e4b94fdb071456e5e33104f5c6512b4f7e952d69d3df812f63001b413337bbbd159b3b5918a1ee5837aba70cad750c1c12ad8341126c78d6c6d6ea878becf312ab5c1ac03f0624dacde77eeb57",
+      "event_id": "e0000000-0000-4000-8000-0000000000a1",
+      "expected": "unknown",
+      "inner": "746f6d692f76312f7369672f667574757265000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728",
+      "key_epoch": 1
+    }
+  },
+  "next_at": [
+    {
+      "current": null,
+      "expected_at_ms": 1000,
+      "now_ms": 1000
+    },
+    {
+      "current": {
+        "archived": true,
+        "at_ms": 5000
+      },
+      "expected_at_ms": 5001,
+      "now_ms": 1000
+    },
+    {
+      "current": {
+        "archived": false,
+        "at_ms": 500
+      },
+      "expected_at_ms": 1000,
+      "now_ms": 1000
+    }
+  ],
+  "space_id": "5e1f0c2a-7b3d-4e8f-9a61-0c2d4e6f8a10",
+  "statements": [
+    {
+      "archived": true,
+      "at_ms": 1793756400000,
+      "item_id": "0e7b5a3c-1d2f-4a6b-8c9d-0e1f2a3b4c5d",
+      "name": "archive_by_b",
+      "signature": "086d8811aa949d1bafae961a1b149da9ba94e530e5e200901b8d92a8f1d16b5d576298674c6ff5af9691db114af6f9852986e082e1efbc6c1e53ff20ab309c0e",
+      "signed_bytes": "746f6d692f76312f7369672f61726368697665005e1f0c2a7b3d4e8f9a610c2d4e6f8a100e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d000001a1a436898001dde3bccec7f3a66a1115f45d720f4dc135c3ae7c4e22dca38fdb1efd6a495ff8",
+      "signer": "B",
+      "space_id": "5e1f0c2a-7b3d-4e8f-9a61-0c2d4e6f8a10",
+      "wire": "746f6d692f76312f7369672f61726368697665005e1f0c2a7b3d4e8f9a610c2d4e6f8a100e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d000001a1a436898001dde3bccec7f3a66a1115f45d720f4dc135c3ae7c4e22dca38fdb1efd6a495ff8086d8811aa949d1bafae961a1b149da9ba94e530e5e200901b8d92a8f1d16b5d576298674c6ff5af9691db114af6f9852986e082e1efbc6c1e53ff20ab309c0e",
+      "wire_len": 157
+    },
+    {
+      "archived": false,
+      "at_ms": 1793760000000,
+      "item_id": "0e7b5a3c-1d2f-4a6b-8c9d-0e1f2a3b4c5d",
+      "name": "unarchive_by_a",
+      "signature": "ed2eac3deb8b8391090e0f3592c35144840c4c964c63929f344cc94c362718f13b6b9bf64ac856b1129d888928d7cbe042a915941776fb5bc1ba0d56f433740a",
+      "signed_bytes": "746f6d692f76312f7369672f61726368697665005e1f0c2a7b3d4e8f9a610c2d4e6f8a100e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d000001a1a46d7800004fd099ccd47d7893dfe9ec24414ecb0d9b5420232aad30d91c465be33cbe65c4",
+      "signer": "A",
+      "space_id": "5e1f0c2a-7b3d-4e8f-9a61-0c2d4e6f8a10",
+      "wire": "746f6d692f76312f7369672f61726368697665005e1f0c2a7b3d4e8f9a610c2d4e6f8a100e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d000001a1a46d7800004fd099ccd47d7893dfe9ec24414ecb0d9b5420232aad30d91c465be33cbe65c4ed2eac3deb8b8391090e0f3592c35144840c4c964c63929f344cc94c362718f13b6b9bf64ac856b1129d888928d7cbe042a915941776fb5bc1ba0d56f433740a",
+      "wire_len": 157
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+[package]
+name = "tomi-relay"
+description = "Tomi relay: blind store-and-forward server for end-to-end encrypted items."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+name = "tomi_relay"
+path = "src/lib.rs"
+
+[[bin]]
+name = "tomi-relay"
+path = "src/main.rs"
+
+[dependencies]
+# The relay never decrypts anything: it only decodes and verifies the signed statements
+# (DeviceCert, KeyRotation, Tombstone, HistoryTransfer) and the clear envelope headers.
+# `default-features = false` is mandatory: no second SQLite / rustls / uniffi in the relay.
+tomi-core = { path = "../../crates/core", default-features = false }
+
+anyhow.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber = { workspace = true, features = ["json"] }
+serde.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
+time.workspace = true
+
+axum = { version = "0.8", default-features = false, features = ["http1", "json", "tokio", "ws", "matched-path"] }
+tokio-util = { version = "0.7", features = ["io"] }
+futures-util = "0.3"
+http-body-util = "0.1"
+bytes = "1"
+form_urlencoded = "1"
+async-trait = "0.1"
+
+# Server-side SQLite (WAL). Same version as tomi-core's optional runtime: one libsqlite3 at most.
+rusqlite = { version = "0.41.1", features = ["bundled"] }
+
+sha2 = "0.11"
+base64 = "0.23"
+hex = "0.4"
+getrandom = "0.4"
+subtle = "2"
+
+# WebAuthn (admin web panel): ES256 verification only, pure Rust (no OpenSSL; `ring` was already there for FCM). Pinned exactly.
+p256 = { version = "=0.14.0", default-features = false, features = ["ecdsa"] }
+toml = "1"
+clap = { version = "4", features = ["derive"] }
+ipnet = "2"
+fs4 = { version = "0.13", default-features = false }
+
+# Outbound FCM HTTP v1 (blocking client run on the blocking pool) and RS256 signing of the
+# Google service-account assertion. Same TLS stack as tomi-core's `http` feature.
+ureq = { version = "3.5.1", default-features = false, features = ["rustls"] }
+ring = "0.17"
+
+[dev-dependencies]
+tempfile = "3"
+tower = { version = "0.5", features = ["util"] }
+tokio-tungstenite = "0.29"
+# Signatures that tomi-core refuses to produce on purpose (a challenge answer without its label).
+ed25519-dalek = "3"
+# A120 probes the `log` -> `tracing` bridge: the third-party crates that could leak a secret
+# (tungstenite, ureq, rustls) log through `log`, not `tracing`.
+log = "0.4"

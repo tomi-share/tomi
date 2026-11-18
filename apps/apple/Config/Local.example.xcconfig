@@ -1,0 +1,4 @@
+// Copy to Local.xcconfig (ignored by git) to build with a default relay of your own. Without it the app has no relay
+// until a pairing link / QR code, the "Relais" field or a creation link gives one.
+// `//` would start a comment inside a value: `$()` splits it.
+TOMI_RELAY_URL = https:/$()/relay.example.org

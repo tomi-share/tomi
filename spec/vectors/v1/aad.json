@@ -1,0 +1,41 @@
+{
+  "description": "Canonical encoding of the AADs (§5.1, §6.3, §7.3). The item_id and the space_id are encoded as 16 raw bytes (RFC 9562), integers in big-endian.",
+  "frozen": "FROZEN as of publication — never modify this file (spec/vectors/v1/README.md).",
+  "vectors": [
+    {
+      "aad": "746f6d692f76312f6161642f63656b2d777261700000000001000000010e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d",
+      "format": 1,
+      "item_id": "0e7b5a3c-1d2f-4a6b-8c9d-0e1f2a3b4c5d",
+      "key_epoch": 1,
+      "kind": "cek_wrap"
+    },
+    {
+      "aad": "746f6d692f76312f6161642f7061796c6f61640000000001000000010e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d",
+      "format": 1,
+      "item_id": "0e7b5a3c-1d2f-4a6b-8c9d-0e1f2a3b4c5d",
+      "key_epoch": 1,
+      "kind": "payload"
+    },
+    {
+      "aad": "746f6d692f76312f6161642f7061796c6f61640000000001000001020e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d",
+      "format": 1,
+      "item_id": "0e7b5a3c-1d2f-4a6b-8c9d-0e1f2a3b4c5d",
+      "key_epoch": 258,
+      "kind": "payload"
+    },
+    {
+      "aad": "746f6d692f76312f6161642f6368756e6b00000000013c3d3e3f404142438445464748494a4b00000002",
+      "attachment_index": 2,
+      "format": 1,
+      "item_id": "3c3d3e3f-4041-4243-8445-464748494a4b",
+      "kind": "chunk"
+    },
+    {
+      "aad": "746f6d692f76312f6161642f6b65792d7472616e73706f7274005e1f0c2a7b3d4e8f9a610c2d4e6f8a1000000002dde3bccec7f3a66a1115f45d720f4dc135c3ae7c4e22dca38fdb1efd6a495ff8",
+      "key_epoch": 2,
+      "kind": "key_transport",
+      "recipient_ed25519": "dde3bccec7f3a66a1115f45d720f4dc135c3ae7c4e22dca38fdb1efd6a495ff8",
+      "space_id": "5e1f0c2a-7b3d-4e8f-9a61-0c2d4e6f8a10"
+    }
+  ]
+}

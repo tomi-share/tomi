@@ -1,0 +1,335 @@
+# Tomi: feature matrix by platform
+
+**Purpose.** A single view of what Tomi does and how each platform does it: Rust core (`crates/core`), relay
+(`apps/relay`), CLI (`crates/cli`), Android (`apps/android`), iOS (`apps/apple`), Windows (`apps/windows`).
+This file is used to **spot differences between platforms and keep them at zero**. The iOS implementation spec is
+in `docs/archive/apple-spec-implementation.md`; the non-negotiable rules are in `AGENTS.md`. Nothing is repeated
+here: this file refers to those documents.
+
+**Last updated: 2026-11-11.**
+
+**Maintenance rule: update this file with every new feature or behaviour change** (same commit as the code). A
+feature that changes on one platform changes the row for all platforms; any new avoidable gap goes under "Open gaps".
+
+## Legend
+
+| Status | Meaning |
+|---|---|
+| ✅ | done: seen implemented in the code (on-device validation is a separate question, see "Not validated on a device") |
+| 🟡 | partial, or an accepted / known gap (the note says which) |
+| ❌ | missing |
+| ➖ | not applicable to this platform |
+| 🚧 | in progress, or not verified ("to verify") |
+
+Reading conventions:
+- **CLI**: `crates/cli` is a shell (`tomi` only prints the version and the format bounds, 9 lines). The column is
+  therefore ➖ everywhere (nothing is planned today); see "Open gaps". Relay operations go through
+  `tomi-relay admin …`, which is a different CLI (local, server-side).
+- **Core** and **Relay**: ➖ when the feature is purely a user-interface concern (the core does not see it) or when
+  the relay is blind (it only sees opaque bytes).
+- The six Android items of 10 November that are still pending on iOS are marked 🚧 "carried over in the working
+  tree, to validate on a Mac": they are not yet committed and their code has not been reviewed here.
+- Abbreviated paths: `KT/` = `apps/android/app/src/main/java/eu/shaffe/tomi/`; `RS/` =
+  `apps/windows/src-tauri/src/`; `FE/` = `apps/windows/src/`; `SW/` = `apps/apple/Packages/TomiKit/Sources/TomiKit/`.
+
+---
+
+## 1. Pairing and space
+
+Protocol: `spec/pairing-v1.md` (CPace, two-word code, QR, verification code). Departure: `spec/api-v1.md`
+§7.9.
+
+| Feature | Core | Relay | CLI | Android | iOS | Windows | Notes / gaps |
+|---|---|---|---|---|---|---|---|
+| Create the space (install key) | ✅ `create_space` (`runtime/pairing/founder.rs`) | ✅ `POST /v1/space`; token via `tomi-relay admin invite --new` | ➖ | ✅ typed, pasted, or scanned QR (`CreateSpaceScreen`) | ✅ typed, pasted into the field, scanned (`CreateSpaceScreen`); also accepts the creation link (`https://<relay>/create#<token>`, parsed by the core: the relay and token fill the fields); "Relais" (Relay) field, with the relay shown in full before "Créer mon espace" (not compiled here 🚧) | ✅ token typed or creation link pasted + "Relais" field + PC name (`PairingPanel`, `Create.svelte`); the relay in use is shown before "Créer l'espace", never kept | The token is stored nowhere. iOS: the help text says "colle la clé" (paste the key), but there is no dedicated Paste button (native paste into the field). |
+| Configurable relay (QR, link, "Relais" field, creation link) | ✅ `set_relay`, `relay_url`, `join_space(…, relay_url)`, `create_space(…, relay_url)`, `parse_pair_link`, `parse_setup_link`, `is_install_token_shape`; the relay is kept in `meta.relay_url` at provisioning, `meta.pending_relay_url` with the sealed batch; no default relay in release (`CoreConfig.relay_url` optional); `relay_authority` in `FfiJoinPrompt` / `PairingOutcome` | ✅ `/create#<token>` and `/l/pair` (static pages) | ➖ | ✅ `CoreLinkReader` (links, tokens and relay address validated by the core; `RelayAddress.canonical` validates the field); "Relais" field (`RelayField`: open and required without a relay, folded under "Autre relais" (Other relay) otherwise) on "Saisis le code d'invitation" and "Crée ton espace"; join link/QR (`DeepLink.Pair.relayUrl`) or creation link (`DeepLink.Setup`; scanner on "Crée ton espace": `https://<relay>/create#<token>` or a bare token): the relay read fills everything, nothing is launched; relay authority shown in full on the link card, on the verification screen with the code ("Vérifie que c'est bien ton relais avant de continuer." (Check that this is your relay before continuing)), `RelayCheckCard`, and before "Créer mon espace"; `relay_not_configured` → "Indique l'adresse du relais" (Enter the relay address); `BuildConfig.RELAY_URL` empty by default (`-PtomiRelayUrl=…`, CI: repository variable `TOMI_RELAY_URL`); App Links `https://<relay>/l/pair` and `/create` without `autoVerify`, `tomi-share://pair#` kept: not tested on a device 🚧 | ✅ `CoreLinkReader` (links, tokens and relay address validated by the core); "Relais" field (`RelayField`: open and required without a relay, folded under "Autre relais" otherwise) on "Saisis le code" and "Crée ton espace"; join or creation link/QR: the link's relay fills the field; authority shown in full on the link card, with the 6-digit code (`RelayCheckCard`) and before "Créer mon espace"; optional default relay (`TOMI_RELAY_URL` empty in the repository, `Config/Local.xcconfig` ignored by git); `currentRelay()`: not compiled here 🚧 | ✅ `pairing.rs`: `Engine::join_space_at` / `create_space_at`, `read_input` (`parse_pair_link`, `parse_setup_link`, `is_install_token_shape`: the kind of pasted text and the relay it names, without returning the code or token); "Relais" field (`pairing/JoinForm.svelte`, `Create.svelte`: open and required without a relay, folded under "Autre relais" otherwise, pre-filled by a pasted or opened link; a link and a field naming two different relays → refused); a creation link pasted into "Rejoindre" offers the creation screen; relay authority shown in full with the code (`Verify.svelte`, "Vérifie que c'est bien ton relais avant de continuer.") and before "Créer l'espace"; `relay_not_configured` → "Indique l'adresse du relais", invalid relay / mismatched relay / invalid creation link: dedicated messages; links `tomi-share://pair#`, `https://<relay>/l/pair#`, `https://<relay>/create#<token>` (`deeplink.rs`, `ingest.rs`) only fill the screen and never launch anything; no relay compiled in by default in release (`RealCoreConfig.relay_url` optional; a build's default relay: compile-time variable `TOMI_DEFAULT_RELAY_URL`, set in CI from the repository variable `TOMI_RELAY_URL`; in debug, `TOMI_RELAY_URL` at launch): not tested on Windows 🚧 | A relay read from a QR code, link or field is not trusted: the verification screen shows it in full with the 6-digit code, and it is kept durably only on success (before that, only a "pending" relay is written, with the sealed batch or the founder keys); otherwise it reverts to the previous relay. A device that is already paired keeps its space's relay and refuses any other; the single exception: `set_relay` for a device paired before this feature that keeps none (so transition builds must still compile the relay: repository variable `TOMI_RELAY_URL` in CI, `-PtomiRelayUrl` locally, `Local.xcconfig` on iOS). `spec/pairing-v1.md` §2.2, §3.3, §4.4, §10.3. iOS: scanning a join QR starts the join (explicit gesture); a link opened in the app waits for "Rejoindre" (Join); without a relay (empty field, device without a relay), the code moves to the input step, where the field is. The token and the code are never logged (descriptions are masked). Windows: no camera scan (see below); Windows only receives an `https://` link when it is pasted into a field (there is no https link handler; only `tomi-share://` is registered). |
+| Invite a device (QR + code) | ✅ `start_invitation` | ✅ rendezvous channels `/v1/pairing/channels` (TTL 120 s) | ➖ | ✅ ZXing QR + code (`InviteScreen`) | ✅ CoreImage QR + monospaced code without ligatures (`InviteScreen`) | ✅ SVG QR of the link + code (`qr.rs`, `Invite.svelte`) | Code, link and QR are secrets: masked at capture (see §6). |
+| Join (code or link) | ✅ `join_space` (CPace PAKE) | ✅ `POST /v1/pairing/channels/{id}/claim` | ➖ | ✅ code, `tomi-share://pair#` link or App Link, "Rejoindre" (Join) button | ✅ code, `tomi-share://pair#` or `https://…/l/pair#` link | ✅ code typed, link pasted (`https://<relay>/l/pair#…`: the relay fills the "Relais" field), `tomi-share://pair#`; relay shown in full at verification | A link never joins on its own, on any platform (rule: `spec/pairing-v1.md` §4.4). Windows: a PC that is already paired ignores the link. |
+| Scan the QR code with the camera | ➖ | ➖ | ➖ | ✅ CameraX + ZXing, camera requested on tap | ✅ VisionKit `DataScannerViewController` | ❌ | Windows: known limitation; the code is typed or the link is pasted (`apps/windows/README.md`). |
+| Verification code (6 digits) + double confirmation | ✅ SAS (`pairing/info.rs`), confirmation from both A AND N is mandatory | ➖ | ➖ | ✅ "identiques / différents" (identical / different) | ✅ same; going back during verification = refusal | ✅ `Verify.svelte`, never typed | The verification code protects nothing on its own: not masked at capture on iOS. |
+| History question at pairing (yes/no, "Oui" pre-selected) | ✅ `AwaitedHistory` | ➖ | ➖ | ✅ | ✅ | ✅ | A single choice, no checkboxes (`AGENTS.md`). |
+| Resume an interrupted pairing | ✅ `resume_pairing` | ➖ | ➖ | ✅ at startup | ✅ at startup | ✅ at startup, result shown once | Windows: a verified batch that is already sealed survives closing the app. |
+| Welcome screen (Create / Join) | ➖ | ➖ | ➖ | ✅ `WelcomeScreen` | ✅ `WelcomeScreen` | ✅ first launch in `PairingPanel` | Texts: `strings.xml` is authoritative. |
+| First launch: Tomi at the top of the share sheet | ➖ | ➖ | ➖ | ✅ `OnboardingScreen` (long press, Pin) | ✅ `OnboardingScreen` (share-sheet favourites) | ✅ `OnboardingPanel` (global shortcut + "Envoyer vers" (Send to)) | Content specific to each OS; the intent is shared across platforms. |
+| Devices: list | ✅ `list_devices` | ✅ `GET /v1/devices` | ➖ | ✅ `DevicesScreen` | ✅ `DevicesScreen` | ✅ `DevicesPanel` | Windows: this PC first, revoked devices hidden. |
+| Devices: rename | ✅ `rename_device` | ✅ `PATCH /v1/devices/{id}` (name not signed, by design) | ➖ | ✅ no biometrics, 40 chars | ✅ alert with a field, 40 chars | ✅ no Hello, 1 to 64 chars | Input limits differ (40 / 40 / 64); the core rule is `is_valid_device_name`. |
+| Devices: remove (revoke) | ✅ `revoke_device` → key rotation | 🟡 no `DELETE /v1/devices/…`: revocation goes through `POST /v1/rotations` (and `tomi-relay admin revoke`) | ➖ | ✅ strong biometrics every time (`Authenticator.forRevocation`) | ✅ Face ID / Touch ID only, never the passcode | ✅ Windows Hello every time (account password fallback) | The current device cannot be removed on iOS and Windows. |
+| Devices: "inactive" hint (over 30 days) with a Remove button | ✅ `last_seen_at_ms` read from the relay (`refresh_devices`, every 5 min while in use); the pairing date is no longer counted as activity | ✅ `last_seen_at` and `active` in `GET /v1/devices` (§4.3) | ➖ | ✅ `DeviceInactivity.kt` (`LAST_SEEN_IS_FROM_RELAY = true`) | ❌ | ✅ `inactivity.rs` (same flag) | A hint, never an action: removal keeps its confirmation and strong authentication. **Enabled, not yet tried against a real relay.** |
+| Space key rotation after a departure | ✅ `maybe_rotate`, after sync and the doorbell | ✅ `DELETE /v1/me` sets `rotation_required`, `GET /v1/keys` | ➖ | ➖ (the core does it alone) | ➖ | ➖ | See also `device_set_mismatch` (§11). |
+| "Unreadable data" (database without key) | ✅ opening refused, nothing erased | ➖ | ➖ | ✅ `StartupGate`: Retry, Reset Tomi (confirmed) | ✅ `UnreadableDataScreen`: Retry, Reset | 🟡 explanatory message (`wrap_key_missing/unreadable`), no Reset button | iOS: not verified in real conditions. Windows: only "Effacer ce PC" (Erase this PC) from departure comes close. |
+| Sign out (voluntary departure) | ✅ `leave_space` (`runtime/leave.rs`) | ✅ `DELETE /v1/me` | ➖ | ✅ `LeaveSpaceDialog` | ✅ `DepartureViews` | ✅ `departure.rs` | No biometrics on all three (only deletion and "Effacer quand même" (Erase anyway) require it). Erases **only on positive proof**. |
+| Delete the space (last device) | ✅ `delete_space` | ✅ `DELETE /v1/space` (`409 not_last_device`), receipt `POST /v1/space/receipt` | ➖ | ✅ strong biometrics, button armed for 2 s | ✅ Face ID / Touch ID only, button armed for 2 s | ✅ Hello, 2 s anti-tap checked on the Rust side (`ARM_MS`) | Retrying a deletion asks for strong biometrics again every time (Android). |
+| "Erase anyway" (without proof) | ✅ `erase_without_proof` (verdict "not found" / "relay too old" < 10 min) | ➖ | ➖ | ✅ checkbox + 2 s + strong biometrics | ✅ checkbox + 2 s + strong biometrics | ✅ checkbox + 2 s + Hello | |
+| Pending departure banner + automatic retries | ✅ marker in `meta`, `continue/cancel/retry_departure` | ➖ | ➖ | ✅ `DepartureBanner`, `DepartureRetrier` (2 → 120 s) | ✅ same (`DepartureRetrier`) | ✅ `DepartureBanner.svelte` (2 → 120 s, at most once per minute on network return or focus) | Same delay scale on all three. |
+| Cleanup outside the core after erasure | ➖ | ➖ | ➖ | ✅ `LeftSpaceCleanup` | ✅ `AppContainer` | ✅ `departure_host.rs` | Notifications, Tomi's clipboard, send copies, caches, startup hint. |
+
+---
+
+## 2. Sending
+
+Format and limits: `spec/format-v1.md`, `spec/api-v1.md` §2.8. App sending contract: ported from Android (`KT/send/`).
+
+| Feature | Core | Relay | CLI | Android | iOS | Windows | Notes / gaps |
+|---|---|---|---|---|---|---|---|
+| Text and link (link extraction) | ✅ `DraftText` (`actions.rs`) | ➖ opaque | ➖ | ✅ `SendScreen`, `LinkExtractor` | ✅ `SendScreen`, `LinkExtractor` | ✅ `Composer.svelte`, `detect.rs` | |
+| Markdown and HTML (variants kept) | ✅ | ➖ | ➖ | ✅ clipboard HTML / `EXTRA_HTML_TEXT` (500 KB) | ✅ pasted HTML kept (text 100,000, HTML 500,000 characters) | ✅ detection and retention (`detect.rs`, `draft.rs`) | A secret item is sent without HTML or Markdown (Windows: removed by `build_draft`). |
+| Files and images | ✅ blobs (`stage_attachment`, chunked upload) | ✅ `POST/PATCH/GET /v1/blobs` | ➖ | ✅ picker + share | ✅ `PhotosPicker` (images, videos) + `fileImporter` | ✅ pasted, dropped, picker (`pick_files`) | |
+| 25 MB per file / 100 MB per send limit | 🟡 no constant: refusal depends on the relay's limits | ✅ `max_blob_bytes` 26,279,936; `max_item_blob_bytes` 105,119,744 | ➖ | ✅ `ContentDetectors.kt` | ✅ `ShareLimits` (`SharePayloadParser.swift`) | ✅ `limits.rs` | The core only checks the **number** of blobs, not the total (late refusal by the relay; queue behaviour to verify 🚧). |
+| Maximum number of files | 🟡 `max_blobs_per_item` announced by the relay | 🟡 32 | ➖ | 🟡 20 (`MAX_ATTACHMENTS`) | 🟡 20 (`ShareLimits.maxFiles`) | 🟡 32 (`MAX_FILES_PER_ITEM`) | **Gap**: 20 on mobile, 32 on Windows. The "20" limit is not in any spec. |
+| Thumbnails at send time (images) | ✅ `thumbnail` field in the envelope (≤ 1 MiB total) | ➖ opaque | ➖ | ✅ 600×800, ≤ 120 KB, 384 KB budget (`DraftThumbnails`) | ✅ ImageIO, same bounds, nothing for a secret item | ✅ 600×800, ≤ 120 KiB, 384 KiB budget (`files.rs`) | Same budget on all three. The spec's ceiling is "a few KB" with no figure (`format-v1.md` §5.4.3). |
+| Thumbnails for other files (PDF, video, Office) | ➖ | ➖ | ➖ | ❌ | ✅ Quick Look (`QLThumbnailGenerator`, 3 s per file) | ❌ | Android and Windows cards display any thumbnail present; only iOS generates them for these types. |
+| Undo window ("Envoyé · Annuler") | ➖ | ➖ | ➖ | ✅ 3 s (`SendCoordinator.UNDO_WINDOW_MS`) | 🚧 3 s: carried over in the working tree, to validate on a Mac | ✅ 3 s (`queue.rs` `SEND_DELAY`) | Charter token `behavior.undo-window-ms` set to 3000; comments and README corrected (10 Nov.). |
+| "Envoyé" banner / Annuler / Options | ➖ | ➖ | ➖ | ✅ `SentBanner` (Options = undo, then reopen the sheet) | ✅ `SentBanner` | 🟡 `JobBar.svelte`: Annuler, Envoyé, Réessayer; no "Options" | Windows: the composer already exposes all options, so there is no sheet to reopen. |
+| Expiry options (Jamais, Après lecture, 1 h, 1 j, 7 j, 30 j) | ✅ `expires_at_ms` + `read_policy`; "Jamais" = relay max TTL − 60 s | ✅ `expires_at` required, ≤ `max_ttl_secs` (30 d) | ➖ | ✅ `ExpiryPolicy.kt` | ✅ `ExpiryPolicy.swift` | ✅ `expiry.rs` | "Jamais" (Never) is the default, secrets included. No 5-minute option. The option lists are not in any spec (`spec/` only gives `max_ttl_secs`). |
+| "Après lecture" not allowed with a file | 🟡 the core accepts it for any item | ➖ | ➖ | ✅ `ExpiryPolicy.optionsFor`, re-checked at send | ✅ | ✅ `options_for`, error `after_read_with_files` | Rule enforced by the apps, not by the core. |
+| Secret content at send time (encrypted title, secret flag) | ✅ `secret` flag, title inside the secret | ➖ opaque | ➖ | ✅ "Masquer le contenu" (Hide content) toggle | ✅ toggle; input shown as dots until the eye icon is tapped | ✅ `build_draft`: no HTML, no thumbnail | iOS: text being typed into a secret item is not protected from capture (see §6). |
+| Secret detection at send time | ❌ no heuristic in the core | ➖ | ➖ | ✅ `SecretDetector.kt` + password managers + `EXTRA_IS_SENSITIVE` | ✅ `SecretDetector.swift` + `ConcealedType` | 🟡 `detect.rs`; the clipboard "sensitive" flag is never read (`flagged_sensitive()`: dead code) | **Three separate heuristics** (thresholds 512 / 128 characters): content that counts as a "secret" on one client may not on another. |
+| Clipboard: read only on an explicit gesture | ➖ | ➖ | ➖ | ✅ "Coller" (Paste) button | ✅ "Coller" button (`UIPasteboard`, on tap) | ✅ `paste` event (Ctrl+V), no button | Invariant: never read automatically (`docs/DEV.md`). |
+| Offline retry / outbound queue | ✅ queue persisted before any request, backoff 1 s → 5 min, idempotent | ✅ same `envelope_hash`: no effect | ➖ | ✅ WorkManager (network required, backoff 15 s) | ✅ `InAppSendScheduler` (15 s → 15 min) + `BGProcessingTask` | ✅ core outbox, resumed at the next sync | iOS: no immediate retry on network return (the retry follows its delay). |
+| Incoming system share | ➖ | ➖ | ➖ | ✅ `ShareActivity` (direct send, confirmation if secret) | 🚧 `TomiShare` extension (App Group inbox `ShareInbox`); files being modified | 🟡 "Envoyer vers" (Send to) (`Tomi.lnk`); no entry in the share sheet | Windows has no share extension (see "Imposed gaps" below). iOS: the extension does not open the core; the app sends when it is opened. |
+| Confirmation when the content looks like a secret (share) | ➖ | ➖ | ➖ | ✅ confirmation sheet | ✅ `ShareFlow` state `.confirm` | ➖ | iOS: no source-app identifier, so only the content heuristic applies. |
+| Send shortcut / tile | ➖ | ➖ | ➖ | ✅ Quick Settings tile (`SendTileService`) + sharing shortcut (`SharingShortcut`) | 🟡 App Intents shortcut "Envoyer avec Tomi"; no widget or control | ✅ global shortcut `Ctrl+Shift+Space`, "Envoyer vers", notification-area icon | Whether an iOS tile is useful is still an open design question. |
+
+---
+
+## 3. Feed and cards
+
+Mock-ups and UI decisions were kept out of this repository; the behaviour they described is recorded below.
+
+| Feature | Core | Relay | CLI | Android | iOS | Windows | Notes / gaps |
+|---|---|---|---|---|---|---|---|
+| "Épinglés" / "Récents" sections (Pinned / Recent) | ✅ `ItemView.pinned` | ➖ | ➖ | ✅ `FeedSections` | ✅ `FeedSections` | ✅ `feed.svelte.ts` | Pinned items are ordered by pin date; fixed order, most recent first (no sort choice anywhere). |
+| Archives: filter + "Archivé · Annuler" (Archived · Undo) return | ✅ `archived`, `archivedAt` | ➖ | ➖ | ✅ banner; from the detail view, archiving and unarchiving **return to the list** | 🚧 same as Android (`dismiss()`, to validate on a Mac) | ✅ "Archivé · Annuler" banner for 5 s; Ctrl+Z = Annuler while it is shown; the restored item is outlined for 3.5 s; from the detail view, archive / unarchive (or pin an archived item) **returns to the list** | `spec/archive-contract.md`. Pinning wins over archiving. Returning to the list from the detail view is intended on all three platforms (11 Nov. 2026); Android not yet validated on a device. Windows: the keyboard moves to the neighbouring card. |
+| Swipe to archive | ➖ | ➖ | ➖ | ✅ `SwipeToArchive` (58 % threshold) | ✅ `UIPanGestureRecognizer` | ➖ | Windows: "Archiver" entry in the ⋮ menu (no swipe on PC, by design). |
+| Filters Tous / Liens / Texte / Fichiers / Masqués / Archives (All / Links / Text / Files / Secret / Archives) | ➖ | ➖ | ➖ | ✅ `FeedFiltering.kt` | ✅ `FeedFiltering` | ✅ `view.rs` `ItemFilter` | A secret item is only filed under "Masqués" (never under Links or Text). Android: the system back gesture clears the active filter (after closing search) before leaving the app; iOS has no system back gesture; Windows: no equivalent shortcut (minor gap). |
+| Flat search (pinned first), conditional counter, note on secret items | ➖ | ➖ | ➖ | ✅ | ✅ | ✅ | A secret item is searched without title or content (only by source device). Filter button hidden during search: Android and iOS (mock-up). |
+| Delivery indicators (Pending, Sent, Delivered to N of M, expired, failed) | ✅ `DeliveryState`, receipts | ✅ `POST /v1/items/{id}/ack` | ➖ | ✅ `CardFooterLogic.kt` | ✅ `DeliveryStatus` | ✅ `card.status` | "Livré à tous" (Delivered to all) only in the detail view (not on cards). |
+| "Unread" dot | ✅ `read`, `mark_read` | ✅ `POST /v1/items/{id}/read` | ➖ | ✅ `unread_badge` | ✅ | ✅ | Windows: the tray count ignores archived items (outside the feed, never "seen") and unreadable items (nothing to read); archiving still does not mark an item as read. |
+| Automatic read by the view (card visible) | ➖ | ➖ | ➖ | ✅ `SeenTracker` (1.5 s at 60 % visible) | 🚧 `SeenTracker`: carried over in the working tree, to validate on a Mac | ✅ `seenWatch` (60 % for 1.5 s, focused window) | Never for a secret item ("Afficher" (Show) reads it). A tap also marks it as read. |
+| Floating toolbar at the bottom | ➖ | ➖ | ➖ | ✅ M3 `FloatingToolbars.kt` (alpha18) | ✅ Liquid Glass `FloatingActionBar` (iOS 26, opaque fallback before) | ➖ | Windows: popover + tabbed window. |
+| The bottom bar no longer hides on scroll | ➖ | ➖ | ➖ | ✅ | 🚧 carried over in the working tree, to validate on a Mac | ➖ | Foldable iPhone: already fixed in unfolded portrait. |
+| Tinted background of the floating toolbar | ➖ | ➖ | ➖ | ✅ (commit `d7b2b6e`) | 🟡 by design: untinted iOS Liquid Glass (design decision); iOS 17 to 25 fallback = the charter's opaque surface; selected button `brand` at 24 % (glass included) | ➖ | Accepted gap, not to close: iOS keeps its Liquid Glass design. To validate on a Mac. |
+| "Hors ligne · en attente" (Offline · pending) chip / banner | ➖ | ➖ | ➖ | ✅ `banner_offline` + `NetworkMonitor` | 🚧 `NetworkMonitor` + `banner_offline`: feed file being modified | ❌ text only ("Enregistré, il partira dès le retour du réseau" (Saved, it will go out when the network returns)) | |
+| Centred column on large screens | ➖ | ➖ | ➖ | ➖ | ✅ `TomiLayout.readableWidth` (680 pt) | ➖ | |
+| Feed mosaic in a wide window | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ `auto-fill minmax(320px,1fr)` grid (`FeedList.svelte`) | In the popover: one column. |
+| Tapping a card = the natural action for its type | ➖ | ➖ | ➖ | ✅ `CardTap.kt` | ✅ `CardTap` | ✅ `itemLogic.ts` `tapAction` | Link → open, secret → Afficher (Show), long text → detail, file → open. |
+| Menu ⋮ / long press (Épingler, Archiver, Copier, Ouvrir, Partager, Détails, Supprimer) | ➖ | ➖ | ➖ | ✅ `DropdownMenu` + long press; "Partager" on a file / image item sends the files (`FileSharing`), under their real name (`fichier.ext` for a secret item: `AttachmentProvider`) | ✅ context menu + "Fichiers" (Files) submenu (no names for a secret item) | ✅ ⋮ menu + right-click in the feed (Enregistrer (Save) instead of Partager (Share)); the detail view no longer has a ⋮ (visible bar) | Common order across platforms. Windows has no "Partager" entry (no share sheet). |
+| File cards (tile, image frame, 3-cell mosaic +N, "N autres fichiers" (N other files)) | ➖ | ➖ | ➖ | ✅ `AttachmentLogic.kt`, `AttachmentViews.kt` | 🚧 `AttachmentLogic.swift`: carried over in the working tree, to validate on a Mac | ✅ `itemLogic.ts` `attachmentPlan`, `ItemCard.svelte` | Windows: a revealed secret item shows "N fichiers" (N files) and inert tiles (no MIME type on the core side). Not validated on a device. Accepted iOS gap: a chevron on every tile (everything opens inside Tomi, never an outbound arrow as on Android); play button on a video's badge. |
+| Markdown rendering (no remote images) | ➖ | ➖ | ➖ | ✅ native Enriched Markdown 0.3.0 + `MarkdownGuard` | ✅ `AttributedString` + `MarkdownGuard` | ✅ `pulldown-cmark` + `ammonia` on the Rust side (`render.rs`) | Three engines, same rule: no network access from content. Android: parser hardening still to finish before the public release; in the detail view, the guard applies per chunk (§4). |
+| Sandboxed HTML rendering | ➖ | ➖ | ➖ | ✅ `HtmlSanitizer` (jsoup + CSP) + WebView without JS or network | ✅ non-persistent `WKWebView`, page JS disabled, CSP `default-src 'none'` | ✅ `<iframe sandbox>` after Rust-side sanitization | iOS: the height is read through `evaluateJavaScript` (the app's JS, not the page's). |
+| Long text previews capped in the feed | ➖ | ➖ | ➖ | ✅ preview cut at a block boundary before guard + render (`MarkdownBlocks.kt`: 40 lines / 2,000 characters / 8 table rows; fenced code closed again; link definitions guarded), fixed card height; plain text, source, and a revealed secret item: first lines (`head`); an already-rendered card recovers its height before re-rendering (`RenderedHeights`: sizes only, in memory) | ❌ to be done: `MarkdownView` re-parses the whole document in `body`, non-lazy `VStack` | ➖ not needed: WebView2 paints lazily, cards clipped in CSS | The detail view, copy, share, open, and search keep the full text; the preview only exists in memory. |
+| Unreadable items kept ("Mise à jour nécessaire" (Update required) / decryption failure) | ✅ `UnreadableReason`, never deleted | ➖ | ➖ | ✅ `UnreadableBody` | ✅ | ✅ "Illisible" (Unreadable) card (2 messages) | No separate "Mise à jour nécessaire" screen: it is a card state. |
+| Drag a file out of the window (to Explorer) | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ `start_drag` (Mark-of-the-Web; refused for secret items) | |
+
+---
+
+## 4. Detail view, viewers and code screen
+
+| Feature | Core | Relay | CLI | Android | iOS | Windows | Notes / gaps |
+|---|---|---|---|---|---|---|---|
+| Detail: metadata (type, sender, expiry, pin, status) | ➖ | ➖ | ➖ | ✅ `ItemDetailScreen` | ✅ `ItemDetailScreen` (committed version; file being modified) | ✅ `ItemDetail.svelte` | |
+| Precise "Date d'envoi" (send date) line (with seconds) | ➖ | ➖ | ➖ | ✅ `formatPreciseDateTime` | 🚧 carried over in the working tree, to validate on a Mac | ✅ `formatPreciseDateTime` (`fr.ts`) | Windows rendering not checked on screen. |
+| Displayed expiry ("expire dans…" (expires in…), "disparaît après la première lecture" (disappears after first read)) | ➖ | ➖ | ➖ | ✅ `formatRemaining`; refreshes on its own (`rememberNow`, on unit change, card visible) | ✅ `TimelineView` (every 15 s) | ✅ shared clock `clock.svelte.ts` (15 s) | Full plurals ("23 heures" (23 hours)), not "23 h". The detail view shows the exact expiry date, not a countdown. |
+| Detail actions (pin, archive, copy, share, delete here / everywhere) | ➖ | ➖ | ➖ | ✅ floating bar: Pin, Share, Archive, ⋮ (Open, Copy link, Delete here / everywhere); Copy = FAB | ✅ | ✅ bar visible in the header (Pin, Archive │ Open, Save, Copy), no ⋮; "Supprimer…" (Delete…) separate (dialog: from this device / everywhere); keyboard shortcuts Ctrl+C / O / S, Del, Esc, Alt+← | Icon + label in a wide window (≥ 760 px), icons only in the popover; mouse "back" button = back. No "Partager" (Share) on Windows. iOS gap to close: Android shows Share in the bar and puts Delete in the ⋮ menu; check the iOS detail bar. |
+| Preview / Markdown modes | ➖ | ➖ | ➖ | ✅ `RenderMode.kt` | ✅ `UserPrefs` | ✅ `available_modes` | HTML is never shown as source. |
+| Detail: long texts rendered in block chunks, revealed on scroll | ➖ | ➖ | ➖ | ✅ `chunks` (`MarkdownBlocks.kt`: whole blocks, ≤ 4,000 characters / 100 lines / 30 table rows; tables split with the header repeated, fenced code closed then reopened, bullet lists kept between items, ordered lists never split; an unsplittable block over 16,000 characters is rendered as plain text), one view per chunk, guard per chunk; plain text, source, and a revealed secret item: line chunks (`sourceChunks`); reveal via `ProgressiveColumn` (the first screen immediately, then one chunk at a time when less than 1.5 screens remain, after the previous ones are rendered; space for not-yet-rendered content is reserved, by estimate then by measurement); splitting happens off the main thread above 8,000 characters | ❌ to be done: `MarkdownView` in a non-lazy `VStack` | ➖ not needed: WebView2 paints lazily | Copy, share and search keep the full text; chunks only exist in memory. Text selection limited to one chunk. Not validated on a device. |
+| Image viewer (zoom, pager, EXIF) | ➖ | ➖ | ➖ | ✅ `ImageViewerScreen` (pager, pinch, ×6); actions in the bottom bar (Save, Share, Details, Delete), no ⋮ menu; Delete targets the displayed image (by its slot): "de cet appareil" (from this device) or "partout" (everywhere; only if the relay supports it), in an item with one or several images; when no images are left, the viewer closes | ✅ `ImageViewerScreen` (zoom 1–6, drag to close); no per-image deletion (gap, see §8) | ✅ `ImageViewer.svelte` (wheel, arrows, n/N); no per-image deletion (gap, see §8) | Only the EXIF **orientation** is applied; no metadata panel. Windows: orientation left to the webview (not verified 🚧). |
+| Save the image / file | ➖ | ➖ | ➖ | ✅ MediaStore `Pictures/Tomi` | ✅ Photos (add-only) and "Enregistrer dans Fichiers" (Save to Files) | ✅ `Téléchargements\Tomi` (`save_item`) | **Forbidden for a secret item** on all three (no permanent plaintext copy). |
+| File viewer (audio, video, PDF…) | ➖ | ➖ | ➖ | 🟡 opens in another app | ✅ `FileViewerScreen`: Apple player, Quick Look, "Ouvrir dans…" (Open in…) page | 🟡 opens in another app | iOS only: platform-specific (`apps/apple/README.md`). A secret item's file is never displayed there. |
+| Code screen: search, persistent line wrap, file copy | ➖ | ➖ | ➖ | ✅ `CodeFileScreen` | ✅ `CodeFileScreen` | ✅ `CodeViewer.svelte` | Windows copies via `navigator.clipboard` (outside Rust's control; harmless as long as `read_code_file` refuses secret items). |
+| Code screen: multi-file tabs | ➖ | ➖ | ➖ | ✅ tab bar + "2/3" | ✅ | ✅ | |
+| Code screen: syntax highlighting | ➖ | ➖ | ➖ | ✅ tree-sitter, 14 languages + PHP (Kotlin removed); highlighting refused above 50 KB / 2,000 lines | ❌ "sans couleurs en v1" (no colours in v1) | 🟡 `highlight.ts`: ~12 languages (JS/TS, Go, Rust, PHP, Python, Ruby, shell, YAML, TOML, JSON, CSS, SQL, markup) | Different language lists; 2 MB read limit on Android and Windows. |
+
+---
+
+## 5. Secrets and security
+
+Golden rule 3 in `AGENTS.md`; exact list of protected screens: see the iOS notes in `apps/apple/README.md` ("Confidentialité à l'écran" (Privacy on screen)).
+
+| Feature | Core | Relay | CLI | Android | iOS | Windows | Notes / gaps |
+|---|---|---|---|---|---|---|---|
+| Title of a secret item encrypted, kept out of the feed and search | ✅ title inside the secret (`item.rs`) | ➖ opaque | ➖ | ✅ | ✅ | ✅ | |
+| Show / copy / open a secret item behind local authentication | ➖ | ➖ | ➖ | ✅ `BiometricGate` (`BIOMETRIC_STRONG` or screen lock) | ✅ `LAContext` Face ID / Touch ID / passcode (`BiometricGate`) | ✅ Windows Hello (`unlock.rs`); account password fallback (`account_auth.rs`) | Windows: the fallback is weaker than Hello (no biometric factor), documented in the README. |
+| 2-minute authentication window | ➖ | ➖ | ➖ | ✅ `AuthWindow` | ✅ `AuthWindow`, closed on lock and in the background | 🟡 `WINDOW` = 120 s, **not closed** on session lock or sleep | Documented limit: Tauri does not expose these events (`apps/windows/README.md`). |
+| Destructive actions require strong authentication, never remembered | ➖ | ➖ | ➖ | ✅ `strongOnly` (biometrics only) | ✅ biometrics only, no passcode fallback | ✅ Hello (password fallback) | Revocation, space deletion, "Effacer quand même" (Erase anyway). |
+| Secret item text not selectable; hides again on leaving | ➖ | ➖ | ➖ | ✅ re-hidden after `AUTO_HIDE_MS` (30 s; not re-reviewed in detail) | ✅ on loss of activity, on lock, after capture | ✅ `REVEAL_MS` timer (15 s, `feed.svelte.ts`) | Different auto-hide delays (30 s / on loss of activity / 15 s). |
+| Sensitive screens excluded from captures and the multitask preview | ➖ | ➖ | ➖ | ✅ `FLAG_SECURE` (`SecureWindow`, reference-counted) | 🟡 `CaptureShield` (password-field layer, empty during capture) + `PrivacyCover`; see "Imposed gaps" below | ✅ `contentProtected` on the popover and the full window | Windows: the exact flag (`WDA_EXCLUDEFROMCAPTURE`?) is handled by Tauri, not verified 🚧. iOS: to verify on an iPhone (capture, recording). |
+| "Screen shared or recorded" cover during capture | ➖ | ➖ | ➖ | ➖ | ✅ `PrivacyCover` (`UIScreen.isCaptured`) | ➖ | iOS-specific: see `apps/apple/README.md`. |
+| Re-hide after a screenshot | ➖ | ➖ | ➖ | ➖ | ✅ `userDidTakeScreenshotNotification` | ➖ | iOS only notifies **after** the fact. |
+| Sensitive clipboard cleared after 30 s | ➖ | ➖ | ➖ | ✅ `EXTRA_IS_SENSITIVE` + `ClearClipboardWorker` | ✅ `localOnly` + 30 s system expiry + `ConcealedType` | ✅ exclusion formats (history, cloud, monitoring) + clearing at 30 s only if unchanged | Android: not verified on a device; background clearing is unconditional (it may overwrite a more recent copy). |
+| System share of a secret item after authentication | ➖ | ➖ | ➖ | ✅ `ItemSharing` | ✅ sheet without "Copier" (Copy) or "Enregistrer" (Save) | ➖ | |
+| Plaintext copy of attachments (accepted trade-off, golden rule 3) | ✅ `files/cache`, `purge_plaintext_cache` | ➖ | ➖ | 🚧 `AttachmentProvider` not exported; purge at startup and on sign-out; "on going to background" to verify | ✅ purge on going to background and at startup; temporary hard link `view-…` | 🟡 `open/` and `files/cache` purged 1 min after last use, on close and at startup | Windows deviates from the "background / startup" rule (one-minute delay). |
+| Decrypted content kept in memory | ➖ | ➖ | ➖ | ➖ | ➖ | 🟡 `RealCore.snapshot` keeps the decrypted feed, secret items included | Gap documented in the header of `RS/real_core.rs`; no copy at rest. |
+| Secrets: no content in logs, minimal plaintext copies | ✅ `Debug` masked (`ItemView`, `FfiItem`, keys, tokens); attachment and response sizes bounded | ➖ | ➖ | ➖ | ✅ sharing a secret item without `EXTRA_SUBJECT`, neutral preview (to validate on a physical device), `FLAG_SECURE` (text, title, and attachments of a secret item's draft), password keyboard on its title and content, selection bar without Copy/Cut on the send screen, copy cancellation; notification summary hidden as soon as a secret or unreadable item is part of it | ➖ | ✅ opened file = hard link to the cache, read-only, a single plaintext copy | Windows: an editor that forces writes can modify the cache until the next purge. "Envoyer vers" (Send to): shortcut removed on uninstall, recreated on install. |
+| Database wrapping key (sealed by the OS) | ✅ 32-byte key supplied by the host | ➖ | ➖ | ✅ Android Keystore (`WrapKeyStore`) | ✅ Keychain `AfterFirstUnlockThisDeviceOnly` | ✅ DPAPI (`wrap.key`) | Gap documented against `api-v1.md` §7.1 (no user presence at each use). A key is never recreated if the database exists. |
+| Rendering isolated from the network (HTML, Markdown) | ➖ | ➖ | ➖ | ✅ see §3 | ✅ | ✅ | Android: `INTERNET` permission present; hardening before the public release still open. |
+
+---
+
+## 6. Notifications and real time
+
+| Feature | Core | Relay | CLI | Android | iOS | Windows | Notes / gaps |
+|---|---|---|---|---|---|---|---|
+| Real-time doorbell (WebSocket) in the foreground | ✅ `run_doorbell` (`engine.rs`) | ✅ `GET /v1/ws` | ➖ | ✅ dedicated thread (`RealTomiCore`) | ✅ `tomi-doorbell` thread, stopped in the background | ✅ dedicated thread + fallback sync every 5 min | |
+| Background tasks | ➖ | ➖ | ➖ | ✅ WorkManager (sending, clipboard) | ✅ `BGAppRefreshTask` (15 min at best) + `BGProcessingTask` (sends) | ✅ the app stays in the notification area | iOS: the task does not ring the doorbell. |
+| Push (wake-up with no content) | 🟡 `push_token` accepted, "pas encore implémenté" (not implemented yet) in `ffi.rs` | 🟡 FCM: `FcmSender` + `PUT/DELETE /v1/me/push`, **disabled by default** (`fcm_service_account_file`); APNs ❌ | ➖ | ❌ no Firebase dependency | ❌ no `aps-environment` | ❌ no WNS | Data message with constant content (`{"w":"1"}`). Without push, nothing is delivered when the app is closed (iOS: background tasks at best). |
+| Arrival notifications | ➖ | ➖ | ➖ | ✅ channels Liens, Texte, Fichiers, Masqués (Links, Text, Files, Secret); grouped | ✅ `UNUserNotificationCenter`, grouped per feed, attached image (300 px thumbnail, never for a secret item) | ✅ grouped toasts (700 ms), can be disabled | |
+| Notification for a secret item: never any content | ➖ | ➖ | ➖ | ✅ generic public version, `VISIBILITY_SECRET`, channel without preview | 🟡 public title "Tomi : nouvel élément" (Tomi: new item), no `VISIBILITY_SECRET` possible | ✅ "Contenu masqué reçu" (Secret content received), "Ouvrir" (Open) button only | iOS: see "Imposed gaps" below. |
+| "Copier" (Copy) action from the notification | ➖ | ➖ | ➖ | ✅ behind biometrics for a secret item (`NotificationActionActivity`) | ✅ Copier / Voir (Copy / View) buttons; secret item: tap, then authenticate | 🟡 no "Copier" for a secret item ("Ouvrir" (Open) only) | |
+| Imported history does not notify (`PairingGrace`, 2 min) | ❌ app side only | ➖ | ➖ | ✅ `NotificationLogic.kt` | ✅ `NotificationLogic.swift` | 🟡 equivalent: `is_news` excludes imported items; the first pass is silent | Logic duplicated in the apps, not in the core. |
+| Toast removed when the item is deleted, expired or archived | ➖ | ➖ | ➖ | 🚧 not verified | 🚧 not verified | ✅ `notify::remove` | |
+
+---
+
+## 7. Deep links
+
+| Feature | Core | Relay | CLI | Android | iOS | Windows | Notes / gaps |
+|---|---|---|---|---|---|---|---|
+| `tomi-share://pair#<code>` (opens the screen, never joins on its own) | ✅ code read | ➖ | ➖ | ✅ `DeepLink.Pair` | ✅ `DeepLinkParser` | ✅ `deeplink.rs` (also `https://<relay>/l/pair#<code>` and `https://<relay>/create#<token>`, parsed by the core; the relay read is shown in full and confirmed with the code) | The code is in the fragment, never in the query. Specified in `pairing-v1.md` §4.3-4.4. |
+| `tomi-share://send` (pre-fills only) | ➖ | ➖ | ➖ | ✅ | ✅ | ✅ (secrets refused in the URL) | A URL never triggers a send (`docs/DEV.md`). Not specified in `spec/`. |
+| `tomi-share://item/<id>`, `tomi-share://open` | ➖ | ➖ | ➖ | ✅ | ✅ `item`; `open` ✅ | ✅ | Same: outside `spec/`. |
+| `https://relay.example.org/l/…` links opened by the app | ➖ | 🟡 `GET /l/…` (install page) and `/.well-known/assetlinks.json`; **no AASA** | ➖ | 🟡 https `*` filter on `/l/pair` and `/create`, **without `autoVerify`** (the host is no longer unique: Android cannot verify an unknown domain, so the chooser may offer Tomi for any host; the link only pre-fills) | ❌ no `applinks:` in the entitlements: the host is no longer unique (configurable relay), so each build will have to declare its own; the code already reads `https://<relay>/l/pair` and `/create` for any host, but only `tomi-share://` is active today | ➖ | Android: DNS, TLS and `assetlinks` fingerprint to finish on the server side. iOS: requires the signing team and the relay's AASA. |
+| Registration of the `tomi-share://` scheme | ➖ | ➖ | ➖ | ✅ manifest | ✅ `Info.plist` | ✅ `deep-link` plugin (registry written by the NSIS installer, not verified 🚧) | |
+
+---
+
+## 8. Pin, archive, expiry, deletion, history
+
+| Feature | Core | Relay | CLI | Android | iOS | Windows | Notes / gaps |
+|---|---|---|---|---|---|---|---|
+| Pin (shared, encrypted, last writer wins) | ✅ `pin`/`unpin` (`pin.rs`) | ✅ `POST /v1/item-states` (opaque envelope) | ➖ | ✅ | ✅ | ✅ `pin_item` | `spec/pin-contract.md`. Does not prevent relay purging. |
+| Synced archive (excludes pinned items) | ✅ `archive`/`unarchive` (`archive.rs`) | ✅ same `item-states` route | ➖ | ✅ | ✅ | ✅ `archive_item` | `spec/archive-contract.md`, vectors `archive.json`. Never marks an item as read. |
+| Unknown item states kept (`pending_states`) | ✅ replayed when the decoder changes | ➖ | ➖ | ➖ | ➖ | ➖ | No cap on a device that is never updated (core, known). |
+| Local expiry + relay purge | ✅ expired items hidden; relay-side purge (`maintenance.rs`) | ✅ periodic passes | ➖ | ✅ | ✅ | ✅ | Relay purging does not erase the local copy. |
+| "Après lecture" (read once) | ✅ `mark_read` → `delete_everywhere` | ✅ tombstone | ➖ | ✅ | ✅ | ✅ `consume_revealed` after actual display | Windows: an "après lecture" secret item is consumed only while the window is in the foreground. |
+| Delete here | ✅ `delete_local` | ✅ via `ack` | ➖ | ✅ | ✅ `deleteLocal` | ✅ | |
+| Delete everywhere (signed tombstone) | ✅ `delete_everywhere` | ✅ `POST /v1/tombstones` | ➖ | ✅ confirmation | ✅ confirmation | ✅ confirmation | Files deleted AFTER the SQL commit. |
+| Delete ONE attachment (image or file of a batch), "de cet appareil" (from this device) or "partout" (everywhere) | ✅ `delete_attachment(item, slot, everywhere)`, `supports_attachment_removal`, `FfiAttachment.slot`, `attachment_path(item, slot)`; `AttachmentTombstone` declaration (189 bytes), `attachment_removals` registry, migration v4, local payload entry cleared, switches to deleting the item when nothing is left, refused (`InvalidInput`) while the item is in the send queue (both scopes), `release` also on opening an item whose attachments are all removed, the relay's blob list purged of the attachment, history transfer (`removed_attachments`) | ✅ `POST /v1/attachment-tombstones`, `attachment_tombstone` event, `features` in `hello` and SpaceState | ➖ | ✅ viewer (bottom bar, 2 scopes, "partout" hidden if the relay does not support it) and file-batch rows in the detail view (⋮: "Supprimer le fichier de cet appareil / partout" (Delete file from this device / everywhere), a confirmation naming the file; not on the feed card; absent for an item still in the send queue); dedicated snackbars | ❌ gap: no UI to delete one attachment; receives removals through the core, `slot` carried (`Attachment.slot`, `attachmentPath(itemId:slot:)`) — not compiled here 🚧 | ❌ gap: no UI to delete one attachment; receives removals through the core, `slot` carried (`Attachment.slot`, `attachment_path(id, slot)`) | Core and relay done (spec `format-v1.md` §8.10, `api-v1.md` §4.8 bis). The relay must be deployed BEFORE the apps. All three apps pass the `slot` (never the list position) to `attachment_path`: a removal received from another device shifts nothing. Android: "partout" is only offered if `supports_attachment_removal`; compatibility: deploy the relay before the apps. Known Windows gap: the UI still passes an attachment's POSITION (converted to a slot on the Rust side from the item re-read at call time); a removal received while a viewer is open may target a different attachment of the same item: have `ImageViewer.svelte` / `CodeViewer.svelte` pass the `slot` before adding the deletion UI. |
+| History transfer (sealed for the new device, everything included) | ✅ `runtime/transfer.rs` | ✅ `POST/GET/DELETE /v1/transfers` (1 GiB, 7 days) | ➖ | ✅ at pairing | ✅ at pairing | ✅ at pairing **and** the Devices tab (send, accept, decline, cancel) | Windows exposes a manual control that mobiles do not have (to confirm 🚧). |
+
+---
+
+## 9. Demo mode
+
+| Feature | Core | Relay | CLI | Android | iOS | Windows | Notes / gaps |
+|---|---|---|---|---|---|---|---|
+| Demo mode | ✅ `demo` feature (not on by default), `runtime/demo.rs` | ➖ | ➖ | ❌ removed: `FakeTomiCore` only in `src/test` | ✅ Debug only (`TOMI_DEMO`), Rust core `demo` (23 items) | 🟡 Debug only, `TOMI_DEMO=1`, **separate fake core** (`fake_core.rs`) | Three mechanisms. iOS: `build-core.sh` builds `demo` by default; only `--no-demo` removes it (no safeguard): required for TestFlight. |
+
+---
+
+## 10. UI and design
+
+Charter: `design/tomi/tokens.json` (reference) and `design/tomi/brand-guidelines.md`; charter 6.3: no circular arrows or spinners.
+
+| Feature | Core | Relay | CLI | Android | iOS | Windows | Notes / gaps |
+|---|---|---|---|---|---|---|---|
+| Light and dark theme | ➖ | ➖ | ➖ | 🟡 follows the system (`Theme.kt`), no dynamic colour and no manual setting found | 🟡 generated tokens, follows the system; manual setting not found | ✅ System / Clair / Sombre (Light / Dark) (Settings) | |
+| Charter tokens (light AND dark) | ➖ | ➖ | ➖ | ✅ `Theme.kt`, radii 8 / 12 | ✅ generated `TomiTokens.swift` (`tokens-to-swift.py`) | ✅ CSS variables (`app.css`) | Night / sun identity colours reserved for the logo mark. |
+| Exact texts (`strings.xml` is authoritative, informal "tu" form) | ➖ | ➖ | ➖ | ✅ `strings.xml` | ✅ `Localizable.xcstrings` generated from `strings.xml` + `ios_` keys | 🟡 `fr.ts` written by hand (not generated) | Risk of text drift on Windows. French only everywhere. |
+| Inter and JetBrains Mono fonts bundled | ➖ | ➖ | ➖ | 🟡 bundled; **OFL licences not found** in the app | ✅ + `Inter-OFL.txt`, `JetBrainsMono-OFL.txt` | ✅ + licence texts | Android: licences to bundle before a public release. |
+| Ligature-free monospace (URL, secret, code) | ➖ | ➖ | ➖ | ✅ `calt=0,liga=0` | ✅ `TomiMonoFont` | 🟡 monospace areas only | |
+| Accessibility | ➖ | ➖ | ➖ | ✅ `contentDescription`, `semantics`, swipe accessibility actions; TalkBack not tested | ✅ ~100 VoiceOver labels, Dynamic Type, Reduce Motion | 🟡 aria, roles, 2 px focus, `reduced-motion`, `forced-colors`; no full audit | |
+| Floating toolbar M3 / Liquid Glass | ➖ | ➖ | ➖ | ✅ M3 1.5.0-alpha18 (moving API) | ✅ Liquid Glass | ➖ | See §3 for the two items still in progress. |
+| Foldable iPhone (side band, `TopCornerBand`) | ➖ | ➖ | ➖ | ➖ | ✅ `ActionBarPlacement`, `TopCornerBand` | ➖ | Reference simulator. |
+| Wide-window mosaic | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ see §3 | |
+| Single primary action (square "Envoyer" (Send) FAB) | ➖ | ➖ | ➖ | ✅ square `brand` FAB | ✅ primary button in `brand`-tinted glass | ➖ | |
+
+---
+
+## 11. Relay, protocol and operations
+
+| Feature | Core | Relay | CLI | Android | iOS | Windows | Notes / gaps |
+|---|---|---|---|---|---|---|---|
+| Blind relay, challenge-response auth, `tms1.` / `tmp1.` tokens | ✅ | ✅ 42 endpoints (`routes/mod.rs`) | ➖ | ➖ | ➖ | ➖ | `spec/api-v1.md` §4.1. |
+| Multi-space | ➖ | ✅ `spaces.rs` (`routing.db` + one database per space), isolation tested | ➖ | ➖ | ➖ | ➖ | `docs/multi-person-shared-relay.md` describes the earlier single-space relay setup: to re-read. |
+| Quotas, retention, rate limits | ➖ | ✅ `max_relay_bytes` 1 GiB, retention 45 d, `rl_*` | ➖ | ➖ | ➖ | ➖ | Per-space quota: override with `tomi-relay admin quota`; otherwise a default adjustable in the web panel (`api/quota`); otherwise `max_space_bytes`; otherwise no limit. A write from a device revoked during a request is refused (`require_caller`). `/v1/*` responses use `no-store` + `nosniff`. |
+| Web administration panel | ➖ | 🟡 `admin_web.rs` (WebAuthn passkey, read-only + invitations), **disabled by default** | ➖ | ➖ | ➖ | ➖ | Responsive (cards on mobile), light / dark / auto theme, relative dates, sorting, confirmations on the page, action feedback at the bottom of the screen, remaining session time. No revocation or space deletion (these stay local: a space's card gives the commands to copy). |
+| Web panel: health and attention points | ➖ | ✅ `api/status` + `api/about` (version, start/uptime, server clock, session end, configuration limits) | ➖ | ➖ | ➖ | ➖ | Alerts computed in the page from metadata only: storage/quota ≥ 90 %, disk close to `min_free_disk_bytes`, FCM in error, pending key change, refused connections. |
+| Web panel: space details | ➖ | ✅ `api/spaces` (+ `present`, `last_activity_at`, `items`, `blobs`, `events`, `head_seq`, `retention_floor_seq`, `rotation_required`), `api/devices` (+ `registered_at`) | ➖ | ➖ | ➖ | ➖ | Additive; the same fields appear in `admin spaces --json` / `admin devices --json`. Counts, sizes, dates: never content or full identifiers. |
+| Web panel: administration journal | ➖ | ✅ `api/journal` (in memory, 100 lines, lost on restart) | ➖ | ➖ | ➖ | ➖ | Fixed words + dates + account (+ bytes for quota); no address, token, code, or space. Repeats folded into one line. |
+| Web panel: copyable diagnostics | ➖ | ✅ built in the page | ➖ | ➖ | ➖ | ➖ | Versions, accounts, sizes, states, limits, browser; no space identifier, device name, fingerprint, or token. |
+| `device_set_mismatch` alert | 🟡 rotation retried after 1 h; the failure is **silent** (TODO `actions.rs`) | ✅ returns `409 device_set_mismatch` | ➖ | ❌ | ❌ | ❌ | `spec/api-v1.md` §7.6 requires the alert; not exposed by the FFI. |
+| Unreadable items / unknown format | ✅ `UnreadableReason`, `UpdateRequired` | ➖ | ➖ | ✅ | ✅ | ✅ | |
+| Logging without content | ➖ | ✅ `logging.rs` | ➖ | ✅ | ✅ | ✅ | Never a secret in logs (golden rule 3). |
+| Frozen vectors `spec/vectors/v1/`, `pairing-v1/` | ✅ checked by the tests | ➖ | ➖ | ➖ | ➖ | ➖ | NEVER change. |
+
+---
+
+## 12. Infrastructure and distribution
+
+| Feature | Core | Relay | CLI | Android | iOS | Windows | Notes / gaps |
+|---|---|---|---|---|---|---|---|
+| GitHub CI (`ci.yml`) | ✅ `rust` (fmt, clippy, tests, demo mode) + `core-windows` + `spec` | ✅ via `rust` | ✅ built by `core-windows` | ✅ `android` job (assembleDebug, tests, lint) | ❌ no job (it would need a macOS runner) | ❌ neither a Tauri build nor `npm run check` nor `cargo test` for `apps/windows` | The Windows workspace is excluded from the root workspace. |
+| Relay binary / release | ➖ | ✅ `release-relay.yml` (Linux musl + Windows `.exe`, SHA-256, Forge deployment if configured) | ➖ | ➖ | ➖ | ➖ | On `relay-v*`. |
+| Android release (APK) | ➖ | ➖ | ➖ | 🟡 **manual**: `gh release upload android-dev`; debug APK; R8 disabled; no release signing | ➖ | ➖ | Asset name to align (`app-debug.apk` / `tomi-debug.apk`). No workflow produces the APK. |
+| Windows release (installer) | ➖ | ➖ | ➖ | ➖ | ➖ | 🟡 unsigned NSIS (`Tomi_0.1.0_x64-setup.exe`), `windows-preview` release **manual** | SmartScreen may warn. No workflow produces it. |
+| iOS distribution (TestFlight) | ➖ | ➖ | ➖ | ➖ | ❌ not done: Release archive, App Groups / Background Modes capabilities and signing team to be set up by the maintainer | ➖ | `Tomi` and `Tomi Dev` schemes; **never archive Dev** (the `Tomi Dev` scheme nonetheless has an `archive` action with no safeguard). |
+| Artifact signing | ➖ | ❌ SHA-256 only (minisign / attestation to add) | ➖ | ❌ | 🚧 local signing via `Signing.local.xcconfig` | ❌ | `ci.yml`: "la CI ne signe rien" (CI signs nothing). |
+| Automatic updates | ➖ | 🟡 route `GET /updates/{*path}` | ➖ | ➖ | ➖ | ❌ no updater plugin (`createUpdaterArtifacts: false`) | |
+| Server deployment (`infra/`) | ➖ | 🟡 Caddy, nginx, systemd, `backup.sh`, `deploy.sh` not run; relay not installed on the production host as of 6 Nov. | ➖ | ➖ | ➖ | ➖ | See `infra/README.md`. |
+| `tomi` CLI | ➖ | ➖ | ❌ shell (prints the version only) | ➖ | ➖ | ➖ | `PROJECT.md` announced it as shipped in v1. |
+
+---
+
+## Not validated on a device (state as of 2026-11-10)
+
+Items marked ✅ in the code that have not yet been run on a physical device:
+- Android (physical device): real pairing (JNA, Keystore, camera, `tomi-share://pair` links), "Données illisibles" (unreadable data), revocation, v2 departure (acceptance test A10), file cards, clipboard clearing, background plaintext copy.
+- iOS: capture protection (`CaptureShield`), banner "Annuler" (3 s window), real "Données illisibles", secret-item notification, the six items of 10 November (🚧).
+- Windows: Windows Hello and its account password fallback (CredUI not tested by hand), toasts, focus, installer and the `tomi-share://` scheme, window display affinity (WDA).
+- End to end: two real clients (Android + Windows) paired, then exchanging items, files, pins, tombstones and history through a deployed relay: not yet proven.
+
+---
+
+## Open gaps
+
+### A. Avoidable gaps (could be closed)
+
+1. **Maximum number of files**: 20 (Android, iOS) versus 32 (Windows, relay). Pick a single value, put it in `spec/` and, ideally, in the core.
+2. **Total 100 MB check in the core**: only the number of blobs is checked before sending; an oversized item is refused only by the relay (queue behaviour to verify).
+3. **Triple secret detection**: three heuristics (Android, iOS, Windows) with different thresholds (512 / 128). Factor them into the core, or align them with shared test vectors.
+4. **Windows: the clipboard "sensitive" flag is never read** (`flagged_sensitive()` is dead code): a password copied from a password manager is not locked to "Masquer" (hidden).
+5. **Windows: no "Options" button** on the undo banner (Annuler only); to decide whether the composer is enough.
+6. **Windows: no "Hors ligne · en attente" (offline · pending) chip / banner** (Android has it; iOS 🚧).
+7. **Inactive-device hint**: Android and Windows have it, enabled (flag `LAST_SEEN_IS_FROM_RELAY = true`), but not yet tried against a real relay; iOS does not have it yet. To port to iOS.
+8. **Windows: no "Réinitialiser" (Reset) for a database without a key** (Android and iOS have it, with confirmation).
+9. **Windows: the 2-minute Hello window is not closed on session lock / sleep** (window subclassing in `unsafe`, refused so far).
+10. **Windows: plaintext copy kept for 1 minute** after last use (golden rule 3: background or startup), and the decrypted feed kept in memory (`RealCore.snapshot`).
+11. **iOS: code screen without syntax colours** (Android: tree-sitter, 14 languages + PHP; Windows: ~12 languages); align the language lists.
+12. **iOS: no universal links** (`applinks:` absent): depends on the signing team and an AASA route to add to the relay.
+13. **iOS: no widget / send control** (Android: tile); whether it is useful is still to be decided.
+14. **iOS: no TestFlight, no Apple CI, no safeguard against an archived `demo` core or `Tomi Dev` scheme** (no macOS runner).
+15. **Android: no FCM push**, although the relay can send it (`push_token` "pas encore implémenté" (not implemented yet) in `ffi.rs`): to do on the core first, then Android.
+16. **Android: OFL font licences missing**, R8 / minify disabled, no release signing, Markdown rendering hardening still needed before a public release.
+17. **Android: unconditional background clipboard clearing** (it may overwrite a more recent copy); background purge of the plaintext copy to verify.
+18. **`device_set_mismatch` alert** not exposed by the core (silent failure in all three apps).
+19. **Release and CI**: Android and Windows (APK / installer) are delivered by hand, without a reproducible workflow; no CI for `apps/windows` (`cargo test`, `npm run check`); no artifact signing (relay included).
+20. **Windows: no updater** (`createUpdaterArtifacts: false`).
+21. **Windows: texts written by hand** (`fr.ts`) instead of derived from `strings.xml` (drift possible).
+22. **Theme**: no manual Light / Dark setting on Android and iOS (Windows has one).
+23. **PDF / video / Office thumbnails** produced only by iOS (Android and Windows send without them).
+24. **Device name input limits**: 40 (Android, iOS) versus 64 (Windows).
+25. **Check that Windows' manual history transfer** (Devices tab) is not a gap with mobile (which only do it at pairing).
+26. **`tomi` CLI**: a shell with no commands, while `PROJECT.md` and `api-v1.md` (`watch` mode) describe it; ship it or remove it from the docs.
+27. **Incomplete spec**: expiry options, the 20-file limit and the thumbnail ceiling are not in any spec; `tomi-share://send|item|open` only appears in `docs/`.
+28. **Outdated docs**: `apps/windows/README.md` (undo "5 s": the code says 3 s), Android comments ("5 s"), `justfile` (comment "spec_vectors.rs pas encore" (not yet)), `docs/multi-person-shared-relay.md` (describes a single-space relay although `spaces.rs` exists).
+29. **Six iOS 🚧 items** (3 s undo, send date, `SeenTracker`, bar that no longer hides, selected button, file cards): to validate on a Mac, then tick them ✅.
+30. **iOS: no capped previews of long texts in the feed** (§3): `MarkdownView` re-parses the whole document in `body` and stacks it in a non-lazy `VStack`; port Android's cutting (`MarkdownBlocks.kt`) before rendering.
+31. **iOS: no chunked rendering of long texts in the detail view** (§4): the detail renders the whole document as one block (`MarkdownView` in a non-lazy `VStack`); port Android's `chunks` / `sourceChunks` and reveal-on-scroll.
+
+### B. Gaps imposed by the platform or an external dependency
+
+| Gap | Reason |
+|---|---|
+| iOS cannot prevent a screenshot (no `FLAG_SECURE`); `CaptureShield` relies on the undocumented behaviour of a password field | iOS has no equivalent public API; compensated by `PrivacyCover`, re-hiding after a capture, and protections 2 to 4 in `apps/apple/README.md`. |
+| iOS: a secret item cannot be kept off the lock screen (`VISIBILITY_SECRET`); the notification only shows "Tomi : nouvel élément" (Tomi: new item) | No iOS equivalent; content is never put in the notification. |
+| iOS: no APNs push | No `ApnsSender` on the relay side and no `aps-environment`; depends on the relay and on the Apple developer account. |
+| iOS: the share extension cannot open the core or launch its app | iOS extension limitation; worked around with the App Group inbox `ShareInbox`. |
+| iOS: "strong" biometrics = Face ID / Touch ID only (no "strong only" notion as on Android) | Decided by the maintainer (PR-10); no exact equivalent exists. |
+| iOS: no source-app identifier and no clipboard "sensitive" marker in a share | The extension cannot see them; only the content heuristic applies. |
+| Android: no standard FileProvider (in-house `AttachmentProvider`, not exported) | Technical choice, not a functional gap. |
+| Windows: no camera QR scanning | PCs usually have no useful camera; the code is typed or the link is pasted. |
+| Windows: no share extension and no swipe-to-archive | No Windows equivalent of the share sheet; the ⋮ menu replaces the swipe (by design). |
+| Windows: `https://…/l/…` links not handled | Windows does not launch the app from an https link; it is pasted into the field. |
+| Windows: an ongoing Hello prompt is not cancelled on session lock | Tauri does not expose `WTS_SESSION_LOCK` or `WM_POWERBROADCAST` (see A.9 if `unsafe` is accepted). |
+| Core: metadata (ids, dates, flags, sizes, device names) stays in plaintext in SQLite | Accepted trade-off, listed in `runtime/store.rs`; no content and no title. |

@@ -1,0 +1,95 @@
+[package]
+name = "tomi-windows"
+version = "0.1.0"
+description = "Tomi - Windows client (tray drop box)"
+edition = "2021"
+license = "Apache-2.0"
+repository = "https://github.com/tomi-share/tomi"
+publish = false
+
+# Standalone workspace: own Cargo.lock and target directory. The root workspace
+# lists this directory in `exclude`.
+[workspace]
+
+[lib]
+name = "tomi_windows_lib"
+crate-type = ["rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon", "image-png"] }
+tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }
+tauri-plugin-deep-link = "2"
+tauri-plugin-global-shortcut = "2"
+tauri-plugin-autostart = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-opener = "2"
+
+# The real core. This client is native Rust, so it calls the core's `runtime` directly
+# (SQLite store, sync engine, outbox, history transfer) with the HTTPS / WebSocket
+# transport (`http`). No `ffi`: UniFFI is the Android binding and would only add weight.
+tomi-core = { path = "../../../crates/core", default-features = false, features = ["runtime", "http"] }
+# Random bytes for the key that wraps the secrets of the local database (see wrapkey.rs).
+# Not a cryptographic primitive: it is the operating system random generator.
+getrandom = "0.4"
+zeroize = "1"
+# QR code of the pairing link (`spec/pairing-v1.md` §4.3). Encoder only (no image support):
+# the webview draws the modules as an SVG path, see qr.rs.
+qrcode = { version = "0.14", default-features = false }
+
+async-trait = "0.1"
+regex = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+uuid = { version = "1", features = ["v4"] }
+tokio = { version = "1", features = ["time", "sync", "rt", "macros"] }
+url = "2"
+ammonia = "4"
+pulldown-cmark = { version = "0.13", default-features = false, features = ["html"] }
+base64 = "0.22"
+mime_guess = "2"
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "gif", "bmp", "webp"] }
+drag = "2"
+
+[target.'cfg(windows)'.dependencies]
+# DPAPI (CryptProtectData / CryptUnprotectData) seals the wrapping key of the local database
+# for the current Windows user. Already in the dependency tree through Tauri.
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Security_Cryptography"] }
+clipboard-win = "5"
+mslnk = "0.1"
+winreg = "0.56"
+# Fallback without Hello: credential dialog + LogonUserW (account_auth.rs).
+# Windows Hello (UserConsentVerifier) asks for a strong verification before the irreversible
+# departure actions (see strong_auth.rs), and the toast history is cleared after an erasure.
+# Already in the dependency tree through Tauri (same version, so the lock only gains an edge).
+windows-future = "0.2"
+windows = { version = "0.61", features = [
+    "Data_Xml_Dom",
+    "Foundation",
+    "Security_Credentials_UI",
+    "Win32_Security",
+    "Win32_Graphics_Gdi",
+    "Win32_Security_Credentials",
+    "Win32_System_Com",
+    "Win32_System_Threading",
+    "Win32_UI_WindowsAndMessaging",
+    "UI_Notifications",
+    "Win32_Foundation",
+    "Win32_System_WinRT",
+] }
+
+[profile.release]
+opt-level = "s"
+lto = true
+strip = true
+codegen-units = 1
+panic = "abort"
+
+[dev-dependencies]
+tempfile = "3"
+# Reads the QR code back from its modules: the test that the drawn code carries the link.
+rqrr = { version = "0.11", default-features = false }
+tokio = { version = "1", features = ["test-util", "rt", "macros", "time", "sync"] }

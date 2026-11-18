@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+<title>Tomi — créer ton espace</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #F6F4EF;
+    --surface: #FFFFFF;
+    --surface-alt: #ECE9E2;
+    --text: #1B2130;
+    --text-muted: #565C6B;
+    --border: #D5D1C7;
+    --brand: #2E4C80;
+    --night: #24324A;
+    --sun: #FFC85C;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121620;
+      --surface: #1A1F2B;
+      --surface-alt: #242A38;
+      --text: #E9E7E1;
+      --text-muted: #A6ABB8;
+      --border: #383E4C;
+      --brand: #A9BFEA;
+      --night: #24324A;
+      --sun: #FFC85C;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Inter", "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+  }
+  main {
+    width: 100%;
+    max-width: 480px;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 32px;
+  }
+  .logo {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    background: var(--night);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+  }
+  .logo span {
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    background: var(--sun);
+    display: block;
+  }
+  h1 {
+    margin: 0 0 8px;
+    font-size: 20px;
+    line-height: 26px;
+    font-weight: 600;
+  }
+  p { margin: 0 0 16px; }
+  .lead { color: var(--text); }
+  .muted { color: var(--text-muted); font-size: 14px; }
+  .actions { margin: 0 0 24px; }
+  .button {
+    display: inline-block;
+    padding: 10px 20px;
+    border-radius: 999px;
+    background: var(--brand);
+    color: var(--bg);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .button:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+  .points {
+    list-style: none;
+    margin: 0 0 24px;
+    padding: 0;
+    border-top: 1px solid var(--border);
+  }
+  .points li {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+  .points strong { color: var(--text); font-weight: 600; }
+  a { color: var(--brand); }
+</style>
+</head>
+<body>
+<main>
+  <div class="card">
+    <div class="logo" aria-hidden="true"><span></span></div>
+    <h1>Créer ton espace Tomi</h1>
+    <p class="lead">Ouvre ce lien avec l'app Tomi pour créer ton espace.</p>
+    <p class="actions"><a class="button" href="/l/">Télécharger l'app Tomi</a></p>
+    <ul class="points">
+      <li><strong>L'app n'est pas encore installée ?</strong> Télécharge-la et installe-la, puis rouvre ce lien (ou scanne de nouveau le QR code).</li>
+      <li><strong>L'app est déjà installée ?</strong> Ouvre ce lien depuis l'appareil où elle se trouve : elle te propose de créer ton espace sur ce relais.</li>
+      <li><strong>Relais aveugle.</strong> Le jeton de ce lien est la partie après le « # » : ton navigateur ne l'envoie jamais au serveur. Tout se passe dans l'application.</li>
+    </ul>
+    <p class="muted">Cette page est la même pour tout le monde. Elle ne lit pas le jeton.</p>
+  </div>
+</main>
+</body>
+</html>

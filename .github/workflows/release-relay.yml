@@ -1,0 +1,217 @@
+name: Release relay
+
+# Triggered by a `relay-vX.Y.Z` tag: builds tomi-relay for Linux (static musl binary, the production
+# binary of the EC2/Caddy deployment, independent of glibc) AND for Windows x64 (msvc, to run/test the
+# relay locally on a PC), and publishes both to a GitHub release. The release is only visible to people
+# with access to the repository (it may be private). Download it from a PC with
+# `gh release download` (see infra/README.md); no GitHub token needs to be placed on the EC2 host.
+# `workflow_dispatch` only builds the artifacts, without publishing.
+#
+# No secret required: the automatic GITHUB_TOKEN is enough, and only for the publishing job.
+
+on:
+  push:
+    tags:
+      - "relay-v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-relay-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_VERSION: "1.99"
+
+# Actions pinned by full commit SHA (readable tag in a comment):
+#   actions/checkout          v6.1.0   d23441a48e516b6c34aea4fa41551a30e30af803
+#   dtolnay/rust-toolchain    master   683b588c487a69d01f6c6ddf40f036ff682cc2c8
+#   Swatinem/rust-cache       v2.9.3   d1527c8f67ef9af357290475d4af4b0fab8f12e0
+#   actions/upload-artifact   v7.0.2   cf430e030ddbb5b0abf93d22962f4752f3646cd9
+#   actions/download-artifact v8.0.2   9000827ccba6bdab643e8b6fd33ac0654aef8333
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Production binary of the EC2 deployment: static Linux musl (independent of glibc).
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            asset: tomi-relay-x86_64-unknown-linux-musl
+          # Windows x64 binary: to run / test the relay locally on a Windows PC.
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            asset: tomi-relay-x86_64-pc-windows-msvc.exe
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+
+      - name: musl tools
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends musl-tools
+
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          key: release-${{ matrix.target }}
+
+      - name: The tag matches the crate version
+        if: github.ref_type == 'tag'
+        shell: bash
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          crate_version="$(cargo metadata --no-deps --format-version 1 \
+            | jq -r '.packages[] | select(.name == "tomi-relay") | .version')"
+          tag_version="${TAG_NAME#relay-v}"
+          echo "tag=${tag_version} crate=${crate_version}"
+          if [ "$tag_version" != "$crate_version" ]; then
+            echo "::error title=Version::The tag ${TAG_NAME} does not match the version ${crate_version} of tomi-relay (Cargo.toml). Fix the version or the tag."
+            exit 1
+          fi
+
+      - name: Build
+        run: cargo build --release --locked --target ${{ matrix.target }} -p tomi-relay
+
+      # One step per OS: the binary path and the tools (file/sha256sum vs certutil) differ.
+      - name: Prepare artifact (Linux)
+        if: runner.os == 'Linux'
+        env:
+          TARGET: ${{ matrix.target }}
+          ASSET: ${{ matrix.asset }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          cp "target/${TARGET}/release/tomi-relay" "dist/${ASSET}"
+          file "dist/${ASSET}"
+          if ! file "dist/${ASSET}" | grep -Eq 'statically linked|static-pie linked'; then
+            echo "::warning title=Binary::The binary is not static; it will depend on the glibc of the host."
+          fi
+          (cd dist && sha256sum "${ASSET}" > "${ASSET}.sha256" && cat "${ASSET}.sha256")
+
+      - name: Prepare artifact (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          TARGET: ${{ matrix.target }}
+          ASSET: ${{ matrix.asset }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Copy-Item "target/$env:TARGET/release/tomi-relay.exe" "dist/$env:ASSET"
+          $hash = (Get-FileHash "dist/$env:ASSET" -Algorithm SHA256).Hash.ToLower()
+          # Same format as `sha256sum` (lowercase, two spaces, file name) so that `sha256sum --check` works.
+          "$hash  $env:ASSET" | Out-File -Encoding ascii -NoNewline "dist/$env:ASSET.sha256"
+          Get-Content "dist/$env:ASSET.sha256"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ${{ matrix.asset }}
+          path: dist/
+          retention-days: 14
+          if-no-files-found: error
+
+  publish:
+    name: Publish to the release
+    needs: build
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Only job with write rights, and only on releases.
+    permissions:
+      contents: write
+    steps:
+      # Fetches the artifacts of both build jobs (one folder per `name`) and merges them.
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: tomi-relay-*
+          path: artifacts/
+          merge-multiple: true
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          cd artifacts
+          ls -l
+          # Each binary is checked against its digest before publishing.
+          for sum in *.sha256; do sha256sum --check "$sum"; done
+          flags=()
+          case "$TAG_NAME" in
+            *-*) flags+=(--prerelease) ;;
+          esac
+          gh release create "$TAG_NAME" \
+            tomi-relay-x86_64-unknown-linux-musl tomi-relay-x86_64-unknown-linux-musl.sha256 \
+            tomi-relay-x86_64-pc-windows-msvc.exe tomi-relay-x86_64-pc-windows-msvc.exe.sha256 \
+            --verify-tag \
+            --title "tomi-relay ${TAG_NAME#relay-v}" \
+            --notes "Relay binaries: static Linux (x86_64-unknown-linux-musl, production binary) and Windows x64 (x86_64-pc-windows-msvc, to run/test locally). Example managed-server deployment: infra/forge/README.md; EC2/Caddy: infra/README.md." \
+            "${flags[@]}"
+
+      # "Latest binary" pointer read by the example deployment script (infra/forge/deploy.sh). It is kept
+      # up to date with the same assets as the versioned release, so `relay-latest` always follows the
+      # latest published `relay-vX.Y.Z`.
+      - name: Update the relay-latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          cd artifacts
+          # (Re)creates relay-latest: unversioned, always a prerelease (development binaries), on the
+          # tag's commit. --target keeps the Git tag `relay-latest` on that commit.
+          if gh release view relay-latest >/dev/null 2>&1; then
+            gh release edit relay-latest --target "$GITHUB_SHA" \
+              --title "tomi-relay (latest) — ${TAG_NAME#relay-v}" \
+              --notes "Pointer to the latest relay binary (currently ${TAG_NAME}). Read by the example deployment script (infra/forge/deploy.sh). Do not use it for a pinned deployment: prefer a relay-vX.Y.Z tag."
+          else
+            gh release create relay-latest \
+              --target "$GITHUB_SHA" --prerelease \
+              --title "tomi-relay (latest) — ${TAG_NAME#relay-v}" \
+              --notes "Pointer to the latest relay binary (currently ${TAG_NAME}). Read by the example deployment script (infra/forge/deploy.sh)."
+          fi
+          # Replaces the assets (--clobber) so that relay-latest carries this tag's binary.
+          gh release upload relay-latest \
+            tomi-relay-x86_64-unknown-linux-musl tomi-relay-x86_64-unknown-linux-musl.sha256 \
+            tomi-relay-x86_64-pc-windows-msvc.exe tomi-relay-x86_64-pc-windows-msvc.exe.sha256 \
+            --clobber
+
+      # Post-release deploy hook (optional): triggers the example deployment now that relay-latest carries
+      # the latest binary. The panel then runs infra/forge/deploy.sh on the server, which downloads this
+      # asset and restarts the relay. Without the secret, the release does not fail: the binary is
+      # published, and the deployment can still be triggered by hand (panel's deploy action).
+      - name: Trigger deploy hook (optional)
+        env:
+          FORGE_DEPLOY_URL: ${{ secrets.FORGE_DEPLOY_URL }}
+        run: |
+          set -euo pipefail
+          # A step-level `if:` cannot read secrets.*; the variable is tested here. Without the secret,
+          # we do not fail: the release is published, and the deployment can still be triggered by hand.
+          if [ -z "${FORGE_DEPLOY_URL}" ]; then
+            echo "FORGE_DEPLOY_URL not set: deployment not triggered (trigger it by hand from the panel)."
+            exit 0
+          fi
+          out="${RUNNER_TEMP}/deploy-hook.out"
+          code="$(curl -sS -o "$out" -w '%{http_code}' -X POST "$FORGE_DEPLOY_URL")"
+          echo "Deploy hook answered HTTP ${code}"
+          cat "$out" 2>/dev/null || true
+          case "$code" in
+            2*) echo "Deployment triggered; deploy.sh fetches relay-latest on the server." ;;
+            *) echo "::warning title=Deploy hook::POST refused (HTTP ${code}). The release is published; deploy by hand from the panel." ;;
+          esac

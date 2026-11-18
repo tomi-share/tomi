@@ -1,0 +1,312 @@
+{
+  "description": "Format 1 reservations for future multi-recipient sharing (§5.8). payload: read json_hex as in payload-json.json; the result MUST be identical to that of equivalent_json_hex (the same item without audience). envelope: as item-text.json, then compare to equivalent_payload_json. reserved_key_epoch: build the SpaceKeyRing from ring (keys, then rotations applied at seq rotation_seq), open envelope (items: open_received with announced_item_id and item_seq; item_states: open_received_state with announced_event_id and seq) and obtain expected_reason; statements: decode wire and obtain expected_error. No existing file is modified by these reservations.",
+  "envelope": [
+    {
+      "aad_cek_wrap": "746f6d692f76312f6161642f63656b2d777261700000000001000000017a7b7c7d7e7f40818283848586878889",
+      "aad_payload": "746f6d692f76312f6161642f7061796c6f61640000000001000000017a7b7c7d7e7f40818283848586878889",
+      "cek": "b0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecf",
+      "cek_wrap_key": "d7c2fc195cf25c98e23cf6715eeef7e9610e66ef375985a00496e98db2071872",
+      "description": "Complete envelope (§5) whose payload carries audience. It opens under the space key like any other: audience has no cryptographic effect, all members decrypt it; expected_item = the item of equivalent_payload_json.",
+      "envelope": "00000001000000017a7b7c7d7e7f40818283848586878889d0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7df90868aac025e06d5fb00c184b99a85b3b8e751297353fe03820410fe7bbfa59f7eedd026151f9fe937059c71bcc89be8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff5105f791e40eddadaacf00f5541cf2d9b41cf65b300e8a09fbb682e1576c9169ab9cbf5d2f004ca36f9e7a5a6c9dd4d03ac3897c57f16984576e56c8ee61dd7576e341c10527ca4d698a6c5dd1a196e713188bf131f06d1392dfed9f3018ecb1872d0edf605c1ec3178be47d8113dcdae0f9386a0728e7831b1187bd9fe0f18898507c46ac62b7affdcb7b4b0fa991b660885c8bb58873305b7e29de3e604e3a50308bd39150570f64e5b67966718023bd5e54103174f15a78fe11882e3eda48b660cec9df0aa0768b3cf204ab91da8ec249fc33c5b7c5fc437bc4c81cd5cdccf6fa4295cbf7febb61c0a99150b3ac8ca32c887b2e478b3de611a058aaf35089a467c27a46dcf5ffe8905285942d3f75",
+      "equivalent_payload_json": "{\"id\":\"7a7b7c7d-7e7f-4081-8283-848586878889\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000,\"text\":{\"plain\":\"Pour le PC\"}}",
+      "expected_item": {
+        "attachments": [],
+        "created_at_ms": 1793750400000,
+        "expires_at_ms": null,
+        "id": "7a7b7c7d-7e7f-4081-8283-848586878889",
+        "read_policy": "until_expiry",
+        "secret": false,
+        "source_device": "e983270f3ea7baa8688d15c08d447559",
+        "text": {
+          "html": null,
+          "markdown": null,
+          "plain": "Pour le PC",
+          "source_format": "plain"
+        },
+        "title": null,
+        "url": null
+      },
+      "format": 1,
+      "item_id": "7a7b7c7d-7e7f-4081-8283-848586878889",
+      "key_epoch": 1,
+      "name": "audience_in_envelope",
+      "padded_payload": "7b226964223a2237613762376337642d376537662d343038312d383238332d383438353836383738383839222c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c22637265617465645f6174223a313739333735303430303030302c2274657874223a7b22706c61696e223a22506f7572206c65205043227d2c2261756469656e6365223a7b22746f223a5b7b2274797065223a22646576696365222c226964223a226432646166323834353765663364313463396335386436663438386531383434227d5d7d7d80000000000000000000000000000000000000000000000000",
+      "payload_ciphertext": "5105f791e40eddadaacf00f5541cf2d9b41cf65b300e8a09fbb682e1576c9169ab9cbf5d2f004ca36f9e7a5a6c9dd4d03ac3897c57f16984576e56c8ee61dd7576e341c10527ca4d698a6c5dd1a196e713188bf131f06d1392dfed9f3018ecb1872d0edf605c1ec3178be47d8113dcdae0f9386a0728e7831b1187bd9fe0f18898507c46ac62b7affdcb7b4b0fa991b660885c8bb58873305b7e29de3e604e3a50308bd39150570f64e5b67966718023bd5e54103174f15a78fe11882e3eda48b660cec9df0aa0768b3cf204ab91da8ec249fc33c5b7c5fc437bc4c81cd5cdccf6fa4295cbf7febb61c0a99150b3ac8ca32c887b2e478b3de611a058aaf35089a467c27a46dcf5ffe8905285942d3f75",
+      "payload_json": "{\"id\":\"7a7b7c7d-7e7f-4081-8283-848586878889\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000,\"text\":{\"plain\":\"Pour le PC\"},\"audience\":{\"to\":[{\"type\":\"device\",\"id\":\"d2daf28457ef3d14c9c58d6f488e1844\"}]}}",
+      "payload_json_hex": "7b226964223a2237613762376337642d376537662d343038312d383238332d383438353836383738383839222c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c22637265617465645f6174223a313739333735303430303030302c2274657874223a7b22706c61696e223a22506f7572206c65205043227d2c2261756469656e6365223a7b22746f223a5b7b2274797065223a22646576696365222c226964223a226432646166323834353765663364313463396335386436663438386531383434227d5d7d7d",
+      "payload_nonce": "e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff",
+      "space_key": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+      "wrap_nonce": "d0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7",
+      "wrapped_cek": "df90868aac025e06d5fb00c184b99a85b3b8e751297353fe03820410fe7bbfa59f7eedd026151f9fe937059c71bcc89b"
+    }
+  ],
+  "frozen": "FROZEN as of publication — never modify this file (spec/vectors/v1/README.md).",
+  "payload": [
+    {
+      "description": "audience with a recipient of type device: ignored, the item is broadcast to the whole space as without audience.",
+      "equivalent_json": "{\"id\":\"4a4b4c4d-4e4f-4051-8253-545556575859\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000,\"text\":{\"plain\":\"x\"}}",
+      "equivalent_json_hex": "7b226964223a2234613462346334642d346534662d343035312d383235332d353435353536353735383539222c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c22637265617465645f6174223a313739333735303430303030302c2274657874223a7b22706c61696e223a2278227d7d",
+      "expected_item": {
+        "attachments": [],
+        "created_at_ms": 1793750400000,
+        "expires_at_ms": null,
+        "id": "4a4b4c4d-4e4f-4051-8253-545556575859",
+        "read_policy": "until_expiry",
+        "secret": false,
+        "source_device": "e983270f3ea7baa8688d15c08d447559",
+        "text": {
+          "html": null,
+          "markdown": null,
+          "plain": "x",
+          "source_format": "plain"
+        },
+        "title": null,
+        "url": null
+      },
+      "expected_item_id": "4a4b4c4d-4e4f-4051-8253-545556575859",
+      "json": "{\"id\":\"4a4b4c4d-4e4f-4051-8253-545556575859\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000,\"text\":{\"plain\":\"x\"},\"audience\":{\"to\":[{\"type\":\"device\",\"id\":\"d2daf28457ef3d14c9c58d6f488e1844\"}]}}",
+      "json_hex": "7b226964223a2234613462346334642d346534662d343035312d383235332d353435353536353735383539222c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c22637265617465645f6174223a313739333735303430303030302c2274657874223a7b22706c61696e223a2278227d2c2261756469656e6365223a7b22746f223a5b7b2274797065223a22646576696365222c226964223a226432646166323834353765663364313463396335386436663438386531383434227d5d7d7d",
+      "name": "audience_one_device"
+    },
+    {
+      "description": "Several recipients (device, reserved member, unknown type) and unknown fields in audience and in an entry: everything is ignored.",
+      "equivalent_json": "{\"id\":\"4a4b4c4d-4e4f-4051-8253-545556575859\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000}",
+      "equivalent_json_hex": "7b226964223a2234613462346334642d346534662d343035312d383235332d353435353536353735383539222c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c22637265617465645f6174223a313739333735303430303030307d",
+      "expected_item": {
+        "attachments": [],
+        "created_at_ms": 1793750400000,
+        "expires_at_ms": null,
+        "id": "4a4b4c4d-4e4f-4051-8253-545556575859",
+        "read_policy": "until_expiry",
+        "secret": false,
+        "source_device": "e983270f3ea7baa8688d15c08d447559",
+        "text": null,
+        "title": null,
+        "url": null
+      },
+      "expected_item_id": "4a4b4c4d-4e4f-4051-8253-545556575859",
+      "json": "{\"id\":\"4a4b4c4d-4e4f-4051-8253-545556575859\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000,\"audience\":{\"to\":[{\"type\":\"device\",\"id\":\"d2daf28457ef3d14c9c58d6f488e1844\"},{\"type\":\"device\",\"id\":\"6896f283182ae9776ed478f4a300426d\"},{\"type\":\"member\",\"id\":\"0f1e2d3c4b5a69788796a5b4c3d2e1f0\"},{\"type\":\"group\",\"id\":\"g1\",\"role\":\"x\"}],\"mode\":\"only\"}}",
+      "json_hex": "7b226964223a2234613462346334642d346534662d343035312d383235332d353435353536353735383539222c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c22637265617465645f6174223a313739333735303430303030302c2261756469656e6365223a7b22746f223a5b7b2274797065223a22646576696365222c226964223a226432646166323834353765663364313463396335386436663438386531383434227d2c7b2274797065223a22646576696365222c226964223a223638393666323833313832616539373736656434373866346133303034323664227d2c7b2274797065223a226d656d626572222c226964223a223066316532643363346235613639373838373936613562346333643265316630227d2c7b2274797065223a2267726f7570222c226964223a226731222c22726f6c65223a2278227d5d2c226d6f6465223a226f6e6c79227d7d",
+      "name": "audience_several_recipients"
+    },
+    {
+      "description": "Secret with a title and audience: the secret flag and the title are read as without audience (audience changes neither masking nor search).",
+      "equivalent_json": "{\"id\":\"4a4b4c4d-4e4f-4051-8253-545556575859\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000,\"secret\":true,\"title\":\"Code Wi-Fi\",\"text\":{\"plain\":\"hunter2\"}}",
+      "equivalent_json_hex": "7b226964223a2234613462346334642d346534662d343035312d383235332d353435353536353735383539222c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c22637265617465645f6174223a313739333735303430303030302c22736563726574223a747275652c227469746c65223a22436f64652057692d4669222c2274657874223a7b22706c61696e223a2268756e74657232227d7d",
+      "expected_item": {
+        "attachments": [],
+        "created_at_ms": 1793750400000,
+        "expires_at_ms": null,
+        "id": "4a4b4c4d-4e4f-4051-8253-545556575859",
+        "read_policy": "until_expiry",
+        "secret": true,
+        "source_device": "e983270f3ea7baa8688d15c08d447559",
+        "text": {
+          "html": null,
+          "markdown": null,
+          "plain": "hunter2",
+          "source_format": "plain"
+        },
+        "title": "Code Wi-Fi",
+        "url": null
+      },
+      "expected_item_id": "4a4b4c4d-4e4f-4051-8253-545556575859",
+      "json": "{\"id\":\"4a4b4c4d-4e4f-4051-8253-545556575859\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000,\"secret\":true,\"title\":\"Code Wi-Fi\",\"text\":{\"plain\":\"hunter2\"},\"audience\":{\"to\":[{\"type\":\"device\",\"id\":\"d2daf28457ef3d14c9c58d6f488e1844\"}]}}",
+      "json_hex": "7b226964223a2234613462346334642d346534662d343035312d383235332d353435353536353735383539222c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c22637265617465645f6174223a313739333735303430303030302c22736563726574223a747275652c227469746c65223a22436f64652057692d4669222c2274657874223a7b22706c61696e223a2268756e74657232227d2c2261756469656e6365223a7b22746f223a5b7b2274797065223a22646576696365222c226964223a226432646166323834353765663364313463396335386436663438386531383434227d5d7d7d",
+      "name": "audience_secret"
+    },
+    {
+      "description": "audience null = absent = tout l'espace.",
+      "equivalent_json": "{\"id\":\"4a4b4c4d-4e4f-4051-8253-545556575859\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000}",
+      "equivalent_json_hex": "7b226964223a2234613462346334642d346534662d343035312d383235332d353435353536353735383539222c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c22637265617465645f6174223a313739333735303430303030307d",
+      "expected_item": {
+        "attachments": [],
+        "created_at_ms": 1793750400000,
+        "expires_at_ms": null,
+        "id": "4a4b4c4d-4e4f-4051-8253-545556575859",
+        "read_policy": "until_expiry",
+        "secret": false,
+        "source_device": "e983270f3ea7baa8688d15c08d447559",
+        "text": null,
+        "title": null,
+        "url": null
+      },
+      "expected_item_id": "4a4b4c4d-4e4f-4051-8253-545556575859",
+      "json": "{\"id\":\"4a4b4c4d-4e4f-4051-8253-545556575859\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000,\"audience\":null}",
+      "json_hex": "7b226964223a2234613462346334642d346534662d343035312d383235332d353435353536353735383539222c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c22637265617465645f6174223a313739333735303430303030302c2261756469656e6365223a6e756c6c7d",
+      "name": "audience_null"
+    },
+    {
+      "description": "audience with an empty to list: ignored by a v1 reader (and treated as absent by any future version).",
+      "equivalent_json": "{\"id\":\"4a4b4c4d-4e4f-4051-8253-545556575859\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000}",
+      "equivalent_json_hex": "7b226964223a2234613462346334642d346534662d343035312d383235332d353435353536353735383539222c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c22637265617465645f6174223a313739333735303430303030307d",
+      "expected_item": {
+        "attachments": [],
+        "created_at_ms": 1793750400000,
+        "expires_at_ms": null,
+        "id": "4a4b4c4d-4e4f-4051-8253-545556575859",
+        "read_policy": "until_expiry",
+        "secret": false,
+        "source_device": "e983270f3ea7baa8688d15c08d447559",
+        "text": null,
+        "title": null,
+        "url": null
+      },
+      "expected_item_id": "4a4b4c4d-4e4f-4051-8253-545556575859",
+      "json": "{\"id\":\"4a4b4c4d-4e4f-4051-8253-545556575859\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000,\"audience\":{\"to\":[]}}",
+      "json_hex": "7b226964223a2234613462346334642d346534662d343035312d383235332d353435353536353735383539222c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c22637265617465645f6174223a313739333735303430303030302c2261756469656e6365223a7b22746f223a5b5d7d7d",
+      "name": "audience_empty_list"
+    },
+    {
+      "description": "audience of an unexpected type (string): a v1 reader does not validate it and does not fail (no malformed_payload).",
+      "equivalent_json": "{\"id\":\"4a4b4c4d-4e4f-4051-8253-545556575859\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000}",
+      "equivalent_json_hex": "7b226964223a2234613462346334642d346534662d343035312d383235332d353435353536353735383539222c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c22637265617465645f6174223a313739333735303430303030307d",
+      "expected_item": {
+        "attachments": [],
+        "created_at_ms": 1793750400000,
+        "expires_at_ms": null,
+        "id": "4a4b4c4d-4e4f-4051-8253-545556575859",
+        "read_policy": "until_expiry",
+        "secret": false,
+        "source_device": "e983270f3ea7baa8688d15c08d447559",
+        "text": null,
+        "title": null,
+        "url": null
+      },
+      "expected_item_id": "4a4b4c4d-4e4f-4051-8253-545556575859",
+      "json": "{\"id\":\"4a4b4c4d-4e4f-4051-8253-545556575859\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000,\"audience\":\"everyone\"}",
+      "json_hex": "7b226964223a2234613462346334642d346534662d343035312d383235332d353435353536353735383539222c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c22637265617465645f6174223a313739333735303430303030302c2261756469656e6365223a2265766572796f6e65227d",
+      "name": "audience_unexpected_type"
+    }
+  ],
+  "reserved_key_epoch": {
+    "item_states": [
+      {
+        "announced_event_id": "e0000000-0000-4000-8000-0000000000f1",
+        "description": "Item state event (320 bytes) whose header announces a reserved key_epoch: kept raw (KeyPending), never opened or applied.",
+        "envelope": "0000000180000001e00000000000400080000000000000f1303132333435363738393a3b3c3d3e3f404142434445464714bb15dee2807b52b54cde9cfb5dae24abfc57409002d11c3cbf7270c6865bdf00dc338eb8769c23b84098c25a7f202e658b9289b4b6fcd86923bba4022ac29acd2e50f964584a72ef8e986bb29f4912f11d2511ac92e9930873a56886795b7dc66839d48a3175928951e8eb66eec4b92b3ad7dbac429fe1cd486ddb989cb7c1ae40952c008da322b4b8ff8d1069bf66dd9d3b39c576064f2cbbae2339e57a98a5bbec6ee1009a3290cf041b7b06bfc47cf85939afa86270ba8526327f3a4b8d253ecda2d12667c3ba0a89cc0b635fcbfb4a7d67dce00f1c81afbdb645c515f25f5b95478a4be132205875b1ed2a56fa602188469cc80ff75be8be617a3ed427286e387c6fde610dd3b70a11e0379e62",
+        "expected_reason": "key_pending",
+        "inputs": {
+          "event_id": "e0000000-0000-4000-8000-0000000000f1",
+          "format": 1,
+          "key": "404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f",
+          "key_epoch": 2147483649,
+          "nonce": "303132333435363738393a3b3c3d3e3f4041424344454647",
+          "padded_content": "746f6d692f76312f72657365727665642d6578616d706c6580000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "name": "reserved_key_id_item_state",
+        "ring": {
+          "keys": [
+            {
+              "epoch": 1,
+              "key": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f"
+            },
+            {
+              "epoch": 2,
+              "key": "707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f"
+            }
+          ],
+          "rotations": [
+            {
+              "from_epoch": 1,
+              "rotation_seq": 100
+            }
+          ]
+        },
+        "seq": 160
+      }
+    ],
+    "items": [
+      {
+        "announced_item_id": "5a5b5c5d-5e5f-4061-8263-646566676869",
+        "description": "Item whose header announces a reserved key_epoch (0x80000001): the v1 reader does not open it, keeps it raw and classifies it KEY_PENDING, never deleted.",
+        "envelope": "00000001800000015a5b5c5d5e5f40618263646566676869a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc73504c024081b68f9b06ae96c656ddb185f1b5fb32dd1c7995ac77f877b2f4e6f982dcf3954f05ee9379b0eed42a7abc8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfce2f09f1635f9c3fa8ca12b04f98ecfc48b65ef96ded8ae1d96745218dc4791213092e89382be036dc8009a2499e905d6fd4d88bee161e4a6a1a02032771004d29fd4650247d6d23496a3566c55b0fa17b9b27ef2b30e995651d433090fbfb8b82574b66f9f1b71835f33126add4e07036d3fcb84294b9fb67f5cd3e25af161b24bc3bcdf8079fc9c287058faf7538648a8b4c97cc8e6cf5aef5938945e06710e55c5e77efef6e5c22d4fbbef995b511d111d620b3234c4a1f198417599dd67cbe2fb8719353fd65ffa992bad6ac2abcdcb27144770adffe0de51b0e55df6627f1fb0ca237c663b3a159467667170664fa2fa807eaabb1faee3b65c439494bfb7d201d07b11addc11983ac9945224639",
+        "expected_reason": "key_pending",
+        "inputs": {
+          "cek": "909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeaf",
+          "format": 1,
+          "item_id": "5a5b5c5d-5e5f-4061-8263-646566676869",
+          "key": "404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f",
+          "key_epoch": 2147483649,
+          "payload_json": "{\"id\":\"5a5b5c5d-5e5f-4061-8263-646566676869\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000,\"text\":{\"plain\":\"x\"},\"audience\":{\"to\":[{\"type\":\"member\",\"id\":\"0f1e2d3c4b5a69788796a5b4c3d2e1f0\"}]}}",
+          "payload_nonce": "c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf",
+          "wrap_nonce": "a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf"
+        },
+        "item_seq": 10,
+        "name": "reserved_key_id_item",
+        "ring": {
+          "keys": [
+            {
+              "epoch": 1,
+              "key": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f"
+            }
+          ],
+          "rotations": []
+        }
+      },
+      {
+        "announced_item_id": "5a5b5c5d-5e5f-4061-8263-646566676869",
+        "description": "Same item after a 1 -> 2 rotation of lower seq: still KEY_PENDING (a reserved value is never a superseded epoch, hence never UNREADABLE_SUSPECT_EPOCH).",
+        "envelope": "00000001800000015a5b5c5d5e5f40618263646566676869a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc73504c024081b68f9b06ae96c656ddb185f1b5fb32dd1c7995ac77f877b2f4e6f982dcf3954f05ee9379b0eed42a7abc8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfce2f09f1635f9c3fa8ca12b04f98ecfc48b65ef96ded8ae1d96745218dc4791213092e89382be036dc8009a2499e905d6fd4d88bee161e4a6a1a02032771004d29fd4650247d6d23496a3566c55b0fa17b9b27ef2b30e995651d433090fbfb8b82574b66f9f1b71835f33126add4e07036d3fcb84294b9fb67f5cd3e25af161b24bc3bcdf8079fc9c287058faf7538648a8b4c97cc8e6cf5aef5938945e06710e55c5e77efef6e5c22d4fbbef995b511d111d620b3234c4a1f198417599dd67cbe2fb8719353fd65ffa992bad6ac2abcdcb27144770adffe0de51b0e55df6627f1fb0ca237c663b3a159467667170664fa2fa807eaabb1faee3b65c439494bfb7d201d07b11addc11983ac9945224639",
+        "expected_reason": "key_pending",
+        "inputs": {
+          "cek": "909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeaf",
+          "format": 1,
+          "item_id": "5a5b5c5d-5e5f-4061-8263-646566676869",
+          "key": "404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f",
+          "key_epoch": 2147483649,
+          "payload_json": "{\"id\":\"5a5b5c5d-5e5f-4061-8263-646566676869\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000,\"text\":{\"plain\":\"x\"},\"audience\":{\"to\":[{\"type\":\"member\",\"id\":\"0f1e2d3c4b5a69788796a5b4c3d2e1f0\"}]}}",
+          "payload_nonce": "c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf",
+          "wrap_nonce": "a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf"
+        },
+        "item_seq": 150,
+        "name": "reserved_key_id_item_after_rotation",
+        "ring": {
+          "keys": [
+            {
+              "epoch": 1,
+              "key": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f"
+            },
+            {
+              "epoch": 2,
+              "key": "707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f"
+            }
+          ],
+          "rotations": [
+            {
+              "from_epoch": 1,
+              "rotation_seq": 100
+            }
+          ]
+        }
+      }
+    ],
+    "reserved_max": 4294967295,
+    "reserved_min": 2147483648,
+    "space_key_epoch_max": 2147483647,
+    "statements": [
+      {
+        "description": "Statement correctly signed by A whose epoch (0x80000000) is in the reserved range: refused at decoding, before any signature verification (malformed_statement).",
+        "expected_error": "malformed_statement",
+        "issued_at_ms": 1793750400000,
+        "key_epoch": 2147483648,
+        "kind": "key_rotation",
+        "name": "key_rotation_to_reserved_epoch",
+        "signer": "A",
+        "tbs": "746f6d692f76312f7369672f6b65792d726f746174696f6e005e1f0c2a7b3d4e8f9a610c2d4e6f8a1080000000000001a1a3dafc004fd099ccd47d7893dfe9ec24414ecb0d9b5420232aad30d91c465be33cbe65c40000000000000000",
+        "wire": "746f6d692f76312f7369672f6b65792d726f746174696f6e005e1f0c2a7b3d4e8f9a610c2d4e6f8a1080000000000001a1a3dafc004fd099ccd47d7893dfe9ec24414ecb0d9b5420232aad30d91c465be33cbe65c40000000000000000c40ba669a867f6e4acb9d3b0e9501e6ccff9dce26eba4bffcfef13b753c73d152d46f7f54614c23ff5b196a99ef4d6937e7169aa6b94774d72dc88dd164b800b"
+      },
+      {
+        "description": "Statement correctly signed by A whose epoch (0x80000000) is in the reserved range: refused at decoding, before any signature verification (malformed_statement).",
+        "expected_error": "malformed_statement",
+        "issued_at_ms": 1793750400000,
+        "key_epoch": 2147483648,
+        "kind": "member_list",
+        "name": "member_list_reserved_epoch",
+        "signer": "A",
+        "tbs": "746f6d692f76312f7369672f6d656d6265722d6c697374005e1f0c2a7b3d4e8f9a610c2d4e6f8a1080000000000001a1a3dafc004fd099ccd47d7893dfe9ec24414ecb0d9b5420232aad30d91c465be33cbe65c4000000014fd099ccd47d7893dfe9ec24414ecb0d9b5420232aad30d91c465be33cbe65c4d89e3bad79437dbed9f843418304f460ff05c7fe81fe4a9577a804cb9367ff66",
+        "wire": "746f6d692f76312f7369672f6d656d6265722d6c697374005e1f0c2a7b3d4e8f9a610c2d4e6f8a1080000000000001a1a3dafc004fd099ccd47d7893dfe9ec24414ecb0d9b5420232aad30d91c465be33cbe65c4000000014fd099ccd47d7893dfe9ec24414ecb0d9b5420232aad30d91c465be33cbe65c4d89e3bad79437dbed9f843418304f460ff05c7fe81fe4a9577a804cb9367ff669dca8cd9fddf31ff2729733c1f6a9e0f2b8cfd06a3cbdf7b8364fbda967d398b3e832c0f8353d723f7926cd2893e4faef2db760d18242647896ed9bbd47dbd06"
+      }
+    ]
+  }
+}

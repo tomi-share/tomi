@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Merged with the generated Info.plist (GENERATE_INFOPLIST_FILE): only what cannot be a build setting. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>eu.shaffe.tomi</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>tomi-share</string>
+			</array>
+		</dict>
+	</array>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>eu.shaffe.tomi.refresh</string>
+		<string>eu.shaffe.tomi.send</string>
+	</array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>processing</string>
+	</array>
+	<!-- Default relay of a device that has none (Config/Local.xcconfig); empty: none, the relay then comes from the link, the QR code, the "Relais" field or the creation link. -->
+	<key>TomiRelayURL</key>
+	<string>$(TOMI_RELAY_URL)</string>
+	<key>UILaunchScreen</key>
+	<dict>
+		<key>UIColorName</key>
+		<string>LaunchBackground</string>
+	</dict>
+</dict>
+</plist>

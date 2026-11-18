@@ -1,0 +1,16 @@
+Tomi
+Copyright 2026 The Tomi contributors
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+Third-party material bundled in this repository keeps its own license:
+- Inter and JetBrains Mono fonts: SIL Open Font License 1.1. Copies of the license:
+  design/fonts/Inter-OFL.txt, design/fonts/JetBrainsMono-OFL.txt (and the copies shipped with each app:
+  apps/android/app/src/main/assets/licenses/, apps/windows/src/assets/fonts/,
+  apps/apple/Packages/TomiDesign/Sources/TomiDesign/Resources/Fonts/).
+- Material Symbols icons: Apache License 2.0 (design/icons/LICENSE-material-symbols.txt,
+  apps/windows/src/assets/LICENSE-material-symbols.txt).
+- tree-sitter PHP grammar (Android code highlighting): see
+  apps/android/app/src/main/assets/licenses/tree-sitter-php.txt.
+- spec/vectors/pairing-v1/wordlist.json derives from the BIP-39 French word list
+  (bitcoin/bips, MIT license).

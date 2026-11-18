@@ -1,0 +1,239 @@
+{
+  "description": "Removal of ONE attachment (§8.10): TBS = label tomi/v1/sig/attachment-tombstone || 0x00 || space_id(16) || item_id(16) || blob_id(16) || u32be(slot) || u64be(deleted_at_ms) || signer_ed_pk(32), wire = TBS || signature(64) = 189 bytes. deleted_at_ms <= 2^53 - 1. Devices in device.json. Only one scope circulates (everywhere): no scope byte. Failure cases: kind = attachment_tombstone or tombstone (parsed with that type), then verification against trust_setup.",
+  "failures": [
+    {
+      "description": "An item tombstone (different label and length) presented as an attachment removal.",
+      "expected_error": "malformed_statement",
+      "kind": "attachment_tombstone",
+      "name": "item_tombstone_is_not_an_attachment_removal",
+      "trust_setup": {
+        "key_epoch": 1,
+        "members": [
+          "A",
+          "B",
+          "C"
+        ],
+        "self": "A"
+      },
+      "wire": "746f6d692f76312f7369672f746f6d6273746f6e65005e1f0c2a7b3d4e8f9a610c2d4e6f8a100e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d000001a1a411ea8002dde3bccec7f3a66a1115f45d720f4dc135c3ae7c4e22dca38fdb1efd6a495ff88a613140a147b05686bdb237ee66165cca09e5010bb35ba8acaf8f360fd32e0037f41ddeb2f09a5fcb263540c1ea75c58e4db4557826b200603c9a49221c8400"
+    },
+    {
+      "description": "An attachment removal presented as an item tombstone.",
+      "expected_error": "malformed_statement",
+      "kind": "tombstone",
+      "name": "attachment_removal_is_not_an_item_tombstone",
+      "trust_setup": {
+        "key_epoch": 1,
+        "members": [
+          "A",
+          "B",
+          "C"
+        ],
+        "self": "A"
+      },
+      "wire": "746f6d692f76312f7369672f6174746163686d656e742d746f6d6273746f6e65005e1f0c2a7b3d4e8f9a610c2d4e6f8a100e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d7c1d9e2a4b3f4a5c8d6e9f0a1b2c3d4e00000001000001a1a411ea80dde3bccec7f3a66a1115f45d720f4dc135c3ae7c4e22dca38fdb1efd6a495ff8804e1b3d602be076007a47cd11d293aa087c8f6068ba5ad51954a447714bade75e2e06bfbcec32057d6709b65cf1f6cf19f0a0e4f707501bcf5d79dff8c4a40e"
+    },
+    {
+      "description": "Slot rewritten (1 -> 0) after signing.",
+      "expected_error": "invalid_signature",
+      "kind": "attachment_tombstone",
+      "name": "slot_altered",
+      "trust_setup": {
+        "key_epoch": 1,
+        "members": [
+          "A",
+          "B",
+          "C"
+        ],
+        "self": "A"
+      },
+      "wire": "746f6d692f76312f7369672f6174746163686d656e742d746f6d6273746f6e65005e1f0c2a7b3d4e8f9a610c2d4e6f8a100e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d7c1d9e2a4b3f4a5c8d6e9f0a1b2c3d4e00000000000001a1a411ea80dde3bccec7f3a66a1115f45d720f4dc135c3ae7c4e22dca38fdb1efd6a495ff8804e1b3d602be076007a47cd11d293aa087c8f6068ba5ad51954a447714bade75e2e06bfbcec32057d6709b65cf1f6cf19f0a0e4f707501bcf5d79dff8c4a40e"
+    },
+    {
+      "description": "blob_id rewritten after signing.",
+      "expected_error": "invalid_signature",
+      "kind": "attachment_tombstone",
+      "name": "blob_id_altered",
+      "trust_setup": {
+        "key_epoch": 1,
+        "members": [
+          "A",
+          "B",
+          "C"
+        ],
+        "self": "A"
+      },
+      "wire": "746f6d692f76312f7369672f6174746163686d656e742d746f6d6273746f6e65005e1f0c2a7b3d4e8f9a610c2d4e6f8a100e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d7c1d9e2a4b3f4a5c8d6e9f0a1b2c3d4f00000001000001a1a411ea80dde3bccec7f3a66a1115f45d720f4dc135c3ae7c4e22dca38fdb1efd6a495ff8804e1b3d602be076007a47cd11d293aa087c8f6068ba5ad51954a447714bade75e2e06bfbcec32057d6709b65cf1f6cf19f0a0e4f707501bcf5d79dff8c4a40e"
+    },
+    {
+      "description": "item_id rewritten after signing.",
+      "expected_error": "invalid_signature",
+      "kind": "attachment_tombstone",
+      "name": "item_id_altered",
+      "trust_setup": {
+        "key_epoch": 1,
+        "members": [
+          "A",
+          "B",
+          "C"
+        ],
+        "self": "A"
+      },
+      "wire": "746f6d692f76312f7369672f6174746163686d656e742d746f6d6273746f6e65005e1f0c2a7b3d4e8f9a610c2d4e6f8a100e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5c7c1d9e2a4b3f4a5c8d6e9f0a1b2c3d4e00000001000001a1a411ea80dde3bccec7f3a66a1115f45d720f4dc135c3ae7c4e22dca38fdb1efd6a495ff8804e1b3d602be076007a47cd11d293aa087c8f6068ba5ad51954a447714bade75e2e06bfbcec32057d6709b65cf1f6cf19f0a0e4f707501bcf5d79dff8c4a40e"
+    },
+    {
+      "description": "Date rewritten after signing.",
+      "expected_error": "invalid_signature",
+      "kind": "attachment_tombstone",
+      "name": "deleted_at_altered",
+      "trust_setup": {
+        "key_epoch": 1,
+        "members": [
+          "A",
+          "B",
+          "C"
+        ],
+        "self": "A"
+      },
+      "wire": "746f6d692f76312f7369672f6174746163686d656e742d746f6d6273746f6e65005e1f0c2a7b3d4e8f9a610c2d4e6f8a100e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d7c1d9e2a4b3f4a5c8d6e9f0a1b2c3d4e00000001000001a1a411ea81dde3bccec7f3a66a1115f45d720f4dc135c3ae7c4e22dca38fdb1efd6a495ff8804e1b3d602be076007a47cd11d293aa087c8f6068ba5ad51954a447714bade75e2e06bfbcec32057d6709b65cf1f6cf19f0a0e4f707501bcf5d79dff8c4a40e"
+    },
+    {
+      "description": "deleted_at_ms = 2^53, valid signature: refused at parsing (malformed_statement).",
+      "expected_error": "malformed_statement",
+      "kind": "attachment_tombstone",
+      "name": "deleted_at_above_2_53_minus_1",
+      "trust_setup": {
+        "key_epoch": 1,
+        "members": [
+          "A",
+          "B",
+          "C"
+        ],
+        "self": "A"
+      },
+      "wire": "746f6d692f76312f7369672f6174746163686d656e742d746f6d6273746f6e65005e1f0c2a7b3d4e8f9a610c2d4e6f8a100e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d7c1d9e2a4b3f4a5c8d6e9f0a1b2c3d4e000000010020000000000000dde3bccec7f3a66a1115f45d720f4dc135c3ae7c4e22dca38fdb1efd6a495ff865c98d6c5b60bef46dfb48561e6b82c5b7dcb55c2a26bfb1418ed42b5d2b1984443d73aadd8342ad1468bd81e4352982a3c0f27ef77668009371cea72a95b609"
+    },
+    {
+      "description": "One bit of the signature flipped.",
+      "expected_error": "invalid_signature",
+      "kind": "attachment_tombstone",
+      "name": "signature_bit_flip",
+      "trust_setup": {
+        "key_epoch": 1,
+        "members": [
+          "A",
+          "B",
+          "C"
+        ],
+        "self": "A"
+      },
+      "wire": "746f6d692f76312f7369672f6174746163686d656e742d746f6d6273746f6e65005e1f0c2a7b3d4e8f9a610c2d4e6f8a100e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d7c1d9e2a4b3f4a5c8d6e9f0a1b2c3d4e00000001000001a1a411ea80dde3bccec7f3a66a1115f45d720f4dc135c3ae7c4e22dca38fdb1efd6a495ff8804e1b3d602be076007a47cd11d293aa087c8f6068ba5ad51954a447714bade75e2e06bfbcec32057d6709b65cf1f6cf19f0a0e4f707501bcf5d79dff8c4a40f"
+    },
+    {
+      "description": "Exact length required: one byte too many.",
+      "expected_error": "malformed_statement",
+      "kind": "attachment_tombstone",
+      "name": "one_byte_too_many",
+      "trust_setup": {
+        "key_epoch": 1,
+        "members": [
+          "A",
+          "B",
+          "C"
+        ],
+        "self": "A"
+      },
+      "wire": "746f6d692f76312f7369672f6174746163686d656e742d746f6d6273746f6e65005e1f0c2a7b3d4e8f9a610c2d4e6f8a100e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d7c1d9e2a4b3f4a5c8d6e9f0a1b2c3d4e00000001000001a1a411ea80dde3bccec7f3a66a1115f45d720f4dc135c3ae7c4e22dca38fdb1efd6a495ff8804e1b3d602be076007a47cd11d293aa087c8f6068ba5ad51954a447714bade75e2e06bfbcec32057d6709b65cf1f6cf19f0a0e4f707501bcf5d79dff8c4a40e00"
+    },
+    {
+      "description": "Exact length required: one byte fewer.",
+      "expected_error": "malformed_statement",
+      "kind": "attachment_tombstone",
+      "name": "one_byte_too_few",
+      "trust_setup": {
+        "key_epoch": 1,
+        "members": [
+          "A",
+          "B",
+          "C"
+        ],
+        "self": "A"
+      },
+      "wire": "746f6d692f76312f7369672f6174746163686d656e742d746f6d6273746f6e65005e1f0c2a7b3d4e8f9a610c2d4e6f8a100e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d7c1d9e2a4b3f4a5c8d6e9f0a1b2c3d4e00000001000001a1a411ea80dde3bccec7f3a66a1115f45d720f4dc135c3ae7c4e22dca38fdb1efd6a495ff8804e1b3d602be076007a47cd11d293aa087c8f6068ba5ad51954a447714bade75e2e06bfbcec32057d6709b65cf1f6cf19f0a0e4f707501bcf5d79dff8c4a4"
+    },
+    {
+      "description": "Valid signature by D, which is not a member.",
+      "expected_error": "untrusted_signer",
+      "kind": "attachment_tombstone",
+      "name": "untrusted_signer",
+      "trust_setup": {
+        "key_epoch": 1,
+        "members": [
+          "A",
+          "B",
+          "C"
+        ],
+        "self": "A"
+      },
+      "wire": "746f6d692f76312f7369672f6174746163686d656e742d746f6d6273746f6e65005e1f0c2a7b3d4e8f9a610c2d4e6f8a100e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d7c1d9e2a4b3f4a5c8d6e9f0a1b2c3d4e00000001000001a1a411ea80ed54a59fb1ac3a51239351362941b868e85a60e3d7b2485d828821dc7a69c2799aba5e8f3cfc16d204be2ab701e580af46695261973b98e03fd8f6082caf057b9148db8b3fb24a687d0ca8fbabda010f27d13cac5fe38f7be3061588981aa909"
+    },
+    {
+      "description": "Valid signature by C, presented to B after rotation.json (C revoked).",
+      "expected_error": "revoked_device",
+      "kind": "attachment_tombstone",
+      "name": "revoked_signer",
+      "trust_setup": {
+        "apply_rotation": "rotation.json",
+        "key_epoch": 1,
+        "members": [
+          "A",
+          "B",
+          "C"
+        ],
+        "self": "B"
+      },
+      "wire": "746f6d692f76312f7369672f6174746163686d656e742d746f6d6273746f6e65005e1f0c2a7b3d4e8f9a610c2d4e6f8a100e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d7c1d9e2a4b3f4a5c8d6e9f0a1b2c3d4e00000001000001a1a411ea8013d9908a70925992ed546007d27f50da68ba7217ef62ac3cca784529ff10471c645a7dadfcfb21a235b064815c1368cfbbe4aed1e1ac7d3a64e6ef5047321473b091039e8b814da113a1e91e855f2de6ff5381ec8501bd31a7552cfa994b5607"
+    },
+    {
+      "description": "Valid signature, but for another space.",
+      "expected_error": "space_mismatch",
+      "kind": "attachment_tombstone",
+      "name": "other_space",
+      "trust_setup": {
+        "key_epoch": 1,
+        "members": [
+          "A",
+          "B",
+          "C"
+        ],
+        "self": "A"
+      },
+      "wire": "746f6d692f76312f7369672f6174746163686d656e742d746f6d6273746f6e65006f2a1d3b8c4e4f90a1721d3e5f7081920e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d7c1d9e2a4b3f4a5c8d6e9f0a1b2c3d4e00000001000001a1a411ea80dde3bccec7f3a66a1115f45d720f4dc135c3ae7c4e22dca38fdb1efd6a495ff8f3b0ff1fe3b9e4393915ddfd5945195261647c69cec4ae708225ee7f5e0d29c0309b37291031a4813f62ccc8f422aa2d8e16e3f4fd8102a3ab3a96058f9e7c09"
+    }
+  ],
+  "frozen": "FROZEN as of publication — never modify this file (spec/vectors/v1/README.md).",
+  "vectors": [
+    {
+      "blob_id": "7c1d9e2a-4b3f-4a5c-8d6e-9f0a1b2c3d4e",
+      "deleted_at_ms": 1793754000000,
+      "item_id": "0e7b5a3c-1d2f-4a6b-8c9d-0e1f2a3b4c5d",
+      "signature": "804e1b3d602be076007a47cd11d293aa087c8f6068ba5ad51954a447714bade75e2e06bfbcec32057d6709b65cf1f6cf19f0a0e4f707501bcf5d79dff8c4a40e",
+      "signed_bytes": "746f6d692f76312f7369672f6174746163686d656e742d746f6d6273746f6e65005e1f0c2a7b3d4e8f9a610c2d4e6f8a100e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d7c1d9e2a4b3f4a5c8d6e9f0a1b2c3d4e00000001000001a1a411ea80dde3bccec7f3a66a1115f45d720f4dc135c3ae7c4e22dca38fdb1efd6a495ff8",
+      "signer": "B",
+      "slot": 1,
+      "space_id": "5e1f0c2a-7b3d-4e8f-9a61-0c2d4e6f8a10",
+      "wire": "746f6d692f76312f7369672f6174746163686d656e742d746f6d6273746f6e65005e1f0c2a7b3d4e8f9a610c2d4e6f8a100e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d7c1d9e2a4b3f4a5c8d6e9f0a1b2c3d4e00000001000001a1a411ea80dde3bccec7f3a66a1115f45d720f4dc135c3ae7c4e22dca38fdb1efd6a495ff8804e1b3d602be076007a47cd11d293aa087c8f6068ba5ad51954a447714bade75e2e06bfbcec32057d6709b65cf1f6cf19f0a0e4f707501bcf5d79dff8c4a40e"
+    },
+    {
+      "blob_id": "8d2eaf3b-5c4a-4b6d-9e7f-a01b2c3d4e5f",
+      "deleted_at_ms": 9007199254740991,
+      "item_id": "1f2e3d4c-5b6a-4978-8695-a4b3c2d1e0f9",
+      "signature": "63e8b2c583e36f424a843098c655d7b5a3dc34e879a838126ba6b7cfa23df873b78fae2645c5ec9cd3762d69af90462f25cf70c622578625b4580dd320d44d0e",
+      "signed_bytes": "746f6d692f76312f7369672f6174746163686d656e742d746f6d6273746f6e65005e1f0c2a7b3d4e8f9a610c2d4e6f8a101f2e3d4c5b6a49788695a4b3c2d1e0f98d2eaf3b5c4a4b6d9e7fa01b2c3d4e5fffffffff001fffffffffffff4fd099ccd47d7893dfe9ec24414ecb0d9b5420232aad30d91c465be33cbe65c4",
+      "signer": "A",
+      "slot": 4294967295,
+      "space_id": "5e1f0c2a-7b3d-4e8f-9a61-0c2d4e6f8a10",
+      "wire": "746f6d692f76312f7369672f6174746163686d656e742d746f6d6273746f6e65005e1f0c2a7b3d4e8f9a610c2d4e6f8a101f2e3d4c5b6a49788695a4b3c2d1e0f98d2eaf3b5c4a4b6d9e7fa01b2c3d4e5fffffffff001fffffffffffff4fd099ccd47d7893dfe9ec24414ecb0d9b5420232aad30d91c465be33cbe65c463e8b2c583e36f424a843098c655d7b5a3dc34e879a838126ba6b7cfa23df873b78fae2645c5ec9cd3762d69af90462f25cf70c622578625b4580dd320d44d0e"
+    }
+  ]
+}

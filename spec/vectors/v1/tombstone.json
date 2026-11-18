@@ -1,0 +1,26 @@
+{
+  "description": "Ed25519-signed tombstones (§8.5). Devices in device.json. Scope: 0x01 local, 0x02 everywhere.",
+  "frozen": "FROZEN as of publication — never modify this file (spec/vectors/v1/README.md).",
+  "vectors": [
+    {
+      "deleted_at_ms": 1793754000000,
+      "item_id": "0e7b5a3c-1d2f-4a6b-8c9d-0e1f2a3b4c5d",
+      "scope": "everywhere",
+      "signature": "8a613140a147b05686bdb237ee66165cca09e5010bb35ba8acaf8f360fd32e0037f41ddeb2f09a5fcb263540c1ea75c58e4db4557826b200603c9a49221c8400",
+      "signed_bytes": "746f6d692f76312f7369672f746f6d6273746f6e65005e1f0c2a7b3d4e8f9a610c2d4e6f8a100e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d000001a1a411ea8002dde3bccec7f3a66a1115f45d720f4dc135c3ae7c4e22dca38fdb1efd6a495ff8",
+      "signer": "B",
+      "space_id": "5e1f0c2a-7b3d-4e8f-9a61-0c2d4e6f8a10",
+      "wire": "746f6d692f76312f7369672f746f6d6273746f6e65005e1f0c2a7b3d4e8f9a610c2d4e6f8a100e7b5a3c1d2f4a6b8c9d0e1f2a3b4c5d000001a1a411ea8002dde3bccec7f3a66a1115f45d720f4dc135c3ae7c4e22dca38fdb1efd6a495ff88a613140a147b05686bdb237ee66165cca09e5010bb35ba8acaf8f360fd32e0037f41ddeb2f09a5fcb263540c1ea75c58e4db4557826b200603c9a49221c8400"
+    },
+    {
+      "deleted_at_ms": 1793750460000,
+      "item_id": "1f2e3d4c-5b6a-4978-8695-a4b3c2d1e0f9",
+      "scope": "local",
+      "signature": "b62fb62b6837c8a247a6e2ad5a1a15968b186084fac381f1cfeebdff20d5d0dd27c2fc93f0afe747d28edfc1ebd262a25956e26757ba37ab5c86ffc0e0bea105",
+      "signed_bytes": "746f6d692f76312f7369672f746f6d6273746f6e65005e1f0c2a7b3d4e8f9a610c2d4e6f8a101f2e3d4c5b6a49788695a4b3c2d1e0f9000001a1a3dbe660014fd099ccd47d7893dfe9ec24414ecb0d9b5420232aad30d91c465be33cbe65c4",
+      "signer": "A",
+      "space_id": "5e1f0c2a-7b3d-4e8f-9a61-0c2d4e6f8a10",
+      "wire": "746f6d692f76312f7369672f746f6d6273746f6e65005e1f0c2a7b3d4e8f9a610c2d4e6f8a101f2e3d4c5b6a49788695a4b3c2d1e0f9000001a1a3dbe660014fd099ccd47d7893dfe9ec24414ecb0d9b5420232aad30d91c465be33cbe65c4b62fb62b6837c8a247a6e2ad5a1a15968b186084fac381f1cfeebdff20d5d0dd27c2fc93f0afe747d28edfc1ebd262a25956e26757ba37ab5c86ffc0e0bea105"
+    }
+  ]
+}

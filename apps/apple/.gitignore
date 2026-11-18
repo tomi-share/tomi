@@ -1,0 +1,17 @@
+# Produced by tools/build-core.sh (just apple-core): the Rust core and its generated Swift bindings.
+Packages/TomiCore/tomi_coreFFI.xcframework/
+Packages/TomiCore/Sources/TomiCore/Generated/
+# SwiftPM / Xcode
+.build/
+.swiftpm/
+DerivedData/
+xcuserdata/
+*.xcuserstate
+
+# XcodeGen output (regenerate with `xcodegen generate` in apps/apple)
+Tomi.xcodeproj/
+# Personal signing settings and default relay of your own build
+Config/Signing.local.xcconfig
+Config/Local.xcconfig
+# Local screenshots of the simulator (PR descriptions), never committed
+build-shots/

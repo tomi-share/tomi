@@ -1,0 +1,216 @@
+{
+  "accepted": [
+    {
+      "description": "The key x in sibling objects (unknown fields): not a duplicate.",
+      "expected_item": {
+        "attachments": [],
+        "created_at_ms": 1793750400000,
+        "expires_at_ms": null,
+        "id": "5a5b5c5d-5e5f-4061-8263-646566676869",
+        "read_policy": "until_expiry",
+        "secret": false,
+        "source_device": "e983270f3ea7baa8688d15c08d447559",
+        "text": null,
+        "title": null,
+        "url": null
+      },
+      "expected_item_id": "5a5b5c5d-5e5f-4061-8263-646566676869",
+      "json": "{\"id\":\"5a5b5c5d-5e5f-4061-8263-646566676869\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000,\"a\":{\"x\":1},\"b\":{\"x\":2},\"c\":[{\"x\":1},{\"x\":2}]}",
+      "json_hex": "7b226964223a2235613562356335642d356535662d343036312d383236332d363436353636363736383639222c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c22637265617465645f6174223a313739333735303430303030302c2261223a7b2278223a317d2c2262223a7b2278223a327d2c2263223a5b7b2278223a317d2c7b2278223a327d5d7d",
+      "name": "same_key_in_sibling_objects"
+    },
+    {
+      "description": "The key a at three depths: not a duplicate.",
+      "expected_item": {
+        "attachments": [],
+        "created_at_ms": 1793750400000,
+        "expires_at_ms": null,
+        "id": "5a5b5c5d-5e5f-4061-8263-646566676869",
+        "read_policy": "until_expiry",
+        "secret": false,
+        "source_device": "e983270f3ea7baa8688d15c08d447559",
+        "text": null,
+        "title": null,
+        "url": null
+      },
+      "expected_item_id": "5a5b5c5d-5e5f-4061-8263-646566676869",
+      "json": "{\"id\":\"5a5b5c5d-5e5f-4061-8263-646566676869\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000,\"a\":{\"a\":{\"a\":1}}}",
+      "json_hex": "7b226964223a2235613562356335642d356535662d343036312d383236332d363436353636363736383639222c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c22637265617465645f6174223a313739333735303430303030302c2261223a7b2261223a7b2261223a317d7d7d",
+      "name": "same_key_at_nested_depths"
+    },
+    {
+      "description": "Audience and audience are two distinct keys (exact comparison).",
+      "expected_item": {
+        "attachments": [],
+        "created_at_ms": 1793750400000,
+        "expires_at_ms": null,
+        "id": "5a5b5c5d-5e5f-4061-8263-646566676869",
+        "read_policy": "until_expiry",
+        "secret": false,
+        "source_device": "e983270f3ea7baa8688d15c08d447559",
+        "text": null,
+        "title": null,
+        "url": null
+      },
+      "expected_item_id": "5a5b5c5d-5e5f-4061-8263-646566676869",
+      "json": "{\"id\":\"5a5b5c5d-5e5f-4061-8263-646566676869\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000,\"Audience\":1,\"audience\":2}",
+      "json_hex": "7b226964223a2235613562356335642d356535662d343036312d383236332d363436353636363736383639222c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c22637265617465645f6174223a313739333735303430303030302c2241756469656e6365223a312c2261756469656e6365223a327d",
+      "name": "keys_differing_by_case"
+    }
+  ],
+  "description": "Payload extensibility (§5.4, §5.4.4). duplicate_keys: read json_hex, MUST fail with expected_error (a key repeated in an object, at any depth, known or not, keys compared after decoding the escapes). accepted: read json_hex, MUST yield expected_item. preserved: read json_hex (MUST yield expected_item), then locally re-seal the item (§7.2) and export it into a history transfer index (§8.7.3): the decrypted payload bytes, or the payload value of the item line (compact JSON, no line break), MUST be exactly json_hex. Unknown fields are never lost, and the title and content of a secret stay inside the ciphertext.",
+  "duplicate_keys": [
+    {
+      "description": "The reserved audience field twice (different values): ambiguity between implementations.",
+      "expected_error": "malformed_payload",
+      "expected_item_id": "5a5b5c5d-5e5f-4061-8263-646566676869",
+      "json": "{\"id\":\"5a5b5c5d-5e5f-4061-8263-646566676869\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000,\"audience\":{\"to\":[]},\"audience\":null}",
+      "json_hex": "7b226964223a2235613562356335642d356535662d343036312d383236332d363436353636363736383639222c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c22637265617465645f6174223a313739333735303430303030302c2261756469656e6365223a7b22746f223a5b5d7d2c2261756469656e6365223a6e756c6c7d",
+      "name": "reserved_field_twice"
+    },
+    {
+      "description": "An unknown field twice, even with the same value: rejected.",
+      "expected_error": "malformed_payload",
+      "expected_item_id": "5a5b5c5d-5e5f-4061-8263-646566676869",
+      "json": "{\"id\":\"5a5b5c5d-5e5f-4061-8263-646566676869\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000,\"x_future\":1,\"x_future\":1}",
+      "json_hex": "7b226964223a2235613562356335642d356535662d343036312d383236332d363436353636363736383639222c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c22637265617465645f6174223a313739333735303430303030302c22785f667574757265223a312c22785f667574757265223a317d",
+      "name": "unknown_field_twice_same_value"
+    },
+    {
+      "description": "Unknown field duplicated inside the known object text.",
+      "expected_error": "malformed_payload",
+      "expected_item_id": "5a5b5c5d-5e5f-4061-8263-646566676869",
+      "json": "{\"id\":\"5a5b5c5d-5e5f-4061-8263-646566676869\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000,\"text\":{\"plain\":\"x\",\"lang\":\"fr\",\"lang\":\"en\"}}",
+      "json_hex": "7b226964223a2235613562356335642d356535662d343036312d383236332d363436353636363736383639222c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c22637265617465645f6174223a313739333735303430303030302c2274657874223a7b22706c61696e223a2278222c226c616e67223a226672222c226c616e67223a22656e227d7d",
+      "name": "unknown_field_in_known_object"
+    },
+    {
+      "description": "Duplicate in an audience.to entry, object nested in an array inside an ignored field.",
+      "expected_error": "malformed_payload",
+      "expected_item_id": "5a5b5c5d-5e5f-4061-8263-646566676869",
+      "json": "{\"id\":\"5a5b5c5d-5e5f-4061-8263-646566676869\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000,\"audience\":{\"to\":[{\"type\":\"device\",\"id\":\"e983270f3ea7baa8688d15c08d447559\",\"id\":\"5a5b5c5d-5e5f-4061-8263-646566676869\"}]}}",
+      "json_hex": "7b226964223a2235613562356335642d356535662d343036312d383236332d363436353636363736383639222c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c22637265617465645f6174223a313739333735303430303030302c2261756469656e6365223a7b22746f223a5b7b2274797065223a22646576696365222c226964223a226539383332373066336561376261613836383864313563303864343437353539222c226964223a2235613562356335642d356535662d343036312d383236332d363436353636363736383639227d5d7d7d",
+      "name": "inside_audience_entry"
+    },
+    {
+      "description": "The same key written with an escape sequence (\\u0061 = a): compare the decoded keys.",
+      "expected_error": "malformed_payload",
+      "expected_item_id": "5a5b5c5d-5e5f-4061-8263-646566676869",
+      "json": "{\"id\":\"5a5b5c5d-5e5f-4061-8263-646566676869\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000,\"audience\":1,\"\\u0061udience\":2}",
+      "json_hex": "7b226964223a2235613562356335642d356535662d343036312d383236332d363436353636363736383639222c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c22637265617465645f6174223a313739333735303430303030302c2261756469656e6365223a312c225c7530303631756469656e6365223a327d",
+      "name": "escaped_spelling_of_same_key"
+    },
+    {
+      "description": "Known field secret twice, the second time with an escape (\\u0065 = e).",
+      "expected_error": "malformed_payload",
+      "expected_item_id": "5a5b5c5d-5e5f-4061-8263-646566676869",
+      "json": "{\"id\":\"5a5b5c5d-5e5f-4061-8263-646566676869\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000,\"secret\":true,\"secr\\u0065t\":false}",
+      "json_hex": "7b226964223a2235613562356335642d356535662d343036312d383236332d363436353636363736383639222c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c22637265617465645f6174223a313739333735303430303030302c22736563726574223a747275652c22736563725c753030363574223a66616c73657d",
+      "name": "known_field_twice_escaped"
+    },
+    {
+      "description": "Duplicate in thumbnail, object nested in attachments[0].",
+      "expected_error": "malformed_payload",
+      "expected_item_id": "5a5b5c5d-5e5f-4061-8263-646566676869",
+      "json": "{\"id\":\"5a5b5c5d-5e5f-4061-8263-646566676869\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000,\"attachments\":[{\"blob_id\":\"6a6b6c6d-6e6f-4071-8273-747576777879\",\"name\":\"a.txt\",\"mime\":\"text/plain\",\"size\":3,\"key\":\"QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl8=\",\"nonce_prefix\":\"YGFiY2RlZmdoaWprbG1ub3Bxcg==\",\"thumbnail\":{\"mime\":\"image/png\",\"data\":\"AAEC\",\"w\":1,\"w\":2}}]}",
+      "json_hex": "7b226964223a2235613562356335642d356535662d343036312d383236332d363436353636363736383639222c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c22637265617465645f6174223a313739333735303430303030302c226174746163686d656e7473223a5b7b22626c6f625f6964223a2236613662366336642d366536662d343037312d383237332d373437353736373737383739222c226e616d65223a22612e747874222c226d696d65223a22746578742f706c61696e222c2273697a65223a332c226b6579223a225145464351305246526b64495355704c5445314f54314252556c4e5556565a5857466c6157317864586c383d222c226e6f6e63655f707265666978223a22594746695932526c5a6d646f61577072624731756233427863673d3d222c227468756d626e61696c223a7b226d696d65223a22696d6167652f706e67222c2264617461223a2241414543222c2277223a312c2277223a327d7d5d7d",
+      "name": "inside_thumbnail"
+    },
+    {
+      "description": "Duplicate at five levels, followed by a valid field: reading does not stop at the first level.",
+      "expected_error": "malformed_payload",
+      "expected_item_id": "5a5b5c5d-5e5f-4061-8263-646566676869",
+      "json": "{\"id\":\"5a5b5c5d-5e5f-4061-8263-646566676869\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000,\"x\":{\"d\":[[{\"y\":0,\"z\":0,\"y\":1}]]},\"after\":1}",
+      "json_hex": "7b226964223a2235613562356335642d356535662d343036312d383236332d363436353636363736383639222c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c22637265617465645f6174223a313739333735303430303030302c2278223a7b2264223a5b5b7b2279223a302c227a223a302c2279223a317d5d5d7d2c226166746572223a317d",
+      "name": "deeply_nested"
+    }
+  ],
+  "frozen": "FROZEN as of publication — never modify this file (spec/vectors/v1/README.md).",
+  "preserved": [
+    {
+      "description": "Unknown fields at the root, in text, in attachments[0] and in thumbnail, plus the reserved audience.",
+      "expected_item": {
+        "attachments": [
+          {
+            "blob_id": "6a6b6c6d-6e6f-4071-8273-747576777879",
+            "file_key": "404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f",
+            "mime": "text/plain",
+            "name": "a.txt",
+            "nonce_prefix": "606162636465666768696a6b6c6d6e6f707172",
+            "size": 3,
+            "thumbnail": {
+              "data": "000102",
+              "mime": "image/png"
+            }
+          }
+        ],
+        "created_at_ms": 1793750400000,
+        "expires_at_ms": null,
+        "id": "5a5b5c5d-5e5f-4061-8263-646566676869",
+        "read_policy": "until_expiry",
+        "secret": false,
+        "source_device": "e983270f3ea7baa8688d15c08d447559",
+        "text": {
+          "html": null,
+          "markdown": null,
+          "plain": "x",
+          "source_format": "plain"
+        },
+        "title": null,
+        "url": null
+      },
+      "expected_item_id": "5a5b5c5d-5e5f-4061-8263-646566676869",
+      "json": "{\"id\":\"5a5b5c5d-5e5f-4061-8263-646566676869\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000,\"future_flag\":true,\"audience\":{\"to\":[{\"type\":\"device\",\"id\":\"e983270f3ea7baa8688d15c08d447559\",\"role\":\"cc\"}],\"mode\":2},\"text\":{\"plain\":\"x\",\"lang\":\"fr\",\"spans\":[1,{\"k\":null}]},\"attachments\":[{\"blob_id\":\"6a6b6c6d-6e6f-4071-8273-747576777879\",\"name\":\"a.txt\",\"mime\":\"text/plain\",\"size\":3,\"key\":\"QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl8=\",\"nonce_prefix\":\"YGFiY2RlZmdoaWprbG1ub3Bxcg==\",\"duration_ms\":1200,\"thumbnail\":{\"mime\":\"image/png\",\"data\":\"AAEC\",\"w\":16}}],\"ext\":{\"x\":1}}",
+      "json_hex": "7b226964223a2235613562356335642d356535662d343036312d383236332d363436353636363736383639222c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c22637265617465645f6174223a313739333735303430303030302c226675747572655f666c6167223a747275652c2261756469656e6365223a7b22746f223a5b7b2274797065223a22646576696365222c226964223a226539383332373066336561376261613836383864313563303864343437353539222c22726f6c65223a226363227d5d2c226d6f6465223a327d2c2274657874223a7b22706c61696e223a2278222c226c616e67223a226672222c227370616e73223a5b312c7b226b223a6e756c6c7d5d7d2c226174746163686d656e7473223a5b7b22626c6f625f6964223a2236613662366336642d366536662d343037312d383237332d373437353736373737383739222c226e616d65223a22612e747874222c226d696d65223a22746578742f706c61696e222c2273697a65223a332c226b6579223a225145464351305246526b64495355704c5445314f54314252556c4e5556565a5857466c6157317864586c383d222c226e6f6e63655f707265666978223a22594746695932526c5a6d646f61577072624731756233427863673d3d222c226475726174696f6e5f6d73223a313230302c227468756d626e61696c223a7b226d696d65223a22696d6167652f706e67222c2264617461223a2241414543222c2277223a31367d7d5d2c22657874223a7b2278223a317d7d",
+      "name": "unknown_fields_at_every_depth"
+    },
+    {
+      "description": "Secret with a title: the title and the unknown fields are kept inside the ciphertext, nothing appears in clear.",
+      "expected_item": {
+        "attachments": [],
+        "created_at_ms": 1793750400000,
+        "expires_at_ms": null,
+        "id": "5a5b5c5d-5e5f-4061-8263-646566676869",
+        "read_policy": "until_expiry",
+        "secret": true,
+        "source_device": "e983270f3ea7baa8688d15c08d447559",
+        "text": {
+          "html": null,
+          "markdown": null,
+          "plain": "hunter2",
+          "source_format": "plain"
+        },
+        "title": "Code Wi-Fi",
+        "url": null
+      },
+      "expected_item_id": "5a5b5c5d-5e5f-4061-8263-646566676869",
+      "json": "{\"id\":\"5a5b5c5d-5e5f-4061-8263-646566676869\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000,\"secret\":true,\"title\":\"Code Wi-Fi\",\"text\":{\"plain\":\"hunter2\"},\"audience\":null,\"x_other\":[]}",
+      "json_hex": "7b226964223a2235613562356335642d356535662d343036312d383236332d363436353636363736383639222c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c22637265617465645f6174223a313739333735303430303030302c22736563726574223a747275652c227469746c65223a22436f64652057692d4669222c2274657874223a7b22706c61696e223a2268756e74657232227d2c2261756469656e6365223a6e756c6c2c22785f6f74686572223a5b5d7d",
+      "name": "secret_with_unknown_fields"
+    },
+    {
+      "description": "Field order, whitespace, escapes (\\u00e9, \\/) and number spellings (1.0, 1E2, -0) must be preserved as they are.",
+      "expected_item": {
+        "attachments": [],
+        "created_at_ms": 1793750400000,
+        "expires_at_ms": null,
+        "id": "5a5b5c5d-5e5f-4061-8263-646566676869",
+        "read_policy": "until_expiry",
+        "secret": false,
+        "source_device": "e983270f3ea7baa8688d15c08d447559",
+        "text": {
+          "html": null,
+          "markdown": null,
+          "plain": "café / x",
+          "source_format": "plain"
+        },
+        "title": null,
+        "url": null
+      },
+      "expected_item_id": "5a5b5c5d-5e5f-4061-8263-646566676869",
+      "json": "{ \"x_num\" : [1.0, 1E2, -0, 2.50] , \"text\" : {\"plain\":\"caf\\u00e9 \\/ x\"} , \"created_at\":1793750400000,\"source_device\":\"e983270f3ea7baa8688d15c08d447559\", \"id\" : \"5a5b5c5d-5e5f-4061-8263-646566676869\" , \"x_after\":\"\\u00e9\" }",
+      "json_hex": "7b2022785f6e756d22203a205b312e302c203145322c202d302c20322e35305d202c20227465787422203a207b22706c61696e223a226361665c7530306539205c2f2078227d202c2022637265617465645f6174223a313739333735303430303030302c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c2022696422203a202235613562356335642d356535662d343036312d383236332d36343635363636373638363922202c2022785f6166746572223a225c753030653922207d",
+      "name": "formatting_is_not_normalised"
+    }
+  ]
+}

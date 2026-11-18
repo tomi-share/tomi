@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Least privilege for the Tomi windows: they only listen to events emitted by Rust (items-changed, job-changed, popover-shown...) and receive the drag-and-drop events of their own webview (which go through the same listener). They cannot emit events, touch windows, menus, the tray, images, paths or resources. All privileged work goes through the app's own commands.",
+  "windows": ["popover", "history"],
+  "permissions": ["core:event:allow-listen", "core:event:allow-unlisten"]
+}

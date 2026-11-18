@@ -1,0 +1,71 @@
+import Foundation
+import TomiCore
+import TomiKit
+
+/// Which core the app runs on.
+public enum CoreMode: Sendable, Equatable {
+    /// The real core. `relayURL` is the relay of a device that has none of its own yet (nil in a build without a default
+    /// relay: it then comes from the link or QR code of the pairing, the "Relais" field or the creation link). `https://`
+    /// only, except `http://localhost` when the Rust core itself is a debug build (`just apple-core --debug`), whatever
+    /// the app configuration.
+    case real(relayURL: URL?)
+    /// The demo core: no network, the demo space of every Tomi app. `assets` holds the bundled
+    /// demo files (images, code files); built-in stand-ins replace the missing ones.
+    case demo(startPaired: Bool, assets: URL?)
+}
+
+public enum CoreFactory {
+    /// Opens the Rust core. Blocks (database, and for the demo the writing of its history):
+    /// never call it on the main thread; prefer `open`.
+    public static func openRust(
+        mode: CoreMode,
+        paths: CorePaths,
+        appVersion: String,
+        deviceName: String,
+        keyStore: WrapKeyStoring = KeychainWrapKeyStore()
+    ) throws -> RustTomiCore {
+        do {
+            switch mode {
+            case let .real(relayURL):
+                let exists = FileManager.default.fileExists(atPath: paths.database.path)
+                let key = try WrapKey.loadOrCreate(store: keyStore, databaseExists: exists)
+                return try RustTomiCore.open(config: CoreConfig(
+                    dbPath: paths.database.path,
+                    filesDir: paths.files.path,
+                    wrapKey: key,
+                    relayUrl: relayURL?.absoluteString,
+                    appVersion: appVersion,
+                    platform: "ios",
+                    // The pairing screen asks "get the history?" itself.
+                    autoImport: false
+                ))
+            case let .demo(startPaired, assets):
+                return try RustTomiCore.openDemo(config: DemoConfig(
+                    filesDir: paths.demo.path,
+                    assetsDir: assets?.path,
+                    platform: "ios",
+                    appVersion: appVersion,
+                    deviceName: deviceName,
+                    startPaired: startPaired
+                ))
+            }
+        } catch let error as TomiError {
+            throw CoreMapping.error(error)
+        }
+    }
+
+    /// Opens the core off the main thread and wraps it for the UI.
+    @MainActor
+    public static func open(
+        mode: CoreMode,
+        paths: CorePaths,
+        appVersion: String,
+        deviceName: String,
+        keyStore: WrapKeyStoring = KeychainWrapKeyStore()
+    ) async throws -> RustTomiCoreAdapter {
+        let core = try await Task.detached(priority: .userInitiated) {
+            try openRust(mode: mode, paths: paths, appVersion: appVersion, deviceName: deviceName, keyStore: keyStore)
+        }.value
+        return RustTomiCoreAdapter(core: core, deviceName: deviceName)
+    }
+}

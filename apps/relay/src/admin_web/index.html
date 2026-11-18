@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="color-scheme" content="light dark">
+<title>Administration du relais Tomi</title>
+<link rel="stylesheet" href="app.css">
+<script src="app.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Aller au contenu</a>
+<header class="top">
+  <h1>Administration du relais Tomi</h1>
+  <div class="top-tools">
+    <p id="session-info" class="session-info" hidden></p>
+    <label class="theme-pick" for="theme">Thème
+      <select id="theme" name="theme">
+        <option value="auto">Automatique</option>
+        <option value="light">Clair</option>
+        <option value="dark">Sombre</option>
+      </select>
+    </label>
+    <button id="logout" type="button" class="secondary" hidden>Se déconnecter</button>
+  </div>
+</header>
+
+<nav id="dash-nav" class="dash-nav" aria-label="Sections du tableau de bord" hidden>
+  <ul>
+    <li><a href="#h-status">Vue d’ensemble</a></li>
+    <li><a href="#h-spaces">Espaces</a></li>
+    <li><a href="#h-invitations">Invitations</a></li>
+    <li><a href="#h-quota">Quota</a></li>
+    <li><a href="#h-journal">Journal</a></li>
+    <li><a href="#h-about">Diagnostic</a></li>
+  </ul>
+</nav>
+
+<main id="main" tabindex="-1">
+  <div class="toast-zone">
+    <div id="toast" class="toast" hidden>
+      <p id="message" class="message" role="status" aria-live="polite"></p>
+      <button id="toast-close" type="button" class="ghost" aria-label="Fermer le message">Fermer</button>
+    </div>
+  </div>
+
+  <section id="view-loading" aria-labelledby="h-loading">
+    <h2 id="h-loading" tabindex="-1">Chargement</h2>
+    <p>Un instant…</p>
+  </section>
+
+  <section id="view-nojs" hidden aria-labelledby="h-unsupported">
+    <h2 id="h-unsupported" tabindex="-1">Navigateur non pris en charge</h2>
+    <p>Ce navigateur ne gère pas les clés d’accès (WebAuthn). Utilise un navigateur récent, en
+      HTTPS.</p>
+  </section>
+
+  <section id="view-enroll" class="card narrow" hidden aria-labelledby="h-enroll">
+    <h2 id="h-enroll" tabindex="-1">Créer ma clé d’accès</h2>
+    <p>Aucune clé d’accès n’est enregistrée sur ce relais. Pour la créer, il te faut un code
+      d’enrôlement, valable 15 minutes. Il s’obtient sur le serveur :
+      <code>tomi-relay admin web enroll</code>.</p>
+    <form id="enroll-form" autocomplete="off" novalidate>
+      <p>
+        <label for="code">Code d’enrôlement</label><br>
+        <input id="code" name="code" type="text" required autocomplete="off" autocapitalize="none"
+          autocorrect="off" spellcheck="false" inputmode="text" maxlength="64" size="24"
+          aria-describedby="code-hint">
+      </p>
+      <p id="code-hint" class="hint">Format <code>xxxx-xxxx-xxxx</code> ; majuscules, tirets et
+        espaces n’ont pas d’importance. 5 essais au plus.</p>
+      <p><button id="enroll-submit" type="submit">Créer ma clé d’accès</button></p>
+    </form>
+  </section>
+
+  <section id="view-login" class="card narrow" hidden aria-labelledby="h-login">
+    <h2 id="h-login" tabindex="-1">Connexion</h2>
+    <p>Utilise ta clé d’accès (empreinte, visage, code du téléphone ou de l’ordinateur).</p>
+    <p><button id="login-submit" type="button">Se connecter avec ma clé d’accès</button></p>
+    <p class="hint">La session se ferme après 30 minutes sans activité, et au plus tard 8 heures
+      après la connexion.</p>
+  </section>
+
+  <div id="view-dashboard" hidden>
+    <section aria-labelledby="h-status">
+      <div class="section-head">
+        <h2 id="h-status" tabindex="-1">Vue d’ensemble</h2>
+        <div class="refresh">
+          <span id="updated-at" class="hint" aria-live="off"></span>
+          <button id="refresh" type="button" class="secondary">Actualiser</button>
+        </div>
+      </div>
+      <p id="status-error" class="inline-error" role="alert" hidden></p>
+      <ul id="alerts" class="alerts" aria-label="Points d’attention" hidden></ul>
+      <p id="alerts-none" class="ok-line" hidden>Rien à signaler.</p>
+      <dl id="status-list" class="tiles"></dl>
+      <details class="help">
+        <summary>Ce que le relais voit, et ce qu’il ne voit pas</summary>
+        <p>Le relais est <strong>aveugle</strong> : il ne fait que stocker et faire suivre des octets
+          chiffrés sur les appareils. Il ne possède aucune clé d’espace, il ne peut donc lire ni un
+          contenu, ni un titre, ni un nom de fichier, ni un secret.</p>
+        <p>Ce panneau ne montre que ce que le relais sait déjà pour faire son travail : des
+          comptes, des tailles, des dates, des identifiants courts et le nom que chaque appareil
+          a donné en rejoignant son espace. « Éléments » compte des enveloppes chiffrées, sans
+          savoir ce qu’elles contiennent.</p>
+        <p>Retirer un appareil ou supprimer un espace ne se fait pas d’ici : ces actions restent
+          sur le serveur (<code>tomi-relay admin</code>) ou dans l’application, pour qu’une session
+          web volée ne puisse rien détruire.</p>
+      </details>
+    </section>
+
+    <section aria-labelledby="h-spaces">
+      <h2 id="h-spaces" tabindex="-1">Espaces</h2>
+      <p id="spaces-error" class="inline-error" role="alert" hidden></p>
+      <p id="spaces-empty" class="empty" hidden>Aucun espace pour l’instant. Crée une invitation
+        plus bas : la personne invitée créera son espace depuis l’application.</p>
+      <div class="scroll">
+        <table id="spaces-table" class="stack" hidden>
+          <caption class="sr">Espaces hébergés par ce relais. Les en-têtes de colonne permettent de trier.</caption>
+          <thead>
+            <tr>
+              <th scope="col" data-sort="id">Identifiant</th>
+              <th scope="col" data-sort="created_at">Créé</th>
+              <th scope="col" data-sort="last_activity_at">Dernière activité</th>
+              <th scope="col" data-sort="members">Appareils</th>
+              <th scope="col" data-sort="items">Contenu</th>
+              <th scope="col" data-sort="used_bytes">Utilisation</th>
+              <th scope="col">État</th>
+              <th scope="col"><span class="sr">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody id="spaces-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="devices-section" class="card" hidden aria-labelledby="h-devices">
+      <div class="section-head">
+        <h2 id="h-devices" tabindex="-1">Appareils de l’espace <span id="devices-space" class="mono"></span></h2>
+        <button id="devices-close" type="button" class="secondary">Fermer</button>
+      </div>
+      <p class="hint">Métadonnées seulement : jamais de contenu, de clé ni de secret.</p>
+      <dl id="space-facts" class="facts"></dl>
+      <p id="devices-error" class="inline-error" role="alert" hidden></p>
+      <p id="devices-empty" class="empty" hidden>Aucun appareil.</p>
+      <div class="scroll">
+        <table id="devices-table" class="stack" hidden>
+          <caption class="sr">Appareils de l’espace choisi. Les en-têtes de colonne permettent de trier.</caption>
+          <thead>
+            <tr>
+              <th scope="col" data-sort="name">Nom</th>
+              <th scope="col" data-sort="platform">Plateforme</th>
+              <th scope="col" data-sort="app_version">Version</th>
+              <th scope="col" data-sort="registered_at">Ajouté</th>
+              <th scope="col" data-sort="last_seen_at">Dernière activité</th>
+              <th scope="col">État</th>
+              <th scope="col">Empreinte</th>
+            </tr>
+          </thead>
+          <tbody id="devices-body"></tbody>
+        </table>
+      </div>
+      <details class="help">
+        <summary>Agir sur cet espace depuis le serveur</summary>
+        <p>Le panneau ne retire aucun appareil et ne supprime aucun espace. Sur le serveur :</p>
+        <ul id="space-commands" class="commands"></ul>
+        <p class="hint">La suppression demande une confirmation sur le serveur : la commande copiée
+          ne la contient pas.</p>
+      </details>
+    </section>
+
+    <section aria-labelledby="h-invitations">
+      <h2 id="h-invitations" tabindex="-1">Invitations</h2>
+      <p>Une invitation permet à une personne de créer son espace. Le jeton n’est montré qu’une
+        seule fois, à la création.</p>
+      <p id="invitations-error" class="inline-error" role="alert" hidden></p>
+      <p id="invitations-empty" class="empty" hidden>Aucune invitation en attente.</p>
+      <ul id="invitations-list" class="plain-list"></ul>
+      <p class="actions">
+        <button id="invite-new" type="button">Créer une invitation</button>
+        <button id="invite-rotate" type="button" class="secondary">Remplacer les invitations en attente</button>
+      </p>
+      <div id="token-box" hidden class="token-box" role="group" aria-labelledby="token-title">
+        <p id="token-title" tabindex="-1"><strong>Jeton d’installation (affiché une seule fois)</strong></p>
+        <div class="token-body">
+          <div class="token-text">
+            <p><code id="token"></code></p>
+            <p id="token-link-wrap" hidden>Lien de création : <code id="token-link"></code></p>
+            <p class="actions"><button id="token-copy" type="button">Copier le jeton</button>
+              <button id="token-link-copy" type="button" hidden>Copier le lien</button>
+              <button id="token-hide" type="button" class="secondary">Masquer le jeton</button></p>
+            <p class="hint">Saisis le jeton à la main, ou ouvre le lien (ou scanne le QR code) sur l’appareil où Tomi est installé : le jeton est dans la partie après le « # », que le navigateur n’envoie jamais au serveur.</p>
+            <p class="hint">Le jeton est masqué tout seul après 10 minutes, ou si tu quittes la page.</p>
+          </div>
+          <div id="token-qr-wrap" class="token-qr-wrap" hidden>
+            <div id="token-qr" class="token-qr"></div>
+            <p class="hint">Ou scanne ce code depuis « Créer ton espace » sur l’autre appareil.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="h-quota">
+      <h2 id="h-quota" tabindex="-1">Quota par défaut d’un espace</h2>
+      <p>Plafond de stockage de chaque espace qui n’a pas de quota propre (réglé sur le serveur par
+        <code>tomi-relay admin quota</code>). Tant que rien n’est réglé (ni ici, ni
+        <code>max_space_bytes</code> dans la configuration), un espace n’a aucune limite. Un changement s’applique tout de suite. Rien n’est
+        supprimé : un espace déjà au-dessus du nouveau plafond ne peut plus qu’en libérer.</p>
+      <p id="quota-error" class="inline-error" role="alert" hidden></p>
+      <dl id="quota-facts" class="facts"></dl>
+      <form id="quota-form" autocomplete="off" novalidate>
+        <p>
+          <label for="quota-mib">Nouveau quota par défaut, en Mio (au moins 1)</label><br>
+          <input id="quota-mib" name="quota-mib" type="text" inputmode="numeric" autocomplete="off"
+            maxlength="12" size="12" aria-describedby="quota-preview">
+          <span id="quota-preview" class="hint" aria-live="polite"></span>
+        </p>
+        <p class="actions">
+          <button id="quota-save" type="submit">Enregistrer</button>
+          <button id="quota-unlimited" type="button" class="secondary">Sans limite par espace</button>
+          <button id="quota-reset" type="button" class="secondary">Revenir à la configuration du relais</button>
+        </p>
+      </form>
+    </section>
+
+    <section aria-labelledby="h-journal">
+      <h2 id="h-journal" tabindex="-1">Journal d’administration</h2>
+      <p class="hint">Ce qui a été fait depuis ce panneau depuis le démarrage du relais (gardé en
+        mémoire seulement, au plus 100 lignes) : jamais de jeton, de code, d’adresse ni de contenu.</p>
+      <p id="journal-error" class="inline-error" role="alert" hidden></p>
+      <p id="journal-empty" class="empty" hidden>Rien pour l’instant.</p>
+      <ol id="journal-list" class="journal"></ol>
+    </section>
+
+    <section aria-labelledby="h-about">
+      <h2 id="h-about" tabindex="-1">À propos et diagnostic</h2>
+      <p id="about-error" class="inline-error" role="alert" hidden></p>
+      <dl id="about-facts" class="facts"></dl>
+      <details class="help">
+        <summary>Limites de la configuration</summary>
+        <dl id="limits-facts" class="facts"></dl>
+      </details>
+      <p>Pour signaler un problème, copie ce résumé : il ne contient ni identifiant d’espace, ni nom
+        d’appareil, ni jeton.</p>
+      <pre id="diagnostic" class="diagnostic" tabindex="0" aria-label="Résumé de diagnostic"></pre>
+      <p class="actions"><button id="diagnostic-copy" type="button" class="secondary">Copier le diagnostic</button></p>
+    </section>
+  </div>
+</main>
+
+<dialog id="confirm-dialog" class="confirm" aria-labelledby="confirm-title" aria-describedby="confirm-text">
+  <h2 id="confirm-title"></h2>
+  <p id="confirm-text"></p>
+  <p class="actions">
+    <button id="confirm-cancel" type="button" class="secondary">Annuler</button>
+    <button id="confirm-ok" type="button" class="danger"></button>
+  </p>
+</dialog>
+</body>
+</html>

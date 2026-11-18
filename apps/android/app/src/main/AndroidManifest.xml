@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Asked after pairing, never at first launch. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Asked only when the user taps "Scan a QR code". -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <!-- Only to label queued items "waiting for network". -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- The Rust core talks to the relay (HTTPS + WebSocket) from its own sockets: nothing else in the app may use the network.
+         Received markdown and HTML are rendered offline on purpose (MarkdownGuard, HtmlSanitizer); the Android review still lists
+         hardening that isolation (parser flags aligned with the renderer, instrumented md4c test) as a precondition of this permission. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Normal permission (no runtime prompt): haptic ticks of the swipe-to-archive, played by the Vibrator whatever the touch-feedback setting. -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+
+    <!-- Backups: allowBackup=false plus dataExtractionRules (cloud-backup and device-transfer, API 31+).
+         android:fullBackupContent is intentionally absent: it only applies to API 30 and below, and minSdk is 33. -->
+    <application
+        android:name=".TomiApplication"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Tomi"
+        android:usesCleartextTraffic="false">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- tomi-share://send?url=&title= | tomi-share://send?text= | tomi-share://item/<id> | tomi-share://open | tomi-share://pair#<code>
+                 These links only pre-fill or navigate; see DeepLinkParser. tomi-share://pair opens the pairing screen and waits for "Rejoindre". -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="tomi-share" />
+                <data android:host="send" />
+                <data android:host="item" />
+                <data android:host="open" />
+                <data android:host="pair" />
+            </intent-filter>
+
+            <!-- Links of ANY relay: https://<relay>/l/pair#<code> (invitation) and https://<relay>/create#<token> (creation of the space).
+                 No host is compiled into the app (the relay is configurable), so there is no autoVerify: Android cannot verify a domain it
+                 does not know, and the system may offer Tomi for these paths on any host. That is harmless: DeepLinkParser only accepts what
+                 the core reads as a pairing or creation link, never acts by itself, and the verification screen shows the relay in full. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" />
+                <data android:host="*" />
+                <data android:pathPrefix="/l/pair" />
+                <data android:pathPrefix="/create" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
+        </activity>
+
+        <!-- Share target. Direct Share is declared in res/xml/shortcuts.xml. -->
+        <activity
+            android:name=".share.ShareActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Tomi.Translucent">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="*/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="*/*" />
+            </intent-filter>
+        </activity>
+
+        <!-- Runs the action of a notification tap (biometrics for secrets). Internal only. -->
+        <activity
+            android:name=".notify.NotificationActionActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Tomi.Translucent" />
+
+        <!-- Decrypted attachments (the core's cache), read-only. Not exported: other apps only reach a file through the
+             temporary read grant of the intent the user started (open with, share). See core/AttachmentProvider.kt. -->
+        <provider
+            android:name=".core.AttachmentProvider"
+            android:authorities="${applicationId}.attachments"
+            android:exported="false"
+            android:grantUriPermissions="true" />
+
+        <service
+            android:name=".tile.SendTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_stat_tomi"
+            android:label="@string/tile_label"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+    </application>
+</manifest>

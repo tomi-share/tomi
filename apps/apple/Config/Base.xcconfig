@@ -1,0 +1,21 @@
+// Settings shared by every configuration of the Tomi Apple apps (project.yml -> Tomi.xcodeproj).
+MARKETING_VERSION = 0.1.0
+CURRENT_PROJECT_VERSION = 1
+IPHONEOS_DEPLOYMENT_TARGET = 17.0
+TARGETED_DEVICE_FAMILY = 1,2
+SWIFT_VERSION = 5.0
+SWIFT_STRICT_CONCURRENCY = targeted
+CODE_SIGN_STYLE = Automatic
+// Default relay of a device that has none yet: NONE in the repository. The relay normally comes from the link or QR code of
+// the pairing, from the "Relais" field, or from the creation link (spec/pairing-v1.md 4.4, 10.3). To build with your own
+// relay, put it in Config/Local.xcconfig (ignored by git):
+//     TOMI_RELAY_URL = https:/$()/relay.example.org
+// (`//` would start a comment: `$()` splits it.) An empty value is "no default relay".
+TOMI_RELAY_URL =
+
+// Personal signing (development team): copy Signing.local.example.xcconfig to Signing.local.xcconfig
+// (ignored by git). Without it the simulator builds still work.
+#include? "Signing.local.xcconfig"
+
+// Personal settings (default relay of your own build): copy Local.example.xcconfig to Local.xcconfig (ignored by git).
+#include? "Local.xcconfig"

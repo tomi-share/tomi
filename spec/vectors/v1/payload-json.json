@@ -1,0 +1,190 @@
+{
+  "description": "Reading the payload JSON (§5.4) after decryption and padding removal. Read json_hex (exact bytes); json is the same thing as text when possible.",
+  "frozen": "FROZEN as of publication — never modify this file (spec/vectors/v1/README.md).",
+  "vectors": [
+    {
+      "description": "Mandatory fields only; defaults applied.",
+      "expected_item": {
+        "attachments": [],
+        "created_at_ms": 1793750400000,
+        "expires_at_ms": null,
+        "id": "4a4b4c4d-4e4f-4051-8253-545556575859",
+        "read_policy": "until_expiry",
+        "secret": false,
+        "source_device": "e983270f3ea7baa8688d15c08d447559",
+        "text": null,
+        "title": null,
+        "url": null
+      },
+      "expected_item_id": "4a4b4c4d-4e4f-4051-8253-545556575859",
+      "json": "{\"id\":\"4a4b4c4d-4e4f-4051-8253-545556575859\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000}",
+      "json_hex": "7b226964223a2234613462346334642d346534662d343035312d383235332d353435353536353735383539222c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c22637265617465645f6174223a313739333735303430303030307d",
+      "name": "minimal"
+    },
+    {
+      "description": "Unknown fields at the root and in text: ignored without error (additive change).",
+      "expected_item": {
+        "attachments": [],
+        "created_at_ms": 1793750400000,
+        "expires_at_ms": null,
+        "id": "4a4b4c4d-4e4f-4051-8253-545556575859",
+        "read_policy": "until_expiry",
+        "secret": false,
+        "source_device": "e983270f3ea7baa8688d15c08d447559",
+        "text": {
+          "html": null,
+          "markdown": null,
+          "plain": "x",
+          "source_format": "plain"
+        },
+        "title": null,
+        "url": null
+      },
+      "expected_item_id": "4a4b4c4d-4e4f-4051-8253-545556575859",
+      "json": "{\"id\":\"4a4b4c4d-4e4f-4051-8253-545556575859\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000,\"future_field\":{\"a\":[1,2,{\"b\":null}]},\"text\":{\"plain\":\"x\",\"future\":1}}",
+      "json_hex": "7b226964223a2234613462346334642d346534662d343035312d383235332d353435353536353735383539222c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c22637265617465645f6174223a313739333735303430303030302c226675747572655f6669656c64223a7b2261223a5b312c322c7b2262223a6e756c6c7d5d7d2c2274657874223a7b22706c61696e223a2278222c22667574757265223a317d7d",
+      "name": "unknown_fields_ignored"
+    },
+    {
+      "description": "Unknown read_policy value -> after_first_read (the most restrictive).",
+      "expected_item": {
+        "attachments": [],
+        "created_at_ms": 1793750400000,
+        "expires_at_ms": null,
+        "id": "4a4b4c4d-4e4f-4051-8253-545556575859",
+        "read_policy": "after_first_read",
+        "secret": false,
+        "source_device": "e983270f3ea7baa8688d15c08d447559",
+        "text": null,
+        "title": null,
+        "url": null
+      },
+      "expected_item_id": "4a4b4c4d-4e4f-4051-8253-545556575859",
+      "json": "{\"id\":\"4a4b4c4d-4e4f-4051-8253-545556575859\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000,\"read_policy\":\"burn_after_reading\"}",
+      "json_hex": "7b226964223a2234613462346334642d346534662d343035312d383235332d353435353536353735383539222c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c22637265617465645f6174223a313739333735303430303030302c22726561645f706f6c696379223a226275726e5f61667465725f72656164696e67227d",
+      "name": "unknown_read_policy"
+    },
+    {
+      "description": "Valeur de source_format inconnue -> plain.",
+      "expected_item": {
+        "attachments": [],
+        "created_at_ms": 1793750400000,
+        "expires_at_ms": null,
+        "id": "4a4b4c4d-4e4f-4051-8253-545556575859",
+        "read_policy": "until_expiry",
+        "secret": false,
+        "source_device": "e983270f3ea7baa8688d15c08d447559",
+        "text": {
+          "html": null,
+          "markdown": null,
+          "plain": "x",
+          "source_format": "plain"
+        },
+        "title": null,
+        "url": null
+      },
+      "expected_item_id": "4a4b4c4d-4e4f-4051-8253-545556575859",
+      "json": "{\"id\":\"4a4b4c4d-4e4f-4051-8253-545556575859\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000,\"text\":{\"plain\":\"x\",\"source_format\":\"asciidoc\"}}",
+      "json_hex": "7b226964223a2234613462346334642d346534662d343035312d383235332d353435353536353735383539222c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c22637265617465645f6174223a313739333735303430303030302c2274657874223a7b22706c61696e223a2278222c22736f757263655f666f726d6174223a226173636969646f63227d7d",
+      "name": "unknown_source_format"
+    },
+    {
+      "description": "Explicit null for optional fields = absent.",
+      "expected_item": {
+        "attachments": [],
+        "created_at_ms": 1793750400000,
+        "expires_at_ms": null,
+        "id": "4a4b4c4d-4e4f-4051-8253-545556575859",
+        "read_policy": "until_expiry",
+        "secret": false,
+        "source_device": "e983270f3ea7baa8688d15c08d447559",
+        "text": null,
+        "title": null,
+        "url": null
+      },
+      "expected_item_id": "4a4b4c4d-4e4f-4051-8253-545556575859",
+      "json": "{\"id\":\"4a4b4c4d-4e4f-4051-8253-545556575859\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000,\"expires_at\":null,\"title\":null,\"url\":null,\"text\":null}",
+      "json_hex": "7b226964223a2234613462346334642d346534662d343035312d383235332d353435353536353735383539222c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c22637265617465645f6174223a313739333735303430303030302c22657870697265735f6174223a6e756c6c2c227469746c65223a6e756c6c2c2275726c223a6e756c6c2c2274657874223a6e756c6c7d",
+      "name": "explicit_nulls"
+    },
+    {
+      "description": "Champ obligatoire id absent.",
+      "expected_error": "malformed_payload",
+      "expected_item_id": "4a4b4c4d-4e4f-4051-8253-545556575859",
+      "json": "{\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000}",
+      "json_hex": "7b22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c22637265617465645f6174223a313739333735303430303030307d",
+      "name": "missing_id"
+    },
+    {
+      "description": "Champ obligatoire created_at absent.",
+      "expected_error": "malformed_payload",
+      "expected_item_id": "4a4b4c4d-4e4f-4051-8253-545556575859",
+      "json": "{\"id\":\"4a4b4c4d-4e4f-4051-8253-545556575859\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\"}",
+      "json_hex": "7b226964223a2234613462346334642d346534662d343035312d383235332d353435353536353735383539222c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539227d",
+      "name": "missing_created_at"
+    },
+    {
+      "description": "created_at must be a JSON integer.",
+      "expected_error": "malformed_payload",
+      "expected_item_id": "4a4b4c4d-4e4f-4051-8253-545556575859",
+      "json": "{\"id\":\"4a4b4c4d-4e4f-4051-8253-545556575859\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":\"1793750400000\"}",
+      "json_hex": "7b226964223a2234613462346334642d346534662d343035312d383235332d353435353536353735383539222c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c22637265617465645f6174223a2231373933373530343030303030227d",
+      "name": "wrong_type"
+    },
+    {
+      "description": "Duplicate JSON key: rejected.",
+      "expected_error": "malformed_payload",
+      "expected_item_id": "4a4b4c4d-4e4f-4051-8253-545556575859",
+      "json": "{\"id\":\"4a4b4c4d-4e4f-4051-8253-545556575859\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000,\"secret\":false,\"secret\":true}",
+      "json_hex": "7b226964223a2234613462346334642d346534662d343035312d383235332d353435353536353735383539222c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c22637265617465645f6174223a313739333735303430303030302c22736563726574223a66616c73652c22736563726574223a747275657d",
+      "name": "duplicate_field"
+    },
+    {
+      "description": "Payload id differs from the envelope's item_id.",
+      "expected_error": "item_id_mismatch",
+      "expected_item_id": "4a4b4c4d-4e4f-4051-8253-545556575859",
+      "json": "{\"id\":\"4a4b4c4d-4e4f-4051-8253-54555657585a\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000}",
+      "json_hex": "7b226964223a2234613462346334642d346534662d343035312d383235332d353435353536353735383561222c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c22637265617465645f6174223a313739333735303430303030307d",
+      "name": "id_mismatch"
+    },
+    {
+      "description": "UUID non canonique (majuscules).",
+      "expected_error": "malformed_payload",
+      "expected_item_id": "4a4b4c4d-4e4f-4051-8253-545556575859",
+      "json": "{\"id\":\"4A4B4C4D-4E4F-4051-8253-545556575859\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000}",
+      "json_hex": "7b226964223a2234413442344334442d344534462d343035312d383235332d353435353536353735383539222c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c22637265617465645f6174223a313739333735303430303030307d",
+      "name": "uppercase_uuid"
+    },
+    {
+      "description": "source_device must be 32 lowercase hexadecimal characters.",
+      "expected_error": "malformed_payload",
+      "expected_item_id": "4a4b4c4d-4e4f-4051-8253-545556575859",
+      "json": "{\"id\":\"4a4b4c4d-4e4f-4051-8253-545556575859\",\"source_device\":\"e983270f3ea7baa8688d15c08d44755\",\"created_at\":1793750400000}",
+      "json_hex": "7b226964223a2234613462346334642d346534662d343035312d383235332d353435353536353735383539222c22736f757263655f646576696365223a2265393833323730663365613762616138363838643135633038643434373535222c22637265617465645f6174223a313739333735303430303030307d",
+      "name": "bad_source_device"
+    },
+    {
+      "description": "text.plain is mandatory when text is present.",
+      "expected_error": "malformed_payload",
+      "expected_item_id": "4a4b4c4d-4e4f-4051-8253-545556575859",
+      "json": "{\"id\":\"4a4b4c4d-4e4f-4051-8253-545556575859\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000,\"text\":{\"html\":\"<b>x</b>\"}}",
+      "json_hex": "7b226964223a2234613462346334642d346534662d343035312d383235332d353435353536353735383539222c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c22637265617465645f6174223a313739333735303430303030302c2274657874223a7b2268746d6c223a223c623e783c2f623e227d7d",
+      "name": "text_without_plain"
+    },
+    {
+      "description": "Attachment key: 31 bytes instead of 32.",
+      "expected_error": "malformed_payload",
+      "expected_item_id": "4a4b4c4d-4e4f-4051-8253-545556575859",
+      "json": "{\"id\":\"4a4b4c4d-4e4f-4051-8253-545556575859\",\"source_device\":\"e983270f3ea7baa8688d15c08d447559\",\"created_at\":1793750400000,\"attachments\":[{\"blob_id\":\"a0000000-0000-4000-8000-000000000000\",\"name\":\"f\",\"mime\":\"text/plain\",\"size\":1,\"key\":\"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==\",\"nonce_prefix\":\"AAAAAAAAAAAAAAAAAAAAAAAAAA==\"}]}",
+      "json_hex": "7b226964223a2234613462346334642d346534662d343035312d383235332d353435353536353735383539222c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c22637265617465645f6174223a313739333735303430303030302c226174746163686d656e7473223a5b7b22626c6f625f6964223a2261303030303030302d303030302d343030302d383030302d303030303030303030303030222c226e616d65223a2266222c226d696d65223a22746578742f706c61696e222c2273697a65223a312c226b6579223a224141414141414141414141414141414141414141414141414141414141414141414141414141414141413d3d222c226e6f6e63655f707265666978223a2241414141414141414141414141414141414141414141414141413d3d227d5d7d",
+      "name": "attachment_bad_key_len"
+    },
+    {
+      "description": "Byte 0xff inside a string: invalid JSON (UTF-8 is mandatory). Use json_hex.",
+      "expected_error": "malformed_payload",
+      "expected_item_id": "4a4b4c4d-4e4f-4051-8253-545556575859",
+      "json_hex": "7b226964223a2234613462346334642d346534662d343035312d383235332d353435353536353735383539222c22736f757263655f646576696365223a226539383332373066336561376261613836383864313563303864343437353539222c22637265617465645f6174223a313739333735303430303030302c227469746c65223a22ff227d",
+      "name": "invalid_utf8"
+    }
+  ]
+}

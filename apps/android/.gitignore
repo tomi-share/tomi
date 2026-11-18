@@ -1,0 +1,9 @@
+# Clones of the tree-sitter runtime and of the PHP grammar (Gradle task fetchGrammarSources, pinned commits).
+.grammar-sources/
+# Build output of the host test of the highlighter.
+tools/grammar-check/build/
+# libtomi_core.so (Rust core) dropped by cargo-ndk outside Gradle (`just android-ndk-libs`, the CI pre-step). The Gradle build makes its
+# own copy under app/build/ (task buildTomiCoreLibs), and the UniFFI Kotlin bindings are generated into app/build/ too: never committed.
+app/src/main/jniLibs/
+# Kotlin compiler daemon session files (generated per build, never committed).
+.kotlin/
