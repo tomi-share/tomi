@@ -21,9 +21,13 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,10 +63,17 @@ import eu.shaffe.tomi.ui.code.TomiCodeHighlightPlugin
 import eu.shaffe.tomi.ui.theme.CodePalette
 import eu.shaffe.tomi.ui.theme.TomiFonts
 import java.io.ByteArrayInputStream
+import kotlinx.coroutines.delay
 
 private val ALLOWED_LINK_SCHEMES = setOf("http", "https", "mailto", "tel")
 
 private const val PAGE_SETTLE_DELAY_MS = 150L
+
+private const val RENDER_TAG = "TomiMarkdown"
+
+/** How long a native Markdown view may stay without a height before it is created again, and how many times that is done. */
+private const val RENDER_LANDING_TIMEOUT_MS = 2_500L
+private const val MAX_RENDER_RETRIES = 3
 
 /** Opens a link from rendered content, but only for harmless schemes (no intent:, file:, content:, javascript:). */
 private fun openExternalLink(context: Context, uri: Uri) {
@@ -244,6 +255,22 @@ private fun TomiMarkdownText(
     val currentOnLinkClick by rememberUpdatedState(onLinkClick)
     val onLinkPress = remember { { url: String -> currentOnLinkClick(url) } }
 
+    // The library renders on three fixed worker threads and drops a result that arrives stale; a view whose rendering never lands
+    // stays at zero height for good (a blank card). Seen in the feed: only some cards of a list rendered. So when a view still has
+    // no height after RENDER_LANDING_TIMEOUT_MS it is created again (a new view: new render, maybe another worker), up to
+    // MAX_RENDER_RETRIES times. Leaving the screen cancels the wait.
+    var attempt by remember(markdown) { mutableIntStateOf(0) }
+    val landed = remember(markdown, attempt) { BooleanArray(1) }
+    LaunchedEffect(markdown, attempt) {
+        if (attempt >= MAX_RENDER_RETRIES) return@LaunchedEffect
+        delay(RENDER_LANDING_TIMEOUT_MS)
+        if (!landed[0]) {
+            Log.w(RENDER_TAG, "markdown view not rendered after ${RENDER_LANDING_TIMEOUT_MS} ms (attempt ${attempt + 1}): recreated")
+            attempt++
+        }
+    }
+
+    key(attempt) {
     AndroidView(
         factory = { ctx ->
             // Settings that never change (prepareForViewReuse puts the first three back to these same values), except the
@@ -264,7 +291,7 @@ private fun TomiMarkdownText(
                 setMarkdownContent(markdown)
             }
         },
-        modifier = modifier.reserveRenderedHeight(markdown, variant = if (allowTrailingMargin) 1 else 0),
+        modifier = modifier.reserveRenderedHeight(markdown, variant = if (allowTrailingMargin) 1 else 0) { landed[0] = true },
         // Runs after attach and after every reuse (prepareForViewReuse clears the content). Each setter ignores an unchanged
         // value, so right after the factory it does nothing and a recomposition re-renders nothing.
         update = { view ->
@@ -278,6 +305,7 @@ private fun TomiMarkdownText(
         onReset = { view -> view.prepareForViewReuse() },
         onRelease = { view -> view.prepareForViewReuse() },
     )
+    }
 }
 
 /**
@@ -285,9 +313,10 @@ private fun TomiMarkdownText(
  * width ([RenderedHeights]); once it has one, remembers it. The layout around it then does not jump when the text was already
  * rendered once: a card that comes back into the feed, the feed after a detail, the detail of a text its card showed whole.
  */
-private fun Modifier.reserveRenderedHeight(markdown: String, variant: Int): Modifier = layout { measurable, constraints ->
+private fun Modifier.reserveRenderedHeight(markdown: String, variant: Int, onRendered: () -> Unit): Modifier = layout { measurable, constraints ->
     val placeable = measurable.measure(constraints)
     val height = if (placeable.height > 0) {
+        onRendered()
         RenderedHeights.put(markdown, placeable.width, density, fontScale, variant, placeable.height)
         placeable.height
     } else {
