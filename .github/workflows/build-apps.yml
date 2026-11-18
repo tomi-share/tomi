@@ -118,7 +118,7 @@ jobs:
           if [ -n "${TOMI_RELAY_URL:-}" ]; then
             relay_args=("-PtomiRelayUrl=${TOMI_RELAY_URL}")
           else
-            echo "::warning title=Android::TOMI_RELAY_URL repository variable missing: the APK is built without a default relay."
+            echo "::notice title=Android::No default relay compiled in (optional TOMI_RELAY_URL repository variable not set)."
           fi
           bash gradlew --no-daemon --stacktrace "${relay_args[@]}" "$task"
       - name: Name the APK
@@ -184,7 +184,7 @@ jobs:
           TOMI_DEFAULT_RELAY_URL: ${{ vars.TOMI_RELAY_URL }}
         run: |
           if [ -z "${TOMI_DEFAULT_RELAY_URL:-}" ]; then
-            echo "::warning title=Windows::TOMI_RELAY_URL repository variable missing: the installer is built without a default relay."
+            echo "::notice title=Windows::No default relay compiled in (optional TOMI_RELAY_URL repository variable not set)."
           fi
           npx tauri build --bundles nsis
       - name: Name the installer
