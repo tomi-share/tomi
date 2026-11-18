@@ -6,7 +6,8 @@ options:
   bundleIdPrefix: eu.shaffe
   deploymentTarget:
     iOS: "17.0"
-  developmentLanguage: fr
+  # English is the reference and the fallback; the other languages are in the String Catalog.
+  developmentLanguage: en
   createIntermediateGroups: true
   groupSortPosition: top
 configs:

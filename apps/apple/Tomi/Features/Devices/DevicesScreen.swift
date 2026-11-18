@@ -120,7 +120,6 @@ struct DevicesScreen: View {
         parts.append(L10n.text(device.platform.labelKey))
         if let last = device.lastActivity {
             let formatter = RelativeDateTimeFormatter()
-            formatter.locale = Locale(identifier: "fr_FR")
             formatter.unitsStyle = .full
             parts.append(formatter.localizedString(for: last, relativeTo: Date()))
         }

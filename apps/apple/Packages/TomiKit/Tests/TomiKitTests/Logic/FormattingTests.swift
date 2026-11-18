@@ -4,6 +4,21 @@ import XCTest
 // Port of apps/android/.../ui/common/Formatting.kt. Android has no unit test for it (it needs a Context and Compose
 // resources), so these cases are new; they check the examples of docs/archive/apple-spec-implementation.md PR-4.
 final class FormattingTests: XCTestCase {
+    // The expected texts are the French ones of the charter.
+    override func setUp() { TomiLocale.current = Locale(identifier: "fr_FR") }
+    override func tearDown() { TomiLocale.current = .autoupdatingCurrent }
+
+    func testAnotherLanguageTakesItsOwnForms() {
+        TomiLocale.current = Locale(identifier: "en_US")
+        XCTAssertEqual(formatFileSize(2_400_000), "2.4 MB")
+        XCTAssertEqual(TimestampLabel.yesterday.text(yesterday: "Yesterday"), "yesterday")
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "Europe/Paris")!
+        let date = calendar.date(from: DateComponents(year: 2026, month: 11, day: 6, hour: 12))!
+        let now = calendar.date(from: DateComponents(year: 2026, month: 11, day: 20, hour: 12))!
+        XCTAssertEqual(formatTimestamp(date, now: now, calendar: calendar), .date("Nov 6"))
+    }
+
     private var calendar: Calendar {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(identifier: "Europe/Paris")!
@@ -18,15 +33,15 @@ final class FormattingTests: XCTestCase {
     func testTimestampIsTheTimeToday() {
         let now = paris(18, 0)
         XCTAssertEqual(formatTimestamp(paris(14, 2), now: now, calendar: calendar), .time("14:02"))
-        XCTAssertEqual(formatTimestamp(paris(0, 5), now: now, calendar: calendar).frenchText, "00:05")
+        XCTAssertEqual(formatTimestamp(paris(0, 5), now: now, calendar: calendar).text(yesterday: "Hier"), "00:05")
     }
 
     func testTimestampIsYesterdayThenTheShortDate() {
         let now = paris(0, 30)
         XCTAssertEqual(formatTimestamp(paris(day: 5, 23, 59), now: now, calendar: calendar), .yesterday)
-        XCTAssertEqual(formatTimestamp(paris(day: 5, 23, 59), now: now, calendar: calendar).frenchText, "hier")
+        XCTAssertEqual(formatTimestamp(paris(day: 5, 23, 59), now: now, calendar: calendar).text(yesterday: "Hier"), "hier")
         XCTAssertEqual(formatTimestamp(paris(day: 4, 12, 0), now: now, calendar: calendar), .date("4 nov."))
-        XCTAssertEqual(formatTimestamp(paris(day: 6, 12, 0, month: 10), now: now, calendar: calendar).frenchText, "6 oct.")
+        XCTAssertEqual(formatTimestamp(paris(day: 6, 12, 0, month: 10), now: now, calendar: calendar).text(yesterday: "Hier"), "6 oct.")
     }
 
     func testFullDateAndTime() {
