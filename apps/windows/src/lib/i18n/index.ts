@@ -7,7 +7,20 @@
 
 import type { AppError } from "../api";
 import { en } from "./en";
+import { de } from "./de";
+import { es } from "./es";
 import { fr } from "./fr";
+import { hi } from "./hi";
+import { id } from "./id";
+import { it } from "./it";
+import { ja } from "./ja";
+import { ko } from "./ko";
+import { nl } from "./nl";
+import { pl } from "./pl";
+import { pt } from "./pt";
+import { ru } from "./ru";
+import { tr } from "./tr";
+import { zh } from "./zh";
 
 /** The forms a count can take. Every language has `other`; English and French only add `one`. */
 export type PluralForms = {
@@ -31,7 +44,7 @@ type Widen<T> = T extends { one: string; other: string }
 export type Dictionary = Widen<typeof en>;
 
 /** The languages of the app, by BCP 47 tag. The key order is the order shown wherever they are listed. */
-export const LOCALES = { en, fr } satisfies Record<string, Dictionary>;
+export const LOCALES = { en, de, es, fr, hi, id, it, ja, ko, nl, pl, pt, ru, tr, zh } satisfies Record<string, Dictionary>;
 
 export type Locale = keyof typeof LOCALES;
 

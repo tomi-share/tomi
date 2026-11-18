@@ -57,7 +57,8 @@ can read. The details are in [`PROJECT.md`](PROJECT.md) and in the [specificatio
 Tomi needs a relay to talk through. Follow [`infra/README.md`](infra/README.md) to run your own, then create your
 space from the app's first screen and pair your other devices.
 
-> The apps are in French for now (the default locale). Code, comments and documentation are in English.
+> The apps follow the language of the device, in fifteen languages, with English as the fallback
+> ([docs/LOCALIZATION.md](docs/LOCALIZATION.md)). Code, comments and documentation are in English.
 
 ### Code signing policy
 

@@ -1,0 +1,563 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- All user-visible texts are Japanese, polite style (desu/masu), no second-person pronoun. Keep identifiers and comments in English.
+     Vocabulary: "非表示" / "表示" (never "秘密" / "公開"). -->
+<resources>
+    <string name="app_name">Tomi</string>
+
+    <!-- Generic actions -->
+    <string name="action_cancel">キャンセル</string>
+    <string name="action_cancel_send">送信をキャンセル</string>
+    <string name="action_close">閉じる</string>
+    <string name="action_back">戻る</string>
+    <string name="action_save">保存</string>
+    <string name="action_continue">続ける</string>
+    <string name="action_later">後で</string>
+    <string name="action_done">完了</string>
+    <string name="action_copy">コピー</string>
+    <string name="action_copy_link">リンクをコピー</string>
+    <string name="action_open">開く</string>
+    <string name="action_more">その他の操作</string>
+    <string name="action_reveal">表示</string>
+    <string name="action_hide">非表示にする</string>
+    <string name="action_send">送信</string>
+    <string name="action_paste">貼り付け</string>
+    <string name="action_attach">ファイルを添付</string>
+    <string name="action_remove_attachment">%1$sを外す</string>
+    <string name="action_undo">取り消す</string>
+    <string name="action_options">オプション</string>
+    <string name="action_search">検索</string>
+    <string name="action_close_search">検索を閉じる</string>
+    <string name="action_filters">フィルタ</string>
+    <string name="action_clear_filter">フィルタを解除</string>
+    <string name="action_delete">削除</string>
+    <string name="action_delete_local">このデバイスから削除</string>
+    <string name="action_delete_everywhere">すべての場所から削除</string>
+    <string name="action_pin">ピン留め</string>
+    <string name="action_unpin">ピン留めを外す</string>
+    <string name="action_archive">アーカイブ</string>
+    <string name="action_unarchive">アーカイブを解除</string>
+    <string name="action_share">共有</string>
+    <string name="action_details">詳細</string>
+    <string name="action_read_more">続きを読む</string>
+
+    <!-- Feed -->
+    <string name="search_placeholder">フィードを検索</string>
+    <string name="filter_all">すべて</string>
+    <string name="filter_links">リンク</string>
+    <string name="filter_text">テキスト</string>
+    <string name="filter_files">ファイル</string>
+    <string name="filter_secrets">非表示</string>
+    <string name="filter_archives">アーカイブ</string>
+    <string name="section_pinned">ピン留め</string>
+    <string name="section_recent">最近</string>
+    <string name="section_archives">アーカイブ</string>
+    <string name="source_this_phone">このスマートフォン</string>
+    <string name="label_masked">非表示</string>
+    <plurals name="search_results">
+        <item quantity="other">%1$d件の結果</item>
+    </plurals>
+    <string name="search_masked_note">非表示のアイテムはタイトルや内容を除いて検索されます</string>
+    <!-- 1: the counter ("2 results"), 2: the note about the hidden items -->
+    <string name="search_summary_with_note">%1$s · %2$s</string>
+    <string name="feed_empty">まだ何もありません。リンク、テキスト、ファイルをTomiに共有すると、ほかのデバイスに送信できます。</string>
+    <string name="feed_empty_archives">アーカイブしたアイテムはありません。「最近」のカードを左にスワイプするとアーカイブできます。</string>
+    <string name="feed_empty_filtered">一致するアイテムはありません。</string>
+    <string name="banner_offline">オフライン · 待機中</string>
+    <string name="menu_share_help">共有メニューにTomiを固定</string>
+    <string name="menu_leave_space">接続を解除</string>
+    <string name="snackbar_copied_secret">コピーしました · 30秒後に消去</string>
+    <string name="snackbar_deleted_local">このデバイスから削除しました</string>
+    <string name="snackbar_deleted_everywhere">すべてのデバイスに削除を要求しました</string>
+    <string name="snackbar_action_failed">操作を完了できませんでした。接続を確認して、もう一度お試しください。</string>
+    <string name="snackbar_pin_failed">ピン留めを変更できませんでした。もう一度お試しください。</string>
+    <string name="snackbar_archived">アーカイブしました</string>
+    <string name="snackbar_unarchived">アーカイブを解除しました</string>
+    <string name="snackbar_archive_failed">アーカイブを変更できませんでした。もう一度お試しください。</string>
+    <string name="snackbar_nothing_to_share">このアイテムには共有できるものがありません。</string>
+    <string name="detail_not_found">アイテムが見つかりません。期限切れになったか、削除された可能性があります。</string>
+    <string name="detail_masked_hint">表示、コピー、共有には指紋または画面ロックのコードが必要です。</string>
+    <string name="detail_revealed_hint">画面を離れるとすぐに再び非表示になります。</string>
+    <string name="meta_type">種類</string>
+    <string name="meta_sent_at">送信日時</string>
+    <string name="meta_expiry">有効期限</string>
+    <string name="meta_pinned">ピン留め</string>
+    <string name="meta_status">状態</string>
+    <string name="meta_yes">はい</string>
+    <string name="meta_no">いいえ</string>
+    <string name="meta_never">なし</string>
+    <string name="meta_after_read">閲覧後</string>
+    <plurals name="characters_count">
+        <item quantity="other">%1$d文字</item>
+    </plurals>
+
+    <!-- Card -->
+    <string name="unread_badge">未読</string>
+    <string name="pinned_badge">ピン留め</string>
+    <string name="archived_badge">アーカイブ済み</string>
+    <string name="time_yesterday">昨日</string>
+    <string name="expires_in">あと%1$sで期限切れ</string>
+    <string name="expires_after_read">最初に閲覧した後に消えます</string>
+    <!-- Attachment tiles (feed + detail). "More files": the button towards the detail, then the same as a caption when "Read more" takes its place. -->
+    <plurals name="more_files">
+        <item quantity="other">ほか%1$d個のファイル</item>
+    </plurals>
+    <plurals name="more_files_caption">
+        <item quantity="other">+ ほか%1$d個のファイル</item>
+    </plurals>
+    <!-- %1$d = count, %2$s = total size ("4 files · 4.9 MB"). Shown from 2 attachments on, so "one" is only for the form. -->
+    <plurals name="attachments_summary_files">
+        <item quantity="other">%1$d個のファイル · %2$s</item>
+    </plurals>
+    <plurals name="attachments_summary_images">
+        <item quantity="other">%1$d枚の画像 · %2$s</item>
+    </plurals>
+    <plurals name="secret_files_hidden">
+        <item quantity="other">%1$d個の非表示ファイル</item>
+    </plurals>
+    <plurals name="remaining_days">
+        <item quantity="other">%1$d日</item>
+    </plurals>
+    <plurals name="remaining_hours">
+        <item quantity="other">%1$d時間</item>
+    </plurals>
+    <plurals name="remaining_minutes">
+        <item quantity="other">%1$d分</item>
+    </plurals>
+    <string name="kind_secret">非表示</string>
+    <string name="kind_image">画像</string>
+    <string name="kind_file">ファイル</string>
+    <string name="kind_link">リンク</string>
+    <string name="kind_unreadable">読み取り不可</string>
+    <string name="unreadable_update_required">このアイテムを読むにはアップデートが必要です。アイテムは保持され、Tomiのアップデート後に表示されます。</string>
+    <string name="unreadable_decryption_failed">このアイテムは現在読み取れません。アイテムは保持されます。同期またはアップデートで読み取れるようになる可能性があります。</string>
+    <string name="kind_rich_text">リッチテキスト</string>
+    <string name="kind_text">テキスト</string>
+    <!-- Internal image viewer -->
+    <string name="action_view_image">画像を表示</string>
+    <string name="viewer_save">保存</string>
+    <string name="viewer_action_delete">削除</string>
+    <string name="viewer_delete_local">このデバイスから画像を削除</string>
+    <string name="viewer_delete_everywhere">すべての場所から画像を削除</string>
+    <string name="viewer_image_description">画像 %1$d/%2$d</string>
+    <string name="viewer_position">%1$d/%2$d</string>
+    <string name="viewer_locked">非表示の画像です。表示するには本人確認をしてください。</string>
+    <string name="viewer_load_failed">この画像を表示できませんでした。</string>
+    <string name="viewer_no_image">表示する画像がありません。</string>
+    <string name="snackbar_image_saved">画像をギャラリーに保存しました</string>
+    <string name="snackbar_file_unavailable">このファイルを開けませんでした。まだダウンロードされていないか、開けるアプリがない可能性があります。</string>
+    <string name="snackbar_file_downloaded">Downloads/Tomiにファイルを保存しました</string>
+    <string name="snackbar_file_download_failed">ファイルを保存できませんでした。もう一度お試しください。</string>
+    <string name="snackbar_image_unavailable">この画像は現在利用できません。</string>
+    <string name="snackbar_image_failed">操作に失敗しました。もう一度お試しください。</string>
+    <!-- Removal of ONE attachment of an item (the item stays) -->
+    <string name="snackbar_image_deleted_local">このデバイスから画像を削除しました</string>
+    <string name="snackbar_image_deleted_everywhere">すべての場所から画像を削除しました</string>
+    <string name="snackbar_file_deleted_local">このデバイスからファイルを削除しました</string>
+    <string name="snackbar_file_deleted_everywhere">すべての場所からファイルを削除しました</string>
+    <string name="file_row_delete">このファイルを削除</string>
+    <string name="file_row_actions">このファイルの操作</string>
+    <string name="file_download">ダウンロード</string>
+    <string name="file_delete_local">このデバイスからファイルを削除</string>
+    <string name="file_delete_everywhere">すべての場所からファイルを削除</string>
+    <string name="dialog_delete_file_everywhere_title">すべての場所からファイルを削除しますか？</string>
+    <string name="dialog_delete_file_everywhere_named">「%1$s」はすべてのデバイスとTomiサーバーから消去されます。オフラインのデバイスでは、再接続時に消去されます。この操作は取り消せません。</string>
+    <string name="dialog_delete_file_everywhere_secret">この非表示のファイルはすべてのデバイスとTomiサーバーから消去されます。すでに表示したデバイスにはコピーが残っている可能性があります。この操作は取り消せません。</string>
+    <string name="biometric_title_image">非表示の画像を表示</string>
+    <string name="biometric_subtitle_image">本人確認をしてください。確認は2分間有効です。</string>
+    <string name="biometric_title_save_image">非表示の画像を保存</string>
+    <string name="biometric_subtitle_save_image">画像をギャラリーに書き込む前に本人確認をしてください。確認は2分間有効です。</string>
+    <!-- Text modes: "Preview" (styled, default) and "Markdown" (the literal source) -->
+    <string name="render_preview">プレビュー</string>
+    <string name="render_markdown">Markdown</string>
+
+    <!-- Code file screen -->
+    <string name="action_view_code">ファイルを開く</string>
+    <string name="code_search">ファイル内を検索</string>
+    <string name="code_search_placeholder">ファイル内を検索</string>
+    <string name="code_search_previous">前の一致</string>
+    <string name="code_search_next">次の一致</string>
+    <string name="code_copy_file">ファイルをコピー</string>
+    <string name="code_wrap">行を折り返す</string>
+    <string name="code_locked">非表示のファイルです。表示するには本人確認をしてください。</string>
+    <string name="code_no_file">表示するコードファイルがありません。</string>
+    <string name="code_unavailable">このファイルは現在表示できません。</string>
+    <string name="code_too_large">このファイルは大きすぎて表示できません（最大2 MB）。</string>
+    <string name="code_binary">このファイルはテキストではないため、ここでは表示できません。</string>
+    <string name="code_no_colours_language">この言語の構文ハイライトはありません。</string>
+    <string name="code_no_colours_size">構文ハイライトを利用できません。ファイルが長すぎます（最大50 KBまたは2,000行）。</string>
+    <string name="biometric_title_file">非表示のファイルを表示</string>
+    <string name="biometric_subtitle_file">本人確認をしてください。確認は2分間有効です。</string>
+    <string name="dialog_delete_everywhere_title">すべての場所から削除しますか？</string>
+    <string name="dialog_delete_everywhere_message">このアイテムはすべてのデバイスとTomiサーバーから消去されます。オフラインのデバイスでは、再接続時に消去されます。この操作は取り消せません。</string>
+    <string name="dialog_delete_everywhere_secret">この非表示のコンテンツはすべてのデバイスとTomiサーバーから消去されます。すでに表示したデバイスにはコピーが残っている可能性があります。この操作は取り消せません。</string>
+    <string name="dialog_delete_image_everywhere_title">すべての場所から画像を削除しますか？</string>
+    <string name="dialog_delete_image_everywhere_message">この画像はすべてのデバイスとTomiサーバーから消去されます。オフラインのデバイスでは、再接続時に消去されます。この操作は取り消せません。</string>
+    <string name="dialog_delete_image_everywhere_secret">この非表示の画像はすべてのデバイスとTomiサーバーから消去されます。すでに表示したデバイスにはコピーが残っている可能性があります。この操作は取り消せません。</string>
+
+    <!-- System share (Android ACTION_SEND) of an item -->
+    <string name="share_chooser_title">共有先</string>
+    <!-- Neutral title of the preview of the system share sheet for a hidden item: the sheet must not show the content. -->
+    <string name="share_hidden_preview_title">非表示のコンテンツ</string>
+    <string name="share_no_app">このコンテンツを受け取れるアプリがありません。</string>
+
+    <!-- Delivery status -->
+    <string name="status_received">受信済み</string>
+    <string name="status_queued">送信待ち</string>
+    <string name="status_waiting_network">ネットワーク待ち</string>
+    <string name="status_sent">送信済み</string>
+    <string name="status_failed">送信失敗</string>
+    <string name="status_delivered_all">すべてに配信済み</string>
+    <string name="status_delivered_partial">%2$d台中%1$d台に配信済み</string>
+    <string name="status_expired">%1$d台に配信済み · %2$sへの配信前に期限切れ</string>
+
+    <!-- Expiry -->
+    <string name="expiry_hour1">1時間</string>
+    <string name="expiry_day1">1日</string>
+    <string name="expiry_day7">7日</string>
+    <string name="expiry_day30">30日</string>
+    <string name="expiry_never">なし</string>
+    <string name="expiry_after_read">閲覧後</string>
+    <string name="expiry_chip">有効期限：%1$s</string>
+    <string name="expiry_label">有効期限</string>
+    <string name="expiry_after_read_hint">「閲覧後」：最初に開かれた時点ですべての場所から消去されます。</string>
+
+    <!-- Compose / send -->
+    <string name="send_title">送信</string>
+    <string name="send_title_label">タイトル（任意）</string>
+    <string name="send_content_label">テキストまたはリンク</string>
+    <string name="label_secret">内容を非表示にする</string>
+    <string name="label_secret_off">「表示」を押すまで、すべての場所でプレビューを隠します</string>
+    <string name="label_secret_on">自動的にオンになりました。オフにできます。</string>
+    <string name="detect_link">リンクを検出</string>
+    <string name="detect_text">テキスト</string>
+    <string name="detect_files">ファイル添付</string>
+    <string name="detect_masked">非表示</string>
+    <string name="detect_masked_password">パスワードのようです。</string>
+    <string name="detect_to_devices">送信先：%1$s</string>
+    <string name="hint_secret_sensitive">送信元のアプリがこのコンテンツを機密として指定したため、非表示で送信されます。</string>
+    <string name="hint_secret_heuristic">このコンテンツはパスワードまたはキーのようなので、非表示になっています。変更できます。</string>
+    <string name="notice_paste_empty">クリップボードにテキストがありません。</string>
+    <string name="notice_link_appended_to_draft">ほかのアプリからのリンクが下書きに追加されました。送信前に確認してください。</string>
+    <string name="notice_params_dropped">リンクの一部のパラメータは無視されました（長すぎるか無効です）。</string>
+    <string name="notice_too_late">間に合いませんでした。アイテムはすでに送信されています。</string>
+    <string name="notice_undo_failed">送信をキャンセルできませんでした。アイテムはすでに送信された可能性があります。</string>
+    <string name="notice_send_failed">送信に失敗しました。テキストは保持されています。もう一度お試しください。</string>
+    <string name="banner_sent">送信済み</string>
+    <plurals name="banner_files_skipped">
+        <item quantity="other">%1$d個のファイルをスキップしました（1ファイルあたり最大25 MB）</item>
+    </plurals>
+    <string name="sheet_title">送信オプション</string>
+
+    <!-- Share target -->
+    <string name="share_not_paired">Tomiはどのスペースにもリンクされていません。アプリを開いてスペースに参加してください。</string>
+    <string name="share_open_app">Tomiを開く</string>
+    <string name="share_failed">送信に失敗しました。もう一度お試しください。</string>
+    <string name="share_too_late">間に合いませんでした。アイテムはすでに送信されています。Tomiのフィードから削除できます。</string>
+    <string name="share_secret_detected">非表示にすべきコンテンツのようです。送信前に確認してください。</string>
+    <string name="preview_secret_masked">••••••••••</string>
+    <plurals name="preview_files">
+        <item quantity="other">%1$d個のファイル</item>
+    </plurals>
+    <string name="shortcut_short_label">Tomi</string>
+    <string name="shortcut_long_label">Tomiで自分のデバイスに送信</string>
+    <string name="tile_label">送信</string>
+
+    <!-- Biometrics -->
+    <string name="biometric_title_secret">非表示のコンテンツを表示</string>
+    <string name="biometric_subtitle_secret">本人確認をしてください。確認は2分間有効です。</string>
+    <string name="biometric_title_share">非表示のコンテンツを共有</string>
+    <string name="biometric_subtitle_share">ほかのアプリに送る前に本人確認をしてください。確認は2分間有効です。</string>
+    <string name="biometric_title_copy_secret">非表示のコンテンツをコピー</string>
+    <string name="biometric_subtitle_from_notification">コンテンツはコピーされ、30秒後にクリップボードから消去されます。</string>
+    <string name="biometric_title_revoke">デバイスを無効化</string>
+    <string name="biometric_subtitle_revoke">重要な操作です。指紋、顔、またはスマートフォンの画面ロックのコードで確認してください。</string>
+    <string name="biometric_title_erase">このスマートフォンを消去</string>
+    <string name="biometric_subtitle_erase">この操作は取り消せません。指紋、顔、またはスマートフォンの画面ロックのコードで確認してください。</string>
+    <string name="biometric_title_pair">デバイスを追加</string>
+    <string name="biometric_subtitle_pair">新しいデバイスは、非表示のアイテムも含めて履歴をすべて受け取ります。指紋、顔、またはスマートフォンの画面ロックのコードで確認してください。</string>
+    <string name="biometric_title_delete_space">スペースを削除</string>
+    <string name="biometric_subtitle_delete_space">この操作は取り消せません。指紋、顔、またはスマートフォンの画面ロックのコードで確認してください。</string>
+    <string name="toast_biometric_unavailable">非表示のコンテンツを表示、コピー、共有するには、画面ロックまたは生体認証を設定してください。</string>
+    <string name="toast_item_not_found">アイテムが見つかりません</string>
+
+    <!-- Notifications -->
+    <string name="channel_group_incoming">受信したアイテム</string>
+    <string name="channel_links">リンク</string>
+    <string name="channel_links_desc">ほかのデバイスから受信したリンク</string>
+    <string name="channel_text">テキスト</string>
+    <string name="channel_text_desc">ほかのデバイスから受信したテキスト</string>
+    <string name="channel_files">ファイル</string>
+    <string name="channel_files_desc">ほかのデバイスから受信したファイルと画像</string>
+    <string name="channel_secrets">非表示</string>
+    <string name="channel_secrets_desc">受信した非表示のコンテンツ。ロック画面には表示されず、プレビューもありません。</string>
+    <string name="channel_devices">デバイス</string>
+    <string name="channel_devices_desc">スペースにデバイスが追加されたときに通知します。内容は含まれず、デバイスの名前のみです。</string>
+    <string name="notif_device_added_title">新しいデバイスが追加されました</string>
+    <string name="notif_device_added_body">「%1$s」がスペースに加わりました。心当たりがない場合は、「デバイス」を開いて無効化してください。</string>
+    <string name="notif_title_secret">非表示のコンテンツ · %1$s</string>
+    <string name="notif_title_link">%1$sからのリンク</string>
+    <string name="notif_title_image">%1$sからの画像</string>
+    <string name="notif_title_file">%1$sからのファイル</string>
+    <string name="notif_title_text">%1$sからのテキスト</string>
+    <string name="notif_title_unreadable">%1$sからのアイテム</string>
+    <string name="notif_body_unreadable">現在読み取れません。Tomiのアップデートが必要です</string>
+    <string name="notif_body_secret">タップしてコピー（認証が必要）</string>
+    <string name="notif_body_generic">新しいアイテム</string>
+    <string name="notif_public_title">Tomi：新しいアイテム</string>
+    <string name="notif_action_copy">コピー</string>
+    <string name="notif_action_view">表示</string>
+    <string name="notif_summary_text">最後の送信元：%1$s</string>
+    <plurals name="notif_summary_title">
+        <item quantity="other">%1$d件の新しいアイテム</item>
+    </plurals>
+
+    <!-- Pairing -->
+    <!-- Welcome: the two doors of a device that is not in a space yet -->
+    <string name="welcome_title">すべてのデバイスを、ひとつのスペースに</string>
+    <string name="welcome_intro">リンク、メモ、パスワードをデバイスからデバイスへ、エンドツーエンドで暗号化して自分に送れます。</string>
+    <string name="welcome_question">どちらから始めますか？</string>
+    <string name="welcome_create_title">スペースを作成</string>
+    <string name="welcome_create_hint">最初のデバイスです。TomiサーバーのQRコードまたはインストールキーを用意してください。</string>
+    <string name="welcome_join_title">スペースに参加</string>
+    <string name="welcome_join_hint">ほかのデバイスですでにTomiを使っていますか？そのデバイスでTomiを開いたまま、手元に置いてください。</string>
+    <!-- Read by the screen reader for a whole door: title, then what it takes. -->
+    <string name="welcome_door_description">%1$s。%2$s</string>
+
+    <!-- Join a space -->
+    <string name="pair_title">スペースに参加</string>
+    <string name="pair_intro">ほかのデバイスで次を開きます</string>
+    <string name="pair_other_device_caption">ほかのデバイスで</string>
+    <string name="pair_illustration_description">イラスト：ほかのデバイスの「デバイスを追加」画面に、QRコードと招待コード（例：7-crayon-renard）が表示されています。</string>
+    <string name="pair_scan_preview_description">ほかのデバイスのQRコードをスキャンするためのカメラプレビュー</string>
+    <string name="pair_link_received">招待リンクを受信しました</string>
+    <string name="pair_link_received_relay">リレー：%1$s</string>
+    <string name="pair_link_received_warning">このリンクはほかのアプリまたはウェブページから来たものです。自分で作成したばかりのスペースに、見覚えのあるリレーでのみ参加してください。</string>
+    <string name="pair_link_received_hint">自動では何も行われません。続けるには「参加」をタップしてください。</string>
+    <string name="pair_join">参加</string>
+    <string name="pair_scan_hint">カメラはこのスキャンにのみ使用されます。</string>
+    <string name="pair_scan_button">QRコードをスキャン</string>
+    <string name="pair_enter_code_button">招待コードを入力</string>
+    <string name="demo_enter">サンプルデータで試す</string>
+    <string name="demo_banner">デモモード：サンプルデータです。何も送信されません。</string>
+    <string name="demo_leave">デモを終了</string>
+    <string name="pair_camera_denied">カメラへのアクセスが拒否されました。代わりに招待コードを入力できます。</string>
+    <string name="pair_code_title">招待コードを入力</string>
+    <string name="pair_code_intro">ほかのデバイスのQRコードの下に表示されています。</string>
+    <string name="pair_code_label">招待コード</string>
+    <string name="pair_code_hint">数字の後に2つの単語があります。アクセント記号や大文字は不要です。</string>
+    <string name="relay_field_label">リレー</string>
+    <string name="relay_field_hint">Tomiサーバーのアドレス（例：relay.example.org）。</string>
+    <string name="relay_other_button">別のリレー</string>
+    <string name="relay_current">リレー：%1$s</string>
+    <string name="pair_scan_instead">代わりにQRコードをスキャン</string>
+    <string name="pair_verify_title">コードを確認</string>
+    <string name="pair_verify_body">両方のデバイスに同じコードが表示されていることを確認してください。</string>
+    <plurals name="pair_verify_peer_members">
+        <item quantity="other">スペースのデバイス数：%1$d台</item>
+    </plurals>
+    <string name="pair_verify_relay_label">リレー：%1$s</string>
+    <string name="pair_verify_relay_hint">続ける前に、これが自分のリレーであることを確認してください。</string>
+    <string name="pair_verify_code_description">確認コード %1$s</string>
+    <string name="pair_verify_validity">残り%1$s有効</string>
+    <string name="pair_verify_same">コードは同じです</string>
+    <string name="pair_verify_different">コードが違います</string>
+    <string name="pair_verify_mismatch">コードが一致しなかったため、デバイスの追加はキャンセルされました。ほかのデバイスからやり直してください。</string>
+    <string name="pair_working">ほかのデバイスに接続しています…</string>
+    <string name="pair_waiting_title">ほかのデバイスを待っています</string>
+    <string name="pair_waiting_body">%1$sでも、コードが同じであることを確認してください。確認が済むとすぐにデバイスの追加が完了します。</string>
+    <string name="pair_history_title">履歴を取得しますか？</string>
+    <plurals name="pair_history_body">
+        <item quantity="other">スペースにはすでに%1$d件のアイテムがあります。このスマートフォンで取得できます。</item>
+    </plurals>
+    <string name="pair_history_size">取得するデータは約%1$sです。</string>
+    <string name="pair_history_yes">はい、履歴を取得します</string>
+    <string name="pair_history_yes_hint">非表示のアイテムやピン留めしたアイテムも含め、スペースのすべてがここに届きます。</string>
+    <string name="pair_history_no">いいえ、空のフィードから始めます</string>
+    <string name="pair_history_no_hint">これから送信されるものだけがここに届きます。</string>
+    <string name="pair_history_footer">アイテムは後からいつでも削除できます。</string>
+    <string name="pair_done_title">デバイスを追加しました</string>
+    <string name="pair_done_body">%1$sがスペースに加わりました。</string>
+    <string name="pair_notifications_rationale">通知を許可すると、デバイスから何か届いたときにわかります。</string>
+    <string name="pair_notifications_enable">通知を許可</string>
+    <string name="pair_error_qr_unknown">このQRコードはTomiの招待ではありません。</string>
+    <string name="pair_error_code_format">ほかのデバイスに表示されている招待コードを入力してください（例：7-crayon-renard）。</string>
+    <string name="pair_error_invalid">この招待コードは無効です。数字と2つの単語を確認してください。</string>
+    <string name="pair_error_wrong_code">コードが正しくありません。ほかのデバイスで新しい招待コードを生成してください。</string>
+    <string name="pair_error_taken">この招待コードはすでに使用されています。ほかのデバイスで新しいコードを生成してください。</string>
+    <string name="pair_error_interrupted">接続が中断されました。ほかのデバイスで新しい招待コードを生成してください。</string>
+    <string name="pair_error_cancelled">ほかのデバイスでデバイスの追加がキャンセルされました。</string>
+    <string name="pair_error_update">このデバイスを追加するには、両方のデバイスでTomiをアップデートしてください。</string>
+    <string name="pair_error_blocked">このデバイスはTomiサーバーを使用できなくなりました。まだスペースに含まれているか確認してください。</string>
+    <string name="pair_error_space_full">スペースのデバイス数が上限に達しました。デバイスリストから1台を除外してください。</string>
+    <string name="pair_error_relay_required">リレーのアドレスを入力してください。</string>
+    <string name="pair_error_relay_invalid">このリレーのアドレスは無効です。relay.example.orgのように入力してください。</string>
+    <string name="pair_error_unexpected">デバイスの追加を完了できませんでした。もう一度お試しください。</string>
+    <string name="pair_error_expired">コードの有効期限が切れました。新しいコードを生成してください。</string>
+    <string name="pair_error_network">ネットワークを利用できません。もう一度お試しください。</string>
+
+    <!-- Devices -->
+    <string name="unreadable_title">読み取れないデータ</string>
+    <string name="unreadable_message">Tomiはこのスマートフォンのデータを開けません。アプリのデータが消去または破損した（スマートフォンを復元した、アプリのストレージを消去したなど）か、データを保護するキーが使用できなくなった可能性があります。ほかのデバイスには影響ありません。</string>
+    <string name="unreadable_retry">再試行</string>
+    <string name="unreadable_reset">Tomiをリセット</string>
+    <string name="unreadable_reset_title">このスマートフォンのTomiのデータを消去しますか？</string>
+    <string name="unreadable_reset_message">Tomiがここに保持しているものはすべて消去され、このスマートフォンはスペースに再度参加する必要があります。ほかのデバイスのアイテムは残ります。ほかのデバイスのデバイスリストから、この古いデバイスを除外してください。</string>
+    <string name="unreadable_reset_confirm">消去してリセット</string>
+    <string name="unreadable_reset_failed">消去に失敗しました。もう一度試すか、Androidの設定でアプリのデータを消去してください。</string>
+    <string name="share_unreadable">Tomiはデータを開けません。アプリを開いて修復してください。</string>
+    <string name="devices_title">デバイス</string>
+    <string name="devices_add">デバイスを追加</string>
+    <string name="devices_empty">スペースにはまだデバイスがありません。</string>
+    <string name="devices_this_device">このデバイス</string>
+    <string name="devices_rename">名前を変更</string>
+    <string name="devices_revoke">無効化</string>
+    <string name="devices_revoke_title">「%1$s」を無効化しますか？</string>
+    <string name="devices_revoke_message">このデバイスはスペースから除外され、スペースのキーが更新されます。このデバイスは新しいアイテムを読めなくなります。指紋、顔、または画面ロックのコードが求められます。</string>
+    <string name="devices_rename_failed">デバイスの名前を変更できませんでした。接続を確認して、もう一度お試しください。</string>
+    <string name="devices_revoke_failed">デバイスを無効化できませんでした。接続を確認して、もう一度お試しください。</string>
+    <string name="devices_revoking">無効化しています。スペースのキーを更新中のため、数秒かかることがあります。</string>
+    <string name="devices_revoke_unavailable">このスマートフォンには画面ロックが設定されていないため、無効化できません。設定でコード、指紋、または顔を登録してください。</string>
+    <string name="rotation_stalled_title">デバイスの除外が未完了です</string>
+    <string name="rotation_stalled_message">除外したデバイスが、スペースの現在のキーをまだ保持している可能性があります。Tomiは1時間ごとにキーの更新を再試行します。ほかのデバイスでTomiを開くと、完了しやすくなります。</string>
+    <string name="snackbar_relay_revoked_admin">「%1$s」はリレーの管理者によって除外されました。</string>
+    <string name="snackbar_relay_revoked_self">リレーによると、「%1$s」はスペースから離れました。</string>
+    <string name="snackbar_relay_revoked_other">「%1$s」はリレーによってスペースから除外されました。</string>
+    <!-- Another device that has not shown up for a long time. Tomi only knows that, not that the app is uninstalled. -->
+    <string name="devices_inactive_hint">%1$s使用されていません。もう使わない場合は除外してください。</string>
+    <plurals name="devices_inactive_duration">
+        <item quantity="other">%1$d日間</item>
+    </plurals>
+
+    <!-- Leaving the space (menu of the feed) -->
+    <string name="leave_title">スペースから接続を解除しますか？</string>
+    <string name="leave_message">このデバイスはスペースから離れます。保持しているものはすべて消去されます（アイテム、非表示のコンテンツ、ファイル、キー、まだ送信されていないものを含む）。ほかのデバイスのコピーは残ります。戻るには、ほかのデバイスからこのデバイスを再度追加する必要があります。</string>
+    <string name="leave_confirm">接続を解除</string>
+    <string name="leave_in_progress">接続を解除しています…</string>
+    <string name="leave_error_update">接続を解除するにはTomiをアップデートしてください。何も消去されていません。</string>
+    <string name="leave_error_unexpected">Tomiサーバーが接続の解除を拒否しました。何も消去されていません。このスマートフォンはスペースに残っています。</string>
+
+    <!-- The only device: deleting the space (after the relay answered "last device") -->
+    <string name="delete_space_title">スペースを削除しますか？</string>
+    <string name="delete_space_message">これが唯一のデバイスです。接続を解除すると、スペースとその中身がすべて完全に削除されます。</string>
+    <string name="delete_space_detail">Tomiサーバーがスペースを消去し、続いてこのスマートフォンが保持しているものをすべて消去します（アイテム、非表示のコンテンツ、ファイル、キー）。誰も復元できなくなります。</string>
+    <string name="delete_space_confirm">スペースを削除</string>
+    <string name="delete_space_in_progress">削除しています…</string>
+    <string name="delete_space_error_relay_too_old">Tomiサーバーが古すぎるため、スペースを削除できません。サーバーをアップデートしてから、もう一度お試しください。何も消去されていません。</string>
+    <string name="delete_space_error_update">スペースを削除するにはTomiをアップデートしてください。何も消去されていません。</string>
+    <string name="delete_space_error_unexpected">Tomiサーバーがスペースの削除を拒否しました。何も消去されていません。</string>
+    <string name="delete_space_unavailable_biometric">スペースを削除するには、スマートフォンの設定で画面ロック（コード、指紋、または顔）を設定してください。何も消去されていません。</string>
+
+    <!-- A pending departure: banner at the top of the feed -->
+    <string name="departure_pending_leave_title">接続解除の保留中</string>
+    <string name="departure_pending_delete_title">スペース削除の保留中</string>
+    <string name="departure_pending_checking">Tomiがサーバーに確認しています。何も消去されていません。</string>
+    <string name="departure_pending_network">Tomiサーバーからまだ確認が届いていません。何も消去されていません。ネットワークが回復すると、Tomiがすぐに再試行します。</string>
+    <string name="departure_pending_server">Tomiサーバーに一時的な問題があります。何も消去されていません。Tomiが再試行しています。</string>
+    <string name="departure_pending_not_sent">リクエストは届きませんでした。このスマートフォンはまだスペースに含まれています。何も消去されていません。</string>
+    <string name="departure_pending_not_found">Tomiサーバーがスペースを見つけられないか、このスマートフォンを認識できなくなりました。何も消去されていません。</string>
+    <string name="departure_cancelling_title">キャンセルしています</string>
+    <string name="departure_cancelling">Tomiは、サーバーへ送信済みのリクエストが終わるのを待っています。このスマートフォンでは何も消去されません。</string>
+    <string name="departure_wiping">このスマートフォンを消去しています…</string>
+    <string name="departure_retry">再試行</string>
+    <string name="departure_cancel">キャンセル</string>
+    <string name="departure_cancelled_leave">接続の解除をキャンセルしました。サーバーがすでに受信していた場合、このスマートフォンはスペースから除外されたものとして表示されますが、保持しているものは読める状態のままです。</string>
+    <string name="departure_cancelled_delete">削除をキャンセルしました。サーバーがすでに削除していた場合、スペースはこのスマートフォンにのみ存在します。</string>
+    <string name="departure_failed">消去を完了できませんでした。何も消去されていません。もう一度お試しください。</string>
+    <string name="space_not_found_title">スペースが見つかりません</string>
+    <string name="space_not_found_message">Tomiサーバーがスペースを見つけられなくなりました。サーバーがリセットされた場合は、このスマートフォンを消去できます。そうでない場合は、まずサーバーを確認してください。このスマートフォンでは何も消去されていません。</string>
+    <string name="space_revoked_title">スペースから除外されました</string>
+    <string name="space_revoked_message">このスマートフォンはスペースから除外されました。保持しているものはここで引き続き読めます。接続を解除すると消去されます。</string>
+
+    <!-- "Erase anyway": erasing without a proof of the relay -->
+    <string name="erase_anyway">それでも消去</string>
+    <string name="erase_title">サーバーの確認なしでこのスマートフォンを消去しますか？</string>
+    <string name="erase_message">Tomiサーバーは、スペースが削除されたことを確認できません。サーバー上のスペースは削除されていない可能性があります。スペースがまだ存在する場合、このスマートフォンからはアクセスできなくなります。</string>
+    <string name="erase_detail">このスマートフォンが保持しているものはすべて完全に消去されます（アイテム、非表示のコンテンツ、ファイル、キー）。</string>
+    <string name="erase_checkbox">取り消せない操作であることを理解しました。</string>
+    <string name="erase_confirm">このスマートフォンを消去</string>
+    <string name="erase_in_progress">消去しています…</string>
+    <string name="erase_checking">Tomiがサーバーに確認しています…</string>
+    <string name="erase_waiting">サーバーへのリクエストがまだ処理中です。Tomiはその完了を待ってから消去します。何も消去されていません。</string>
+    <string name="erase_not_allowed">Tomiは先にサーバーに確認する必要があります。しばらくしてからもう一度お試しください。</string>
+    <string name="erase_expired">サーバーからの応答は無効になりました。古すぎるか、その後サーバーが別の応答をしています。何も消去されていません。しばらくしてからもう一度お試しください。</string>
+    <string name="erase_unavailable_biometric">サーバーの確認なしで消去するには、スマートフォンの設定で画面ロック（コード、指紋、または顔）を設定してください。Tomiをアンインストールしても、保持しているものはすべて消去されます。</string>
+    <string name="platform_android">Android</string>
+    <string name="platform_windows">Windows</string>
+    <string name="platform_other">その他</string>
+
+    <!-- Add a device (the inviting device) -->
+    <string name="invite_title">デバイスを追加</string>
+    <string name="invite_starting">コードを準備しています…</string>
+    <string name="invite_intro">新しいデバイスでTomiを開き、このQRコードをスキャンするか、招待コードを入力してください。</string>
+    <string name="invite_qr_description">招待QRコード</string>
+    <string name="invite_single_use">このコードは1回だけ使えます。この画面を開いている間、自動的に更新されます。</string>
+    <string name="invite_verify_body">%1$sに同じコードが表示されていることを確認してください。</string>
+    <string name="invite_verify_hint">ほかのデバイスにコードではなくエラーが表示されている場合は、「コードが違います」をタップしてください。</string>
+    <string name="invite_add">このデバイスを追加</string>
+    <string name="invite_adding_title">新しいデバイスを待っています</string>
+    <string name="invite_adding_body">%1$sでも、コードが同じであることを確認してください。確認が済むとすぐにデバイスが追加されます。</string>
+    <string name="invite_done_history">%1$sがスペースの履歴を取得します。しばらく時間がかかることがあります。</string>
+    <string name="invite_failed_title">デバイスは追加されませんでした</string>
+    <string name="invite_new_code">新しいコード</string>
+    <string name="invite_notice_failed">デバイスの追加を完了できませんでした。新しい招待コードを用意しました。</string>
+    <string name="invite_notice_refused">デバイスの追加はキャンセルされました。新しい招待コードを用意しました。</string>
+    <string name="invite_error_expired">コードの有効期限が切れました。新しいコードを生成してください。</string>
+    <string name="invite_error_cancelled">ほかのデバイスでデバイスの追加がキャンセルされました。</string>
+    <string name="invite_error_busy">すでにデバイスを追加中です。その操作を完了するか、しばらく待ってから、もう一度お試しください。</string>
+    <string name="invite_error_failed">デバイスの追加を完了できませんでした。もう一度お試しください。</string>
+    <string name="invite_auth_required_title">確認が必要です</string>
+    <string name="invite_auth_required_body">デバイスを追加するには、指紋、顔、またはスマートフォンの画面ロックのコードで本人確認をしてください。</string>
+    <string name="invite_auth_unavailable_body">デバイスを追加するには、まずスマートフォンの設定で画面ロック（コード、指紋、または顔）を設定してください。</string>
+    <string name="invite_auth_retry">確認</string>
+    <string name="invite_notice_auth_denied">確認がキャンセルされたため、何も追加されていません。準備ができたら、もう一度「このデバイスを追加」をタップしてください。</string>
+
+    <!-- Create the space (the first device) -->
+    <string name="create_title">スペースを作成</string>
+    <string name="create_intro">Tomiサーバーから、QRコードまたはテキストでインストールキーが発行されています。</string>
+    <string name="create_token_label">インストールキー</string>
+    <string name="create_or_paste">またはキーを貼り付け</string>
+    <string name="create_scan_button">QRコードをスキャン</string>
+    <string name="create_scan_button_description">カメラでインストールキーのQRコードをスキャン</string>
+    <string name="create_scan_preview_description">インストールキーのQRコードをスキャンするためのカメラプレビュー</string>
+    <string name="create_scan_cancel">スキャナを閉じる</string>
+    <string name="create_camera_denied">カメラへのアクセスが拒否されました。代わりにキーを貼り付けるか入力できます。</string>
+    <string name="create_error_qr">このQRコードはインストールキーでも作成リンクでもありません。TomiサーバーのQRコードをスキャンするか、キーを入力してください。</string>
+    <string name="create_where_button">キーはどこにありますか？</string>
+    <string name="create_where_title">キーはどこにありますか？</string>
+    <string name="create_where_body">Tomiサーバーのインストール時に、QRコードとともに一度だけ表示されています。</string>
+    <string name="create_where_other_title">別のキーを入手するには</string>
+    <string name="create_where_run">サーバーで次のコマンドを実行してください：</string>
+    <string name="create_where_command" translatable="false">$ tomi-relay admin invite --new</string>
+    <string name="create_where_ok">OK</string>
+    <string name="create_name_label">このデバイスの名前</string>
+    <string name="create_name_edit">名前を編集</string>
+    <string name="create_submit">スペースを作成</string>
+    <string name="create_join_instead">既存のスペースに参加</string>
+    <string name="create_done_title">スペースの準備ができました</string>
+    <string name="create_done_body">%1$sはスペースの最初のデバイスです。ほかのデバイスは「デバイス」から追加してください。</string>
+    <string name="create_relay_check_label">リレー：%1$s</string>
+    <string name="create_relay_check_hint">スペースを作成する前に、これが自分のリレーであることを確認してください。</string>
+    <string name="create_relay_from_link">リンクまたはQRコードから読み取りました。</string>
+    <string name="create_error_token">インストールキーが正しくないか、すでに使用されています。確認して、もう一度お試しください。</string>
+    <string name="create_error_token_empty">インストールキーを貼り付けてください。</string>
+    <string name="create_error_name">デバイス名は1〜64文字で、先頭と末尾に空白を入れないでください。</string>
+    <string name="create_error_space_exists">このキーはすでにスペースの作成に使用されています。スペースに含まれているデバイスから、このデバイスを追加してください。</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_pin_title">共有メニューの先頭にTomiを固定</string>
+    <string name="onboarding_pin_body">Tomiを長押しして「固定」を選びます。常に同じ位置、先頭に表示されるようになります。</string>
+    <string name="onboarding_open_share">共有メニューを開く</string>
+    <string name="onboarding_later">後で</string>
+    <string name="onboarding_scene_pin_description">イラスト：共有メニューでTomiを長押しすると、「固定」オプションが表示されます。</string>
+    <string name="onboarding_check_caption">このように表示されます</string>
+    <string name="onboarding_check_title">Tomiは先頭にありますか？</string>
+    <string name="onboarding_check_body">必要に応じて共有メニューを開き直してください。Tomiがピンのアイコン付きで先頭に表示されるはずです。</string>
+    <string name="onboarding_check_yes">はい、完了しました</string>
+    <string name="onboarding_check_again">まだです。メニューを開き直す</string>
+    <string name="onboarding_scene_check_description">イラスト：共有メニューで、Tomiがピンのアイコン付きで先頭に表示されています。</string>
+    <string name="onboarding_scene_share_title">共有</string>
+    <string name="onboarding_scene_notes">メモ</string>
+    <string name="onboarding_scene_browser">ブラウザ</string>
+    <string name="onboarding_scene_files">ファイル</string>
+    <string name="onboarding_sample_text">Tomiの共有テスト</string>
+</resources>

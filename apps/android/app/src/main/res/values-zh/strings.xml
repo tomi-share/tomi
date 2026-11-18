@@ -1,0 +1,563 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- All user-visible texts are Simplified Chinese (mainland usage), informal "你". Keep identifiers and comments in English.
+     Vocabulary: "隐藏" / "显示" (never "秘密" / "揭示"). -->
+<resources>
+    <string name="app_name">Tomi</string>
+
+    <!-- Generic actions -->
+    <string name="action_cancel">取消</string>
+    <string name="action_cancel_send">取消发送</string>
+    <string name="action_close">关闭</string>
+    <string name="action_back">返回</string>
+    <string name="action_save">保存</string>
+    <string name="action_continue">继续</string>
+    <string name="action_later">稍后</string>
+    <string name="action_done">完成</string>
+    <string name="action_copy">复制</string>
+    <string name="action_copy_link">复制链接</string>
+    <string name="action_open">打开</string>
+    <string name="action_more">更多操作</string>
+    <string name="action_reveal">显示</string>
+    <string name="action_hide">隐藏</string>
+    <string name="action_send">发送</string>
+    <string name="action_paste">粘贴</string>
+    <string name="action_attach">添加附件</string>
+    <string name="action_remove_attachment">移除 %1$s</string>
+    <string name="action_undo">撤销</string>
+    <string name="action_options">选项</string>
+    <string name="action_search">搜索</string>
+    <string name="action_close_search">关闭搜索</string>
+    <string name="action_filters">筛选</string>
+    <string name="action_clear_filter">清除筛选</string>
+    <string name="action_delete">删除</string>
+    <string name="action_delete_local">从此设备删除</string>
+    <string name="action_delete_everywhere">在所有设备上删除</string>
+    <string name="action_pin">置顶</string>
+    <string name="action_unpin">取消置顶</string>
+    <string name="action_archive">归档</string>
+    <string name="action_unarchive">取消归档</string>
+    <string name="action_share">分享</string>
+    <string name="action_details">详情</string>
+    <string name="action_read_more">展开全文</string>
+
+    <!-- Feed -->
+    <string name="search_placeholder">搜索信息流</string>
+    <string name="filter_all">全部</string>
+    <string name="filter_links">链接</string>
+    <string name="filter_text">文本</string>
+    <string name="filter_files">文件</string>
+    <string name="filter_secrets">已隐藏</string>
+    <string name="filter_archives">归档</string>
+    <string name="section_pinned">已置顶</string>
+    <string name="section_recent">最近</string>
+    <string name="section_archives">归档</string>
+    <string name="source_this_phone">这台手机</string>
+    <string name="label_masked">已隐藏</string>
+    <plurals name="search_results">
+        <item quantity="other">%1$d 个结果</item>
+    </plurals>
+    <string name="search_masked_note">搜索已隐藏条目时不会匹配其标题和内容</string>
+    <!-- 1: the counter ("2 results"), 2: the note about the hidden items -->
+    <string name="search_summary_with_note">%1$s · %2$s</string>
+    <string name="feed_empty">还没有内容。将链接、文本或文件分享到 Tomi，即可发送到你的其他设备。</string>
+    <string name="feed_empty_archives">没有已归档的条目。在“最近”中将卡片向左滑动即可归档。</string>
+    <string name="feed_empty_filtered">没有匹配的条目。</string>
+    <string name="banner_offline">离线 · 等待中</string>
+    <string name="menu_share_help">在分享菜单中固定 Tomi</string>
+    <string name="menu_leave_space">断开连接</string>
+    <string name="snackbar_copied_secret">已复制 · 30 秒后清除</string>
+    <string name="snackbar_deleted_local">已从此设备删除</string>
+    <string name="snackbar_deleted_everywhere">已请求在所有设备上删除</string>
+    <string name="snackbar_action_failed">无法完成操作。请检查网络连接后重试。</string>
+    <string name="snackbar_pin_failed">无法更改置顶。请重试。</string>
+    <string name="snackbar_archived">已归档</string>
+    <string name="snackbar_unarchived">已取消归档</string>
+    <string name="snackbar_archive_failed">无法更改归档。请重试。</string>
+    <string name="snackbar_nothing_to_share">此条目中没有可分享的内容。</string>
+    <string name="detail_not_found">找不到该条目。它可能已过期或已被删除。</string>
+    <string name="detail_masked_hint">显示、复制和分享需要验证你的指纹或锁屏密码。</string>
+    <string name="detail_revealed_hint">离开此屏幕后会立即重新隐藏。</string>
+    <string name="meta_type">类型</string>
+    <string name="meta_sent_at">发送时间</string>
+    <string name="meta_expiry">有效期</string>
+    <string name="meta_pinned">已置顶</string>
+    <string name="meta_status">状态</string>
+    <string name="meta_yes">是</string>
+    <string name="meta_no">否</string>
+    <string name="meta_never">永不</string>
+    <string name="meta_after_read">阅后删除</string>
+    <plurals name="characters_count">
+        <item quantity="other">%1$d 个字符</item>
+    </plurals>
+
+    <!-- Card -->
+    <string name="unread_badge">未读</string>
+    <string name="pinned_badge">已置顶</string>
+    <string name="archived_badge">已归档</string>
+    <string name="time_yesterday">昨天</string>
+    <string name="expires_in">%1$s后过期</string>
+    <string name="expires_after_read">首次阅读后消失</string>
+    <!-- Attachment tiles (feed + detail). "More files": the button towards the detail, then the same as a caption when "Read more" takes its place. -->
+    <plurals name="more_files">
+        <item quantity="other">还有 %1$d 个文件</item>
+    </plurals>
+    <plurals name="more_files_caption">
+        <item quantity="other">+ 另外 %1$d 个文件</item>
+    </plurals>
+    <!-- %1$d = count, %2$s = total size ("4 files · 4.9 MB"). Shown from 2 attachments on, so "one" is only for the form. -->
+    <plurals name="attachments_summary_files">
+        <item quantity="other">%1$d 个文件 · %2$s</item>
+    </plurals>
+    <plurals name="attachments_summary_images">
+        <item quantity="other">%1$d 张图片 · %2$s</item>
+    </plurals>
+    <plurals name="secret_files_hidden">
+        <item quantity="other">%1$d 个已隐藏的文件</item>
+    </plurals>
+    <plurals name="remaining_days">
+        <item quantity="other">%1$d 天</item>
+    </plurals>
+    <plurals name="remaining_hours">
+        <item quantity="other">%1$d 小时</item>
+    </plurals>
+    <plurals name="remaining_minutes">
+        <item quantity="other">%1$d 分钟</item>
+    </plurals>
+    <string name="kind_secret">已隐藏</string>
+    <string name="kind_image">图片</string>
+    <string name="kind_file">文件</string>
+    <string name="kind_link">链接</string>
+    <string name="kind_unreadable">无法读取</string>
+    <string name="unreadable_update_required">需要更新才能读取此条目。它会被保留，Tomi 更新后即可显示。</string>
+    <string name="unreadable_decryption_failed">此条目暂时无法读取。它会被保留：同步或更新后可能就能读取。</string>
+    <string name="kind_rich_text">富文本</string>
+    <string name="kind_text">文本</string>
+    <!-- Internal image viewer -->
+    <string name="action_view_image">查看图片</string>
+    <string name="viewer_save">保存</string>
+    <string name="viewer_action_delete">删除</string>
+    <string name="viewer_delete_local">从此设备删除图片</string>
+    <string name="viewer_delete_everywhere">在所有设备上删除图片</string>
+    <string name="viewer_image_description">第 %1$d 张图片，共 %2$d 张</string>
+    <string name="viewer_position">%1$d/%2$d</string>
+    <string name="viewer_locked">已隐藏的图片。请验证身份后显示。</string>
+    <string name="viewer_load_failed">无法显示此图片。</string>
+    <string name="viewer_no_image">没有可显示的图片。</string>
+    <string name="snackbar_image_saved">图片已保存到图库</string>
+    <string name="snackbar_file_unavailable">无法打开此文件。它可能尚未下载，或者没有应用可以打开它。</string>
+    <string name="snackbar_file_downloaded">文件已保存到 Downloads/Tomi</string>
+    <string name="snackbar_file_download_failed">无法保存文件。请重试。</string>
+    <string name="snackbar_image_unavailable">此图片目前不可用。</string>
+    <string name="snackbar_image_failed">操作失败。请重试。</string>
+    <!-- Removal of ONE attachment of an item (the item stays) -->
+    <string name="snackbar_image_deleted_local">已从此设备删除图片</string>
+    <string name="snackbar_image_deleted_everywhere">已在所有设备上删除图片</string>
+    <string name="snackbar_file_deleted_local">已从此设备删除文件</string>
+    <string name="snackbar_file_deleted_everywhere">已在所有设备上删除文件</string>
+    <string name="file_row_delete">删除此文件</string>
+    <string name="file_row_actions">此文件的操作</string>
+    <string name="file_download">下载</string>
+    <string name="file_delete_local">从此设备删除文件</string>
+    <string name="file_delete_everywhere">在所有设备上删除文件</string>
+    <string name="dialog_delete_file_everywhere_title">要在所有设备上删除文件吗？</string>
+    <string name="dialog_delete_file_everywhere_named">“%1$s”将从你的所有设备和你的 Tomi 服务器上删除。离线的设备会在重新连接后删除它。此操作是永久性的。</string>
+    <string name="dialog_delete_file_everywhere_secret">这个已隐藏的文件将从你的所有设备和你的 Tomi 服务器上删除。已经显示过它的设备可能保留了副本。此操作是永久性的。</string>
+    <string name="biometric_title_image">显示已隐藏的图片</string>
+    <string name="biometric_subtitle_image">请验证你的身份。验证在 2 分钟内有效。</string>
+    <string name="biometric_title_save_image">保存已隐藏的图片</string>
+    <string name="biometric_subtitle_save_image">将图片写入图库前，请验证你的身份。验证在 2 分钟内有效。</string>
+    <!-- Text modes: "Preview" (styled, default) and "Markdown" (the literal source) -->
+    <string name="render_preview">预览</string>
+    <string name="render_markdown">Markdown</string>
+
+    <!-- Code file screen -->
+    <string name="action_view_code">打开文件</string>
+    <string name="code_search">在文件中搜索</string>
+    <string name="code_search_placeholder">在文件中搜索</string>
+    <string name="code_search_previous">上一个匹配项</string>
+    <string name="code_search_next">下一个匹配项</string>
+    <string name="code_copy_file">复制文件</string>
+    <string name="code_wrap">自动换行</string>
+    <string name="code_locked">已隐藏的文件。请验证身份后显示。</string>
+    <string name="code_no_file">没有可显示的代码文件。</string>
+    <string name="code_unavailable">目前无法显示此文件。</string>
+    <string name="code_too_large">此文件太大，无法显示（最大 2 MB）。</string>
+    <string name="code_binary">此文件不是文本：无法在这里显示。</string>
+    <string name="code_no_colours_language">不支持此语言的语法高亮。</string>
+    <string name="code_no_colours_size">语法高亮不可用：文件过长（最多 50 KB 或 2,000 行）。</string>
+    <string name="biometric_title_file">显示已隐藏的文件</string>
+    <string name="biometric_subtitle_file">请验证你的身份。验证在 2 分钟内有效。</string>
+    <string name="dialog_delete_everywhere_title">要在所有设备上删除吗？</string>
+    <string name="dialog_delete_everywhere_message">该条目将从你的所有设备和你的 Tomi 服务器上删除。离线的设备会在重新连接后删除它。此操作是永久性的。</string>
+    <string name="dialog_delete_everywhere_secret">这项隐藏内容将从你的所有设备和你的 Tomi 服务器上删除。已经显示过它的设备可能保留了副本。此操作是永久性的。</string>
+    <string name="dialog_delete_image_everywhere_title">要在所有设备上删除图片吗？</string>
+    <string name="dialog_delete_image_everywhere_message">此图片将从你的所有设备和你的 Tomi 服务器上删除。离线的设备会在重新连接后删除它。此操作是永久性的。</string>
+    <string name="dialog_delete_image_everywhere_secret">这张已隐藏的图片将从你的所有设备和你的 Tomi 服务器上删除。已经显示过它的设备可能保留了副本。此操作是永久性的。</string>
+
+    <!-- System share (Android ACTION_SEND) of an item -->
+    <string name="share_chooser_title">分享方式</string>
+    <!-- Neutral title of the preview of the system share sheet for a hidden item: the sheet must not show the content. -->
+    <string name="share_hidden_preview_title">隐藏内容</string>
+    <string name="share_no_app">没有应用可以接收此内容。</string>
+
+    <!-- Delivery status -->
+    <string name="status_received">已接收</string>
+    <string name="status_queued">等待发送</string>
+    <string name="status_waiting_network">等待网络</string>
+    <string name="status_sent">已发送</string>
+    <string name="status_failed">发送失败</string>
+    <string name="status_delivered_all">已送达全部设备</string>
+    <string name="status_delivered_partial">已送达 %1$d/%2$d 台设备</string>
+    <string name="status_expired">已送达 %1$d 台 · 送达 %2$s 前已过期</string>
+
+    <!-- Expiry -->
+    <string name="expiry_hour1">1 小时</string>
+    <string name="expiry_day1">1 天</string>
+    <string name="expiry_day7">7 天</string>
+    <string name="expiry_day30">30 天</string>
+    <string name="expiry_never">永不</string>
+    <string name="expiry_after_read">阅后删除</string>
+    <string name="expiry_chip">有效期：%1$s</string>
+    <string name="expiry_label">有效期</string>
+    <string name="expiry_after_read_hint">“阅后删除”：首次打开后，立即在所有设备上删除。</string>
+
+    <!-- Compose / send -->
+    <string name="send_title">发送</string>
+    <string name="send_title_label">标题（可选）</string>
+    <string name="send_content_label">文本或链接</string>
+    <string name="label_secret">隐藏内容</string>
+    <string name="label_secret_off">在所有设备上隐藏预览，直到点按“显示”</string>
+    <string name="label_secret_on">已自动开启。你可以关闭。</string>
+    <string name="detect_link">检测到链接</string>
+    <string name="detect_text">文本</string>
+    <string name="detect_files">已添加文件</string>
+    <string name="detect_masked">已隐藏</string>
+    <string name="detect_masked_password">这看起来像密码。</string>
+    <string name="detect_to_devices">发送到 %1$s</string>
+    <string name="hint_secret_sensitive">来源应用将此内容标记为敏感内容：它会以隐藏方式发送。</string>
+    <string name="hint_secret_heuristic">此内容看起来像密码或密钥：已将其隐藏。你可以更改。</string>
+    <string name="notice_paste_empty">剪贴板中没有文本。</string>
+    <string name="notice_link_appended_to_draft">来自另一个应用的链接已添加到你的草稿中。请在发送前检查。</string>
+    <string name="notice_params_dropped">链接中的部分参数已被忽略（过长或无效）。</string>
+    <string name="notice_too_late">太晚了：该条目已经发送。</string>
+    <string name="notice_undo_failed">无法取消发送。该条目可能已经发送。</string>
+    <string name="notice_send_failed">发送失败。你的文本已保留，请重试。</string>
+    <string name="banner_sent">已发送</string>
+    <plurals name="banner_files_skipped">
+        <item quantity="other">已跳过 %1$d 个文件：每个文件最大 25 MB</item>
+    </plurals>
+    <string name="sheet_title">发送选项</string>
+
+    <!-- Share target -->
+    <string name="share_not_paired">Tomi 尚未关联任何空间。打开应用以加入你的空间。</string>
+    <string name="share_open_app">打开 Tomi</string>
+    <string name="share_failed">发送失败。请重试。</string>
+    <string name="share_too_late">太晚了：该条目已经发送。你可以在 Tomi 信息流中将其删除。</string>
+    <string name="share_secret_detected">这看起来是需要隐藏的内容。请在发送前确认。</string>
+    <string name="preview_secret_masked">••••••••••</string>
+    <plurals name="preview_files">
+        <item quantity="other">%1$d 个文件</item>
+    </plurals>
+    <string name="shortcut_short_label">Tomi</string>
+    <string name="shortcut_long_label">用 Tomi 发送到我的设备</string>
+    <string name="tile_label">发送</string>
+
+    <!-- Biometrics -->
+    <string name="biometric_title_secret">显示隐藏内容</string>
+    <string name="biometric_subtitle_secret">请验证你的身份。验证在 2 分钟内有效。</string>
+    <string name="biometric_title_share">分享隐藏内容</string>
+    <string name="biometric_subtitle_share">发送到其他应用前，请验证你的身份。验证在 2 分钟内有效。</string>
+    <string name="biometric_title_copy_secret">复制隐藏内容</string>
+    <string name="biometric_subtitle_from_notification">内容将被复制，30 秒后从剪贴板中清除。</string>
+    <string name="biometric_title_revoke">吊销设备</string>
+    <string name="biometric_subtitle_revoke">敏感操作：请使用你的指纹、面孔或手机的锁屏密码确认。</string>
+    <string name="biometric_title_erase">抹掉这台手机</string>
+    <string name="biometric_subtitle_erase">此操作无法撤销：请使用你的指纹、面孔或手机的锁屏密码确认。</string>
+    <string name="biometric_title_pair">添加设备</string>
+    <string name="biometric_subtitle_pair">新设备将收到全部历史记录，包括已隐藏的条目。请使用你的指纹、面孔或手机的锁屏密码确认。</string>
+    <string name="biometric_title_delete_space">删除你的空间</string>
+    <string name="biometric_subtitle_delete_space">此操作无法撤销：请使用你的指纹、面孔或手机的锁屏密码确认。</string>
+    <string name="toast_biometric_unavailable">请设置屏幕锁定或生物识别，才能显示、复制或分享隐藏内容。</string>
+    <string name="toast_item_not_found">找不到该条目</string>
+
+    <!-- Notifications -->
+    <string name="channel_group_incoming">收到的条目</string>
+    <string name="channel_links">链接</string>
+    <string name="channel_links_desc">从你的其他设备收到的链接</string>
+    <string name="channel_text">文本</string>
+    <string name="channel_text_desc">从你的其他设备收到的文本</string>
+    <string name="channel_files">文件</string>
+    <string name="channel_files_desc">从你的其他设备收到的文件和图片</string>
+    <string name="channel_secrets">已隐藏</string>
+    <string name="channel_secrets_desc">收到的隐藏内容。从不在锁屏上显示，没有预览。</string>
+    <string name="channel_devices">设备</string>
+    <string name="channel_devices_desc">有设备添加到你的空间时提醒。不含任何内容，只有设备名称。</string>
+    <string name="notif_device_added_title">已添加新设备</string>
+    <string name="notif_device_added_body">“%1$s”已加入你的空间。不是你本人？请打开“设备”并吊销它。</string>
+    <string name="notif_title_secret">隐藏内容 · %1$s</string>
+    <string name="notif_title_link">来自 %1$s 的链接</string>
+    <string name="notif_title_image">来自 %1$s 的图片</string>
+    <string name="notif_title_file">来自 %1$s 的文件</string>
+    <string name="notif_title_text">来自 %1$s 的文本</string>
+    <string name="notif_title_unreadable">来自 %1$s 的条目</string>
+    <string name="notif_body_unreadable">暂时无法读取：需要更新 Tomi</string>
+    <string name="notif_body_secret">点按以复制（需要验证身份）</string>
+    <string name="notif_body_generic">新条目</string>
+    <string name="notif_public_title">Tomi：新条目</string>
+    <string name="notif_action_copy">复制</string>
+    <string name="notif_action_view">查看</string>
+    <string name="notif_summary_text">最近一条来自 %1$s</string>
+    <plurals name="notif_summary_title">
+        <item quantity="other">%1$d 个新条目</item>
+    </plurals>
+
+    <!-- Pairing -->
+    <!-- Welcome: the two doors of a device that is not in a space yet -->
+    <string name="welcome_title">你的设备，同一个空间</string>
+    <string name="welcome_intro">在设备之间给自己发送链接、笔记和密码，全程端到端加密。</string>
+    <string name="welcome_question">你想如何开始？</string>
+    <string name="welcome_create_title">创建你的空间</string>
+    <string name="welcome_create_hint">这是你的第一台设备。请准备好你的 Tomi 服务器的二维码或安装密钥。</string>
+    <string name="welcome_join_title">加入你的空间</string>
+    <string name="welcome_join_hint">另一台设备上已经有 Tomi 了？请让它保持打开并放在手边。</string>
+    <!-- Read by the screen reader for a whole door: title, then what it takes. -->
+    <string name="welcome_door_description">%1$s。%2$s</string>
+
+    <!-- Join a space -->
+    <string name="pair_title">加入你的空间</string>
+    <string name="pair_intro">在你的另一台设备上，打开</string>
+    <string name="pair_other_device_caption">在你的另一台设备上</string>
+    <string name="pair_illustration_description">插图：在你的另一台设备上，“添加设备”屏幕显示一个二维码和一个邀请码，例如 7-crayon-renard。</string>
+    <string name="pair_scan_preview_description">用于扫描另一台设备二维码的相机预览</string>
+    <string name="pair_link_received">已收到邀请链接</string>
+    <string name="pair_link_received_relay">中继：%1$s</string>
+    <string name="pair_link_received_warning">此链接来自另一个应用或网页。只加入你自己刚刚创建的空间，并且使用你认识的中继。</string>
+    <string name="pair_link_received_hint">不会自动执行任何操作。点按“加入”以继续。</string>
+    <string name="pair_join">加入</string>
+    <string name="pair_scan_hint">相机仅用于此次扫描。</string>
+    <string name="pair_scan_button">扫描二维码</string>
+    <string name="pair_enter_code_button">输入邀请码</string>
+    <string name="demo_enter">使用示例数据试用</string>
+    <string name="demo_banner">演示模式：示例数据，不会发送任何内容。</string>
+    <string name="demo_leave">退出演示</string>
+    <string name="pair_camera_denied">相机访问被拒绝。你可以改为输入邀请码。</string>
+    <string name="pair_code_title">输入邀请码</string>
+    <string name="pair_code_intro">它显示在你另一台设备上的二维码下方。</string>
+    <string name="pair_code_label">邀请码</string>
+    <string name="pair_code_hint">数字后面的两个单词。无需输入重音符号或大写字母。</string>
+    <string name="relay_field_label">中继</string>
+    <string name="relay_field_hint">你的 Tomi 服务器的地址，例如 relay.example.org。</string>
+    <string name="relay_other_button">其他中继</string>
+    <string name="relay_current">中继：%1$s</string>
+    <string name="pair_scan_instead">改为扫描二维码</string>
+    <string name="pair_verify_title">核对验证码</string>
+    <string name="pair_verify_body">请确认两台设备上显示的验证码相同。</string>
+    <plurals name="pair_verify_peer_members">
+        <item quantity="other">你的空间有 %1$d 台设备</item>
+    </plurals>
+    <string name="pair_verify_relay_label">中继：%1$s</string>
+    <string name="pair_verify_relay_hint">继续之前，请确认这是你的中继。</string>
+    <string name="pair_verify_code_description">验证码 %1$s</string>
+    <string name="pair_verify_validity">剩余有效时间：%1$s</string>
+    <string name="pair_verify_same">验证码相同</string>
+    <string name="pair_verify_different">验证码不同</string>
+    <string name="pair_verify_mismatch">验证码不一致：已取消添加设备。请在另一台设备上重新开始。</string>
+    <string name="pair_working">正在连接另一台设备…</string>
+    <string name="pair_waiting_title">正在等待另一台设备</string>
+    <string name="pair_waiting_body">也请在 %1$s 上确认验证码相同。确认后即可完成添加设备。</string>
+    <string name="pair_history_title">要获取历史记录吗？</string>
+    <plurals name="pair_history_body">
+        <item quantity="other">你的空间中已有 %1$d 个条目。你可以在这台手机上获取它们。</item>
+    </plurals>
+    <string name="pair_history_size">大约需要获取 %1$s。</string>
+    <string name="pair_history_yes">是，获取历史记录</string>
+    <string name="pair_history_yes_hint">空间中的所有内容都会同步到这里，包括已隐藏和已置顶的条目。</string>
+    <string name="pair_history_no">否，从空的信息流开始</string>
+    <string name="pair_history_no_hint">只有从现在起发送的内容才会同步到这里。</string>
+    <string name="pair_history_footer">你随时可以在之后删除条目。</string>
+    <string name="pair_done_title">已添加设备</string>
+    <string name="pair_done_body">%1$s 已加入你的空间。</string>
+    <string name="pair_notifications_rationale">允许通知，以便在设备向你发送内容时得到提醒。</string>
+    <string name="pair_notifications_enable">允许通知</string>
+    <string name="pair_error_qr_unknown">此二维码不是 Tomi 邀请。</string>
+    <string name="pair_error_code_format">请输入另一台设备上显示的邀请码，例如 7-crayon-renard。</string>
+    <string name="pair_error_invalid">此邀请码无效。请检查数字和两个单词。</string>
+    <string name="pair_error_wrong_code">邀请码不正确。请在另一台设备上生成新的邀请码。</string>
+    <string name="pair_error_taken">此邀请码已被使用。请在另一台设备上生成新的邀请码。</string>
+    <string name="pair_error_interrupted">连接已中断。请在另一台设备上生成新的邀请码。</string>
+    <string name="pair_error_cancelled">另一台设备已取消添加设备。</string>
+    <string name="pair_error_update">请在两台设备上都更新 Tomi，才能添加这台设备。</string>
+    <string name="pair_error_blocked">这台设备无法再使用你的 Tomi 服务器。请检查它是否仍在你的空间中。</string>
+    <string name="pair_error_space_full">你的空间已达到设备数量上限。请从设备列表中移除一台设备。</string>
+    <string name="pair_error_relay_required">请输入中继地址。</string>
+    <string name="pair_error_relay_invalid">此中继地址无效。格式应类似 relay.example.org。</string>
+    <string name="pair_error_unexpected">添加设备未完成。请重试。</string>
+    <string name="pair_error_expired">邀请码已过期。请生成新的邀请码。</string>
+    <string name="pair_error_network">网络不可用。请重试。</string>
+
+    <!-- Devices -->
+    <string name="unreadable_title">数据无法读取</string>
+    <string name="unreadable_message">Tomi 无法在这台手机上打开它的数据。应用数据可能已被抹掉或损坏（手机被恢复、应用存储被清除），或者保护数据的密钥已无法使用。你的其他设备不受影响。</string>
+    <string name="unreadable_retry">重试</string>
+    <string name="unreadable_reset">重置 Tomi</string>
+    <string name="unreadable_reset_title">要抹掉 Tomi 在这台手机上的数据吗？</string>
+    <string name="unreadable_reset_message">Tomi 在这里保存的所有内容都将被抹掉，这台手机需要重新加入你的空间。你的其他设备会保留它们的条目；记得从它们的设备列表中移除这台旧设备。</string>
+    <string name="unreadable_reset_confirm">抹掉并重置</string>
+    <string name="unreadable_reset_failed">抹掉失败。请重试，或在 Android 设置中清除应用数据。</string>
+    <string name="share_unreadable">Tomi 无法打开它的数据。请打开应用进行修复。</string>
+    <string name="devices_title">设备</string>
+    <string name="devices_add">添加设备</string>
+    <string name="devices_empty">你的空间中还没有设备。</string>
+    <string name="devices_this_device">此设备</string>
+    <string name="devices_rename">重命名</string>
+    <string name="devices_revoke">吊销</string>
+    <string name="devices_revoke_title">要吊销“%1$s”吗？</string>
+    <string name="devices_revoke_message">这台设备将被移出空间，空间密钥将被更新。它将无法再读取新条目。系统会要求你验证指纹、面孔或锁屏密码。</string>
+    <string name="devices_rename_failed">无法重命名设备。请检查网络连接后重试。</string>
+    <string name="devices_revoke_failed">无法吊销设备。请检查网络连接后重试。</string>
+    <string name="devices_revoking">正在吊销：空间密钥正在更新，这可能需要几秒钟。</string>
+    <string name="devices_revoke_unavailable">这台手机上没有设置屏幕锁定：无法吊销。请在设置中设置密码、指纹或面孔。</string>
+    <string name="rotation_stalled_title">设备移除尚未完成</string>
+    <string name="rotation_stalled_message">已移除的设备可能仍持有你空间的当前密钥。Tomi 每小时会重试更新密钥。在你的其他设备上打开 Tomi 会有所帮助。</string>
+    <string name="snackbar_relay_revoked_admin">“%1$s”已被中继管理员移除。</string>
+    <string name="snackbar_relay_revoked_self">据中继显示，“%1$s”已离开空间。</string>
+    <string name="snackbar_relay_revoked_other">“%1$s”已被中继移出空间。</string>
+    <!-- Another device that has not shown up for a long time. Tomi only knows that, not that the app is uninstalled. -->
+    <string name="devices_inactive_hint">已有 %1$s未活动。不再使用它了？请将其移除。</string>
+    <plurals name="devices_inactive_duration">
+        <item quantity="other">%1$d 天</item>
+    </plurals>
+
+    <!-- Leaving the space (menu of the feed) -->
+    <string name="leave_title">要与你的空间断开连接吗？</string>
+    <string name="leave_message">这台设备将离开你的空间。它保存的所有内容都将被抹掉：条目、隐藏内容、文件和密钥，包括尚未发送的内容。你的其他设备会保留各自的副本。如需回来，你必须从另一台设备重新添加这台设备。</string>
+    <string name="leave_confirm">断开连接</string>
+    <string name="leave_in_progress">正在断开连接…</string>
+    <string name="leave_error_update">请更新 Tomi 后才能断开连接。未抹掉任何内容。</string>
+    <string name="leave_error_unexpected">你的 Tomi 服务器拒绝了断开连接。未抹掉任何内容：这台手机仍在你的空间中。</string>
+
+    <!-- The only device: deleting the space (after the relay answered "last device") -->
+    <string name="delete_space_title">要删除你的空间吗？</string>
+    <string name="delete_space_message">这是唯一的设备。断开连接将永久删除你的空间及其中的所有内容。</string>
+    <string name="delete_space_detail">你的 Tomi 服务器会抹掉该空间，然后这台手机会抹掉它保存的所有内容：条目、隐藏内容、文件和密钥。任何人都无法恢复它们。</string>
+    <string name="delete_space_confirm">删除空间</string>
+    <string name="delete_space_in_progress">正在删除…</string>
+    <string name="delete_space_error_relay_too_old">你的 Tomi 服务器版本过旧，无法删除空间。请更新后重试。未抹掉任何内容。</string>
+    <string name="delete_space_error_update">请更新 Tomi 后才能删除你的空间。未抹掉任何内容。</string>
+    <string name="delete_space_error_unexpected">你的 Tomi 服务器拒绝删除空间。未抹掉任何内容。</string>
+    <string name="delete_space_unavailable_biometric">如需删除你的空间，请在手机的设置中设置屏幕锁定（密码、指纹或面孔）。未抹掉任何内容。</string>
+
+    <!-- A pending departure: banner at the top of the feed -->
+    <string name="departure_pending_leave_title">等待断开连接</string>
+    <string name="departure_pending_delete_title">等待删除空间</string>
+    <string name="departure_pending_checking">Tomi 正在与你的服务器核实。未抹掉任何内容。</string>
+    <string name="departure_pending_network">你的 Tomi 服务器尚未确认。未抹掉任何内容。网络恢复后，Tomi 会立即重试。</string>
+    <string name="departure_pending_server">你的 Tomi 服务器出现临时问题。未抹掉任何内容。Tomi 正在重试。</string>
+    <string name="departure_pending_not_sent">你的请求未能送达：这台手机仍在你的空间中。未抹掉任何内容。</string>
+    <string name="departure_pending_not_found">你的 Tomi 服务器找不到你的空间了，或者不再识别这台手机。未抹掉任何内容。</string>
+    <string name="departure_cancelling_title">正在取消</string>
+    <string name="departure_cancelling">Tomi 正在等待已发送到服务器的请求完成。这台手机上不会抹掉任何内容。</string>
+    <string name="departure_wiping">正在抹掉这台手机…</string>
+    <string name="departure_retry">重试</string>
+    <string name="departure_cancel">取消</string>
+    <string name="departure_cancelled_leave">已取消断开连接。如果你的服务器已经收到请求，这台手机将显示为已移出空间；它保存的内容仍可读取。</string>
+    <string name="departure_cancelled_delete">已取消删除。如果你的服务器已经执行了删除，你的空间现在只存在于这台手机上。</string>
+    <string name="departure_failed">抹掉未完成。未抹掉任何内容。请重试。</string>
+    <string name="space_not_found_title">找不到空间</string>
+    <string name="space_not_found_message">你的 Tomi 服务器找不到你的空间了。如果服务器已被重置，你可以抹掉这台手机；否则请先检查你的服务器。这台手机上未抹掉任何内容。</string>
+    <string name="space_revoked_title">已被移出空间</string>
+    <string name="space_revoked_message">这台手机已被移出你的空间。它保存的内容在这里仍可读取。断开连接会将其抹掉。</string>
+
+    <!-- "Erase anyway": erasing without a proof of the relay -->
+    <string name="erase_anyway">仍然抹掉</string>
+    <string name="erase_title">要在服务器未确认的情况下抹掉这台手机吗？</string>
+    <string name="erase_message">你的 Tomi 服务器无法确认你的空间已被删除。该空间可能并未在你的服务器上删除；如果它仍然存在，这台手机将无法再访问它。</string>
+    <string name="erase_detail">这台手机保存的所有内容都将被永久抹掉：条目、隐藏内容、文件和密钥。</string>
+    <string name="erase_checkbox">我明白：这是永久性的。</string>
+    <string name="erase_confirm">抹掉这台手机</string>
+    <string name="erase_in_progress">正在抹掉…</string>
+    <string name="erase_checking">Tomi 正在与你的服务器核实…</string>
+    <string name="erase_waiting">发往你的服务器的请求仍在进行中。Tomi 会等它完成后再抹掉。未抹掉任何内容。</string>
+    <string name="erase_not_allowed">Tomi 必须先与你的服务器核实。请稍后重试。</string>
+    <string name="erase_expired">你的服务器的回复已失效：它太旧了，或者你的服务器之后给出了不同的回复。未抹掉任何内容。请稍后重试。</string>
+    <string name="erase_unavailable_biometric">如需在服务器未确认的情况下抹掉，请在手机的设置中设置屏幕锁定（密码、指纹或面孔）。卸载 Tomi 也会抹掉它保存的所有内容。</string>
+    <string name="platform_android">Android</string>
+    <string name="platform_windows">Windows</string>
+    <string name="platform_other">其他</string>
+
+    <!-- Add a device (the inviting device) -->
+    <string name="invite_title">添加设备</string>
+    <string name="invite_starting">正在准备邀请码…</string>
+    <string name="invite_intro">在新设备上打开 Tomi，然后扫描此二维码或输入邀请码。</string>
+    <string name="invite_qr_description">邀请二维码</string>
+    <string name="invite_single_use">此邀请码只能使用一次。只要此屏幕保持打开，它就会自动更新。</string>
+    <string name="invite_verify_body">请确认 %1$s 上显示的验证码相同。</string>
+    <string name="invite_verify_hint">如果另一台设备显示的是错误而非验证码，请点按“验证码不同”。</string>
+    <string name="invite_add">添加这台设备</string>
+    <string name="invite_adding_title">正在等待新设备</string>
+    <string name="invite_adding_body">也请在 %1$s 上确认验证码相同。确认后即可添加设备。</string>
+    <string name="invite_done_history">%1$s 将获取你空间的历史记录。这可能需要一些时间。</string>
+    <string name="invite_failed_title">未添加设备</string>
+    <string name="invite_new_code">新邀请码</string>
+    <string name="invite_notice_failed">添加设备未完成。新的邀请码已准备好。</string>
+    <string name="invite_notice_refused">已取消添加设备。新的邀请码已准备好。</string>
+    <string name="invite_error_expired">邀请码已过期。请生成新的邀请码。</string>
+    <string name="invite_error_cancelled">另一台设备已取消添加设备。</string>
+    <string name="invite_error_busy">已有一台设备正在添加中。请先完成或稍等片刻，然后重试。</string>
+    <string name="invite_error_failed">添加设备未完成。请重试。</string>
+    <string name="invite_auth_required_title">需要确认</string>
+    <string name="invite_auth_required_body">如需添加设备，请使用你的指纹、面孔或手机的锁屏密码验证身份。</string>
+    <string name="invite_auth_unavailable_body">如需添加设备，请先在手机的设置中设置屏幕锁定（密码、指纹或面孔）。</string>
+    <string name="invite_auth_retry">确认</string>
+    <string name="invite_notice_auth_denied">已取消确认：未添加任何设备。准备好后，请再次点按“添加这台设备”。</string>
+
+    <!-- Create the space (the first device) -->
+    <string name="create_title">创建你的空间</string>
+    <string name="create_intro">你的 Tomi 服务器已经以二维码或文本形式给了你一个安装密钥。</string>
+    <string name="create_token_label">安装密钥</string>
+    <string name="create_or_paste">或粘贴密钥</string>
+    <string name="create_scan_button">扫描二维码</string>
+    <string name="create_scan_button_description">用相机扫描安装密钥的二维码</string>
+    <string name="create_scan_preview_description">用于扫描安装密钥二维码的相机预览</string>
+    <string name="create_scan_cancel">关闭扫描器</string>
+    <string name="create_camera_denied">相机访问被拒绝。你可以改为粘贴或输入密钥。</string>
+    <string name="create_error_qr">此二维码既不是安装密钥，也不是创建链接。请扫描你的 Tomi 服务器提供的二维码，或输入密钥。</string>
+    <string name="create_where_button">在哪里找到密钥？</string>
+    <string name="create_where_title">在哪里找到密钥？</string>
+    <string name="create_where_body">你的 Tomi 服务器在安装时已通过二维码显示过它，且只显示一次。</string>
+    <string name="create_where_other_title">获取新的密钥</string>
+    <string name="create_where_run">在你的服务器上运行此命令：</string>
+    <string name="create_where_command" translatable="false">$ tomi-relay admin invite --new</string>
+    <string name="create_where_ok">知道了</string>
+    <string name="create_name_label">这台设备的名称</string>
+    <string name="create_name_edit">编辑名称</string>
+    <string name="create_submit">创建我的空间</string>
+    <string name="create_join_instead">加入现有空间</string>
+    <string name="create_done_title">你的空间已准备就绪</string>
+    <string name="create_done_body">%1$s 是你空间中的第一台设备。可在“设备”中添加其他设备。</string>
+    <string name="create_relay_check_label">中继：%1$s</string>
+    <string name="create_relay_check_hint">创建空间之前，请确认这是你的中继。</string>
+    <string name="create_relay_from_link">从链接或二维码中读取。</string>
+    <string name="create_error_token">安装密钥不正确或已被使用。请检查后重试。</string>
+    <string name="create_error_token_empty">请粘贴安装密钥。</string>
+    <string name="create_error_name">设备名称长度必须为 1 到 64 个字符，且开头和结尾不能有空格。</string>
+    <string name="create_error_space_exists">此密钥已被用于创建空间。请从已在该空间中的设备添加这台设备。</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_pin_title">将 Tomi 固定在分享菜单顶部</string>
+    <string name="onboarding_pin_body">长按 Tomi，然后选择“固定”。它将始终排在第一位，位置不变。</string>
+    <string name="onboarding_open_share">打开分享菜单</string>
+    <string name="onboarding_later">稍后</string>
+    <string name="onboarding_scene_pin_description">插图：在分享菜单中长按 Tomi，会出现“固定”选项。</string>
+    <string name="onboarding_check_caption">你应该会看到这样</string>
+    <string name="onboarding_check_title">Tomi 在最上面了吗？</string>
+    <string name="onboarding_check_body">如有需要，请重新打开分享菜单。Tomi 应该排在第一位，并带有图钉图标。</string>
+    <string name="onboarding_check_yes">是，已完成</string>
+    <string name="onboarding_check_again">还没有，重新打开菜单</string>
+    <string name="onboarding_scene_check_description">插图：在分享菜单中，Tomi 排在第一位，并带有图钉图标。</string>
+    <string name="onboarding_scene_share_title">分享</string>
+    <string name="onboarding_scene_notes">笔记</string>
+    <string name="onboarding_scene_browser">浏览器</string>
+    <string name="onboarding_scene_files">文件</string>
+    <string name="onboarding_sample_text">Tomi 分享测试</string>
+</resources>

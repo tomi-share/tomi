@@ -1,0 +1,564 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- All user-visible texts are Indonesian (Bahasa Indonesia), formal "Anda" (as Android, iOS and Windows use it).
+     Keep identifiers and comments in English.
+     Vocabulary: "Tersembunyi" / "Tampilkan" (never "Rahasia" / "Ungkap"). -->
+<resources>
+    <string name="app_name">Tomi</string>
+
+    <!-- Generic actions -->
+    <string name="action_cancel">Batal</string>
+    <string name="action_cancel_send">Batalkan kiriman</string>
+    <string name="action_close">Tutup</string>
+    <string name="action_back">Kembali</string>
+    <string name="action_save">Simpan</string>
+    <string name="action_continue">Lanjutkan</string>
+    <string name="action_later">Nanti</string>
+    <string name="action_done">Selesai</string>
+    <string name="action_copy">Salin</string>
+    <string name="action_copy_link">Salin tautan</string>
+    <string name="action_open">Buka</string>
+    <string name="action_more">Tindakan lainnya</string>
+    <string name="action_reveal">Tampilkan</string>
+    <string name="action_hide">Sembunyikan</string>
+    <string name="action_send">Kirim</string>
+    <string name="action_paste">Tempel</string>
+    <string name="action_attach">Lampirkan file</string>
+    <string name="action_remove_attachment">Lepaskan %1$s</string>
+    <string name="action_undo">Urungkan</string>
+    <string name="action_options">Opsi</string>
+    <string name="action_search">Cari</string>
+    <string name="action_close_search">Tutup pencarian</string>
+    <string name="action_filters">Filter</string>
+    <string name="action_clear_filter">Hapus filter</string>
+    <string name="action_delete">Hapus</string>
+    <string name="action_delete_local">Hapus dari perangkat ini</string>
+    <string name="action_delete_everywhere">Hapus di semua tempat</string>
+    <string name="action_pin">Sematkan</string>
+    <string name="action_unpin">Lepas sematan</string>
+    <string name="action_archive">Arsipkan</string>
+    <string name="action_unarchive">Batalkan arsip</string>
+    <string name="action_share">Bagikan</string>
+    <string name="action_details">Detail</string>
+    <string name="action_read_more">Selengkapnya</string>
+
+    <!-- Feed -->
+    <string name="search_placeholder">Cari di linimasa</string>
+    <string name="filter_all">Semua</string>
+    <string name="filter_links">Tautan</string>
+    <string name="filter_text">Teks</string>
+    <string name="filter_files">File</string>
+    <string name="filter_secrets">Tersembunyi</string>
+    <string name="filter_archives">Arsip</string>
+    <string name="section_pinned">Disematkan</string>
+    <string name="section_recent">Terbaru</string>
+    <string name="section_archives">Arsip</string>
+    <string name="source_this_phone">Ponsel ini</string>
+    <string name="label_masked">Tersembunyi</string>
+    <plurals name="search_results">
+        <item quantity="other">%1$d hasil</item>
+    </plurals>
+    <string name="search_masked_note">item tersembunyi dicari tanpa judul atau isinya</string>
+    <!-- 1: the counter ("2 results"), 2: the note about the hidden items -->
+    <string name="search_summary_with_note">%1$s · %2$s</string>
+    <string name="feed_empty">Belum ada apa-apa. Bagikan tautan, teks, atau file ke Tomi untuk mengirimnya ke perangkat Anda yang lain.</string>
+    <string name="feed_empty_archives">Tidak ada item yang diarsipkan. Geser kartu di Terbaru ke kiri untuk mengarsipkannya.</string>
+    <string name="feed_empty_filtered">Tidak ada item yang cocok.</string>
+    <string name="banner_offline">Offline · menunggu</string>
+    <string name="menu_share_help">Sematkan Tomi di menu berbagi</string>
+    <string name="menu_leave_space">Putuskan sambungan</string>
+    <string name="snackbar_copied_secret">Disalin · dihapus dalam 30 dtk</string>
+    <string name="snackbar_deleted_local">Dihapus dari perangkat ini</string>
+    <string name="snackbar_deleted_everywhere">Penghapusan diminta di semua perangkat</string>
+    <string name="snackbar_action_failed">Tindakan tidak dapat diselesaikan. Periksa koneksi Anda, lalu coba lagi.</string>
+    <string name="snackbar_pin_failed">Sematan tidak dapat diubah. Coba lagi.</string>
+    <string name="snackbar_archived">Diarsipkan</string>
+    <string name="snackbar_unarchived">Dikeluarkan dari arsip</string>
+    <string name="snackbar_archive_failed">Arsip tidak dapat diubah. Coba lagi.</string>
+    <string name="snackbar_nothing_to_share">Tidak ada yang dapat dibagikan dari item ini.</string>
+    <string name="detail_not_found">Item tidak ditemukan. Item mungkin sudah kedaluwarsa atau dihapus.</string>
+    <string name="detail_masked_hint">Tampilkan, Salin, dan Bagikan memerlukan sidik jari atau kode kunci layar Anda.</string>
+    <string name="detail_revealed_hint">Disembunyikan lagi begitu Anda meninggalkan layar ini.</string>
+    <string name="meta_type">Jenis</string>
+    <string name="meta_sent_at">Dikirim pada</string>
+    <string name="meta_expiry">Kedaluwarsa</string>
+    <string name="meta_pinned">Disematkan</string>
+    <string name="meta_status">Status</string>
+    <string name="meta_yes">Ya</string>
+    <string name="meta_no">Tidak</string>
+    <string name="meta_never">Tidak pernah</string>
+    <string name="meta_after_read">Setelah dibaca</string>
+    <plurals name="characters_count">
+        <item quantity="other">%1$d karakter</item>
+    </plurals>
+
+    <!-- Card -->
+    <string name="unread_badge">Belum dibaca</string>
+    <string name="pinned_badge">Disematkan</string>
+    <string name="archived_badge">Diarsipkan</string>
+    <string name="time_yesterday">Kemarin</string>
+    <string name="expires_in">kedaluwarsa dalam %1$s</string>
+    <string name="expires_after_read">hilang setelah dibaca pertama kali</string>
+    <!-- Attachment tiles (feed + detail). "More files": the button towards the detail, then the same as a caption when "Read more" takes its place. -->
+    <plurals name="more_files">
+        <item quantity="other">%1$d file lagi</item>
+    </plurals>
+    <plurals name="more_files_caption">
+        <item quantity="other">+ %1$d file lagi</item>
+    </plurals>
+    <!-- %1$d = count, %2$s = total size ("4 files · 4.9 MB"). Shown from 2 attachments on, so "one" is only for the form. -->
+    <plurals name="attachments_summary_files">
+        <item quantity="other">%1$d file · %2$s</item>
+    </plurals>
+    <plurals name="attachments_summary_images">
+        <item quantity="other">%1$d gambar · %2$s</item>
+    </plurals>
+    <plurals name="secret_files_hidden">
+        <item quantity="other">%1$d file tersembunyi</item>
+    </plurals>
+    <plurals name="remaining_days">
+        <item quantity="other">%1$d hari</item>
+    </plurals>
+    <plurals name="remaining_hours">
+        <item quantity="other">%1$d jam</item>
+    </plurals>
+    <plurals name="remaining_minutes">
+        <item quantity="other">%1$d menit</item>
+    </plurals>
+    <string name="kind_secret">Tersembunyi</string>
+    <string name="kind_image">Gambar</string>
+    <string name="kind_file">File</string>
+    <string name="kind_link">Tautan</string>
+    <string name="kind_unreadable">Tidak terbaca</string>
+    <string name="unreadable_update_required">Pembaruan diperlukan untuk membaca item ini. Item tetap disimpan dan akan ditampilkan setelah Tomi diperbarui.</string>
+    <string name="unreadable_decryption_failed">Item ini belum dapat dibaca untuk saat ini. Item tetap disimpan: sinkronisasi atau pembaruan mungkin dapat membuatnya terbaca.</string>
+    <string name="kind_rich_text">Teks berformat</string>
+    <string name="kind_text">Teks</string>
+    <!-- Internal image viewer -->
+    <string name="action_view_image">Lihat gambar</string>
+    <string name="viewer_save">Simpan</string>
+    <string name="viewer_action_delete">Hapus</string>
+    <string name="viewer_delete_local">Hapus gambar dari perangkat ini</string>
+    <string name="viewer_delete_everywhere">Hapus gambar di semua tempat</string>
+    <string name="viewer_image_description">Gambar %1$d dari %2$d</string>
+    <string name="viewer_position">%1$d/%2$d</string>
+    <string name="viewer_locked">Gambar tersembunyi. Konfirmasi identitas Anda untuk menampilkannya.</string>
+    <string name="viewer_load_failed">Gambar ini tidak dapat ditampilkan.</string>
+    <string name="viewer_no_image">Tidak ada gambar untuk ditampilkan.</string>
+    <string name="snackbar_image_saved">Gambar disimpan ke galeri</string>
+    <string name="snackbar_file_unavailable">File ini tidak dapat dibuka. File mungkin belum diunduh, atau tidak ada aplikasi yang dapat membukanya.</string>
+    <string name="snackbar_file_downloaded">File disimpan di Downloads/Tomi</string>
+    <string name="snackbar_file_download_failed">File tidak dapat disimpan. Coba lagi.</string>
+    <string name="snackbar_image_unavailable">Gambar ini tidak tersedia saat ini.</string>
+    <string name="snackbar_image_failed">Tindakan gagal. Coba lagi.</string>
+    <!-- Removal of ONE attachment of an item (the item stays) -->
+    <string name="snackbar_image_deleted_local">Gambar dihapus dari perangkat ini</string>
+    <string name="snackbar_image_deleted_everywhere">Gambar dihapus di semua tempat</string>
+    <string name="snackbar_file_deleted_local">File dihapus dari perangkat ini</string>
+    <string name="snackbar_file_deleted_everywhere">File dihapus di semua tempat</string>
+    <string name="file_row_delete">Hapus file ini</string>
+    <string name="file_row_actions">Tindakan untuk file ini</string>
+    <string name="file_download">Unduh</string>
+    <string name="file_delete_local">Hapus file dari perangkat ini</string>
+    <string name="file_delete_everywhere">Hapus file di semua tempat</string>
+    <string name="dialog_delete_file_everywhere_title">Hapus file di semua tempat?</string>
+    <string name="dialog_delete_file_everywhere_named">“%1$s” akan dihapus dari semua perangkat Anda dan dari server Tomi Anda. Perangkat yang sedang offline akan menghapusnya saat tersambung kembali. Tindakan ini permanen.</string>
+    <string name="dialog_delete_file_everywhere_secret">File tersembunyi ini akan dihapus dari semua perangkat Anda dan dari server Tomi Anda. Perangkat yang sudah menampilkannya mungkin telah menyimpan salinannya. Tindakan ini permanen.</string>
+    <string name="biometric_title_image">Tampilkan gambar tersembunyi</string>
+    <string name="biometric_subtitle_image">Konfirmasi identitas Anda. Konfirmasi ini berlaku selama 2 menit.</string>
+    <string name="biometric_title_save_image">Simpan gambar tersembunyi</string>
+    <string name="biometric_subtitle_save_image">Konfirmasi identitas Anda sebelum gambar disimpan ke galeri. Konfirmasi ini berlaku selama 2 menit.</string>
+    <!-- Text modes: "Preview" (styled, default) and "Markdown" (the literal source) -->
+    <string name="render_preview">Pratinjau</string>
+    <string name="render_markdown">Markdown</string>
+
+    <!-- Code file screen -->
+    <string name="action_view_code">Buka file</string>
+    <string name="code_search">Cari di file</string>
+    <string name="code_search_placeholder">Cari di file</string>
+    <string name="code_search_previous">Hasil sebelumnya</string>
+    <string name="code_search_next">Hasil berikutnya</string>
+    <string name="code_copy_file">Salin file</string>
+    <string name="code_wrap">Bungkus baris</string>
+    <string name="code_locked">File tersembunyi. Konfirmasi identitas Anda untuk menampilkannya.</string>
+    <string name="code_no_file">Tidak ada file kode untuk ditampilkan.</string>
+    <string name="code_unavailable">File ini tidak dapat ditampilkan saat ini.</string>
+    <string name="code_too_large">File ini terlalu besar untuk ditampilkan (maksimum 2 MB).</string>
+    <string name="code_binary">File ini bukan teks: tidak dapat ditampilkan di sini.</string>
+    <string name="code_no_colours_language">Tidak ada penyorotan sintaksis untuk bahasa ini.</string>
+    <string name="code_no_colours_size">Penyorotan sintaksis tidak tersedia: file terlalu panjang (maksimum 50 KB atau 2.000 baris).</string>
+    <string name="biometric_title_file">Tampilkan file tersembunyi</string>
+    <string name="biometric_subtitle_file">Konfirmasi identitas Anda. Konfirmasi ini berlaku selama 2 menit.</string>
+    <string name="dialog_delete_everywhere_title">Hapus di semua tempat?</string>
+    <string name="dialog_delete_everywhere_message">Item ini akan dihapus dari semua perangkat Anda dan dari server Tomi Anda. Perangkat yang sedang offline akan menghapusnya saat tersambung kembali. Tindakan ini permanen.</string>
+    <string name="dialog_delete_everywhere_secret">Konten tersembunyi ini akan dihapus dari semua perangkat Anda dan dari server Tomi Anda. Perangkat yang sudah menampilkannya mungkin telah menyimpan salinannya. Tindakan ini permanen.</string>
+    <string name="dialog_delete_image_everywhere_title">Hapus gambar di semua tempat?</string>
+    <string name="dialog_delete_image_everywhere_message">Gambar ini akan dihapus dari semua perangkat Anda dan dari server Tomi Anda. Perangkat yang sedang offline akan menghapusnya saat tersambung kembali. Tindakan ini permanen.</string>
+    <string name="dialog_delete_image_everywhere_secret">Gambar tersembunyi ini akan dihapus dari semua perangkat Anda dan dari server Tomi Anda. Perangkat yang sudah menampilkannya mungkin telah menyimpan salinannya. Tindakan ini permanen.</string>
+
+    <!-- System share (Android ACTION_SEND) of an item -->
+    <string name="share_chooser_title">Bagikan melalui</string>
+    <!-- Neutral title of the preview of the system share sheet for a hidden item: the sheet must not show the content. -->
+    <string name="share_hidden_preview_title">Konten tersembunyi</string>
+    <string name="share_no_app">Tidak ada aplikasi yang dapat menerima konten ini.</string>
+
+    <!-- Delivery status -->
+    <string name="status_received">Diterima</string>
+    <string name="status_queued">Menunggu dikirim</string>
+    <string name="status_waiting_network">Menunggu jaringan</string>
+    <string name="status_sent">Terkirim</string>
+    <string name="status_failed">Gagal mengirim</string>
+    <string name="status_delivered_all">Terkirim ke semua</string>
+    <string name="status_delivered_partial">Terkirim ke %1$d dari %2$d</string>
+    <string name="status_expired">Terkirim ke %1$d · kedaluwarsa sebelum terkirim ke %2$s</string>
+
+    <!-- Expiry -->
+    <string name="expiry_hour1">1 jam</string>
+    <string name="expiry_day1">1 hr</string>
+    <string name="expiry_day7">7 hr</string>
+    <string name="expiry_day30">30 hr</string>
+    <string name="expiry_never">Tidak pernah</string>
+    <string name="expiry_after_read">Setelah dibaca</string>
+    <string name="expiry_chip">Kedaluwarsa: %1$s</string>
+    <string name="expiry_label">Kedaluwarsa</string>
+    <string name="expiry_after_read_hint">“Setelah dibaca”: dihapus di semua tempat begitu pertama kali dibuka.</string>
+
+    <!-- Compose / send -->
+    <string name="send_title">Kirim</string>
+    <string name="send_title_label">Judul (opsional)</string>
+    <string name="send_content_label">Teks atau tautan</string>
+    <string name="label_secret">Sembunyikan konten</string>
+    <string name="label_secret_off">Pratinjau disembunyikan di semua tempat hingga “Tampilkan”</string>
+    <string name="label_secret_on">Diaktifkan otomatis. Anda dapat menonaktifkannya.</string>
+    <string name="detect_link">Tautan terdeteksi</string>
+    <string name="detect_text">Teks</string>
+    <string name="detect_files">File terlampir</string>
+    <string name="detect_masked">Tersembunyi</string>
+    <string name="detect_masked_password">Ini tampak seperti kata sandi.</string>
+    <string name="detect_to_devices">Ke %1$s</string>
+    <string name="hint_secret_sensitive">Aplikasi sumber menandai konten ini sebagai sensitif: konten dikirim dalam keadaan tersembunyi.</string>
+    <string name="hint_secret_heuristic">Konten ini tampak seperti kata sandi atau kunci: konten disembunyikan. Anda dapat mengubahnya.</string>
+    <string name="notice_paste_empty">Papan klip tidak berisi teks.</string>
+    <string name="notice_link_appended_to_draft">Tautan dari aplikasi lain ditambahkan ke draf Anda. Periksa sebelum mengirim.</string>
+    <string name="notice_params_dropped">Beberapa parameter tautan diabaikan (terlalu panjang atau tidak valid).</string>
+    <string name="notice_too_late">Terlambat: item sudah dikirim.</string>
+    <string name="notice_undo_failed">Pengiriman tidak dapat dibatalkan. Item mungkin sudah dikirim.</string>
+    <string name="notice_send_failed">Gagal mengirim. Teks Anda tetap disimpan, coba lagi.</string>
+    <string name="banner_sent">Terkirim</string>
+    <plurals name="banner_files_skipped">
+        <item quantity="other">%1$d file dilewati: maksimum 25 MB per file</item>
+    </plurals>
+    <string name="sheet_title">Opsi pengiriman</string>
+
+    <!-- Share target -->
+    <string name="share_not_paired">Tomi belum tertaut ke ruang mana pun. Buka aplikasi untuk bergabung ke ruang Anda.</string>
+    <string name="share_open_app">Buka Tomi</string>
+    <string name="share_failed">Gagal mengirim. Coba lagi.</string>
+    <string name="share_too_late">Terlambat: item sudah dikirim. Anda dapat menghapusnya dari linimasa Tomi.</string>
+    <string name="share_secret_detected">Ini tampak seperti konten yang perlu disembunyikan. Konfirmasi sebelum mengirim.</string>
+    <string name="preview_secret_masked">••••••••••</string>
+    <plurals name="preview_files">
+        <item quantity="other">%1$d file</item>
+    </plurals>
+    <string name="shortcut_short_label">Tomi</string>
+    <string name="shortcut_long_label">Kirim ke perangkat saya dengan Tomi</string>
+    <string name="tile_label">Kirim</string>
+
+    <!-- Biometrics -->
+    <string name="biometric_title_secret">Tampilkan konten tersembunyi</string>
+    <string name="biometric_subtitle_secret">Konfirmasi identitas Anda. Konfirmasi ini berlaku selama 2 menit.</string>
+    <string name="biometric_title_share">Bagikan konten tersembunyi</string>
+    <string name="biometric_subtitle_share">Konfirmasi identitas Anda sebelum mengirimnya ke aplikasi lain. Konfirmasi ini berlaku selama 2 menit.</string>
+    <string name="biometric_title_copy_secret">Salin konten tersembunyi</string>
+    <string name="biometric_subtitle_from_notification">Konten akan disalin, lalu dihapus dari papan klip setelah 30 dtk.</string>
+    <string name="biometric_title_revoke">Cabut perangkat</string>
+    <string name="biometric_subtitle_revoke">Tindakan sensitif: konfirmasi dengan sidik jari, wajah, atau kode kunci layar ponsel Anda.</string>
+    <string name="biometric_title_erase">Bersihkan ponsel ini</string>
+    <string name="biometric_subtitle_erase">Tindakan ini tidak dapat diurungkan: konfirmasi dengan sidik jari, wajah, atau kode kunci layar ponsel Anda.</string>
+    <string name="biometric_title_pair">Tambahkan perangkat</string>
+    <string name="biometric_subtitle_pair">Perangkat baru akan menerima seluruh riwayat, termasuk item tersembunyi. Konfirmasi dengan sidik jari, wajah, atau kode kunci layar ponsel Anda.</string>
+    <string name="biometric_title_delete_space">Hapus ruang Anda</string>
+    <string name="biometric_subtitle_delete_space">Tindakan ini tidak dapat diurungkan: konfirmasi dengan sidik jari, wajah, atau kode kunci layar ponsel Anda.</string>
+    <string name="toast_biometric_unavailable">Siapkan kunci layar atau biometrik untuk menampilkan, menyalin, atau membagikan konten tersembunyi.</string>
+    <string name="toast_item_not_found">Item tidak ditemukan</string>
+
+    <!-- Notifications -->
+    <string name="channel_group_incoming">Item yang diterima</string>
+    <string name="channel_links">Tautan</string>
+    <string name="channel_links_desc">Tautan yang diterima dari perangkat Anda yang lain</string>
+    <string name="channel_text">Teks</string>
+    <string name="channel_text_desc">Teks yang diterima dari perangkat Anda yang lain</string>
+    <string name="channel_files">File</string>
+    <string name="channel_files_desc">File dan gambar yang diterima dari perangkat Anda yang lain</string>
+    <string name="channel_secrets">Tersembunyi</string>
+    <string name="channel_secrets_desc">Konten tersembunyi yang diterima. Tidak pernah ditampilkan di layar kunci, tanpa pratinjau.</string>
+    <string name="channel_devices">Perangkat</string>
+    <string name="channel_devices_desc">Peringatan saat perangkat ditambahkan ke ruang Anda. Tanpa konten, hanya nama perangkat.</string>
+    <string name="notif_device_added_title">Perangkat baru ditambahkan</string>
+    <string name="notif_device_added_body">“%1$s” bergabung ke ruang Anda. Bukan Anda? Buka Perangkat dan cabut perangkat tersebut.</string>
+    <string name="notif_title_secret">Konten tersembunyi · %1$s</string>
+    <string name="notif_title_link">Tautan dari %1$s</string>
+    <string name="notif_title_image">Gambar dari %1$s</string>
+    <string name="notif_title_file">File dari %1$s</string>
+    <string name="notif_title_text">Teks dari %1$s</string>
+    <string name="notif_title_unreadable">Item dari %1$s</string>
+    <string name="notif_body_unreadable">Belum dapat dibaca: Tomi perlu diperbarui</string>
+    <string name="notif_body_secret">Ketuk untuk menyalin (perlu autentikasi)</string>
+    <string name="notif_body_generic">Item baru</string>
+    <string name="notif_public_title">Tomi: item baru</string>
+    <string name="notif_action_copy">Salin</string>
+    <string name="notif_action_view">Lihat</string>
+    <string name="notif_summary_text">Terakhir dikirim dari %1$s</string>
+    <plurals name="notif_summary_title">
+        <item quantity="other">%1$d item baru</item>
+    </plurals>
+
+    <!-- Pairing -->
+    <!-- Welcome: the two doors of a device that is not in a space yet -->
+    <string name="welcome_title">Perangkat Anda, satu ruang</string>
+    <string name="welcome_intro">Kirim tautan, catatan, dan kata sandi ke diri sendiri dari satu perangkat ke perangkat lain, dengan enkripsi end-to-end.</string>
+    <string name="welcome_question">Bagaimana Anda ingin memulai?</string>
+    <string name="welcome_create_title">Buat ruang Anda</string>
+    <string name="welcome_create_hint">Ini perangkat pertama Anda. Siapkan kode QR atau kunci instalasi server Tomi Anda.</string>
+    <string name="welcome_join_title">Gabung ke ruang Anda</string>
+    <string name="welcome_join_hint">Tomi sudah ada di perangkat lain? Biarkan tetap terbuka dan dalam jangkauan.</string>
+    <!-- Read by the screen reader for a whole door: title, then what it takes. -->
+    <string name="welcome_door_description">%1$s. %2$s</string>
+
+    <!-- Join a space -->
+    <string name="pair_title">Gabung ke ruang Anda</string>
+    <string name="pair_intro">Di perangkat Anda yang lain, buka</string>
+    <string name="pair_other_device_caption">Di perangkat Anda yang lain</string>
+    <string name="pair_illustration_description">Ilustrasi: di perangkat Anda yang lain, layar “Tambahkan perangkat” menampilkan kode QR dan kode undangan, misalnya 7-crayon-renard.</string>
+    <string name="pair_scan_preview_description">Pratinjau kamera untuk memindai kode QR perangkat lain</string>
+    <string name="pair_link_received">Tautan undangan diterima</string>
+    <string name="pair_link_received_relay">Relai: %1$s</string>
+    <string name="pair_link_received_warning">Tautan ini berasal dari aplikasi lain atau halaman web. Hanya gabung ke ruang yang baru saja Anda buat sendiri, dengan relai yang Anda kenali.</string>
+    <string name="pair_link_received_hint">Tidak ada yang dilakukan secara otomatis. Ketuk “Gabung” untuk melanjutkan.</string>
+    <string name="pair_join">Gabung</string>
+    <string name="pair_scan_hint">Kamera hanya digunakan untuk pemindaian ini.</string>
+    <string name="pair_scan_button">Pindai kode QR</string>
+    <string name="pair_enter_code_button">Masukkan kode undangan</string>
+    <string name="demo_enter">Coba dengan data contoh</string>
+    <string name="demo_banner">Mode demo: data contoh, tidak ada yang dikirim.</string>
+    <string name="demo_leave">Keluar dari demo</string>
+    <string name="pair_camera_denied">Akses kamera ditolak. Anda dapat memasukkan kode undangan sebagai gantinya.</string>
+    <string name="pair_code_title">Masukkan kode undangan</string>
+    <string name="pair_code_intro">Kode ini ada di bawah kode QR, di perangkat Anda yang lain.</string>
+    <string name="pair_code_label">Kode undangan</string>
+    <string name="pair_code_hint">Dua kata setelah angka. Tidak perlu aksen atau huruf kapital.</string>
+    <string name="relay_field_label">Relai</string>
+    <string name="relay_field_hint">Alamat server Tomi Anda, misalnya relay.example.org.</string>
+    <string name="relay_other_button">Relai lain</string>
+    <string name="relay_current">Relai: %1$s</string>
+    <string name="pair_scan_instead">Pindai kode QR saja</string>
+    <string name="pair_verify_title">Periksa kode</string>
+    <string name="pair_verify_body">Pastikan kode yang sama ditampilkan di kedua perangkat.</string>
+    <plurals name="pair_verify_peer_members">
+        <item quantity="other">Ruang Anda memiliki %1$d perangkat</item>
+    </plurals>
+    <string name="pair_verify_relay_label">Relai: %1$s</string>
+    <string name="pair_verify_relay_hint">Pastikan ini relai Anda sebelum melanjutkan.</string>
+    <string name="pair_verify_code_description">Kode verifikasi %1$s</string>
+    <string name="pair_verify_validity">Berlaku %1$s lagi</string>
+    <string name="pair_verify_same">Kodenya sama</string>
+    <string name="pair_verify_different">Kodenya berbeda</string>
+    <string name="pair_verify_mismatch">Kode tidak cocok: penambahan perangkat dibatalkan. Mulai lagi dari perangkat lain.</string>
+    <string name="pair_working">Menyambungkan ke perangkat lain…</string>
+    <string name="pair_waiting_title">Menunggu perangkat lain</string>
+    <string name="pair_waiting_body">Konfirmasi juga di %1$s bahwa kodenya sama. Penambahan perangkat selesai begitu hal itu dilakukan.</string>
+    <string name="pair_history_title">Ambil riwayat?</string>
+    <plurals name="pair_history_body">
+        <item quantity="other">Ruang Anda sudah berisi %1$d item. Anda dapat mengambilnya di ponsel ini.</item>
+    </plurals>
+    <string name="pair_history_size">Sekitar %1$s untuk diambil.</string>
+    <string name="pair_history_yes">Ya, ambil riwayat</string>
+    <string name="pair_history_yes_hint">Semua isi ruang Anda akan tiba di sini, termasuk item tersembunyi dan yang disematkan.</string>
+    <string name="pair_history_no">Tidak, mulai dari linimasa kosong</string>
+    <string name="pair_history_no_hint">Hanya yang dikirim mulai sekarang yang akan tiba di sini.</string>
+    <string name="pair_history_footer">Anda selalu dapat menghapus item nanti.</string>
+    <string name="pair_done_title">Perangkat ditambahkan</string>
+    <string name="pair_done_body">%1$s kini menjadi bagian dari ruang Anda.</string>
+    <string name="pair_notifications_rationale">Izinkan notifikasi agar Anda tahu saat ada perangkat yang mengirimi Anda sesuatu.</string>
+    <string name="pair_notifications_enable">Izinkan notifikasi</string>
+    <string name="pair_error_qr_unknown">Kode QR ini bukan undangan Tomi.</string>
+    <string name="pair_error_code_format">Masukkan kode undangan yang ditampilkan di perangkat lain, misalnya 7-crayon-renard.</string>
+    <string name="pair_error_invalid">Kode undangan ini tidak valid. Periksa angka dan kedua katanya.</string>
+    <string name="pair_error_wrong_code">Kode salah. Buat kode undangan baru di perangkat lain.</string>
+    <string name="pair_error_taken">Kode undangan ini sudah digunakan. Buat kode baru di perangkat lain.</string>
+    <string name="pair_error_interrupted">Koneksi terputus. Buat kode undangan baru di perangkat lain.</string>
+    <string name="pair_error_cancelled">Penambahan perangkat dibatalkan di perangkat lain.</string>
+    <string name="pair_error_update">Perbarui Tomi di kedua perangkat untuk menambahkan perangkat ini.</string>
+    <string name="pair_error_blocked">Perangkat ini tidak dapat lagi menggunakan server Tomi Anda. Pastikan perangkat ini masih menjadi bagian dari ruang Anda.</string>
+    <string name="pair_error_space_full">Ruang Anda sudah mencapai jumlah perangkat maksimum. Keluarkan satu perangkat dari daftar perangkat.</string>
+    <string name="pair_error_relay_required">Masukkan alamat relai.</string>
+    <string name="pair_error_relay_invalid">Alamat relai ini tidak valid. Tulis seperti relay.example.org.</string>
+    <string name="pair_error_unexpected">Penambahan perangkat tidak selesai. Coba lagi.</string>
+    <string name="pair_error_expired">Kode kedaluwarsa. Buat kode baru.</string>
+    <string name="pair_error_network">Jaringan tidak tersedia. Coba lagi.</string>
+
+    <!-- Devices -->
+    <string name="unreadable_title">Data tidak terbaca</string>
+    <string name="unreadable_message">Tomi tidak dapat membuka datanya di ponsel ini. Data aplikasi mungkin telah dihapus atau rusak (ponsel dipulihkan, penyimpanan aplikasi dikosongkan), atau kunci yang melindunginya tidak dapat digunakan lagi. Perangkat Anda yang lain tidak terpengaruh.</string>
+    <string name="unreadable_retry">Coba lagi</string>
+    <string name="unreadable_reset">Setel ulang Tomi</string>
+    <string name="unreadable_reset_title">Bersihkan data Tomi di ponsel ini?</string>
+    <string name="unreadable_reset_message">Semua yang disimpan Tomi di sini akan dihapus dan ponsel ini harus bergabung lagi ke ruang Anda. Perangkat Anda yang lain tetap menyimpan item mereka; jangan lupa keluarkan perangkat lama ini dari daftar perangkat mereka.</string>
+    <string name="unreadable_reset_confirm">Bersihkan dan setel ulang</string>
+    <string name="unreadable_reset_failed">Gagal membersihkan. Coba lagi, atau hapus data aplikasi di Setelan Android.</string>
+    <string name="share_unreadable">Tomi tidak dapat membuka datanya. Buka aplikasi untuk memperbaikinya.</string>
+    <string name="devices_title">Perangkat</string>
+    <string name="devices_add">Tambahkan perangkat</string>
+    <string name="devices_empty">Belum ada perangkat di ruang Anda.</string>
+    <string name="devices_this_device">Perangkat ini</string>
+    <string name="devices_rename">Ganti nama</string>
+    <string name="devices_revoke">Cabut</string>
+    <string name="devices_revoke_title">Cabut “%1$s”?</string>
+    <string name="devices_revoke_message">Perangkat ini akan dikeluarkan dari ruang dan kunci ruang akan diperbarui. Perangkat ini tidak akan dapat membaca item baru lagi. Anda akan diminta sidik jari, wajah, atau kode kunci layar Anda.</string>
+    <string name="devices_rename_failed">Nama perangkat tidak dapat diubah. Periksa koneksi Anda, lalu coba lagi.</string>
+    <string name="devices_revoke_failed">Perangkat tidak dapat dicabut. Periksa koneksi Anda, lalu coba lagi.</string>
+    <string name="devices_revoking">Mencabut: kunci ruang sedang diperbarui, ini dapat memakan waktu beberapa detik.</string>
+    <string name="devices_revoke_unavailable">Tidak ada kunci layar yang disiapkan di ponsel ini: pencabutan tidak dapat dilakukan. Siapkan kode, sidik jari, atau wajah di setelan.</string>
+    <string name="rotation_stalled_title">Pengeluaran perangkat belum selesai</string>
+    <string name="rotation_stalled_message">Perangkat yang dikeluarkan mungkin masih menyimpan kunci ruang Anda saat ini. Tomi mencoba memperbaruinya lagi setiap jam. Membuka Tomi di perangkat Anda yang lain dapat membantu.</string>
+    <string name="snackbar_relay_revoked_admin">“%1$s” dikeluarkan oleh administrator relai.</string>
+    <string name="snackbar_relay_revoked_self">“%1$s” keluar dari ruang, menurut relai.</string>
+    <string name="snackbar_relay_revoked_other">“%1$s” dikeluarkan dari ruang oleh relai.</string>
+    <!-- Another device that has not shown up for a long time. Tomi only knows that, not that the app is uninstalled. -->
+    <string name="devices_inactive_hint">Tidak aktif selama %1$s. Sudah tidak digunakan? Keluarkan.</string>
+    <plurals name="devices_inactive_duration">
+        <item quantity="other">%1$d hari</item>
+    </plurals>
+
+    <!-- Leaving the space (menu of the feed) -->
+    <string name="leave_title">Putuskan sambungan dari ruang Anda?</string>
+    <string name="leave_message">Perangkat ini akan keluar dari ruang Anda. Semua yang disimpannya akan dihapus: item, konten tersembunyi, file, dan kunci, termasuk yang belum dikirim. Perangkat Anda yang lain tetap menyimpan salinannya. Untuk kembali, Anda harus menambahkan perangkat ini lagi dari perangkat lain.</string>
+    <string name="leave_confirm">Putuskan sambungan</string>
+    <string name="leave_in_progress">Memutuskan sambungan…</string>
+    <string name="leave_error_update">Perbarui Tomi agar dapat memutuskan sambungan. Tidak ada yang dihapus.</string>
+    <string name="leave_error_unexpected">Server Tomi Anda menolak pemutusan sambungan. Tidak ada yang dihapus: ponsel ini tetap berada di ruang Anda.</string>
+
+    <!-- The only device: deleting the space (after the relay answered "last device") -->
+    <string name="delete_space_title">Hapus ruang Anda?</string>
+    <string name="delete_space_message">Ini satu-satunya perangkat. Memutuskan sambungan akan menghapus ruang Anda beserta seluruh isinya secara permanen.</string>
+    <string name="delete_space_detail">Server Tomi Anda menghapus ruang, lalu ponsel ini menghapus semua yang disimpannya: item, konten tersembunyi, file, dan kunci. Tidak seorang pun dapat memulihkannya.</string>
+    <string name="delete_space_confirm">Hapus ruang</string>
+    <string name="delete_space_in_progress">Menghapus…</string>
+    <string name="delete_space_error_relay_too_old">Server Tomi Anda terlalu usang untuk menghapus ruang. Perbarui server, lalu coba lagi. Tidak ada yang dihapus.</string>
+    <string name="delete_space_error_update">Perbarui Tomi agar dapat menghapus ruang Anda. Tidak ada yang dihapus.</string>
+    <string name="delete_space_error_unexpected">Server Tomi Anda menolak menghapus ruang. Tidak ada yang dihapus.</string>
+    <string name="delete_space_unavailable_biometric">Untuk menghapus ruang Anda, siapkan kunci layar (kode, sidik jari, atau wajah) di setelan ponsel. Tidak ada yang dihapus.</string>
+
+    <!-- A pending departure: banner at the top of the feed -->
+    <string name="departure_pending_leave_title">Pemutusan sambungan tertunda</string>
+    <string name="departure_pending_delete_title">Penghapusan ruang tertunda</string>
+    <string name="departure_pending_checking">Tomi sedang memeriksa dengan server Anda. Tidak ada yang dihapus.</string>
+    <string name="departure_pending_network">Server Tomi Anda belum mengonfirmasi. Tidak ada yang dihapus. Tomi akan mencoba lagi begitu jaringan kembali.</string>
+    <string name="departure_pending_server">Server Tomi Anda mengalami masalah sementara. Tidak ada yang dihapus. Tomi sedang mencoba lagi.</string>
+    <string name="departure_pending_not_sent">Permintaan Anda tidak terkirim: ponsel ini masih menjadi bagian dari ruang Anda. Tidak ada yang dihapus.</string>
+    <string name="departure_pending_not_found">Server Tomi Anda tidak dapat lagi menemukan ruang Anda, atau tidak lagi mengenali ponsel ini. Tidak ada yang dihapus.</string>
+    <string name="departure_cancelling_title">Membatalkan</string>
+    <string name="departure_cancelling">Tomi sedang menunggu permintaan yang sudah dikirim ke server Anda selesai. Tidak ada yang akan dihapus di ponsel ini.</string>
+    <string name="departure_wiping">Membersihkan ponsel ini…</string>
+    <string name="departure_retry">Coba lagi</string>
+    <string name="departure_cancel">Batal</string>
+    <string name="departure_cancelled_leave">Pemutusan sambungan dibatalkan. Jika server Anda sudah menerimanya, ponsel ini akan terlihat sebagai dikeluarkan dari ruang; isinya tetap dapat dibaca.</string>
+    <string name="departure_cancelled_delete">Penghapusan dibatalkan. Jika server Anda sudah melakukannya, ruang Anda kini hanya ada di ponsel ini.</string>
+    <string name="departure_failed">Pembersihan tidak selesai. Tidak ada yang dihapus. Coba lagi.</string>
+    <string name="space_not_found_title">Ruang tidak ditemukan</string>
+    <string name="space_not_found_message">Server Tomi Anda tidak dapat lagi menemukan ruang Anda. Jika server telah disetel ulang, Anda dapat membersihkan ponsel ini; jika tidak, periksa server Anda terlebih dahulu. Tidak ada yang dihapus di ponsel ini.</string>
+    <string name="space_revoked_title">Dikeluarkan dari ruang</string>
+    <string name="space_revoked_message">Ponsel ini telah dikeluarkan dari ruang Anda. Isinya tetap dapat dibaca di sini. Memutuskan sambungan akan menghapusnya.</string>
+
+    <!-- "Erase anyway": erasing without a proof of the relay -->
+    <string name="erase_anyway">Tetap bersihkan</string>
+    <string name="erase_title">Bersihkan ponsel ini tanpa konfirmasi dari server?</string>
+    <string name="erase_message">Server Tomi Anda tidak dapat mengonfirmasi bahwa ruang Anda telah dihapus. Ruang mungkin belum dihapus di server Anda; jika masih ada, ponsel ini tidak akan lagi memiliki akses ke ruang tersebut.</string>
+    <string name="erase_detail">Semua yang disimpan ponsel ini akan dihapus secara permanen: item, konten tersembunyi, file, dan kunci.</string>
+    <string name="erase_checkbox">Saya mengerti: ini permanen.</string>
+    <string name="erase_confirm">Bersihkan ponsel ini</string>
+    <string name="erase_in_progress">Membersihkan…</string>
+    <string name="erase_checking">Tomi sedang memeriksa dengan server Anda…</string>
+    <string name="erase_waiting">Permintaan ke server Anda masih berlangsung. Tomi menunggunya selesai sebelum membersihkan. Tidak ada yang dihapus.</string>
+    <string name="erase_not_allowed">Tomi harus memeriksa dengan server Anda terlebih dahulu. Coba lagi sebentar lagi.</string>
+    <string name="erase_expired">Jawaban dari server Anda tidak berlaku lagi: sudah terlalu lama, atau server Anda telah memberi jawaban berbeda sejak itu. Tidak ada yang dihapus. Coba lagi sebentar lagi.</string>
+    <string name="erase_unavailable_biometric">Untuk membersihkan tanpa konfirmasi dari server, siapkan kunci layar (kode, sidik jari, atau wajah) di setelan ponsel. Mencopot pemasangan Tomi juga menghapus semua yang disimpannya.</string>
+    <string name="platform_android">Android</string>
+    <string name="platform_windows">Windows</string>
+    <string name="platform_other">Lainnya</string>
+
+    <!-- Add a device (the inviting device) -->
+    <string name="invite_title">Tambahkan perangkat</string>
+    <string name="invite_starting">Menyiapkan kode…</string>
+    <string name="invite_intro">Di perangkat baru, buka Tomi, lalu pindai kode QR ini atau masukkan kode undangan.</string>
+    <string name="invite_qr_description">Kode QR undangan</string>
+    <string name="invite_single_use">Kode ini hanya berlaku sekali. Kode diperbarui sendiri selama layar ini tetap terbuka.</string>
+    <string name="invite_verify_body">Pastikan kode yang sama ditampilkan di %1$s.</string>
+    <string name="invite_verify_hint">Jika perangkat lain menampilkan error, bukan kode, ketuk “Kodenya berbeda”.</string>
+    <string name="invite_add">Tambahkan perangkat ini</string>
+    <string name="invite_adding_title">Menunggu perangkat baru</string>
+    <string name="invite_adding_body">Konfirmasi juga di %1$s bahwa kodenya sama. Perangkat ditambahkan begitu hal itu dilakukan.</string>
+    <string name="invite_done_history">%1$s akan mengambil riwayat ruang Anda. Ini mungkin memerlukan waktu.</string>
+    <string name="invite_failed_title">Perangkat tidak ditambahkan</string>
+    <string name="invite_new_code">Kode baru</string>
+    <string name="invite_notice_failed">Penambahan perangkat tidak selesai. Kode undangan baru sudah siap.</string>
+    <string name="invite_notice_refused">Penambahan perangkat dibatalkan. Kode undangan baru sudah siap.</string>
+    <string name="invite_error_expired">Kode sudah kedaluwarsa. Buat kode baru.</string>
+    <string name="invite_error_cancelled">Penambahan perangkat dibatalkan di perangkat lain.</string>
+    <string name="invite_error_busy">Perangkat lain sedang ditambahkan. Selesaikan itu atau tunggu sebentar, lalu coba lagi.</string>
+    <string name="invite_error_failed">Penambahan perangkat tidak selesai. Coba lagi.</string>
+    <string name="invite_auth_required_title">Konfirmasi diperlukan</string>
+    <string name="invite_auth_required_body">Untuk menambahkan perangkat, konfirmasi identitas Anda dengan sidik jari, wajah, atau kode kunci layar ponsel Anda.</string>
+    <string name="invite_auth_unavailable_body">Untuk menambahkan perangkat, siapkan terlebih dahulu kunci layar (kode, sidik jari, atau wajah) di setelan ponsel.</string>
+    <string name="invite_auth_retry">Konfirmasi</string>
+    <string name="invite_notice_auth_denied">Konfirmasi dibatalkan: tidak ada yang ditambahkan. Ketuk “Tambahkan perangkat ini” lagi saat Anda siap.</string>
+
+    <!-- Create the space (the first device) -->
+    <string name="create_title">Buat ruang Anda</string>
+    <string name="create_intro">Server Tomi Anda memberi Anda kunci instalasi, dalam bentuk kode QR atau teks.</string>
+    <string name="create_token_label">Kunci instalasi</string>
+    <string name="create_or_paste">atau tempel kuncinya</string>
+    <string name="create_scan_button">Pindai kode QR</string>
+    <string name="create_scan_button_description">Pindai kode QR kunci instalasi dengan kamera</string>
+    <string name="create_scan_preview_description">Pratinjau kamera untuk memindai kode QR kunci instalasi</string>
+    <string name="create_scan_cancel">Tutup pemindai</string>
+    <string name="create_camera_denied">Akses kamera ditolak. Anda dapat menempel atau memasukkan kunci sebagai gantinya.</string>
+    <string name="create_error_qr">Kode QR ini bukan kunci instalasi maupun tautan pembuatan. Pindai kode dari server Tomi Anda atau masukkan kuncinya.</string>
+    <string name="create_where_button">Di mana kuncinya?</string>
+    <string name="create_where_title">Di mana menemukan kuncinya?</string>
+    <string name="create_where_body">Server Tomi Anda menampilkannya saat instalasi, hanya sekali, dengan kode QR.</string>
+    <string name="create_where_other_title">Untuk mendapatkan kunci lain</string>
+    <string name="create_where_run">Jalankan perintah ini di server Anda:</string>
+    <string name="create_where_command" translatable="false">$ tomi-relay admin invite --new</string>
+    <string name="create_where_ok">Mengerti</string>
+    <string name="create_name_label">Nama perangkat ini</string>
+    <string name="create_name_edit">Ubah nama</string>
+    <string name="create_submit">Buat ruang saya</string>
+    <string name="create_join_instead">Gabung ke ruang yang ada</string>
+    <string name="create_done_title">Ruang Anda sudah siap</string>
+    <string name="create_done_body">%1$s adalah perangkat pertama di ruang Anda. Tambahkan perangkat lain dari Perangkat.</string>
+    <string name="create_relay_check_label">Relai: %1$s</string>
+    <string name="create_relay_check_hint">Pastikan ini relai Anda sebelum membuat ruang Anda.</string>
+    <string name="create_relay_from_link">Dibaca dari tautan atau kode QR.</string>
+    <string name="create_error_token">Kunci instalasi salah atau sudah digunakan. Periksa, lalu coba lagi.</string>
+    <string name="create_error_token_empty">Tempel kunci instalasi.</string>
+    <string name="create_error_name">Nama perangkat harus terdiri dari 1 hingga 64 karakter, tanpa spasi di awal atau di akhir.</string>
+    <string name="create_error_space_exists">Kunci ini sudah digunakan untuk membuat ruang. Tambahkan perangkat ini dari perangkat yang sudah ada di ruang tersebut.</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_pin_title">Sematkan Tomi di bagian atas menu berbagi</string>
+    <string name="onboarding_pin_body">Sentuh lama Tomi, lalu pilih “Sematkan”. Tomi akan selalu berada di urutan pertama, di tempat yang sama.</string>
+    <string name="onboarding_open_share">Buka menu berbagi</string>
+    <string name="onboarding_later">Nanti</string>
+    <string name="onboarding_scene_pin_description">Ilustrasi: di menu berbagi, menyentuh lama Tomi memunculkan opsi Sematkan.</string>
+    <string name="onboarding_check_caption">Inilah yang seharusnya Anda lihat</string>
+    <string name="onboarding_check_title">Apakah Tomi ada di atas?</string>
+    <string name="onboarding_check_body">Buka lagi menu berbagi jika perlu. Tomi seharusnya muncul pertama, dengan ikon sematan.</string>
+    <string name="onboarding_check_yes">Ya, sudah</string>
+    <string name="onboarding_check_again">Belum, buka lagi menunya</string>
+    <string name="onboarding_scene_check_description">Ilustrasi: di menu berbagi, Tomi muncul pertama, dengan ikon sematan.</string>
+    <string name="onboarding_scene_share_title">Bagikan</string>
+    <string name="onboarding_scene_notes">Catatan</string>
+    <string name="onboarding_scene_browser">Browser</string>
+    <string name="onboarding_scene_files">File</string>
+    <string name="onboarding_sample_text">Uji berbagi Tomi</string>
+</resources>

@@ -10,8 +10,9 @@ import type {
   RenderMode,
   TransferPhase,
 } from "../api";
+import type { Dictionary } from "./index";
 
-export const fr = {
+export const fr: Dictionary = {
   appName: "Tomi",
   empty: {
     all: "Rien pour l'instant. Écris, colle ou dépose quelque chose ci-dessus pour l'envoyer à tes appareils.",

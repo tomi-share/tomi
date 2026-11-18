@@ -1,0 +1,579 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- All user-visible texts are Turkish, formal "siz" (the address used by the system apps). Keep identifiers and comments in English.
+     Vocabulary: "Gizli" / "Göster" (never "Sır" / "Açığa çıkar"). -->
+<resources>
+    <string name="app_name">Tomi</string>
+
+    <!-- Generic actions -->
+    <string name="action_cancel">İptal</string>
+    <string name="action_cancel_send">Gönderimi iptal et</string>
+    <string name="action_close">Kapat</string>
+    <string name="action_back">Geri</string>
+    <string name="action_save">Kaydet</string>
+    <string name="action_continue">Devam</string>
+    <string name="action_later">Daha sonra</string>
+    <string name="action_done">Bitti</string>
+    <string name="action_copy">Kopyala</string>
+    <string name="action_copy_link">Bağlantıyı kopyala</string>
+    <string name="action_open">Aç</string>
+    <string name="action_more">Diğer işlemler</string>
+    <string name="action_reveal">Göster</string>
+    <string name="action_hide">Gizle</string>
+    <string name="action_send">Gönder</string>
+    <string name="action_paste">Yapıştır</string>
+    <string name="action_attach">Dosya ekle</string>
+    <string name="action_remove_attachment">Kaldır: %1$s</string>
+    <string name="action_undo">Geri al</string>
+    <string name="action_options">Seçenekler</string>
+    <string name="action_search">Ara</string>
+    <string name="action_close_search">Aramayı kapat</string>
+    <string name="action_filters">Filtreler</string>
+    <string name="action_clear_filter">Filtreyi kaldır</string>
+    <string name="action_delete">Sil</string>
+    <string name="action_delete_local">Bu cihazdan sil</string>
+    <string name="action_delete_everywhere">Her yerden sil</string>
+    <string name="action_pin">Sabitle</string>
+    <string name="action_unpin">Sabitlemeyi kaldır</string>
+    <string name="action_archive">Arşivle</string>
+    <string name="action_unarchive">Arşivden çıkar</string>
+    <string name="action_share">Paylaş</string>
+    <string name="action_details">Ayrıntılar</string>
+    <string name="action_read_more">Devamını oku</string>
+
+    <!-- Feed -->
+    <string name="search_placeholder">Akışta ara</string>
+    <string name="filter_all">Tümü</string>
+    <string name="filter_links">Bağlantılar</string>
+    <string name="filter_text">Metin</string>
+    <string name="filter_files">Dosyalar</string>
+    <string name="filter_secrets">Gizli</string>
+    <string name="filter_archives">Arşiv</string>
+    <string name="section_pinned">Sabitlenenler</string>
+    <string name="section_recent">Son öğeler</string>
+    <string name="section_archives">Arşiv</string>
+    <string name="source_this_phone">Bu telefon</string>
+    <string name="label_masked">Gizli</string>
+    <plurals name="search_results">
+        <item quantity="one">%1$d sonuç</item>
+        <item quantity="other">%1$d sonuç</item>
+    </plurals>
+    <string name="search_masked_note">gizli öğelerde başlık ve içerik aranmaz</string>
+    <!-- 1: the counter ("2 results"), 2: the note about the hidden items -->
+    <string name="search_summary_with_note">%1$s · %2$s</string>
+    <string name="feed_empty">Henüz bir şey yok. Diğer cihazlarınıza göndermek için Tomi’ye bir bağlantı, metin veya dosya paylaşın.</string>
+    <string name="feed_empty_archives">Arşivlenmiş öğe yok. Arşivlemek için “Son öğeler” bölümündeki bir kartı sola kaydırın.</string>
+    <string name="feed_empty_filtered">Eşleşen öğe yok.</string>
+    <string name="banner_offline">Çevrimdışı · bekleniyor</string>
+    <string name="menu_share_help">Tomi’yi paylaşım menüsüne sabitle</string>
+    <string name="menu_leave_space">Bağlantıyı kes</string>
+    <string name="snackbar_copied_secret">Kopyalandı · 30 sn sonra temizlenecek</string>
+    <string name="snackbar_deleted_local">Bu cihazdan silindi</string>
+    <string name="snackbar_deleted_everywhere">Tüm cihazlardan silinmesi istendi</string>
+    <string name="snackbar_action_failed">İşlem tamamlanamadı. Bağlantınızı kontrol edip tekrar deneyin.</string>
+    <string name="snackbar_pin_failed">Sabitleme değiştirilemedi. Tekrar deneyin.</string>
+    <string name="snackbar_archived">Arşivlendi</string>
+    <string name="snackbar_unarchived">Arşivden çıkarıldı</string>
+    <string name="snackbar_archive_failed">Arşiv durumu değiştirilemedi. Tekrar deneyin.</string>
+    <string name="snackbar_nothing_to_share">Bu öğede paylaşılacak bir şey yok.</string>
+    <string name="detail_not_found">Öğe bulunamadı. Süresi dolmuş veya silinmiş olabilir.</string>
+    <string name="detail_masked_hint">Göster, Kopyala ve Paylaş için parmak iziniz veya ekran kilidi kodunuz gerekir.</string>
+    <string name="detail_revealed_hint">Ekrandan ayrıldığınız anda yeniden gizlenir.</string>
+    <string name="meta_type">Tür</string>
+    <string name="meta_sent_at">Gönderilme tarihi</string>
+    <string name="meta_expiry">Sona erme</string>
+    <string name="meta_pinned">Sabitlenmiş</string>
+    <string name="meta_status">Durum</string>
+    <string name="meta_yes">Evet</string>
+    <string name="meta_no">Hayır</string>
+    <string name="meta_never">Süresiz</string>
+    <string name="meta_after_read">Okunduktan sonra</string>
+    <plurals name="characters_count">
+        <item quantity="one">%1$d karakter</item>
+        <item quantity="other">%1$d karakter</item>
+    </plurals>
+
+    <!-- Card -->
+    <string name="unread_badge">Okunmadı</string>
+    <string name="pinned_badge">Sabitlenmiş</string>
+    <string name="archived_badge">Arşivlenmiş</string>
+    <string name="time_yesterday">Dün</string>
+    <string name="expires_in">%1$s içinde sona erer</string>
+    <string name="expires_after_read">ilk okumadan sonra kaybolur</string>
+    <!-- Attachment tiles (feed + detail). "More files": the button towards the detail, then the same as a caption when "Read more" takes its place. -->
+    <plurals name="more_files">
+        <item quantity="one">%1$d dosya daha</item>
+        <item quantity="other">%1$d dosya daha</item>
+    </plurals>
+    <plurals name="more_files_caption">
+        <item quantity="one">+ %1$d dosya daha</item>
+        <item quantity="other">+ %1$d dosya daha</item>
+    </plurals>
+    <!-- %1$d = count, %2$s = total size ("4 files · 4.9 MB"). Shown from 2 attachments on, so "one" is only for the form. -->
+    <plurals name="attachments_summary_files">
+        <item quantity="one">%1$d dosya · %2$s</item>
+        <item quantity="other">%1$d dosya · %2$s</item>
+    </plurals>
+    <plurals name="attachments_summary_images">
+        <item quantity="one">%1$d görsel · %2$s</item>
+        <item quantity="other">%1$d görsel · %2$s</item>
+    </plurals>
+    <plurals name="secret_files_hidden">
+        <item quantity="one">%1$d gizli dosya</item>
+        <item quantity="other">%1$d gizli dosya</item>
+    </plurals>
+    <plurals name="remaining_days">
+        <item quantity="one">%1$d gün</item>
+        <item quantity="other">%1$d gün</item>
+    </plurals>
+    <plurals name="remaining_hours">
+        <item quantity="one">%1$d saat</item>
+        <item quantity="other">%1$d saat</item>
+    </plurals>
+    <plurals name="remaining_minutes">
+        <item quantity="one">%1$d dakika</item>
+        <item quantity="other">%1$d dakika</item>
+    </plurals>
+    <string name="kind_secret">Gizli</string>
+    <string name="kind_image">Görsel</string>
+    <string name="kind_file">Dosya</string>
+    <string name="kind_link">Bağlantı</string>
+    <string name="kind_unreadable">Okunamıyor</string>
+    <string name="unreadable_update_required">Bu öğeyi okumak için bir güncelleme gerekiyor. Öğe saklanır ve Tomi güncellendikten sonra gösterilir.</string>
+    <string name="unreadable_decryption_failed">Bu öğe şimdilik okunamıyor. Saklanıyor: bir eşitleme veya güncelleme onu okunabilir hale getirebilir.</string>
+    <string name="kind_rich_text">Zengin metin</string>
+    <string name="kind_text">Metin</string>
+    <!-- Internal image viewer -->
+    <string name="action_view_image">Görseli görüntüle</string>
+    <string name="viewer_save">Kaydet</string>
+    <string name="viewer_action_delete">Sil</string>
+    <string name="viewer_delete_local">Görseli bu cihazdan sil</string>
+    <string name="viewer_delete_everywhere">Görseli her yerden sil</string>
+    <string name="viewer_image_description">Görsel %1$d / %2$d</string>
+    <string name="viewer_position">%1$d/%2$d</string>
+    <string name="viewer_locked">Gizli görsel. Göstermek için kimliğinizi doğrulayın.</string>
+    <string name="viewer_load_failed">Bu görsel gösterilemedi.</string>
+    <string name="viewer_no_image">Gösterilecek görsel yok.</string>
+    <string name="snackbar_image_saved">Görsel galeriye kaydedildi</string>
+    <string name="snackbar_file_unavailable">Bu dosya açılamadı. Henüz indirilmemiş olabilir veya onu açabilecek bir uygulama yok.</string>
+    <string name="snackbar_file_downloaded">Dosya Downloads/Tomi klasörüne kaydedildi</string>
+    <string name="snackbar_file_download_failed">Dosya kaydedilemedi. Tekrar deneyin.</string>
+    <string name="snackbar_image_unavailable">Bu görsel şu anda kullanılamıyor.</string>
+    <string name="snackbar_image_failed">İşlem başarısız oldu. Tekrar deneyin.</string>
+    <!-- Removal of ONE attachment of an item (the item stays) -->
+    <string name="snackbar_image_deleted_local">Görsel bu cihazdan silindi</string>
+    <string name="snackbar_image_deleted_everywhere">Görsel her yerden silindi</string>
+    <string name="snackbar_file_deleted_local">Dosya bu cihazdan silindi</string>
+    <string name="snackbar_file_deleted_everywhere">Dosya her yerden silindi</string>
+    <string name="file_row_delete">Bu dosyayı sil</string>
+    <string name="file_row_actions">Bu dosya için işlemler</string>
+    <string name="file_download">İndir</string>
+    <string name="file_delete_local">Dosyayı bu cihazdan sil</string>
+    <string name="file_delete_everywhere">Dosyayı her yerden sil</string>
+    <string name="dialog_delete_file_everywhere_title">Dosya her yerden silinsin mi?</string>
+    <string name="dialog_delete_file_everywhere_named">“%1$s” tüm cihazlarınızdan ve Tomi sunucunuzdan silinecek. Çevrimdışı cihazlar yeniden bağlandıklarında onu silecek. Bu işlem kalıcıdır.</string>
+    <string name="dialog_delete_file_everywhere_secret">Bu gizli dosya tüm cihazlarınızdan ve Tomi sunucunuzdan silinecek. Onu daha önce göstermiş bir cihaz bir kopyasını saklamış olabilir. Bu işlem kalıcıdır.</string>
+    <string name="biometric_title_image">Gizli görseli göster</string>
+    <string name="biometric_subtitle_image">Kimliğinizi doğrulayın. Doğrulama 2 dakika geçerli kalır.</string>
+    <string name="biometric_title_save_image">Gizli görseli kaydet</string>
+    <string name="biometric_subtitle_save_image">Görsel galeriye yazılmadan önce kimliğinizi doğrulayın. Doğrulama 2 dakika geçerli kalır.</string>
+    <!-- Text modes: "Preview" (styled, default) and "Markdown" (the literal source) -->
+    <string name="render_preview">Önizleme</string>
+    <string name="render_markdown">Markdown</string>
+
+    <!-- Code file screen -->
+    <string name="action_view_code">Dosyayı aç</string>
+    <string name="code_search">Dosyada ara</string>
+    <string name="code_search_placeholder">Dosyada ara</string>
+    <string name="code_search_previous">Önceki eşleşme</string>
+    <string name="code_search_next">Sonraki eşleşme</string>
+    <string name="code_copy_file">Dosyayı kopyala</string>
+    <string name="code_wrap">Satırları kaydır</string>
+    <string name="code_locked">Gizli dosya. Göstermek için kimliğinizi doğrulayın.</string>
+    <string name="code_no_file">Gösterilecek kod dosyası yok.</string>
+    <string name="code_unavailable">Bu dosya şu anda gösterilemiyor.</string>
+    <string name="code_too_large">Bu dosya gösterilemeyecek kadar büyük (en fazla 2 MB).</string>
+    <string name="code_binary">Bu dosya metin değil: burada gösterilemez.</string>
+    <string name="code_no_colours_language">Bu dil için söz dizimi renklendirmesi yok.</string>
+    <string name="code_no_colours_size">Söz dizimi renklendirmesi kullanılamıyor: dosya çok uzun (en fazla 50 KB veya 2.000 satır).</string>
+    <string name="biometric_title_file">Gizli dosyayı göster</string>
+    <string name="biometric_subtitle_file">Kimliğinizi doğrulayın. Doğrulama 2 dakika geçerli kalır.</string>
+    <string name="dialog_delete_everywhere_title">Her yerden silinsin mi?</string>
+    <string name="dialog_delete_everywhere_message">Öğe tüm cihazlarınızdan ve Tomi sunucunuzdan silinecek. Çevrimdışı cihazlar yeniden bağlandıklarında onu silecek. Bu işlem kalıcıdır.</string>
+    <string name="dialog_delete_everywhere_secret">Bu gizli içerik tüm cihazlarınızdan ve Tomi sunucunuzdan silinecek. Onu daha önce göstermiş bir cihaz bir kopyasını saklamış olabilir. Bu işlem kalıcıdır.</string>
+    <string name="dialog_delete_image_everywhere_title">Görsel her yerden silinsin mi?</string>
+    <string name="dialog_delete_image_everywhere_message">Bu görsel tüm cihazlarınızdan ve Tomi sunucunuzdan silinecek. Çevrimdışı cihazlar yeniden bağlandıklarında onu silecek. Bu işlem kalıcıdır.</string>
+    <string name="dialog_delete_image_everywhere_secret">Bu gizli görsel tüm cihazlarınızdan ve Tomi sunucunuzdan silinecek. Onu daha önce göstermiş bir cihaz bir kopyasını saklamış olabilir. Bu işlem kalıcıdır.</string>
+
+    <!-- System share (Android ACTION_SEND) of an item -->
+    <string name="share_chooser_title">Şununla paylaş</string>
+    <!-- Neutral title of the preview of the system share sheet for a hidden item: the sheet must not show the content. -->
+    <string name="share_hidden_preview_title">Gizli içerik</string>
+    <string name="share_no_app">Bu içeriği alabilecek bir uygulama yok.</string>
+
+    <!-- Delivery status -->
+    <string name="status_received">Alındı</string>
+    <string name="status_queued">Gönderilmeyi bekliyor</string>
+    <string name="status_waiting_network">Ağ bekleniyor</string>
+    <string name="status_sent">Gönderildi</string>
+    <string name="status_failed">Gönderilemedi</string>
+    <string name="status_delivered_all">Tümüne teslim edildi</string>
+    <string name="status_delivered_partial">%1$d/%2$d cihaza teslim edildi</string>
+    <string name="status_expired">%1$d cihaza teslim edildi · %2$s için teslimattan önce süresi doldu</string>
+
+    <!-- Expiry -->
+    <string name="expiry_hour1">1 sa</string>
+    <string name="expiry_day1">1 g</string>
+    <string name="expiry_day7">7 g</string>
+    <string name="expiry_day30">30 g</string>
+    <string name="expiry_never">Süresiz</string>
+    <string name="expiry_after_read">Okunduktan sonra</string>
+    <string name="expiry_chip">Sona erme: %1$s</string>
+    <string name="expiry_label">Sona erme</string>
+    <string name="expiry_after_read_hint">“Okunduktan sonra”: ilk açıldığı anda her yerden silinir.</string>
+
+    <!-- Compose / send -->
+    <string name="send_title">Gönder</string>
+    <string name="send_title_label">Başlık (isteğe bağlı)</string>
+    <string name="send_content_label">Metin veya bağlantı</string>
+    <string name="label_secret">İçeriği gizle</string>
+    <string name="label_secret_off">“Göster” seçilene kadar önizleme her yerde gizli</string>
+    <string name="label_secret_on">Otomatik olarak açıldı. Kapatabilirsiniz.</string>
+    <string name="detect_link">Bağlantı algılandı</string>
+    <string name="detect_text">Metin</string>
+    <string name="detect_files">Dosya eklendi</string>
+    <string name="detect_masked">Gizli</string>
+    <string name="detect_masked_password">Bu bir parolaya benziyor.</string>
+    <string name="detect_to_devices">Alıcı: %1$s</string>
+    <string name="hint_secret_sensitive">Kaynak uygulama bu içeriği hassas olarak işaretledi: gizli olarak gönderilir.</string>
+    <string name="hint_secret_heuristic">Bu içerik bir parolaya veya anahtara benziyor: gizlendi. Bunu değiştirebilirsiniz.</string>
+    <string name="notice_paste_empty">Panoda metin yok.</string>
+    <string name="notice_link_appended_to_draft">Başka bir uygulamadan gelen bir bağlantı taslağınıza eklendi. Göndermeden önce kontrol edin.</string>
+    <string name="notice_params_dropped">Bağlantının bazı parametreleri yok sayıldı (çok uzun veya geçersiz).</string>
+    <string name="notice_too_late">Çok geç: öğe zaten gönderildi.</string>
+    <string name="notice_undo_failed">Gönderim iptal edilemedi. Öğe zaten gönderilmiş olabilir.</string>
+    <string name="notice_send_failed">Gönderilemedi. Metniniz saklandı, tekrar deneyin.</string>
+    <string name="banner_sent">Gönderildi</string>
+    <plurals name="banner_files_skipped">
+        <item quantity="one">%1$d dosya atlandı: dosya başına en fazla 25 MB</item>
+        <item quantity="other">%1$d dosya atlandı: dosya başına en fazla 25 MB</item>
+    </plurals>
+    <string name="sheet_title">Gönderim seçenekleri</string>
+
+    <!-- Share target -->
+    <string name="share_not_paired">Tomi hiçbir alana bağlı değil. Alanınıza katılmak için uygulamayı açın.</string>
+    <string name="share_open_app">Tomi’yi aç</string>
+    <string name="share_failed">Gönderilemedi. Tekrar deneyin.</string>
+    <string name="share_too_late">Çok geç: öğe zaten gönderildi. Onu Tomi akışından silebilirsiniz.</string>
+    <string name="share_secret_detected">Bu, gizlenmesi gereken bir içeriğe benziyor. Göndermeden önce onaylayın.</string>
+    <string name="preview_secret_masked">••••••••••</string>
+    <plurals name="preview_files">
+        <item quantity="one">%1$d dosya</item>
+        <item quantity="other">%1$d dosya</item>
+    </plurals>
+    <string name="shortcut_short_label">Tomi</string>
+    <string name="shortcut_long_label">Tomi ile cihazlarıma gönder</string>
+    <string name="tile_label">Gönder</string>
+
+    <!-- Biometrics -->
+    <string name="biometric_title_secret">Gizli içeriği göster</string>
+    <string name="biometric_subtitle_secret">Kimliğinizi doğrulayın. Doğrulama 2 dakika geçerli kalır.</string>
+    <string name="biometric_title_share">Gizli içeriği paylaş</string>
+    <string name="biometric_subtitle_share">Başka bir uygulamaya göndermeden önce kimliğinizi doğrulayın. Doğrulama 2 dakika geçerli kalır.</string>
+    <string name="biometric_title_copy_secret">Gizli içeriği kopyala</string>
+    <string name="biometric_subtitle_from_notification">İçerik kopyalanacak, ardından 30 sn sonra panodan temizlenecek.</string>
+    <string name="biometric_title_revoke">Cihazın erişimini kes</string>
+    <string name="biometric_subtitle_revoke">Hassas işlem: parmak iziniz, yüzünüz veya telefonun ekran kilidi koduyla onaylayın.</string>
+    <string name="biometric_title_erase">Bu telefonu temizle</string>
+    <string name="biometric_subtitle_erase">Bu işlem geri alınamaz: parmak iziniz, yüzünüz veya telefonun ekran kilidi koduyla onaylayın.</string>
+    <string name="biometric_title_pair">Cihaz ekle</string>
+    <string name="biometric_subtitle_pair">Yeni cihaz, gizli öğeler dahil tüm geçmişi alacak. Parmak iziniz, yüzünüz veya telefonun ekran kilidi koduyla onaylayın.</string>
+    <string name="biometric_title_delete_space">Alanınızı silin</string>
+    <string name="biometric_subtitle_delete_space">Bu işlem geri alınamaz: parmak iziniz, yüzünüz veya telefonun ekran kilidi koduyla onaylayın.</string>
+    <string name="toast_biometric_unavailable">Gizli içeriği göstermek, kopyalamak veya paylaşmak için bir ekran kilidi ya da biyometri ayarlayın.</string>
+    <string name="toast_item_not_found">Öğe bulunamadı</string>
+
+    <!-- Notifications -->
+    <string name="channel_group_incoming">Alınan öğeler</string>
+    <string name="channel_links">Bağlantılar</string>
+    <string name="channel_links_desc">Diğer cihazlarınızdan alınan bağlantılar</string>
+    <string name="channel_text">Metin</string>
+    <string name="channel_text_desc">Diğer cihazlarınızdan alınan metinler</string>
+    <string name="channel_files">Dosyalar</string>
+    <string name="channel_files_desc">Diğer cihazlarınızdan alınan dosyalar ve görseller</string>
+    <string name="channel_secrets">Gizli</string>
+    <string name="channel_secrets_desc">Alınan gizli içerik. Kilit ekranında asla gösterilmez, önizleme yok.</string>
+    <string name="channel_devices">Cihazlar</string>
+    <string name="channel_devices_desc">Alanınıza bir cihaz eklendiğinde uyarır. İçerik yok, yalnızca cihazın adı.</string>
+    <string name="notif_device_added_title">Yeni cihaz eklendi</string>
+    <string name="notif_device_added_body">“%1$s” alanınıza katıldı. Siz değil misiniz? Cihazlar bölümünü açın ve erişimini kesin.</string>
+    <string name="notif_title_secret">Gizli içerik · %1$s</string>
+    <string name="notif_title_link">%1$s cihazından bağlantı</string>
+    <string name="notif_title_image">%1$s cihazından görsel</string>
+    <string name="notif_title_file">%1$s cihazından dosya</string>
+    <string name="notif_title_text">%1$s cihazından metin</string>
+    <string name="notif_title_unreadable">%1$s cihazından öğe</string>
+    <string name="notif_body_unreadable">Şimdilik okunamıyor: Tomi’nin güncellenmesi gerekiyor</string>
+    <string name="notif_body_secret">Kopyalamak için dokunun (kimlik doğrulama gerekir)</string>
+    <string name="notif_body_generic">Yeni öğe</string>
+    <string name="notif_public_title">Tomi: yeni öğe</string>
+    <string name="notif_action_copy">Kopyala</string>
+    <string name="notif_action_view">Görüntüle</string>
+    <string name="notif_summary_text">Son gönderen: %1$s</string>
+    <plurals name="notif_summary_title">
+        <item quantity="one">%1$d yeni öğe</item>
+        <item quantity="other">%1$d yeni öğe</item>
+    </plurals>
+
+    <!-- Pairing -->
+    <!-- Welcome: the two doors of a device that is not in a space yet -->
+    <string name="welcome_title">Cihazlarınız, tek bir alan</string>
+    <string name="welcome_intro">Bağlantıları, notları ve parolaları uçtan uca şifrelenmiş olarak bir cihazınızdan diğerine gönderin.</string>
+    <string name="welcome_question">Nasıl başlamak istersiniz?</string>
+    <string name="welcome_create_title">Alanınızı oluşturun</string>
+    <string name="welcome_create_hint">Bu ilk cihazınız. Tomi sunucunuzun QR kodunu veya kurulum anahtarını hazır bulundurun.</string>
+    <string name="welcome_join_title">Alanınıza katılın</string>
+    <string name="welcome_join_hint">Tomi başka bir cihazınızda zaten var mı? O cihazı açık ve yakınınızda tutun.</string>
+    <!-- Read by the screen reader for a whole door: title, then what it takes. -->
+    <string name="welcome_door_description">%1$s. %2$s</string>
+
+    <!-- Join a space -->
+    <string name="pair_title">Alanınıza katılın</string>
+    <string name="pair_intro">Diğer cihazınızda şunu açın</string>
+    <string name="pair_other_device_caption">Diğer cihazınızda</string>
+    <string name="pair_illustration_description">Çizim: diğer cihazınızda “Cihaz ekle” ekranı bir QR kodu ve bir davet kodu gösterir, örneğin 7-crayon-renard.</string>
+    <string name="pair_scan_preview_description">Diğer cihazın QR kodunu taramak için kamera önizlemesi</string>
+    <string name="pair_link_received">Davet bağlantısı alındı</string>
+    <string name="pair_link_received_relay">Aktarıcı: %1$s</string>
+    <string name="pair_link_received_warning">Bu bağlantı başka bir uygulamadan veya bir web sayfasından geliyor. Yalnızca az önce kendiniz oluşturduğunuz bir alana, tanıdığınız bir aktarıcıyla katılın.</string>
+    <string name="pair_link_received_hint">Hiçbir şey otomatik olarak yapılmaz. Devam etmek için “Katıl” düğmesine dokunun.</string>
+    <string name="pair_join">Katıl</string>
+    <string name="pair_scan_hint">Kamera yalnızca bu tarama için kullanılır.</string>
+    <string name="pair_scan_button">QR kodunu tara</string>
+    <string name="pair_enter_code_button">Davet kodunu gir</string>
+    <string name="demo_enter">Örnek verilerle dene</string>
+    <string name="demo_banner">Demo modu: örnek veriler, hiçbir şey gönderilmez.</string>
+    <string name="demo_leave">Demodan çık</string>
+    <string name="pair_camera_denied">Kamera erişimi reddedildi. Bunun yerine davet kodunu girebilirsiniz.</string>
+    <string name="pair_code_title">Davet kodunu girin</string>
+    <string name="pair_code_intro">Kodu diğer cihazınızda, QR kodunun altında bulabilirsiniz.</string>
+    <string name="pair_code_label">Davet kodu</string>
+    <string name="pair_code_hint">Sayıdan sonra iki kelime. Aksan veya büyük harf gerekmez.</string>
+    <string name="relay_field_label">Aktarıcı</string>
+    <string name="relay_field_hint">Tomi sunucunuzun adresi, örneğin relay.example.org.</string>
+    <string name="relay_other_button">Başka aktarıcı</string>
+    <string name="relay_current">Aktarıcı: %1$s</string>
+    <string name="pair_scan_instead">Bunun yerine QR kodunu tara</string>
+    <string name="pair_verify_title">Kodu kontrol edin</string>
+    <string name="pair_verify_body">İki cihazda da aynı kodun gösterildiğini kontrol edin.</string>
+    <plurals name="pair_verify_peer_members">
+        <item quantity="one">Alanınızda %1$d cihaz var</item>
+        <item quantity="other">Alanınızda %1$d cihaz var</item>
+    </plurals>
+    <string name="pair_verify_relay_label">Aktarıcı: %1$s</string>
+    <string name="pair_verify_relay_hint">Devam etmeden önce bunun sizin aktarıcınız olduğunu kontrol edin.</string>
+    <string name="pair_verify_code_description">Doğrulama kodu %1$s</string>
+    <string name="pair_verify_validity">%1$s daha geçerli</string>
+    <string name="pair_verify_same">Kodlar aynı</string>
+    <string name="pair_verify_different">Kodlar farklı</string>
+    <string name="pair_verify_mismatch">Kodlar eşleşmedi: cihaz ekleme iptal edildi. Diğer cihazdan yeniden başlayın.</string>
+    <string name="pair_working">Diğer cihaza bağlanılıyor…</string>
+    <string name="pair_waiting_title">Diğer cihaz bekleniyor</string>
+    <string name="pair_waiting_body">Kodların aynı olduğunu %1$s cihazında da onaylayın. Bu yapılır yapılmaz cihaz ekleme tamamlanır.</string>
+    <string name="pair_history_title">Geçmiş alınsın mı?</string>
+    <plurals name="pair_history_body">
+        <item quantity="one">Alanınızda zaten %1$d öğe var. Bu öğeyi bu telefona alabilirsiniz.</item>
+        <item quantity="other">Alanınızda zaten %1$d öğe var. Bu öğeleri bu telefona alabilirsiniz.</item>
+    </plurals>
+    <string name="pair_history_size">Alınacak boyut yaklaşık %1$s.</string>
+    <string name="pair_history_yes">Evet, geçmişi al</string>
+    <string name="pair_history_yes_hint">Gizli ve sabitlenmiş öğeler dahil, alanınızdaki her şey buraya gelir.</string>
+    <string name="pair_history_no">Hayır, boş bir akışla başla</string>
+    <string name="pair_history_no_hint">Yalnızca bundan sonra gönderilenler buraya gelir.</string>
+    <string name="pair_history_footer">Bir öğeyi daha sonra her zaman silebilirsiniz.</string>
+    <string name="pair_done_title">Cihaz eklendi</string>
+    <string name="pair_done_body">%1$s artık alanınızın bir parçası.</string>
+    <string name="pair_notifications_rationale">Bir cihaz size bir şey gönderdiğinde haberdar olmak için bildirimlere izin verin.</string>
+    <string name="pair_notifications_enable">Bildirimlere izin ver</string>
+    <string name="pair_error_qr_unknown">Bu QR kodu bir Tomi daveti değil.</string>
+    <string name="pair_error_code_format">Diğer cihazda gösterilen davet kodunu girin, örneğin 7-crayon-renard.</string>
+    <string name="pair_error_invalid">Bu davet kodu geçerli değil. Sayıyı ve iki kelimeyi kontrol edin.</string>
+    <string name="pair_error_wrong_code">Kod yanlış. Diğer cihazda yeni bir davet kodu oluşturun.</string>
+    <string name="pair_error_taken">Bu davet kodu zaten kullanıldı. Diğer cihazda yeni bir kod oluşturun.</string>
+    <string name="pair_error_interrupted">Bağlantı kesildi. Diğer cihazda yeni bir davet kodu oluşturun.</string>
+    <string name="pair_error_cancelled">Cihaz ekleme diğer cihazda iptal edildi.</string>
+    <string name="pair_error_update">Bu cihazı eklemek için iki cihazda da Tomi’yi güncelleyin.</string>
+    <string name="pair_error_blocked">Bu cihaz artık Tomi sunucunuzu kullanamıyor. Hâlâ alanınızın bir parçası olduğunu kontrol edin.</string>
+    <string name="pair_error_space_full">Alanınız en fazla cihaz sayısına ulaştı. Cihaz listesinden birini çıkarın.</string>
+    <string name="pair_error_relay_required">Aktarıcı adresini girin.</string>
+    <string name="pair_error_relay_invalid">Bu aktarıcı adresi geçerli değil. relay.example.org biçiminde yazın.</string>
+    <string name="pair_error_unexpected">Cihaz ekleme tamamlanmadı. Tekrar deneyin.</string>
+    <string name="pair_error_expired">Kodun süresi doldu. Yeni bir kod oluşturun.</string>
+    <string name="pair_error_network">Ağ kullanılamıyor. Tekrar deneyin.</string>
+
+    <!-- Devices -->
+    <string name="unreadable_title">Okunamayan veriler</string>
+    <string name="unreadable_message">Tomi bu telefondaki verilerini açamıyor. Uygulamanın verileri silinmiş veya bozulmuş olabilir (telefon geri yüklendi, uygulama verileri temizlendi) ya da verileri koruyan anahtar artık kullanılamıyor. Diğer cihazlarınız etkilenmez.</string>
+    <string name="unreadable_retry">Tekrar dene</string>
+    <string name="unreadable_reset">Tomi’yi sıfırla</string>
+    <string name="unreadable_reset_title">Tomi’nin bu telefondaki verileri temizlensin mi?</string>
+    <string name="unreadable_reset_message">Tomi’nin burada tuttuğu her şey silinecek ve bu telefonun alanınıza yeniden katılması gerekecek. Diğer cihazlarınız öğelerini korur; bu eski cihazı onların cihaz listesinden çıkarmayı unutmayın.</string>
+    <string name="unreadable_reset_confirm">Temizle ve sıfırla</string>
+    <string name="unreadable_reset_failed">Temizleme başarısız oldu. Tekrar deneyin veya Android ayarlarından uygulamanın verilerini temizleyin.</string>
+    <string name="share_unreadable">Tomi verilerini açamıyor. Onarmak için uygulamayı açın.</string>
+    <string name="devices_title">Cihazlar</string>
+    <string name="devices_add">Cihaz ekle</string>
+    <string name="devices_empty">Alanınızda henüz cihaz yok.</string>
+    <string name="devices_this_device">Bu cihaz</string>
+    <string name="devices_rename">Yeniden adlandır</string>
+    <string name="devices_revoke">Erişimi kes</string>
+    <string name="devices_revoke_title">“%1$s” cihazının erişimi kesilsin mi?</string>
+    <string name="devices_revoke_message">Bu cihaz alandan çıkarılacak ve alan anahtarı yenilenecek. Yeni öğeleri artık okuyamayacak. Sizden parmak iziniz, yüzünüz veya ekran kilidi kodunuz istenecek.</string>
+    <string name="devices_rename_failed">Cihaz yeniden adlandırılamadı. Bağlantınızı kontrol edip tekrar deneyin.</string>
+    <string name="devices_revoke_failed">Cihazın erişimi kesilemedi. Bağlantınızı kontrol edip tekrar deneyin.</string>
+    <string name="devices_revoking">Erişim kesiliyor: alan anahtarı yenileniyor, bu birkaç saniye sürebilir.</string>
+    <string name="devices_revoke_unavailable">Bu telefonda ekran kilidi ayarlı değil: erişim kesilemez. Ayarlardan bir kod, parmak izi veya yüz ayarlayın.</string>
+    <string name="rotation_stalled_title">Cihaz çıkarma tamamlanmayı bekliyor</string>
+    <string name="rotation_stalled_message">Çıkarılan bir cihaz alanınızın geçerli anahtarını hâlâ tutuyor olabilir. Tomi anahtarı yenilemeyi her saat yeniden deniyor. Tomi’yi diğer cihazlarınızda açmak yardımcı olur.</string>
+    <string name="snackbar_relay_revoked_admin">“%1$s”, aktarıcının yöneticisi tarafından çıkarıldı.</string>
+    <string name="snackbar_relay_revoked_self">Aktarıcıya göre “%1$s” alandan ayrıldı.</string>
+    <string name="snackbar_relay_revoked_other">“%1$s”, aktarıcı tarafından alandan çıkarıldı.</string>
+    <!-- Another device that has not shown up for a long time. Tomi only knows that, not that the app is uninstalled. -->
+    <string name="devices_inactive_hint">%1$s boyunca etkin değil. Artık kullanmıyor musunuz? Çıkarın.</string>
+    <plurals name="devices_inactive_duration">
+        <item quantity="one">%1$d gün</item>
+        <item quantity="other">%1$d gün</item>
+    </plurals>
+
+    <!-- Leaving the space (menu of the feed) -->
+    <string name="leave_title">Alanınızla bağlantı kesilsin mi?</string>
+    <string name="leave_message">Bu cihaz alanınızdan ayrılacak. Tuttuğu her şey silinecek: henüz gönderilmemiş olanlar dahil öğeler, gizli içerik, dosyalar ve anahtarlar. Diğer cihazlarınız kendi kopyalarını korur. Geri dönmek için bu cihazı başka bir cihazdan yeniden eklemeniz gerekecek.</string>
+    <string name="leave_confirm">Bağlantıyı kes</string>
+    <string name="leave_in_progress">Bağlantı kesiliyor…</string>
+    <string name="leave_error_update">Bağlantıyı kesebilmek için Tomi’yi güncelleyin. Hiçbir şey silinmedi.</string>
+    <string name="leave_error_unexpected">Tomi sunucunuz bağlantının kesilmesini reddetti. Hiçbir şey silinmedi: bu telefon alanınızda kalıyor.</string>
+
+    <!-- The only device: deleting the space (after the relay answered "last device") -->
+    <string name="delete_space_title">Alanınız silinsin mi?</string>
+    <string name="delete_space_message">Bu tek cihaz. Bağlantıyı kesmek alanınızı ve içindeki her şeyi kalıcı olarak siler.</string>
+    <string name="delete_space_detail">Tomi sunucunuz alanı siler, ardından bu telefon tuttuğu her şeyi siler: öğeler, gizli içerik, dosyalar ve anahtarlar. Bunları kimse kurtaramayacak.</string>
+    <string name="delete_space_confirm">Alanı sil</string>
+    <string name="delete_space_in_progress">Siliniyor…</string>
+    <string name="delete_space_error_relay_too_old">Tomi sunucunuz alanı silmek için çok eski. Sunucuyu güncelleyin, ardından tekrar deneyin. Hiçbir şey silinmedi.</string>
+    <string name="delete_space_error_update">Alanınızı silebilmek için Tomi’yi güncelleyin. Hiçbir şey silinmedi.</string>
+    <string name="delete_space_error_unexpected">Tomi sunucunuz alanı silmeyi reddetti. Hiçbir şey silinmedi.</string>
+    <string name="delete_space_unavailable_biometric">Alanınızı silmek için telefonun ayarlarından bir ekran kilidi (kod, parmak izi veya yüz) ayarlayın. Hiçbir şey silinmedi.</string>
+
+    <!-- A pending departure: banner at the top of the feed -->
+    <string name="departure_pending_leave_title">Bağlantı kesme bekliyor</string>
+    <string name="departure_pending_delete_title">Alan silme bekliyor</string>
+    <string name="departure_pending_checking">Tomi sunucunuzla kontrol ediyor. Hiçbir şey silinmedi.</string>
+    <string name="departure_pending_network">Tomi sunucunuz henüz onaylamadı. Hiçbir şey silinmedi. Ağ geri gelir gelmez Tomi yeniden dener.</string>
+    <string name="departure_pending_server">Tomi sunucunuzda geçici bir sorun var. Hiçbir şey silinmedi. Tomi yeniden deniyor.</string>
+    <string name="departure_pending_not_sent">İsteğiniz iletilemedi: bu telefon hâlâ alanınızın bir parçası. Hiçbir şey silinmedi.</string>
+    <string name="departure_pending_not_found">Tomi sunucunuz artık alanınızı bulamıyor veya bu telefonu artık tanımıyor. Hiçbir şey silinmedi.</string>
+    <string name="departure_cancelling_title">İptal ediliyor</string>
+    <string name="departure_cancelling">Tomi, sunucunuza önceden gönderilen isteğin tamamlanmasını bekliyor. Bu telefonda hiçbir şey silinmeyecek.</string>
+    <string name="departure_wiping">Bu telefon temizleniyor…</string>
+    <string name="departure_retry">Tekrar dene</string>
+    <string name="departure_cancel">İptal</string>
+    <string name="departure_cancelled_leave">Bağlantı kesme iptal edildi. Sunucunuz isteği zaten aldıysa bu telefon alandan çıkarılmış olarak görünecek; tuttuğu veriler okunabilir kalır.</string>
+    <string name="departure_cancelled_delete">Silme iptal edildi. Sunucunuz silmeyi zaten yaptıysa alanınız artık yalnızca bu telefonda var.</string>
+    <string name="departure_failed">Temizleme tamamlanmadı. Hiçbir şey silinmedi. Tekrar deneyin.</string>
+    <string name="space_not_found_title">Alan bulunamadı</string>
+    <string name="space_not_found_message">Tomi sunucunuz artık alanınızı bulamıyor. Sunucu sıfırlandıysa bu telefonu temizleyebilirsiniz; aksi halde önce sunucunuzu kontrol edin. Bu telefonda hiçbir şey silinmedi.</string>
+    <string name="space_revoked_title">Alandan çıkarıldı</string>
+    <string name="space_revoked_message">Bu telefon alanınızdan çıkarıldı. Tuttuğu veriler burada okunabilir kalır. Bağlantıyı kesmek bunları siler.</string>
+
+    <!-- "Erase anyway": erasing without a proof of the relay -->
+    <string name="erase_anyway">Yine de temizle</string>
+    <string name="erase_title">Bu telefon sunucu onayı olmadan temizlensin mi?</string>
+    <string name="erase_message">Tomi sunucunuz alanınızın silindiğini onaylayamıyor. Alan sunucunuzda silinmemiş olabilir; hâlâ varsa bu telefonun ona artık erişimi olmayacak.</string>
+    <string name="erase_detail">Bu telefonun tuttuğu her şey kalıcı olarak silinecek: öğeler, gizli içerik, dosyalar ve anahtarlar.</string>
+    <string name="erase_checkbox">Anlıyorum: bu işlem kalıcıdır.</string>
+    <string name="erase_confirm">Bu telefonu temizle</string>
+    <string name="erase_in_progress">Temizleniyor…</string>
+    <string name="erase_checking">Tomi sunucunuzla kontrol ediyor…</string>
+    <string name="erase_waiting">Sunucunuza yapılan bir istek hâlâ sürüyor. Tomi temizlemeden önce bunun bitmesini bekliyor. Hiçbir şey silinmedi.</string>
+    <string name="erase_not_allowed">Tomi önce sunucunuzla kontrol etmeli. Birazdan tekrar deneyin.</string>
+    <string name="erase_expired">Sunucunuzun yanıtı artık geçerli değil: çok eski veya sunucunuz o zamandan beri farklı yanıt verdi. Hiçbir şey silinmedi. Birazdan tekrar deneyin.</string>
+    <string name="erase_unavailable_biometric">Sunucu onayı olmadan temizlemek için telefonun ayarlarından bir ekran kilidi (kod, parmak izi veya yüz) ayarlayın. Tomi’yi kaldırmak da tuttuğu her şeyi siler.</string>
+    <string name="platform_android">Android</string>
+    <string name="platform_windows">Windows</string>
+    <string name="platform_other">Diğer</string>
+
+    <!-- Add a device (the inviting device) -->
+    <string name="invite_title">Cihaz ekle</string>
+    <string name="invite_starting">Kod hazırlanıyor…</string>
+    <string name="invite_intro">Yeni cihazda Tomi’yi açın, ardından bu QR kodunu tarayın veya davet kodunu girin.</string>
+    <string name="invite_qr_description">Davet QR kodu</string>
+    <string name="invite_single_use">Bu kod yalnızca bir kez çalışır. Bu ekran açık kaldığı sürece kendini yeniler.</string>
+    <string name="invite_verify_body">%1$s cihazında aynı kodun gösterildiğini kontrol edin.</string>
+    <string name="invite_verify_hint">Diğer cihaz kod yerine bir hata gösterirse “Kodlar farklı” düğmesine dokunun.</string>
+    <string name="invite_add">Bu cihazı ekle</string>
+    <string name="invite_adding_title">Yeni cihaz bekleniyor</string>
+    <string name="invite_adding_body">Kodların aynı olduğunu %1$s cihazında da onaylayın. Bu yapılır yapılmaz cihaz eklenir.</string>
+    <string name="invite_done_history">%1$s, alanınızın geçmişini alacak. Bu biraz zaman alabilir.</string>
+    <string name="invite_failed_title">Cihaz eklenmedi</string>
+    <string name="invite_new_code">Yeni kod</string>
+    <string name="invite_notice_failed">Cihaz ekleme tamamlanmadı. Yeni bir davet kodu hazır.</string>
+    <string name="invite_notice_refused">Cihaz ekleme iptal edildi. Yeni bir davet kodu hazır.</string>
+    <string name="invite_error_expired">Kodun süresi doldu. Yeni bir kod oluşturun.</string>
+    <string name="invite_error_cancelled">Cihaz ekleme diğer cihazda iptal edildi.</string>
+    <string name="invite_error_busy">Zaten bir cihaz ekleniyor. Bu işlemi bitirin veya biraz bekleyin, ardından tekrar deneyin.</string>
+    <string name="invite_error_failed">Cihaz ekleme tamamlanmadı. Tekrar deneyin.</string>
+    <string name="invite_auth_required_title">Onay gerekiyor</string>
+    <string name="invite_auth_required_body">Cihaz eklemek için parmak iziniz, yüzünüz veya telefonun ekran kilidi koduyla kimliğinizi doğrulayın.</string>
+    <string name="invite_auth_unavailable_body">Cihaz eklemek için önce telefonun ayarlarından bir ekran kilidi (kod, parmak izi veya yüz) ayarlayın.</string>
+    <string name="invite_auth_retry">Onayla</string>
+    <string name="invite_notice_auth_denied">Onay iptal edildi: hiçbir şey eklenmedi. Hazır olduğunuzda “Bu cihazı ekle” düğmesine yeniden dokunun.</string>
+
+    <!-- Create the space (the first device) -->
+    <string name="create_title">Alanınızı oluşturun</string>
+    <string name="create_intro">Tomi sunucunuz size QR kodu veya metin olarak bir kurulum anahtarı verdi.</string>
+    <string name="create_token_label">Kurulum anahtarı</string>
+    <string name="create_or_paste">veya anahtarı yapıştırın</string>
+    <string name="create_scan_button">QR kodunu tara</string>
+    <string name="create_scan_button_description">Kurulum anahtarının QR kodunu kamerayla tara</string>
+    <string name="create_scan_preview_description">Kurulum anahtarının QR kodunu taramak için kamera önizlemesi</string>
+    <string name="create_scan_cancel">Tarayıcıyı kapat</string>
+    <string name="create_camera_denied">Kamera erişimi reddedildi. Bunun yerine anahtarı yapıştırabilir veya girebilirsiniz.</string>
+    <string name="create_error_qr">Bu QR kodu ne bir kurulum anahtarı ne de bir oluşturma bağlantısı. Tomi sunucunuzun verdiği kodu tarayın veya anahtarı girin.</string>
+    <string name="create_where_button">Anahtar nerede?</string>
+    <string name="create_where_title">Anahtar nerede?</string>
+    <string name="create_where_body">Tomi sunucunuz anahtarı kurulum sırasında yalnızca bir kez, bir QR koduyla gösterdi.</string>
+    <string name="create_where_other_title">Başka bir anahtar almak için</string>
+    <string name="create_where_run">Sunucunuzda şu komutu çalıştırın:</string>
+    <string name="create_where_command" translatable="false">$ tomi-relay admin invite --new</string>
+    <string name="create_where_ok">Anladım</string>
+    <string name="create_name_label">Bu cihazın adı</string>
+    <string name="create_name_edit">Adı düzenle</string>
+    <string name="create_submit">Alanımı oluştur</string>
+    <string name="create_join_instead">Mevcut alana katıl</string>
+    <string name="create_done_title">Alanınız hazır</string>
+    <string name="create_done_body">%1$s, alanınızdaki ilk cihaz. Diğerlerini Cihazlar bölümünden ekleyin.</string>
+    <string name="create_relay_check_label">Aktarıcı: %1$s</string>
+    <string name="create_relay_check_hint">Alanınızı oluşturmadan önce bunun sizin aktarıcınız olduğunu kontrol edin.</string>
+    <string name="create_relay_from_link">Bağlantıdan veya QR kodundan okundu.</string>
+    <string name="create_error_token">Kurulum anahtarı yanlış veya zaten kullanılmış. Kontrol edip tekrar deneyin.</string>
+    <string name="create_error_token_empty">Kurulum anahtarını yapıştırın.</string>
+    <string name="create_error_name">Cihaz adı 1 ile 64 karakter arasında olmalı, başında veya sonunda boşluk olmamalı.</string>
+    <string name="create_error_space_exists">Bu anahtar bir alan oluşturmak için zaten kullanıldı. Bu cihazı, alanda zaten bulunan bir cihazdan ekleyin.</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_pin_title">Tomi’yi paylaşım menünüzün en üstüne sabitleyin</string>
+    <string name="onboarding_pin_body">Tomi’ye dokunup basılı tutun, ardından “Sabitle” seçeneğini belirleyin. Hep aynı yerde, ilk sırada kalır.</string>
+    <string name="onboarding_open_share">Paylaşım menüsünü aç</string>
+    <string name="onboarding_later">Daha sonra</string>
+    <string name="onboarding_scene_pin_description">Çizim: paylaşım menüsünde Tomi’ye dokunup basılı tutunca Sabitle seçeneği görünür.</string>
+    <string name="onboarding_check_caption">Görmeniz gereken ekran</string>
+    <string name="onboarding_check_title">Tomi en üstte mi?</string>
+    <string name="onboarding_check_body">Gerekirse paylaşım menüsünü yeniden açın. Tomi bir raptiyeyle ilk sırada görünmeli.</string>
+    <string name="onboarding_check_yes">Evet, tamam</string>
+    <string name="onboarding_check_again">Henüz değil, menüyü yeniden aç</string>
+    <string name="onboarding_scene_check_description">Çizim: paylaşım menüsünde Tomi bir raptiyeyle ilk sırada görünür.</string>
+    <string name="onboarding_scene_share_title">Paylaş</string>
+    <string name="onboarding_scene_notes">Notlar</string>
+    <string name="onboarding_scene_browser">Tarayıcı</string>
+    <string name="onboarding_scene_files">Dosyalar</string>
+    <string name="onboarding_sample_text">Tomi paylaşım denemesi</string>
+</resources>
