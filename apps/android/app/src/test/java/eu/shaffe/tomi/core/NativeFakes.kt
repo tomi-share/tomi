@@ -18,6 +18,7 @@ import uniffi.tomi_core.FfiPairingPeer
 import uniffi.tomi_core.FfiSyncReport
 import uniffi.tomi_core.FfiTransfer
 import uniffi.tomi_core.FfiVerifyPrompt
+import uniffi.tomi_core.DemoConfig
 import uniffi.tomi_core.DemoDepartureMode
 import uniffi.tomi_core.DemoIncomingKind
 import uniffi.tomi_core.DispatchKind
@@ -245,8 +246,29 @@ internal open class NativeFake : RustTomiCoreInterface {
 
     override fun unpin(id: String) = unexpected()
 
-    // The demo world of the core (the Apple apps use it); Android runs on the real core only.
-    override fun isDemo(): Boolean = false
+    // The demo space of the core, entered from the pairing screen.
+    @Volatile
+    var demo = false
+    var demoSupported = false
+    var enterDemoImpl: (DemoConfig) -> Unit = { throw AssertionError("enterDemo was not expected") }
+    var leaveDemoImpl: () -> Boolean = { false }
+
+    override fun isDemo(): Boolean = demo
+
+    override fun supportsDemoEntry(): Boolean {
+        record("supportsDemoEntry")
+        return demoSupported
+    }
+
+    override fun enterDemo(config: DemoConfig) {
+        record("enterDemo")
+        enterDemoImpl(config)
+    }
+
+    override fun leaveDemo(): Boolean {
+        record("leaveDemo")
+        return leaveDemoImpl()
+    }
 
     override fun pairWithQr(payload: String): PairingOutcome = unexpected()
 

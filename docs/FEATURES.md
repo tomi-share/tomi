@@ -213,7 +213,7 @@ Golden rule 3 in `AGENTS.md`; exact list of protected screens: see the iOS notes
 
 | Feature | Core | Relay | CLI | Android | iOS | Windows | Notes / gaps |
 |---|---|---|---|---|---|---|---|
-| Demo mode | ✅ `demo` feature (not on by default), `runtime/demo.rs` | ➖ | ➖ | ❌ removed: `FakeTomiCore` only in `src/test` | ✅ Debug only (`TOMI_DEMO`), Rust core `demo` (23 items) | 🟡 Debug only, `TOMI_DEMO=1`, **separate fake core** (`fake_core.rs`) | Three mechanisms. iOS: `build-core.sh` builds `demo` by default; only `--no-demo` removes it (no safeguard): required for TestFlight. |
+| Demo mode | ✅ `demo` feature (not on by default), `runtime/demo.rs` | ➖ | ➖ | ✅ every build (release included): discreet entry "Essayer avec des données de démonstration" from "Rejoins ton espace" (`PairingScreen.kt`), "Quitter la démo" banner at the top of the feed (`DemoBanner`, `DepartureBanner.kt`); `libtomi_core.so` built with `--features demo` (Gradle task `buildTomiCoreLibs`); no bundled demo files (the core makes up stand-in images); attachments served from the demo cache (`AttachmentProvider`) | ✅ Debug only (`TOMI_DEMO`), Rust core `demo` (23 items) | 🟡 Debug only, `TOMI_DEMO=1`, **separate fake core** (`fake_core.rs`) | Two mechanisms (Windows keeps its separate fake core). Android: same entry and banner as iOS, same texts (`demo_enter`, `demo_banner`, `demo_leave`); remaining gap: Android bundles no demo files (real photos), the core generates stand-ins; not tried on a phone. iOS: `build-core.sh` builds `demo` by default; only `--no-demo` removes it (no safeguard): required for TestFlight. |
 
 ---
 

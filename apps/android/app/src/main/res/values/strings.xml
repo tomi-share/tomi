@@ -338,6 +338,9 @@
     <string name="pair_scan_hint">La caméra ne sert qu’à ce scan.</string>
     <string name="pair_scan_button">Scanner le QR code</string>
     <string name="pair_enter_code_button">Saisir le code d’invitation</string>
+    <string name="demo_enter">Essayer avec des données de démonstration</string>
+    <string name="demo_banner">Mode démo : données fictives, rien n’est envoyé.</string>
+    <string name="demo_leave">Quitter la démo</string>
     <string name="pair_camera_denied">Caméra refusée. Tu peux saisir le code d’invitation à la place.</string>
     <string name="pair_code_title">Saisis le code d’invitation</string>
     <string name="pair_code_intro">Tu le trouves sous le QR code, sur ton autre appareil.</string>

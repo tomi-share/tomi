@@ -104,8 +104,12 @@ fun PairingScreen(
     viewModel: PairingViewModel,
     onFinished: () -> Unit,
     onBack: () -> Unit,
+    onDemoEntered: () -> Unit = {},
 ) {
     FlagSecureEffect(enabled = true)
+    LaunchedEffect(viewModel.demoEntered) {
+        if (viewModel.demoEntered) onDemoEntered()
+    }
     var enteringCode by rememberSaveable { mutableStateOf(false) }
     // Leaving any step of the pairing counts as a refusal: nothing is joined, and the channel is closed at the relay.
     BackHandler(enabled = viewModel.phase != PairingPhase.Input && viewModel.phase != PairingPhase.Done) {
@@ -272,6 +276,12 @@ private fun ScanContent(
             ) {
                 Icon(Icons.Outlined.Keyboard, contentDescription = null, modifier = Modifier.size(20.dp))
                 Text(stringResource(R.string.pair_enter_code_button), modifier = Modifier.padding(start = 8.dp))
+            }
+            // Discreet on purpose: a way to look around without a second device.
+            if (viewModel.canEnterDemo) {
+                TextButton(onClick = viewModel::enterDemo, enabled = !working, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.demo_enter))
+                }
             }
         }
     }

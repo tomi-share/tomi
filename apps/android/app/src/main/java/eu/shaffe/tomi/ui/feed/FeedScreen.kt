@@ -158,6 +158,7 @@ fun FeedScreen(
     val leaveViewModel = containerViewModel { LeaveSpaceViewModel(it.core, it.departureRetrier) }
     val departureBanner by leaveViewModel.banner.collectAsStateWithLifecycle()
     val canOfferLeave by leaveViewModel.canOfferLeave.collectAsStateWithLifecycle()
+    val inDemo by viewModel.isDemo.collectAsStateWithLifecycle()
     DepartureEventsEffect(leaveViewModel, snackbar)
     val onRetryDeparture = rememberDepartureRetry(leaveViewModel)
 
@@ -226,6 +227,7 @@ fun FeedScreen(
                     )
                 }
                 val banner: @Composable () -> Unit = {
+                    if (inDemo) DemoBanner(onLeave = viewModel::leaveDemo)
                     DepartureBanner(
                         state = departureBanner,
                         onRetry = onRetryDeparture,

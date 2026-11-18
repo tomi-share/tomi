@@ -42,6 +42,17 @@ class AttachmentUrisTest {
         assertNull("not a cache file name", AttachmentUris.uriFor(File(dir, "tomi.db").path, dir, authority))
     }
 
+    /** The demo space decrypts into `demo/this/files/cache`: its files have a URI too, the real cache does not take them. */
+    @Test
+    fun aFileOfTheDemoCacheHasAUriFromThatCacheOnly() {
+        val real = cache()
+        val demo = File(tmp.root, "demo/this/files/cache").apply { mkdirs() }
+        val file = File(demo, "${id}_1").apply { writeText("x") }
+        assertNull(AttachmentUris.uriFor(file.path, real, authority, "png"))
+        assertEquals("content://eu.shaffe.tomi.attachments/${id}_1/fichier.png", AttachmentUris.uriFor(file.path, demo, authority, "png"))
+        assertEquals(file, AttachmentUris.fileFor(listOf("${id}_1", "fichier.png"), demo))
+    }
+
     @Test
     fun aUriOnlyNamesAFileDirectlyInTheCache() {
         val dir = cache()
