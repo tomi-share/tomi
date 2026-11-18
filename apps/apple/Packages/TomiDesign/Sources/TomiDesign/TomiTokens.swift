@@ -4,9 +4,9 @@
 /// Windows and the dp / sp of Android). Use them through `TomiTheme`, not directly in views.
 public enum TomiTokens {
     public enum Behavior {
-        /// Product rule (docs/DEV.md, invariant 4): delay before the clipboard is cleared after copying a hidden item.
+        /// Product reminder (docs/DEV.md, invariant 4): delay before the clipboard is cleared after copying a hidden item.
         public static let secretClipboardClearMs: Int = 30000
-        /// Product rule (F16): duration of the « Envoyé · Annuler » banner.
+        /// Product reminder: duration of the 'Sent · Undo' banner.
         public static let undoWindowMs: Int = 3000
     }
     public enum Border {
@@ -14,7 +14,7 @@ public enum TomiTokens {
         public static let width: Int = 1
     }
     public enum BorderWidth {
-        /// Left accent of a hidden card, in color.*.secret.
+        /// Left edge of a hidden item's card, in color.*.secret.
         public static let secretAccent: Int = 3
     }
     public enum ColorDark {
@@ -34,35 +34,35 @@ public enum TomiTokens {
         public static let borderStrong: UInt32 = 0x6F7587
         /// Dark mode. Lightened night blue: primary button, links, unread dot, focus ring.
         public static let brand: UInt32 = 0xA9BFEA
-        /// Dark mode. Text and icon placed on color.dark.brand (dark text on light blue).
+        /// Dark mode. Text and icons placed on color.dark.brand (dark text on light blue).
         public static let onBrand: UInt32 = 0x121620
         /// Dark mode. Brand-tinted background: active filter, selected chip. Same value as color.identity.night.
         public static let brandContainer: UInt32 = 0x24324A
-        /// Dark mode. Lightened ochre: offline, in the send queue, banner undo, highlight. Duller than the sun #FFC85C.
+        /// Dark mode. Lightened ochre: offline, in the send queue, Cancel on the banner, highlight. More muted than the sun #FFC85C.
         public static let secondary: UInt32 = 0xE0B160
         /// Dark mode. Lightened plum: marker of hidden items.
         public static let secret: UInt32 = 0xCDB3D9
-        /// Dark mode. Background of the masked block of a hidden item and of the hidden chip.
+        /// Dark mode. Background of the hidden block of a hidden item and of the Hidden chip.
         public static let secretContainer: UInt32 = 0x2E2636
-        /// Dark mode. « Delivered » status and « Envoyé » confirmation.
+        /// Dark mode. Delivered status and the 'Sent' confirmation.
         public static let success: UInt32 = 0x8FCFA6
         /// Dark mode. Real errors only.
         public static let error: UInt32 = 0xF2B8B5
     }
     public enum ColorIdentity {
-        /// Identity. « Nuit » (night): app icon background (tile, Android adaptive icon), background of brand assets (store, launch screen), logotype on a light background. Not an interface colour: inside the app, use color.*.brand.
+        /// Identity. 'Night': background of the app icon (tile, Android adaptive icon), background of brand media (store, splash screen), logotype on light backgrounds. Not an interface colour: in the app, use color.*.brand.
         public static let night: UInt32 = 0x24324A
-        /// Identity. « Soleil » (sun): reserved for the symbol placed on the night background (app icon, launch screen, colour logo). Never for text, a button, a state, or on a light background (contrast 1.5:1).
+        /// Identity. 'Sun': reserved for the symbol placed on the night background (app icon, splash screen, colour logo). Never for text, a button, a state, or on a light background (contrast 1.5:1).
         public static let sun: UInt32 = 0xFFC85C
     }
     public enum ColorLight {
-        /// Light mode. Window and screen background (cream white, less harsh than pure white).
+        /// Light mode. Window and screen background (cream white, softer than pure white).
         public static let bg: UInt32 = 0xF6F4EF
         /// Light mode. Feed cards, tray popover, share bottom sheet, input fields.
         public static let surface: UInt32 = 0xFFFFFF
         /// Light mode. Secondary areas: popover header, hovered or selected row, code block, revealed password.
         public static let surfaceAlt: UInt32 = 0xECE9E2
-        /// Light mode. Main text, titles, active icons (bluish ink, of the night family).
+        /// Light mode. Main text, titles, active icons (bluish ink, from the night family).
         public static let text: UInt32 = 0x1B2130
         /// Light mode. Secondary text: source device, time, size, expired item, inactive icons.
         public static let textMuted: UInt32 = 0x565C6B
@@ -70,21 +70,21 @@ public enum TomiTokens {
         public static let border: UInt32 = 0xD5D1C7
         /// Light mode. Outline of fields, checkboxes, switches: interactive component, 3:1 minimum (WCAG 1.4.11).
         public static let borderStrong: UInt32 = 0x858996
-        /// Light mode. Interface « night blue » (same hue as color.identity.night, brighter): primary Send button, links, unread dot, focus ring.
+        /// Light mode. Interface 'night blue' (same hue as color.identity.night, brighter): primary Send button, links, unread dot, focus ring.
         public static let brand: UInt32 = 0x2E4C80
-        /// Light mode. Text and icon placed on color.light.brand.
+        /// Light mode. Text and icons placed on color.light.brand.
         public static let onBrand: UInt32 = 0xFFFFFF
         /// Light mode. Brand-tinted background: active filter, selected chip. Text on it in brand or text.
         public static let brandContainer: UInt32 = 0xE3E9F4
-        /// Light mode. « Ochre »: waiting states (offline, in the send queue, undo on the delayed-send banner), search highlight. Never for an error. Duller than the sun, which stays on the symbol.
+        /// Light mode. 'Ochre': waiting states (offline, in the send queue, Cancel on the deferred-send banner), search highlight. Never for an error. More muted than the sun, which stays on the symbol.
         public static let secondary: UInt32 = 0x8C5F14
-        /// Light mode. « Plum »: marker of hidden items (crossed-out eye icon, label, card left accent).
+        /// Light mode. 'Plum': marker of hidden items (crossed-out eye icon, label, left edge of the card).
         public static let secret: UInt32 = 0x6F4F7C
-        /// Light mode. Background of the masked block of a hidden item (« •••••• Afficher ») and of the hidden chip.
+        /// Light mode. Background of the hidden block of a hidden item ('•••••• Show') and of the Hidden chip.
         public static let secretContainer: UInt32 = 0xEFE8F1
-        /// Light mode. « Delivered » status and « Envoyé » confirmation. Muted green.
+        /// Light mode. Delivered status and the 'Sent' confirmation. Muted green.
         public static let success: UInt32 = 0x2E6B45
-        /// Light mode. Real errors only: failed send, unreadable item, confirmation of « Supprimer partout ».
+        /// Light mode. Real errors only: failed send, unreadable item, confirmation of Delete everywhere.
         public static let error: UInt32 = 0xB3261E
     }
     public enum FocusRing {
@@ -92,15 +92,15 @@ public enum TomiTokens {
         public static let width: Int = 2
     }
     public enum FontFamily {
-        /// UI font (SIL OFL 1.1, files in design/fonts/). Embedded in the app, no network loading. CSS stack: "Inter", "Segoe UI Variable", "Segoe UI", system-ui, sans-serif. Android: res/font/. The « tomi » logotype is NOT in Inter: it is drawn (logo-wordmark.svg).
+        /// Interface font (SIL OFL 1.1, files in design/fonts/). Embed it in the app, no network loading. CSS stack: "Inter", "Segoe UI Variable", "Segoe UI", system-ui, sans-serif. Android: res/font/. The 'tomi' wordmark is NOT set in Inter: it is drawn (logo-wordmark.svg).
         public static let ui: String = "Inter"
-        /// Mono font (SIL OFL 1.1) for code, revealed passwords, URLs, file names, pairing code. CSS stack: "JetBrains Mono", "Cascadia Mono", Consolas, monospace.
+        /// Mono font (SIL OFL 1.1) for code, revealed passwords, URLs, file names, pairing codes. CSS stack: "JetBrains Mono", "Cascadia Mono", Consolas, monospace.
         public static let mono: String = "JetBrains Mono"
     }
     public enum FontFeature {
         /// font-feature-settings for a revealed password: slashed zero.
         public static let monoPassword: String = "\"zero\" 1"
-        /// Inter font-feature-settings for hours, sizes, pairing code: fixed-width digits.
+        /// Inter font-feature-settings for times, sizes, pairing codes: tabular figures.
         public static let uiDigits: String = "\"tnum\" 1"
     }
     public enum FontLine {
@@ -118,19 +118,19 @@ public enum TomiTokens {
         public static let mono: Int = 20
     }
     public enum FontSize {
-        /// Screen and bottom-sheet title. Line height font.line.title.
+        /// Screen and bottom-sheet title. Line height: font.line.title.
         public static let title: Int = 20
-        /// Section title, device name. Line height font.line.subtitle.
+        /// Section title, device name. Line height: font.line.subtitle.
         public static let subtitle: Int = 16
-        /// Card preview, item text, input field. Line height font.line.body.
+        /// Card preview, item text, input field. Line height: font.line.body.
         public static let body: Int = 15
-        /// Buttons, chips, filter tabs, menus. Line height font.line.label.
+        /// Buttons, chips, filter tabs, menus. Line height: font.line.label.
         public static let label: Int = 14
-        /// Metadata (device, time, size, status). Minimum size. Line height font.line.caption.
+        /// Metadata (device, time, size, status). Minimum size. Line height: font.line.caption.
         public static let caption: Int = 12
-        /// Mono content in a card. Line height font.line.mono.
+        /// Mono content in a card. Line height: font.line.mono.
         public static let mono: Int = 14
-        /// 6-digit pairing code (mono, semibold, tnum).
+        /// 6-digit pairing code (mono, semibold, tabular figures).
         public static let pairingCode: Int = 28
     }
     public enum FontWeight {
@@ -142,7 +142,7 @@ public enum TomiTokens {
         public static let semibold: Int = 600
     }
     public enum Icon {
-        /// Single icon set for Windows and Android (Apache 2.0). FILL 0, wght 400, GRAD 0, opsz = displayed size. No circular-arrow icon (sync, autorenew, refresh) next to the logo: see charter 6.3.
+        /// Single icon set for Windows and Android (Apache 2.0). FILL 0, wght 400, GRAD 0, opsz = displayed size. No circular-arrow icon (sync, autorenew, refresh) next to the logo: see guidelines 6.3.
         public static let set: String = "Material Symbols Outlined"
         /// wght axis of Material Symbols.
         public static let weight: Int = 400
@@ -156,33 +156,33 @@ public enum TomiTokens {
         public static let lg: Int = 24
     }
     public enum Logo {
-        /// Clear space around the symbol, as a fraction of its width: the diameter of the dot (64 units out of 208). Nothing in this zone.
+        /// Clear space around the symbol, as a fraction of its width: the bead diameter (64 units out of 208). Nothing inside this zone.
         public static let clearSpace: Double = 0.31
     }
     public enum LogoMinHeight {
-        /// Minimum height of logo-horizontal.svg (whole box); below it, symbol only. Logotype alone: 12 px minimum x-height.
+        /// Minimum height of logo-horizontal.svg (whole bounding box); below that, the symbol alone. Wordmark alone: 12 px minimum x-height.
         public static let lockup: Int = 24
     }
     public enum LogoMinSize {
-        /// Minimum size of the symbol alone. Drawing per size: logo-16.svg (16 px), logo-20.svg (20 px), logo-24.svg (24 px), logo.svg (32 px and up). App icon: logo-app-16/20/24.svg, then logo-app.svg. See charter 2.4.
+        /// Minimum size of the symbol alone. Drawing per size: logo-16.svg (16 px), logo-20.svg (20 px), logo-24.svg (24 px), logo.svg (32 px and up). App icon: logo-app-16/20/24.svg, then logo-app.svg. See guidelines 2.4.
         public static let symbol: Int = 16
     }
     public enum MotionDuration {
         /// Duration in ms: hidden-item mask, hover, switch.
         public static let short: Int = 150
-        /// Duration in ms: popover, bottom sheet, « Envoyé · Annuler » banner.
+        /// Duration in ms: popover, bottom sheet, 'Sent · Undo' banner.
         public static let medium: Int = 250
     }
     public enum MotionLogo {
-        /// Duration in ms of the dot's lap (symbol animation), played once, curve motion.logo.easing. Never looped as a loading indicator.
+        /// Duration in ms of the bead's lap (symbol animation), played once, with motion.logo.easing. Never looping as a loading indicator.
         public static let lap: Int = 1200
-        /// Curve of the dot's lap: soft start and end.
+        /// Easing of the bead's lap: soft start and end.
         public static let easing: String = "cubic-bezier(0.65, 0, 0.35, 1)"
     }
     public enum Radius {
         /// Small elements: code block, checkbox.
         public static let sm: Int = 4
-        /// Buttons, fields, feed cards, masked block.
+        /// Buttons, fields, feed cards, hidden block.
         public static let md: Int = 8
         /// Tray popover, bottom sheet, drop zone.
         public static let lg: Int = 12
@@ -190,13 +190,13 @@ public enum TomiTokens {
         public static let full: Int = 999
     }
     public enum Space {
-        /// Minimum gap: icon ↔ label in a chip, metadata lines.
+        /// Minimum gap: icon to label in a chip, metadata lines.
         public static let step1: Int = 4
         /// Gap between elements of the same group.
         public static let step2: Int = 8
         /// Vertical inner margin of a card, gap between cards.
         public static let step3: Int = 12
-        /// Horizontal inner margin of cards, popover, bottom sheet; Android screen margin.
+        /// Horizontal inner margin of cards, the popover and the bottom sheet; Android screen margin.
         public static let step4: Int = 16
         /// Separation between sections.
         public static let step5: Int = 24
