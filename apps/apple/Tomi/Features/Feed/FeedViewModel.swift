@@ -64,7 +64,8 @@ final class FeedViewModel {
         }
     }
 
-    func item(id: String) -> TomiItem? { allItems.first { $0.id == id } }
+    /// The item of the core, else the revealed one that already left it (what `allItems` holds, without sorting the feed).
+    func item(id: String) -> TomiItem? { core.state.items.first { $0.id == id } ?? revealed[id] }
 
     func setQuery(_ value: String) {
         query = String(value.prefix(Self.maxQuery))
@@ -159,7 +160,7 @@ final class FeedViewModel {
             }
             SensitiveClipboard.copy(plain: plain, html: html, sensitive: item.secret)
             if !item.read || item.readPolicy == .afterFirstRead { try? await core.markRead(id: item.id) }
-            feedback.show(L10n.text(item.secret ? "snackbar_copied_secret" : "snackbar_copied"))
+            feedback.show(L10n.text(item.secret ? "snackbar_copied_secret" : "ios_snackbar_copied"))
         }
     }
 
@@ -168,7 +169,7 @@ final class FeedViewModel {
         // Never a hidden item's link in clear on a single tap (Android L2): "Copier" goes through the gate.
         guard !item.secret, let url = item.url else { return }
         SensitiveClipboard.copy(plain: url, sensitive: false)
-        feedback.show(L10n.text("snackbar_copied"))
+        feedback.show(L10n.text("ios_snackbar_copied"))
     }
 
     func share(_ item: TomiItem) {

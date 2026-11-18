@@ -45,11 +45,12 @@ final class AppContainerTests: XCTestCase {
         )
         await container.start()
         let core = try XCTUnwrap(container.core)
-        let deadline = Date().addingTimeInterval(10)
-        while core.state.items.count < 23 && Date() < deadline {
+        // The demo feed of the core: the 23 items of the Android demo on top of a generated week and years of history.
+        let deadline = Date().addingTimeInterval(120)
+        while !(core.state.loaded && core.state.items.count > 23) && Date() < deadline {
             try await Task.sleep(for: .milliseconds(50))
         }
-        XCTAssertEqual(core.state.items.count, 23)
+        XCTAssertGreaterThan(core.state.items.count, 23)
         // With the bundled assets the demo images are the real photos, with thumbnails.
         let photos = try XCTUnwrap(core.state.items.first { $0.title == "Photos du week-end" })
         XCTAssertEqual(photos.attachments.map(\.name), ["demo_paysage.jpg", "demo_portrait_exif.jpg", "demo_paysage.jpg"])

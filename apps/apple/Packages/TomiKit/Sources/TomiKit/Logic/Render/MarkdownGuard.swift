@@ -30,11 +30,9 @@ public enum MarkdownGuard {
     /// The markdown that may be handed to the renderer, or nil when it must not be rendered (too long, or still
     /// containing an image opener after `neutralizeImages`).
     public static func safeMarkdown(_ markdown: String) -> String? {
-        if markdown.unicodeScalars.allSatisfy({ $0.properties.isWhitespace }) { return markdown }
-        if markdown.count > maxChars { return nil }
-        let sanitized = neutralizeImages(normalizeLineEndings(markdown))
-        if containsImage(sanitized) { return nil }
-        return parsed(sanitized, syntax: .full) == nil ? nil : sanitized
+        guard let sanitized = scanned(markdown) else { return nil }
+        if sanitized.isBlank { return sanitized.text }
+        return parsed(sanitized.text, syntax: .full) == nil ? nil : sanitized.text
     }
 
     /// The markdown parsed for display with `syntax` (the options the view uses), or nil when it must be shown as
@@ -43,8 +41,21 @@ public enum MarkdownGuard {
         _ markdown: String,
         syntax: AttributedString.MarkdownParsingOptions.InterpretedSyntax = .full
     ) -> AttributedString? {
-        guard let sanitized = safeMarkdown(markdown) else { return nil }
-        return parsed(sanitized, syntax: syntax)
+        guard let sanitized = scanned(markdown) else { return nil }
+        // The tree that is shown is the tree that is checked: with the full syntax (what the views ask for) the text is
+        // parsed once; another syntax is checked with the full one first, as `safeMarkdown` does.
+        if syntax != .full && !sanitized.isBlank && parsed(sanitized.text, syntax: .full) == nil { return nil }
+        return parsed(sanitized.text, syntax: syntax)
+    }
+
+    /// The first, stricter filter (no parsing): `markdown` with its image openers escaped, or nil when it is too long
+    /// or an image opener is still found. A blank text is kept as it is.
+    private static func scanned(_ markdown: String) -> (text: String, isBlank: Bool)? {
+        if markdown.unicodeScalars.allSatisfy({ $0.properties.isWhitespace }) { return (markdown, true) }
+        if markdown.count > maxChars { return nil }
+        let sanitized = neutralizeImages(normalizeLineEndings(markdown))
+        if containsImage(sanitized) { return nil }
+        return (sanitized, false)
     }
 
     /// Parses with Foundation's markdown parser; nil if it fails or if any run holds an image.

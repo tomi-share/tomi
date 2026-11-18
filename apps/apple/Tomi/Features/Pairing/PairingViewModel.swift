@@ -207,6 +207,27 @@ final class PairingViewModel {
         }
     }
 
+    /// The discreet demo entry of the join screen: offered only by a real core built with the demo, in no space.
+    var canEnterDemo: Bool { core()?.canEnterDemo ?? false }
+
+    /// Enters the demo space of the core (no pairing, no network): the feed shows the demo data at once. Stays on
+    /// Working until the screen goes away.
+    @discardableResult
+    func enterBundledDemo() async -> Bool {
+        guard phase == .input, let core = core(), core.canEnterDemo else { return false }
+        phase = .working
+        error = nil
+        do {
+            try await core.enterDemo()
+            pendingPayload = nil
+            return true
+        } catch {
+            phase = .input
+            self.error = "pair_error_unexpected"
+            return false
+        }
+    }
+
     /// Back to the first step, for the next time the screen shows (after a revocation).
     func reset() {
         // A pairing left half-way must not stay open at the relay.

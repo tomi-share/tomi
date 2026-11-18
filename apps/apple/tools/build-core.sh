@@ -8,8 +8,9 @@
 # (`rustup target add ...`) and Xcode (clang is used by `cc` for SQLite and ring).
 # Usage: apps/apple/tools/build-core.sh [--debug] [--no-demo]
 #   --debug    Rust debug build (default: release, optimised).
-#   --no-demo  leave the demo mode out (`openDemo` then answers an error). Required for the
-#              TestFlight / App Store archives; development builds keep it.
+#   --no-demo  leave the demo mode out (`openDemo` and `enterDemo` then answer an error, and the app
+#              hides its demo entry). Never for a TestFlight / App Store archive: the released app
+#              offers the demo.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"

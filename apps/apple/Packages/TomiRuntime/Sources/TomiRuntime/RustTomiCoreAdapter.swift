@@ -43,6 +43,7 @@ private final class ChangeListener: CoreListener, @unchecked Sendable {
 
 /// What the adapter reads after a change, off the main thread.
 private struct Snapshot: Sendable {
+    var isDemo: Bool
     var isPaired: Bool
     var spaceState: SpaceState
     var updateURL: URL?
@@ -65,7 +66,11 @@ private struct Snapshot: Sendable {
 @MainActor
 public final class RustTomiCoreAdapter: TomiKit.TomiCore {
     public let state = CoreState()
-    public let isDemo: Bool
+    public var isDemo: Bool { state.isDemo }
+    /// The demo can be entered: a real core built with the demo, read its state, in no space.
+    public var canEnterDemo: Bool { demoEntry != nil && supportsDemoEntry && state.loaded && !state.isPaired && !state.isDemo }
+    /// The demo on screen was entered from the real core.
+    public var canLeaveDemo: Bool { supportsDemoEntry && state.isDemo }
 
     private let core: RustTomiCore
     private let local = CoreQueue(label: "eu.shaffe.tomi.core.local", qos: .userInitiated)
@@ -91,16 +96,22 @@ public final class RustTomiCoreAdapter: TomiKit.TomiCore {
     private let joinControl = CoreQueue(label: "eu.shaffe.tomi.core.join.cancel", qos: .userInitiated)
     /// The name this device asks for when it joins a space (the core's rule decides, `DeviceNames.choose`).
     private let deviceName: String?
+    /// What `enterDemo` opens the demo with (nil: this adapter never enters it).
+    private let demoEntry: DemoEntry?
+    /// The Rust core can enter the demo (built with it, and not itself a demo core).
+    private let supportsDemoEntry: Bool
     private var refreshPending = false
     private var wantsDoorbell = false
     private var doorbellRunning = false
     /// The current doorbell is being stopped by the app (not closed by the core).
     private var doorbellStopRequested = false
 
-    public init(core: RustTomiCore, deviceName: String? = nil) {
+    public init(core: RustTomiCore, deviceName: String? = nil, demoEntry: DemoEntry? = nil) {
         self.core = core
         self.deviceName = deviceName
-        self.isDemo = core.isDemo()
+        self.demoEntry = demoEntry
+        self.supportsDemoEntry = core.supportsDemoEntry()
+        state.isDemo = core.isDemo()
         let listener = ChangeListener { [weak self] in
             Task { @MainActor in self?.scheduleRefresh() }
         }
@@ -138,21 +149,27 @@ public final class RustTomiCoreAdapter: TomiKit.TomiCore {
     /// Re-reads everything the UI shows, now.
     public func refresh() async {
         let core = self.core
-        guard let snapshot = try? await local.run({ Self.read(core) }) else { return }
+        // What did not change keeps its storage (see `ItemReuse`): the merge runs off the main thread, with the read.
+        let previous = state.items
+        guard let snapshot = try? await local.run({ Self.read(core, previous: previous) }) else { return }
+        state.isDemo = snapshot.isDemo
         state.isPaired = snapshot.isPaired
         state.spaceState = snapshot.spaceState
         state.updateURL = snapshot.updateURL
         state.localDevice = snapshot.localDevice
         if let devices = snapshot.devices { state.devices = devices }
-        if let items = snapshot.items { state.items = items }
+        // Only a change is published: every screen that reads the feed is drawn again when it is written. Comparing is
+        // cheap here, an unchanged item being the very storage of the one on screen.
+        if let items = snapshot.items, items != state.items { state.items = items }
         state.departure = snapshot.departure
         state.loaded = true
         startDoorbellIfNeeded()
     }
 
-    private nonisolated static func read(_ core: RustTomiCore) -> Snapshot {
+    private nonisolated static func read(_ core: RustTomiCore, previous: [TomiItem]) -> Snapshot {
         let paired = core.isPaired()
         var snapshot = Snapshot(
+            isDemo: core.isDemo(),
             isPaired: paired,
             spaceState: CoreMapping.spaceState(core.spaceState()),
             updateURL: core.updateUrl().flatMap(URL.init(string:)),
@@ -165,7 +182,7 @@ public final class RustTomiCoreAdapter: TomiKit.TomiCore {
         // This device stays known even once revoked (its own items must still read as sent).
         snapshot.localDevice = (try? core.localDevice()).map { CoreMapping.device($0, keepRevoked: true) } ?? nil
         snapshot.devices = (try? core.devices())?.compactMap { CoreMapping.device($0) }
-        snapshot.items = (try? core.items())?.map(CoreMapping.item)
+        snapshot.items = (try? core.items()).map { ItemReuse.reuseUnchanged(previous: previous, fresh: $0.map(CoreMapping.item)) }
         return snapshot
     }
 
@@ -562,6 +579,32 @@ public final class RustTomiCoreAdapter: TomiKit.TomiCore {
     public func simulateIncoming(_ kind: SimulatedIncoming) async throws {
         let ffi = CoreMapping.incoming(kind)
         try await call(on: network) { try $0.simulateIncoming(kind: ffi) }
+    }
+
+    // MARK: Demo entered from the real core
+
+    public func enterDemo() async throws {
+        guard let entry = demoEntry, supportsDemoEntry else {
+            throw TomiCoreError(.invalidInput, reason: "demo entry not supported")
+        }
+        // A joining left open on the real core is closed first: nothing real stays pending behind the demo.
+        await abandonJoin()
+        try await call(on: pairing) { core in
+            try core.enterDemo(config: DemoConfig(
+                filesDir: entry.filesDir,
+                assetsDir: entry.assetsDir,
+                platform: "ios",
+                appVersion: entry.appVersion,
+                deviceName: entry.deviceName,
+                startPaired: true
+            ))
+        }
+        await refresh()
+    }
+
+    public func leaveDemo() async {
+        _ = try? await call(on: pairing) { $0.leaveDemo() }
+        await refresh()
     }
 
     public func purgePlaintextCache() async throws {

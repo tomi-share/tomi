@@ -55,5 +55,7 @@
   "ios_file_open_in": "Ouvrir dans…",
   "ios_file_hidden_title": "Fichier masqué",
   "ios_file_hidden": "Un fichier masqué ne s’affiche pas dans Tomi : son aperçu échapperait à la protection de l’écran. Tu peux le partager vers une autre app après Face ID.",
-  "ios_file_load_failed": "Impossible d’ouvrir ce fichier. Réessaie dans un instant."
+  "ios_file_load_failed": "Impossible d’ouvrir ce fichier. Réessaie dans un instant.",
+  "ios_detail_title": "Détail",
+  "ios_snackbar_copied": "Copié"
 }

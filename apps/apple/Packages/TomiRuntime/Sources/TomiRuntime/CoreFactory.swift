@@ -14,6 +14,21 @@ public enum CoreMode: Sendable, Equatable {
     case demo(startPaired: Bool, assets: URL?)
 }
 
+/// What the real core needs to enter the demo (`RustTomiCoreAdapter.enterDemo`).
+public struct DemoEntry: Sendable {
+    public let filesDir: String
+    public let assetsDir: String?
+    public let appVersion: String
+    public let deviceName: String
+
+    public init(filesDir: String, assetsDir: String?, appVersion: String, deviceName: String) {
+        self.filesDir = filesDir
+        self.assetsDir = assetsDir
+        self.appVersion = appVersion
+        self.deviceName = deviceName
+    }
+}
+
 public enum CoreFactory {
     /// Opens the Rust core. Blocks (database, and for the demo the writing of its history):
     /// never call it on the main thread; prefer `open`.
@@ -55,17 +70,23 @@ public enum CoreFactory {
     }
 
     /// Opens the core off the main thread and wraps it for the UI.
+    /// `demoAssets`: the bundled demo files, for a real core that may enter the demo.
     @MainActor
     public static func open(
         mode: CoreMode,
         paths: CorePaths,
         appVersion: String,
         deviceName: String,
-        keyStore: WrapKeyStoring = KeychainWrapKeyStore()
+        keyStore: WrapKeyStoring = KeychainWrapKeyStore(),
+        demoAssets: URL? = nil
     ) async throws -> RustTomiCoreAdapter {
         let core = try await Task.detached(priority: .userInitiated) {
             try openRust(mode: mode, paths: paths, appVersion: appVersion, deviceName: deviceName, keyStore: keyStore)
         }.value
-        return RustTomiCoreAdapter(core: core, deviceName: deviceName)
+        var entry: DemoEntry?
+        if case .real = mode {
+            entry = DemoEntry(filesDir: paths.demo.path, assetsDir: demoAssets?.path, appVersion: appVersion, deviceName: deviceName)
+        }
+        return RustTomiCoreAdapter(core: core, deviceName: deviceName, demoEntry: entry)
     }
 }

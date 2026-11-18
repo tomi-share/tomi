@@ -5,8 +5,8 @@ import TomiKit
 import UIKit
 
 /// Detail of an item (Android `ItemDetailScreen`): the card unfolded, the hint of a hidden item, the metadata (type,
-/// expiry, pinned, status), and the floating toolbar (copy, pin, archive, delete, more). Goes back by itself when the
-/// item is deleted while on screen.
+/// expiry, pinned, status), and the floating toolbar (copy, pin, share, archive, and more: open, copy link, delete).
+/// Goes back by itself when the item is deleted while on screen.
 struct ItemDetailScreen: View {
     let itemId: String
     @Bindable var model: FeedViewModel
@@ -49,7 +49,7 @@ struct ItemDetailScreen: View {
                     .deleteEverywhereConfirmation(isPresented: $confirmDeleteEverywhere, item: item, model: model)
             }
         }
-        .navigationTitle(Text("detail_title"))
+        .navigationTitle(Text("ios_detail_title"))
         .navigationBarTitleDisplayMode(.inline)
         // The item may arrive after the screen (loading): it counts as seen as soon as it is there, and the screen goes
         // back by itself only once it has been seen and then disappears.
@@ -128,6 +128,10 @@ struct ItemDetailScreen: View {
             FloatingBarButton(icon: item.pinned ? .pinned : .pin, label: item.pinned ? "action_unpin" : "action_pin", selected: item.pinned) {
                 model.togglePin(item)
             }
+            // Sharing is the main way out of the app: always one tap away, ahead of archive and delete (as on Android).
+            if ItemSharing.canShare(item) {
+                FloatingBarButton(icon: .share, label: "action_share") { model.share(item) }
+            }
             if ArchiveSwipe.canArchive(item, localDeviceId: model.localDeviceId) {
                 let unarchive = ArchiveSwipe.menuAction(item) == .unarchive
                 FloatingBarButton(icon: unarchive ? .unarchive : .archive, label: unarchive ? "action_unarchive" : "action_archive") {
@@ -136,28 +140,27 @@ struct ItemDetailScreen: View {
                     dismiss()
                 }
             }
+            // Always there: it holds the deletion.
             Menu {
-                Button { model.deleteLocal(item) } label: {
-                    Label(L10n.text("action_delete_local"), systemImage: TomiIcon.delete.systemName)
+                let url = item.url.flatMap(URL.init(string:)).flatMap { url in
+                    (!item.secret || model.isRevealed(item)) && LinkExtractor.isValidHTTPURL(url.absoluteString) ? url : nil
                 }
-                Button(role: .destructive) { confirmDeleteEverywhere = true } label: {
-                    Label(L10n.text("action_delete_everywhere"), systemImage: TomiIcon.delete.systemName)
-                }
-            } label: { FloatingBarIcon(icon: .delete) }
-            .accessibilityLabel(Text("action_delete"))
-            Menu {
-                if ItemSharing.canShare(item) {
-                    Button { model.share(item) } label: { Label(L10n.text("action_share"), systemImage: TomiIcon.share.systemName) }
-                }
-                if let url = item.url.flatMap(URL.init(string:)), !item.secret || model.isRevealed(item),
-                   LinkExtractor.isValidHTTPURL(url.absoluteString) {
+                let copyLink = item.text != nil && item.url != nil && !item.secret
+                if let url {
                     Button {
                         model.onCardOpened(item)
                         UIApplication.shared.open(url)
                     } label: { Label(L10n.text("action_open"), systemImage: TomiIcon.open.systemName) }
                 }
-                if item.text != nil && item.url != nil && !item.secret {
+                if copyLink {
                     Button { model.copyLink(item) } label: { Label(L10n.text("action_copy_link"), systemImage: TomiIcon.link.systemName) }
+                }
+                if url != nil || copyLink { Divider() }
+                Button { model.deleteLocal(item) } label: {
+                    Label(L10n.text("action_delete_local"), systemImage: TomiIcon.delete.systemName)
+                }
+                Button(role: .destructive) { confirmDeleteEverywhere = true } label: {
+                    Label(L10n.text("action_delete_everywhere"), systemImage: TomiIcon.delete.systemName)
                 }
             } label: { FloatingBarIcon(icon: .more) }
             .accessibilityLabel(Text("action_more"))

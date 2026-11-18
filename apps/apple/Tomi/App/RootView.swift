@@ -61,23 +61,33 @@ struct RootView: View {
         #endif
     }
 
+    /// The logotype where the header of the feed puts it (beside an occupied corner, on the line of the status content
+    /// or of the window controls), so that it does not move when the feed shows.
     private var opening: some View {
-        ZStack {
-            TomiColor.bg.ignoresSafeArea()
-            VStack(alignment: .leading, spacing: TomiSpace.s5) {
-                Image("TomiLogotype")
-                    .renderingMode(.template)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(height: 32)
-                    .foregroundStyle(TomiColor.logo)
-                    .accessibilityLabel(Text("app_name"))
-                TomiLinearProgress().frame(maxWidth: 160)
-                Spacer()
+        ActionBarScaffold { layout in
+            let band = layout.topBand
+            ZStack {
+                TomiColor.bg.ignoresSafeArea()
+                VStack(alignment: .leading, spacing: TomiSpace.s5) {
+                    Image("TomiLogotype")
+                        .renderingMode(.template)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(height: 32)
+                        .foregroundStyle(TomiColor.logo)
+                        .accessibilityLabel(Text("app_name"))
+                    TomiLinearProgress().frame(maxWidth: 160)
+                    Spacer()
+                }
+                .padding(.leading, max(TomiSpace.screen, CGFloat(band?.leading ?? 0)))
+                .padding(.trailing, max(TomiSpace.screen, CGFloat(band?.trailing ?? 0)))
+                .padding(.top, layout.headerCenter == nil ? TomiSpace.s4 : layout.topPadding(rowHeight: 32))
+                .frame(maxWidth: TomiLayout.readableWidth, alignment: .leading)
+                .frame(maxWidth: .infinity)
+                .ignoresSafeArea(.container, edges: band == nil ? [] : .top)
             }
-            .padding(.horizontal, TomiSpace.screen)
-            .padding(.top, TomiSpace.s4)
-            .frame(maxWidth: .infinity, alignment: .leading)
+        } bar: { _ in
+            EmptyView()
         }
     }
 }

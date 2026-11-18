@@ -50,7 +50,7 @@ struct FeedScreen: View {
                 TomiColor.bg.ignoresSafeArea()
                 feed(layout)
                 if showsStickyHeader { stickyHeader(layout) }
-                if let band = layout.topBand { statusBackdrop(band) }
+                if let band = layout.topBand, band.holdsStatus { statusBackdrop(band) }
                 if let send, let sent = send.submission {
                     SentBanner(deadline: sent.deadline, skippedFiles: sent.skippedFiles, undoing: send.undoing, onUndo: onUndoSend)
                         .padding(.horizontal, TomiSpace.screen)
@@ -187,6 +187,7 @@ struct FeedScreen: View {
 
     private var headerMenu: some View {
         Menu {
+            #if DEBUG || TOMI_DEV_TOOLS
             if model.core.isDemo {
                 Button(L10n.text("ios_debug_simulate_link")) { model.simulateIncoming(.link) }
                 Button(L10n.text("ios_debug_simulate_text")) { model.simulateIncoming(.text) }
@@ -205,6 +206,7 @@ struct FeedScreen: View {
                     }
                 }
             }
+            #endif
             Button(L10n.text("filter_archives")) { model.filter = .archives }
             Button(L10n.text("menu_share_help"), action: onShareHelp)
             #if DEBUG
@@ -306,6 +308,14 @@ struct FeedScreen: View {
                         if searching { searchHeader(layout) } else { header(layout) }
                     }
                     .id(Self.topId)
+                    // The demo entered from the real core: said at all times, with the way out.
+                    if model.core.canLeaveDemo {
+                        DemoBanner { Task { await model.core.leaveDemo() } }
+                            .padding(.horizontal, TomiSpace.screen)
+                            .padding(.top, TomiSpace.s2)
+                            .frame(maxWidth: TomiLayout.readableWidth)
+                            .frame(maxWidth: .infinity)
+                    }
                     // What the departure is doing, at all times, under the header (Android `DepartureBanner`).
                     if let leave, let gate {
                         DepartureBannerView(model: leave, gate: gate)

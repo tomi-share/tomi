@@ -82,6 +82,25 @@ final class TopCornerBandTests: XCTestCase {
         XCTAssertNil(band(width: 466, top: 24, trailing: 84, topTrailing: (84, 124)))
     }
 
+    func testTheWindowControlsOfAnIPadWindowMakeABand() {
+        // Measured on the iPad Air 11 simulator (iPadOS 27.2), window resized to 400 × 655: top inset 10, controls in
+        // 66 × 53 at the top left, rounded corners of 22 × 22 elsewhere. The header goes beside the controls.
+        let window = band(width: 400, top: 10, topLeading: (66, 53), topTrailing: (22, 22))
+        XCTAssertEqual(window, TopCornerBand(height: 53, leading: 66, trailing: 0, inset: 10))
+        // On the line of the controls, measured centred at 31 pt; no glass of ours behind them.
+        XCTAssertEqual(window?.rowCenter, 31.5)
+        XCTAssertEqual(window?.holdsStatus, false)
+        // The same window moved to the top of the screen, under the status bar: controls in 66 × 75 under 32 pt,
+        // measured centred at 53 pt.
+        let atTop = band(width: 400, top: 32, topLeading: (66, 75))
+        XCTAssertEqual(atTop, TopCornerBand(height: 75, leading: 66, trailing: 0, inset: 32))
+        XCTAssertEqual(atTop?.rowCenter, 53.5)
+        // Full screen: no occupied corner, the status bar of the iPad above the page.
+        XCTAssertNil(band(width: 820, top: 32))
+        // Only rounded window corners: no band.
+        XCTAssertNil(band(width: 400, top: 10, topLeading: (22, 22), topTrailing: (22, 22)))
+    }
+
     func testABandTooNarrowForTheHeaderIsNotUsed() {
         XCTAssertNil(band(width: 400, top: 82, topLeading: (60, 82), topTrailing: (144, 82)))
     }
@@ -90,6 +109,7 @@ final class TopCornerBandTests: XCTestCase {
         let band = TopCornerBand(height: 82, leading: 0, trailing: 144)
         // Measured: time and camera centred at 48 pt in the 82 pt band.
         XCTAssertEqual(band.rowCenter, 47.83, accuracy: 0.01)
+        XCTAssertTrue(band.holdsStatus)
         XCTAssertEqual(band.backdropHeight, 55)
         XCTAssertEqual(TopCornerBand.headerCenter(band: band, safeTop: 82), band.rowCenter)
         // Folded, or unfolded in landscape: no top inset, the row centres where the camera is.

@@ -22,7 +22,33 @@ struct ItemCard: View {
     private var outgoing: Bool { item.isOutgoing(localDeviceId: model.localDeviceId) }
     private var unread: Bool { !item.read && !outgoing }
     /// "Lire la suite" is on the card: the "N autres fichiers" button of the attachments gives way to a caption.
-    private var showsReadMore: Bool { !expanded && CardTap.showsReadMore(item, revealed: revealed, overflow: overflow) }
+    private var showsReadMore: Bool { !expanded && CardTap.showsReadMore(item, revealed: revealed, overflow: cut) }
+
+    /// What the card cut: what the layout measured, or a text of which the card only got the beginning (a long text
+    /// is bounded before it is parsed and laid out, so its cut is known without measuring).
+    private var cut: CardOverflow {
+        var cut = overflow
+        if bodyTruncated { cut.body = true }
+        return cut
+    }
+
+    private var bodyTruncated: Bool {
+        guard !expanded, item.isReadable, let text = item.text else { return false }
+        // Nothing is computed for a hidden item that is closed.
+        if item.secret { return revealed && CardTexts.head(text.plain).truncated }
+        return cardText(text, mode: mode ?? RenderModes.resolve(text, preferred: model.preferredRenderMode))?.truncated ?? false
+    }
+
+    /// The bounded text the card shows in `mode` (nil for HTML, which has its own bounded view). Prepared once per item
+    /// and mode (`CardTexts`), never at each evaluation of the card.
+    private func cardText(_ text: RichText, mode: RenderMode) -> CardText? {
+        switch (mode, RenderModes.previewKind(text)) {
+        case (.source, _): CardTexts.text(itemId: item.id, kind: .source, of: text)
+        case (.preview, .markdown): CardTexts.text(itemId: item.id, kind: .markdown, of: text)
+        case (.preview, .plain): CardTexts.text(itemId: item.id, kind: .plain, of: text)
+        case (.preview, .html): nil
+        }
+    }
 
     var body: some View {
         TomiCard(secretAccent: item.secret) {
@@ -56,7 +82,7 @@ struct ItemCard: View {
     // MARK: Tap
 
     private func handleTap() {
-        let action = CardTap.actionFor(item, revealed: revealed, overflow: overflow)
+        let action = CardTap.actionFor(item, revealed: revealed, overflow: cut)
         model.onCardOpened(item)
         switch action {
         case .openLink:
@@ -72,7 +98,7 @@ struct ItemCard: View {
     }
 
     private var accessibilityTapLabel: String {
-        switch CardTap.actionFor(item, revealed: revealed, overflow: overflow) {
+        switch CardTap.actionFor(item, revealed: revealed, overflow: cut) {
         case .openLink: L10n.text("action_open")
         case .reveal: L10n.text("action_reveal")
         case .hide: L10n.text("action_hide")
@@ -202,18 +228,20 @@ struct ItemCard: View {
                 limitedText(title, lines: 2, style: .subtitle, cut: \.title, protected: true)
             }
             if let text = item.text?.plain {
-                // Six lines at most in a card, plus the block's padding.
-                ClippedContent(maxHeight: expanded ? nil : 6 * secretLineHeight + 2 * TomiSpace.s3, clipped: bodyCut) {
-                    Text(text)
-                        .tomiMono(size: 14, slashedZero: true)
-                        .lineSpacing(4)
-                        .foregroundStyle(TomiColor.text)
-                        .padding(TomiSpace.s3)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(TomiColor.surfaceAlt, in: RoundedRectangle(cornerRadius: TomiRadius.medium))
-                        .captureProtected()
-                }
                 // Never selectable: a hidden item is copied through the gated, sensitive copy only.
+                if expanded {
+                    revealedSecretDetail(text)
+                } else {
+                    // Six lines at most in a card, plus the block's padding. Revealed only (this branch is never built
+                    // while hidden): the card lays out its first lines, never the whole text (in memory, never kept).
+                    ClippedContent(maxHeight: 6 * secretLineHeight + 2 * TomiSpace.s3, clipped: bodyCut) {
+                        secretText(CardTexts.head(text).markdown)
+                            .padding(TomiSpace.s3)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(TomiColor.surfaceAlt, in: RoundedRectangle(cornerRadius: TomiRadius.medium))
+                            .captureProtected()
+                    }
+                }
             }
             if let url = item.url { urlLine(url, selectable: false).captureProtected() }
             if !item.attachments.isEmpty {
@@ -278,28 +306,86 @@ struct ItemCard: View {
 
     @ViewBuilder
     private func textBody(_ text: RichText, mode: RenderMode) -> some View {
+        if expanded {
+            detailTextBody(text, mode: mode)
+        } else {
+            cardTextBody(text, mode: mode)
+        }
+    }
+
+    /// The text of a feed card: its bounded beginning (`cardText`), never the whole text.
+    @ViewBuilder
+    private func cardTextBody(_ text: RichText, mode: RenderMode) -> some View {
         switch (mode, RenderModes.previewKind(text)) {
+        case (.preview, .html):
+            HTMLBlock(html: text.html ?? "", expanded: false, clipped: bodyCut)
         case (.source, _):
-            ClippedContent(maxHeight: expanded ? nil : 8 * 19, clipped: bodyCut) {
-                Text(text.markdownSource ?? text.plain)
-                    .tomiMono(size: 13).lineSpacing(6)
-                    .foregroundStyle(TomiColor.text)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .textSelection(.enabled)
-            }
+            let shown = CardTexts.text(itemId: item.id, kind: .source, of: text)
+            ClippedContent(maxHeight: 8 * 19, clipped: bodyCut) { sourceText(shown.literal) }
         case (.preview, .markdown):
-            ClippedContent(maxHeight: expanded ? nil : 220, clipped: bodyCut) {
-                if let markdown = text.markdownSource, let view = MarkdownView(markdown: markdown) {
-                    view.textSelection(.enabled)
+            let shown = CardTexts.text(itemId: item.id, kind: .markdown, of: text)
+            // A cut preview is far taller than the card shows: the card has its height from the first frame, and
+            // nothing is measured.
+            ClippedContent(maxHeight: 220, clipped: bodyCut, knownClipped: shown.truncated) {
+                if let blocks = shown.blocks {
+                    MarkdownView(blocks: blocks).textSelection(.enabled)
                 } else {
-                    plainText(text.plain)
+                    plainText(shown.literal)
                 }
             }
-        case (.preview, .html):
-            HTMLBlock(html: text.html ?? "", expanded: expanded, clipped: bodyCut)
         case (.preview, .plain):
-            limitedText(text.plain, lines: 4, style: .body, cut: \.body).textSelection(.enabled)
+            let shown = CardTexts.text(itemId: item.id, kind: .plain, of: text)
+            limitedText(shown.literal, lines: 4, style: .body, cut: \.body).textSelection(.enabled)
         }
+    }
+
+    /// The text of the detail, whole: a long one as a column of parts built while scrolling (`ChunkedMarkdown`,
+    /// `ChunkedLiteral`), a short one as a single part on the same path.
+    @ViewBuilder
+    private func detailTextBody(_ text: RichText, mode: RenderMode) -> some View {
+        switch (mode, RenderModes.previewKind(text)) {
+        case (.preview, .html):
+            HTMLBlock(html: text.html ?? "", expanded: true, clipped: bodyCut)
+        case (.source, _):
+            ChunkedLiteral(text: text.markdownSource ?? text.plain, spacing: 6) { sourceText($0) }
+        case (.preview, .markdown):
+            ChunkedMarkdown(markdown: text.markdownSource ?? text.plain, fallbackPlain: text.plain)
+        case (.preview, .plain):
+            ChunkedLiteral(text: text.plain, spacing: max(0, TomiTextStyle.body.lineHeight - TomiTextStyle.body.size * 1.2)) {
+                plainText($0).textSelection(.enabled)
+            }
+        }
+    }
+
+    /// The Markdown source, literally (#, -, ``` stay visible), in the monospace font.
+    private func sourceText(_ value: String) -> some View {
+        Text(value)
+            .tomiMono(size: 13).lineSpacing(6)
+            .foregroundStyle(TomiColor.text)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .textSelection(.enabled)
+    }
+
+    private func secretText(_ value: String) -> some View {
+        Text(value)
+            .tomiMono(size: 14, slashedZero: true)
+            .lineSpacing(4)
+            .foregroundStyle(TomiColor.text)
+    }
+
+    /// The text of a revealed hidden item in the detail. A short one is one block in the layer that captures leave
+    /// out, as in a card. A long one is cut into pieces of lines (in memory only, gone when it is hidden again), each
+    /// in that layer: one protected block would have to lay out the whole text at once.
+    @ViewBuilder
+    private func revealedSecretDetail(_ text: String) -> some View {
+        ChunkedLiteral(text: text, spacing: 4) { piece in
+            secretText(piece)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .captureProtected()
+        }
+        .padding(TomiSpace.s3)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(TomiColor.surfaceAlt, in: RoundedRectangle(cornerRadius: TomiRadius.medium))
     }
 
     private func plainText(_ value: String) -> some View {

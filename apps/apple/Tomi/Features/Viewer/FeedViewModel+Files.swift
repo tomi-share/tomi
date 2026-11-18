@@ -131,7 +131,7 @@ extension FeedViewModel {
             let type = UTType(mimeType: attachment.mime) ?? UTType(filenameExtension: (attachment.name as NSString).pathExtension) ?? .image
             UIPasteboard.general.setData(data, forPasteboardType: type.identifier)
             onCardOpened(item)
-            feedback.show(L10n.text("snackbar_copied"))
+            feedback.show(L10n.text("ios_snackbar_copied"))
         }
     }
 
@@ -212,7 +212,7 @@ extension FeedViewModel {
         Task {
             if !item.read || item.readPolicy == .afterFirstRead { try? await core.markRead(id: item.id) }
         }
-        feedback.show(L10n.text(item.secret ? "snackbar_copied_secret" : "snackbar_copied"))
+        feedback.show(L10n.text(item.secret ? "snackbar_copied_secret" : "ios_snackbar_copied"))
     }
 
     private func report(_ result: ImageActionResult) {
