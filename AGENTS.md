@@ -60,7 +60,8 @@ Identifiers: application id `eu.shaffe.tomi`, URL scheme `tomi-share://`.
   the symbol. No circular-arrow icon and no spinner next to the logo (brand guidelines §6.3).
 - iOS: native Liquid Glass (iOS 26+) for the floating bar and controls — a design of its own, not an imitation of Android.
   Behavior and content stay aligned with Android; any deliberate difference is recorded in `docs/FEATURES.md`.
-- UI strings are in French (default locale) in `strings.xml`, `Localizable.xcstrings` and `apps/windows/src/lib/i18n/fr.ts`.
+- UI strings follow the language of the device; English is the reference and the fallback (`res/values/strings.xml`,
+  `Localizable.xcstrings` generated from it, `apps/windows/src/lib/i18n/`). How to add a language: `docs/LOCALIZATION.md`.
   Code, comments and documentation are in English.
 
 ## Build and checks
