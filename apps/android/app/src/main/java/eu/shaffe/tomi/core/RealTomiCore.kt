@@ -23,6 +23,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import uniffi.tomi_core.AttachmentRemovalKind
 import uniffi.tomi_core.CoreListener
+import uniffi.tomi_core.DemoConfig
 import uniffi.tomi_core.FfiDepartureOutcome
 import uniffi.tomi_core.FfiItemContent
 import uniffi.tomi_core.FfiJoinPrompt
@@ -65,10 +66,13 @@ class RealTomiCore(
     private val attachmentUriOf: (path: String, mime: String?, name: String?) -> String? = { _, _, _ -> null },
     /** The thumbnail the sender puts in an outgoing attachment (blocking, called off the main thread); null for none. */
     private val makeThumbnail: (DraftAttachment) -> DraftThumbnail? = { null },
+    /** The configuration of the demo space (called off the main thread, when it is entered); null: no way into the demo. */
+    private val demoConfig: (() -> DemoConfig)? = null,
 ) : TomiCore {
     private val bridge = BlockingBridge(scope, io)
 
     private val pairedState = MutableStateFlow(false)
+    private val demoState = MutableStateFlow(false)
     private val spaceStateFlow = MutableStateFlow(SpaceState.Active)
     private val localDeviceState = MutableStateFlow(UNPAIRED_DEVICE)
     private val departureState = MutableStateFlow<Departure?>(null)
@@ -110,6 +114,7 @@ class RealTomiCore(
     }
 
     override val isPaired: StateFlow<Boolean> = pairedState.asStateFlow()
+    override val isDemo: StateFlow<Boolean> = demoState.asStateFlow()
     override val spaceState: StateFlow<SpaceState> = spaceStateFlow.asStateFlow()
     override val localDevice: StateFlow<Device> = localDeviceState.asStateFlow()
     override val departure: StateFlow<Departure?> = departureState.asStateFlow()
@@ -130,6 +135,8 @@ class RealTomiCore(
 
     private fun readState() {
         val paired = native.isPaired()
+        // Before isPaired: a collector that sees the device paired must already know whether it is the demo.
+        demoState.value = native.isDemo()
         pairedState.value = paired
         spaceStateFlow.value = native.spaceState().toDomain()
         departureState.value = native.departure()?.toDomain()
@@ -629,6 +636,30 @@ class RealTomiCore(
                 delay(resumeBackoffMs[attempt++])
             }
         }
+    }
+
+    // --- Demo ------------------------------------------------------------------------------------------------------------------
+
+    override fun supportsDemoEntry(): Boolean = demoConfig != null && native.supportsDemoEntry()
+
+    /** The core opens the demo space (seconds, about 45 MB written): it runs to its end even if the caller goes away. */
+    override suspend fun enterDemo() {
+        val config = demoConfig ?: throw TomiCoreException("core: no demo")
+        // One pairing at a time: the core refuses the demo while one is pending.
+        abandonJoin()
+        try {
+            bridge.toTheEnd { native.enterDemo(config()) }
+        } catch (e: TomiException) {
+            throw PairingErrors.coreException(e)
+        }
+        bridge.quick { refreshState() }
+        changes.tryEmit(Unit)
+    }
+
+    /** Back to the real core, unpaired: the state is re-read and the demo feed forgotten ([afterErasure]). */
+    override suspend fun leaveDemo() {
+        bridge.quick { native.leaveDemo() }
+        afterErasure()
     }
 
     override fun isValidDeviceName(name: String): Boolean = validDeviceName(name)

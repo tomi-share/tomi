@@ -108,6 +108,14 @@ class PairingViewModel(private val container: AppContainer) : ViewModel() {
     /** The field is open and required: no relay on the device and none in the link. */
     val relayRequired: Boolean get() = RelayAddress.fieldRequired(configuredRelay, pendingRelay)
 
+    /** Set once the core runs its demo space: the screen goes to the feed (no first-launch screen, like iOS). */
+    var demoEntered by mutableStateOf(false)
+        private set
+
+    /** The discreet way into the demo, under the pairing buttons: only while this device is in no space and the core has the demo. */
+    val canEnterDemo: Boolean
+        get() = container.core.supportsDemoEntry() && !container.core.isPaired.value
+
     /** Incremented at each start and each abort: the result of an attempt that was abandoned meanwhile is dropped. */
     private var attempt = 0
     private var job: Job? = null
@@ -128,7 +136,8 @@ class PairingViewModel(private val container: AppContainer) : ViewModel() {
                 // A pairing that a stop interrupted is settled at start-up: the device is in the space while this screen waits.
                 if (paired && !wasPaired && phase == PairingPhase.Input) {
                     clearPending()
-                    phase = PairingPhase.Done
+                    // The demo makes the device "paired" too (also after "Annuler" while it opened): no "joined" screen for it.
+                    if (container.core.isDemo.value) demoEntered = true else phase = PairingPhase.Done
                 }
                 wasPaired = paired
             }
@@ -267,6 +276,29 @@ class PairingViewModel(private val container: AppContainer) : ViewModel() {
                 }
             } finally {
                 if (mine == attempt) busy = false
+            }
+        }
+    }
+
+    /** "Essayer avec des données de démonstration": the core opens its demo space (a few seconds), then the screen goes to the feed. */
+    fun enterDemo() {
+        if (phase != PairingPhase.Input) return
+        phase = PairingPhase.Working
+        error = null
+        val mine = ++attempt
+        // Not [job]: "Annuler" must not cut it short (the core finishes the opening anyway, and the collector then sees the demo).
+        viewModelScope.launch {
+            try {
+                container.core.enterDemo()
+                pendingPayload = null
+                demoEntered = true
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: TomiCoreException) {
+                if (mine == attempt) {
+                    phase = PairingPhase.Input
+                    error = R.string.pair_error_unexpected
+                }
             }
         }
     }

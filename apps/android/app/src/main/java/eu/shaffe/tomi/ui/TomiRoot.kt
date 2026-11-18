@@ -108,7 +108,13 @@ fun TomiRoot(mainViewModel: MainViewModel, onLeftSpace: () -> Unit) {
             )
         }
         composable(Routes.PAIR) {
-            PairingScreen(pairingViewModel, onFinished = onSpaceReady, onBack = { nav.popBackStack() })
+            PairingScreen(
+                pairingViewModel,
+                onFinished = onSpaceReady,
+                onBack = { nav.popBackStack() },
+                // Straight to the demo feed, without the first-launch screen (like iOS).
+                onDemoEntered = { nav.navigate(Routes.FEED) { popUpTo(Routes.WELCOME) { inclusive = true } } },
+            )
         }
         composable(Routes.CREATE) {
             // Scoped to this destination: the token typed here is gone when the screen is left.

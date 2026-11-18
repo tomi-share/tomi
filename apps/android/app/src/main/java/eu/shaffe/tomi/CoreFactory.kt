@@ -6,6 +6,7 @@ import android.provider.Settings
 import android.webkit.MimeTypeMap
 import eu.shaffe.tomi.core.AttachmentUris
 import eu.shaffe.tomi.core.CoreFiles
+import eu.shaffe.tomi.core.DeviceNames
 import eu.shaffe.tomi.core.RealTomiCore
 import eu.shaffe.tomi.core.TomiCore
 import eu.shaffe.tomi.security.AndroidKeystoreWrapper
@@ -13,6 +14,7 @@ import eu.shaffe.tomi.security.WrapKeyStore
 import eu.shaffe.tomi.send.DraftThumbnails
 import kotlinx.coroutines.CoroutineScope
 import uniffi.tomi_core.CoreConfig
+import uniffi.tomi_core.DemoConfig
 import uniffi.tomi_core.RustTomiCore
 import uniffi.tomi_core.isValidDeviceName
 import java.io.File
@@ -60,9 +62,23 @@ internal object CoreFactory {
                 deviceNameCandidates = { deviceNameCandidates(app) },
                 attachmentUriOf = { path, mime, name ->
                     val extension = mime?.let { MimeTypeMap.getSingleton().getExtensionFromMimeType(it) }
-                    AttachmentUris.uriFor(path, CoreFiles.plaintextCacheDir(app), AttachmentUris.authority(app.packageName), extension, name)
+                    val authority = AttachmentUris.authority(app.packageName)
+                    // The demo space decrypts into its own cache.
+                    AttachmentUris.uriFor(path, CoreFiles.plaintextCacheDir(app), authority, extension, name)
+                        ?: AttachmentUris.uriFor(path, CoreFiles.demoPlaintextCacheDir(app), authority, extension, name)
                 },
                 makeThumbnail = DraftThumbnails::make,
+                // Every build, release included (like iOS). No bundled files: the core makes up the demo files itself.
+                demoConfig = {
+                    DemoConfig(
+                        filesDir = CoreFiles.demoDir(app).apply { mkdirs() }.path,
+                        assetsDir = null,
+                        platform = "android",
+                        appVersion = BuildConfig.VERSION_NAME,
+                        deviceName = DeviceNames.choose(deviceNameCandidates(app), ::isValidDeviceName),
+                        startPaired = true,
+                    )
+                },
             )
         } catch (e: Exception) {
             // The first read of the state failed: nothing observes the native core yet (no listener, no collector), so it is released

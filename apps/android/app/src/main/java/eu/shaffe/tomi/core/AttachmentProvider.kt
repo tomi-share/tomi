@@ -23,6 +23,12 @@ object CoreFiles {
      * files root it is given ([filesDir]), hence `tomi-core/files/files/cache`.
      */
     fun plaintextCacheDir(context: Context): File = File(filesDir(context), "files/cache")
+
+    /** The files of the demo space (`DemoConfig.filesDir`); the core empties it when the demo opens and when it closes. */
+    fun demoDir(context: Context): File = File(coreDir(context), "demo")
+
+    /** The decrypted-attachment cache of the demo space: its own device is the engine of `{demoDir}/this`. */
+    fun demoPlaintextCacheDir(context: Context): File = File(demoDir(context), "this/files/cache")
 }
 
 /**
@@ -103,25 +109,28 @@ object AttachmentUris {
  */
 class AttachmentProvider : ContentProvider() {
     private val cacheDir: File by lazy { CoreFiles.plaintextCacheDir(requireNotNull(context)) }
+    private val demoCacheDir: File by lazy { CoreFiles.demoPlaintextCacheDir(requireNotNull(context)) }
 
     override fun onCreate(): Boolean = true
 
     override fun openFile(uri: Uri, mode: String): ParcelFileDescriptor {
         if (mode != "r") throw SecurityException("read only")
-        val file = AttachmentUris.fileFor(uri.pathSegments, cacheDir) ?: throw FileNotFoundException()
-        if (!file.isFile) throw FileNotFoundException()
+        val file = fileOf(uri) ?: throw FileNotFoundException()
         return ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
     }
 
     override fun query(uri: Uri, projection: Array<out String>?, selection: String?, selectionArgs: Array<out String>?, sortOrder: String?): Cursor? {
-        val file = AttachmentUris.fileFor(uri.pathSegments, cacheDir) ?: return null
-        if (!file.isFile) return null
+        val file = fileOf(uri) ?: return null
         val columns = projection?.filter { it == OpenableColumns.DISPLAY_NAME || it == OpenableColumns.SIZE }?.toTypedArray()
             ?: arrayOf(OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE)
         return MatrixCursor(columns, 1).apply {
             addRow(columns.map { if (it == OpenableColumns.SIZE) file.length() else uri.lastPathSegment })
         }
     }
+
+    /** The cache file behind [uri]: the real cache first, then the demo space's. Null if none exists. */
+    private fun fileOf(uri: Uri): File? =
+        listOf(cacheDir, demoCacheDir).firstNotNullOfOrNull { dir -> AttachmentUris.fileFor(uri.pathSegments, dir)?.takeIf { it.isFile } }
 
     /** From the extension the URI carries (the intents that hand a URI out also carry the type of the attachment). */
     override fun getType(uri: Uri): String? =

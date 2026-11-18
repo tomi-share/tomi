@@ -1,6 +1,7 @@
 package eu.shaffe.tomi.core
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 /**
@@ -249,6 +250,26 @@ interface TomiCore {
      */
     suspend fun resumePairing(): ResumeOutcome
 
+    // --- Demo (the core's demo space, entered from the pairing screen) ------------------------------------------------------------
+
+    /**
+     * True while the core runs its demo space: fictitious data, nothing is sent. [isPaired] is true meanwhile. Defaults to a core
+     * without a demo (the tests' fake).
+     */
+    val isDemo: StateFlow<Boolean> get() = NOT_DEMO
+
+    /** Whether this core can open its demo space now (built with it, not in a space, no pairing pending in the core). */
+    fun supportsDemoEntry(): Boolean = false
+
+    /**
+     * Opens the demo space (blocks a few seconds and writes its files: runs off the main thread). Throws [TomiCoreException] when the
+     * core refuses (in a space, pairing pending) or has no demo. A pairing pending in this class is abandoned first.
+     */
+    suspend fun enterDemo() {}
+
+    /** Leaves the demo space and erases its files: back to the real, unpaired core. Does nothing outside the demo. */
+    suspend fun leaveDemo() {}
+
     /**
      * The relay this device talks to now (`https://host[:port]`): the one of its space once paired, otherwise the build default (a
      * development build) or the one a previous attempt kept; null when there is none (a release build: the relay then comes from a link,
@@ -262,3 +283,6 @@ interface TomiCore {
      */
     fun isValidDeviceName(name: String): Boolean
 }
+
+/** [TomiCore.isDemo] of a core without a demo. */
+private val NOT_DEMO: StateFlow<Boolean> = MutableStateFlow(false)

@@ -307,7 +307,7 @@ abstract class BuildTomiCoreLibs @Inject constructor(exec: ExecOperations) : Tom
         out.mkdirs()
         val args = mutableListOf("ndk", "--platform", apiLevel.get().toString())
         abis.get().forEach { args += listOf("--target", it) }
-        args += listOf("--output-dir", out.absolutePath, "build", "--package", "tomi-core", "--locked")
+        args += listOf("--output-dir", out.absolutePath, "build", "--package", "tomi-core", "--features", "demo", "--locked")
         if (release.get()) args += "--release"
         cargo(mapOf("ANDROID_NDK_HOME" to ndkDir.get()), *args.toTypedArray())
         abis.get().forEach { abi -> check(File(out, "$abi/libtomi_core.so").isFile) { "cargo-ndk produced no $abi/libtomi_core.so" } }

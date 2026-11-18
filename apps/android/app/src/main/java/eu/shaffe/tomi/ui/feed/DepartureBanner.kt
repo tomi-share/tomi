@@ -83,6 +83,14 @@ fun DepartureBanner(
     }
 }
 
+/** At the top of the feed while the core runs its demo space: what it is, and the way out (back to the welcome screen). */
+@Composable
+fun DemoBanner(onLeave: () -> Unit, modifier: Modifier = Modifier) {
+    BannerCard(title = null, text = stringResource(R.string.demo_banner), progress = false, modifier = modifier) {
+        BannerButton(stringResource(R.string.demo_leave), enabled = true, onClick = onLeave)
+    }
+}
+
 private fun pendingText(last: PendingReason?): Int = when (last) {
     null -> R.string.departure_pending_checking
     PendingReason.Network -> R.string.departure_pending_network

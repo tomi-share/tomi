@@ -82,6 +82,17 @@ sealed interface FeedEvent {
 class FeedViewModel(private val container: AppContainer) : ViewModel() {
     private val core = container.core
 
+    /** The core runs its demo space: the feed shows [DemoBanner] and its way out. */
+    val isDemo: StateFlow<Boolean> = core.isDemo
+
+    /**
+     * "Quitter la démo": on the container's scope, so that a restart of the activity does not cut it. No navigation here: the device is
+     * then unpaired, and TomiRoot starts again from the welcome screen.
+     */
+    fun leaveDemo() {
+        container.scope.launch { safeCore { core.leaveDemo() } }
+    }
+
     private val filter = MutableStateFlow(FeedFilter.All)
     private val query = MutableStateFlow("")
     private val preferredMode = MutableStateFlow(container.prefs.preferredRenderMode)
