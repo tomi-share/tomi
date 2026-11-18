@@ -5,8 +5,21 @@
 //! Windows; English is the reference and the fallback. To add a language: write its table and
 //! add it to [`TABLES`]. `{n}` and `{device}` are replaced when the string is built.
 
+mod de;
 mod en;
+mod es;
 mod fr;
+mod hi;
+mod id;
+mod it;
+mod ja;
+mod ko;
+mod nl;
+mod pl;
+mod pt;
+mod ru;
+mod tr;
+mod zh;
 
 #[cfg(not(test))]
 use std::sync::OnceLock;
@@ -53,7 +66,23 @@ pub struct Table {
 }
 
 /// The languages of the app, by BCP 47 tag.
-const TABLES: &[(&str, &Table)] = &[("en", &en::EN), ("fr", &fr::FR)];
+const TABLES: &[(&str, &Table)] = &[
+    ("en", &en::EN),
+    ("de", &de::DE),
+    ("es", &es::ES),
+    ("fr", &fr::FR),
+    ("hi", &hi::HI),
+    ("id", &id::ID),
+    ("it", &it::IT),
+    ("ja", &ja::JA),
+    ("ko", &ko::KO),
+    ("nl", &nl::NL),
+    ("pl", &pl::PL),
+    ("pt", &pt::PT),
+    ("ru", &ru::RU),
+    ("tr", &tr::TR),
+    ("zh", &zh::ZH),
+];
 
 /// The table for someone whose preferred languages are `preferred` (most wanted first): the
 /// first one the app has, exactly or by its language alone (`fr-CA` -> `fr`), else English.

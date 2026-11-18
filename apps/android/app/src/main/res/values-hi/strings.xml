@@ -1,0 +1,579 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- All user-visible texts are Hindi (Devanagari), polite "आप" as phone interfaces use it. Keep identifiers and comments in English.
+     Vocabulary: "छिपा हुआ" / "दिखाएँ" (never "गुप्त" / "प्रकट करें"). -->
+<resources>
+    <string name="app_name">Tomi</string>
+
+    <!-- Generic actions -->
+    <string name="action_cancel">रद्द करें</string>
+    <string name="action_cancel_send">भेजना रद्द करें</string>
+    <string name="action_close">बंद करें</string>
+    <string name="action_back">वापस जाएँ</string>
+    <string name="action_save">सेव करें</string>
+    <string name="action_continue">जारी रखें</string>
+    <string name="action_later">बाद में</string>
+    <string name="action_done">हो गया</string>
+    <string name="action_copy">कॉपी करें</string>
+    <string name="action_copy_link">लिंक कॉपी करें</string>
+    <string name="action_open">खोलें</string>
+    <string name="action_more">ज़्यादा कार्रवाइयाँ</string>
+    <string name="action_reveal">दिखाएँ</string>
+    <string name="action_hide">छिपाएँ</string>
+    <string name="action_send">भेजें</string>
+    <string name="action_paste">पेस्ट करें</string>
+    <string name="action_attach">फ़ाइल अटैच करें</string>
+    <string name="action_remove_attachment">%1$s हटाएँ</string>
+    <string name="action_undo">पहले जैसा करें</string>
+    <string name="action_options">विकल्प</string>
+    <string name="action_search">खोजें</string>
+    <string name="action_close_search">खोज बंद करें</string>
+    <string name="action_filters">फ़िल्टर</string>
+    <string name="action_clear_filter">फ़िल्टर साफ़ करें</string>
+    <string name="action_delete">डिलीट करें</string>
+    <string name="action_delete_local">इस डिवाइस से डिलीट करें</string>
+    <string name="action_delete_everywhere">हर जगह से डिलीट करें</string>
+    <string name="action_pin">पिन करें</string>
+    <string name="action_unpin">अनपिन करें</string>
+    <string name="action_archive">आर्काइव करें</string>
+    <string name="action_unarchive">आर्काइव से निकालें</string>
+    <string name="action_share">शेयर करें</string>
+    <string name="action_details">विवरण</string>
+    <string name="action_read_more">और पढ़ें</string>
+
+    <!-- Feed -->
+    <string name="search_placeholder">फ़ीड में खोजें</string>
+    <string name="filter_all">सभी</string>
+    <string name="filter_links">लिंक</string>
+    <string name="filter_text">टेक्स्ट</string>
+    <string name="filter_files">फ़ाइलें</string>
+    <string name="filter_secrets">छिपे हुए</string>
+    <string name="filter_archives">आर्काइव</string>
+    <string name="section_pinned">पिन किए गए</string>
+    <string name="section_recent">हाल के</string>
+    <string name="section_archives">आर्काइव</string>
+    <string name="source_this_phone">यह फ़ोन</string>
+    <string name="label_masked">छिपा हुआ</string>
+    <plurals name="search_results">
+        <item quantity="one">%1$d परिणाम</item>
+        <item quantity="other">%1$d परिणाम</item>
+    </plurals>
+    <string name="search_masked_note">छिपे हुए आइटम उनके शीर्षक या कॉन्टेंट के बिना खोजे जाते हैं</string>
+    <!-- 1: the counter ("2 results"), 2: the note about the hidden items -->
+    <string name="search_summary_with_note">%1$s · %2$s</string>
+    <string name="feed_empty">अभी यहाँ कुछ नहीं है। अपने दूसरे डिवाइस पर भेजने के लिए कोई लिंक, टेक्स्ट या फ़ाइल Tomi पर शेयर करें।</string>
+    <string name="feed_empty_archives">कोई आर्काइव किया गया आइटम नहीं है। किसी कार्ड को आर्काइव करने के लिए उसे “हाल के” में बाईं ओर स्वाइप करें।</string>
+    <string name="feed_empty_filtered">कोई मिलता-जुलता आइटम नहीं है।</string>
+    <string name="banner_offline">ऑफ़लाइन · इंतज़ार जारी है</string>
+    <string name="menu_share_help">शेयर मेन्यू में Tomi को पिन करें</string>
+    <string name="menu_leave_space">डिस्कनेक्ट करें</string>
+    <string name="snackbar_copied_secret">कॉपी किया गया · 30 से॰ में साफ़ होगा</string>
+    <string name="snackbar_deleted_local">इस डिवाइस से डिलीट किया गया</string>
+    <string name="snackbar_deleted_everywhere">सभी डिवाइस पर डिलीट करने का अनुरोध किया गया</string>
+    <string name="snackbar_action_failed">कार्रवाई पूरी नहीं हो सकी। अपना कनेक्शन देखें और फिर से कोशिश करें।</string>
+    <string name="snackbar_pin_failed">पिन नहीं बदला जा सका। फिर से कोशिश करें।</string>
+    <string name="snackbar_archived">आर्काइव किया गया</string>
+    <string name="snackbar_unarchived">आर्काइव से निकाला गया</string>
+    <string name="snackbar_archive_failed">आर्काइव नहीं बदला जा सका। फिर से कोशिश करें।</string>
+    <string name="snackbar_nothing_to_share">इस आइटम में शेयर करने के लिए कुछ नहीं है।</string>
+    <string name="detail_not_found">आइटम नहीं मिला। हो सकता है कि वह समाप्त हो गया हो या डिलीट कर दिया गया हो।</string>
+    <string name="detail_masked_hint">दिखाने, कॉपी करने और शेयर करने के लिए आपका फ़िंगरप्रिंट या स्क्रीन लॉक कोड ज़रूरी है।</string>
+    <string name="detail_revealed_hint">स्क्रीन छोड़ते ही फिर से छिप जाता है।</string>
+    <string name="meta_type">टाइप</string>
+    <string name="meta_sent_at">भेजने की तारीख</string>
+    <string name="meta_expiry">समाप्ति</string>
+    <string name="meta_pinned">पिन किया गया</string>
+    <string name="meta_status">स्थिति</string>
+    <string name="meta_yes">हाँ</string>
+    <string name="meta_no">नहीं</string>
+    <string name="meta_never">कभी नहीं</string>
+    <string name="meta_after_read">पढ़ने के बाद</string>
+    <plurals name="characters_count">
+        <item quantity="one">%1$d वर्ण</item>
+        <item quantity="other">%1$d वर्ण</item>
+    </plurals>
+
+    <!-- Card -->
+    <string name="unread_badge">अपठित</string>
+    <string name="pinned_badge">पिन किया गया</string>
+    <string name="archived_badge">आर्काइव किया गया</string>
+    <string name="time_yesterday">कल</string>
+    <string name="expires_in">%1$s में समाप्त</string>
+    <string name="expires_after_read">पहली बार पढ़ने के बाद गायब हो जाता है</string>
+    <!-- Attachment tiles (feed + detail). "More files": the button towards the detail, then the same as a caption when "Read more" takes its place. -->
+    <plurals name="more_files">
+        <item quantity="one">%1$d और फ़ाइल</item>
+        <item quantity="other">%1$d और फ़ाइलें</item>
+    </plurals>
+    <plurals name="more_files_caption">
+        <item quantity="one">+ %1$d और फ़ाइल</item>
+        <item quantity="other">+ %1$d और फ़ाइलें</item>
+    </plurals>
+    <!-- %1$d = count, %2$s = total size ("4 files · 4.9 MB"). Shown from 2 attachments on, so "one" is only for the form. -->
+    <plurals name="attachments_summary_files">
+        <item quantity="one">%1$d फ़ाइल · %2$s</item>
+        <item quantity="other">%1$d फ़ाइलें · %2$s</item>
+    </plurals>
+    <plurals name="attachments_summary_images">
+        <item quantity="one">%1$d इमेज · %2$s</item>
+        <item quantity="other">%1$d इमेज · %2$s</item>
+    </plurals>
+    <plurals name="secret_files_hidden">
+        <item quantity="one">%1$d छिपी हुई फ़ाइल</item>
+        <item quantity="other">%1$d छिपी हुई फ़ाइलें</item>
+    </plurals>
+    <plurals name="remaining_days">
+        <item quantity="one">%1$d दिन</item>
+        <item quantity="other">%1$d दिन</item>
+    </plurals>
+    <plurals name="remaining_hours">
+        <item quantity="one">%1$d घंटा</item>
+        <item quantity="other">%1$d घंटे</item>
+    </plurals>
+    <plurals name="remaining_minutes">
+        <item quantity="one">%1$d मिनट</item>
+        <item quantity="other">%1$d मिनट</item>
+    </plurals>
+    <string name="kind_secret">छिपा हुआ</string>
+    <string name="kind_image">इमेज</string>
+    <string name="kind_file">फ़ाइल</string>
+    <string name="kind_link">लिंक</string>
+    <string name="kind_unreadable">पढ़ा नहीं जा सकता</string>
+    <string name="unreadable_update_required">इस आइटम को पढ़ने के लिए अपडेट ज़रूरी है। इसे रखा गया है और Tomi अपडेट होने के बाद दिखाया जाएगा।</string>
+    <string name="unreadable_decryption_failed">यह आइटम अभी पढ़ा नहीं जा सकता। इसे रखा गया है: सिंक या अपडेट के बाद यह पढ़ने लायक हो सकता है।</string>
+    <string name="kind_rich_text">रिच टेक्स्ट</string>
+    <string name="kind_text">टेक्स्ट</string>
+    <!-- Internal image viewer -->
+    <string name="action_view_image">इमेज देखें</string>
+    <string name="viewer_save">सेव करें</string>
+    <string name="viewer_action_delete">डिलीट करें</string>
+    <string name="viewer_delete_local">इमेज को इस डिवाइस से डिलीट करें</string>
+    <string name="viewer_delete_everywhere">इमेज को हर जगह से डिलीट करें</string>
+    <string name="viewer_image_description">%2$d में से इमेज %1$d</string>
+    <string name="viewer_position">%1$d/%2$d</string>
+    <string name="viewer_locked">छिपी हुई इमेज। इसे दिखाने के लिए अपनी पहचान की पुष्टि करें।</string>
+    <string name="viewer_load_failed">यह इमेज दिखाई नहीं जा सकी।</string>
+    <string name="viewer_no_image">दिखाने के लिए कोई इमेज नहीं है।</string>
+    <string name="snackbar_image_saved">इमेज गैलरी में सेव की गई</string>
+    <string name="snackbar_file_unavailable">यह फ़ाइल नहीं खोली जा सकी। हो सकता है कि यह अभी डाउनलोड न हुई हो, या कोई ऐप इसे न खोल सके।</string>
+    <string name="snackbar_file_downloaded">फ़ाइल डाउनलोड/Tomi में सेव की गई</string>
+    <string name="snackbar_file_download_failed">फ़ाइल सेव नहीं की जा सकी। फिर से कोशिश करें।</string>
+    <string name="snackbar_image_unavailable">यह इमेज अभी उपलब्ध नहीं है।</string>
+    <string name="snackbar_image_failed">कार्रवाई पूरी नहीं हुई। फिर से कोशिश करें।</string>
+    <!-- Removal of ONE attachment of an item (the item stays) -->
+    <string name="snackbar_image_deleted_local">इमेज इस डिवाइस से डिलीट की गई</string>
+    <string name="snackbar_image_deleted_everywhere">इमेज हर जगह से डिलीट की गई</string>
+    <string name="snackbar_file_deleted_local">फ़ाइल इस डिवाइस से डिलीट की गई</string>
+    <string name="snackbar_file_deleted_everywhere">फ़ाइल हर जगह से डिलीट की गई</string>
+    <string name="file_row_delete">यह फ़ाइल डिलीट करें</string>
+    <string name="file_row_actions">इस फ़ाइल के लिए कार्रवाइयाँ</string>
+    <string name="file_download">डाउनलोड करें</string>
+    <string name="file_delete_local">फ़ाइल को इस डिवाइस से डिलीट करें</string>
+    <string name="file_delete_everywhere">फ़ाइल को हर जगह से डिलीट करें</string>
+    <string name="dialog_delete_file_everywhere_title">फ़ाइल को हर जगह से डिलीट करें?</string>
+    <string name="dialog_delete_file_everywhere_named">“%1$s” आपके सभी डिवाइस और आपके Tomi सर्वर से मिटा दी जाएगी। ऑफ़लाइन डिवाइस फिर से कनेक्ट होने पर इसे मिटा देंगे। यह कार्रवाई स्थायी है।</string>
+    <string name="dialog_delete_file_everywhere_secret">यह छिपी हुई फ़ाइल आपके सभी डिवाइस और आपके Tomi सर्वर से मिटा दी जाएगी। हो सकता है कि जिस डिवाइस पर इसे पहले ही दिखाया जा चुका है, उसने इसकी कॉपी रख ली हो। यह कार्रवाई स्थायी है।</string>
+    <string name="biometric_title_image">छिपी हुई इमेज दिखाएँ</string>
+    <string name="biometric_subtitle_image">अपनी पहचान की पुष्टि करें। यह पुष्टि 2 मिनट तक मान्य रहती है।</string>
+    <string name="biometric_title_save_image">छिपी हुई इमेज सेव करें</string>
+    <string name="biometric_subtitle_save_image">इमेज को गैलरी में सेव करने से पहले अपनी पहचान की पुष्टि करें। यह पुष्टि 2 मिनट तक मान्य रहती है।</string>
+    <!-- Text modes: "Preview" (styled, default) and "Markdown" (the literal source) -->
+    <string name="render_preview">प्रीव्यू</string>
+    <string name="render_markdown">Markdown</string>
+
+    <!-- Code file screen -->
+    <string name="action_view_code">फ़ाइल खोलें</string>
+    <string name="code_search">फ़ाइल में खोजें</string>
+    <string name="code_search_placeholder">फ़ाइल में खोजें</string>
+    <string name="code_search_previous">पिछला मिलान</string>
+    <string name="code_search_next">अगला मिलान</string>
+    <string name="code_copy_file">फ़ाइल कॉपी करें</string>
+    <string name="code_wrap">लाइनें रैप करें</string>
+    <string name="code_locked">छिपी हुई फ़ाइल। इसे दिखाने के लिए अपनी पहचान की पुष्टि करें।</string>
+    <string name="code_no_file">दिखाने के लिए कोई कोड फ़ाइल नहीं है।</string>
+    <string name="code_unavailable">यह फ़ाइल अभी दिखाई नहीं जा सकी।</string>
+    <string name="code_too_large">यह फ़ाइल दिखाने के लिए बहुत बड़ी है (ज़्यादा से ज़्यादा 2 MB)।</string>
+    <string name="code_binary">यह फ़ाइल टेक्स्ट नहीं है: इसे यहाँ दिखाया नहीं जा सकता।</string>
+    <string name="code_no_colours_language">इस भाषा के लिए सिंटैक्स हाइलाइटिंग नहीं है।</string>
+    <string name="code_no_colours_size">सिंटैक्स हाइलाइटिंग उपलब्ध नहीं है: फ़ाइल बहुत लंबी है (ज़्यादा से ज़्यादा 50 KB या 2,000 लाइनें)।</string>
+    <string name="biometric_title_file">छिपी हुई फ़ाइल दिखाएँ</string>
+    <string name="biometric_subtitle_file">अपनी पहचान की पुष्टि करें। यह पुष्टि 2 मिनट तक मान्य रहती है।</string>
+    <string name="dialog_delete_everywhere_title">हर जगह से डिलीट करें?</string>
+    <string name="dialog_delete_everywhere_message">यह आइटम आपके सभी डिवाइस और आपके Tomi सर्वर से मिटा दिया जाएगा। ऑफ़लाइन डिवाइस फिर से कनेक्ट होने पर इसे मिटा देंगे। यह कार्रवाई स्थायी है।</string>
+    <string name="dialog_delete_everywhere_secret">यह छिपा हुआ कॉन्टेंट आपके सभी डिवाइस और आपके Tomi सर्वर से मिटा दिया जाएगा। हो सकता है कि जिस डिवाइस पर इसे पहले ही दिखाया जा चुका है, उसने इसकी कॉपी रख ली हो। यह कार्रवाई स्थायी है।</string>
+    <string name="dialog_delete_image_everywhere_title">इमेज को हर जगह से डिलीट करें?</string>
+    <string name="dialog_delete_image_everywhere_message">यह इमेज आपके सभी डिवाइस और आपके Tomi सर्वर से मिटा दी जाएगी। ऑफ़लाइन डिवाइस फिर से कनेक्ट होने पर इसे मिटा देंगे। यह कार्रवाई स्थायी है।</string>
+    <string name="dialog_delete_image_everywhere_secret">यह छिपी हुई इमेज आपके सभी डिवाइस और आपके Tomi सर्वर से मिटा दी जाएगी। हो सकता है कि जिस डिवाइस पर इसे पहले ही दिखाया जा चुका है, उसने इसकी कॉपी रख ली हो। यह कार्रवाई स्थायी है।</string>
+
+    <!-- System share (Android ACTION_SEND) of an item -->
+    <string name="share_chooser_title">इससे शेयर करें</string>
+    <!-- Neutral title of the preview of the system share sheet for a hidden item: the sheet must not show the content. -->
+    <string name="share_hidden_preview_title">छिपा हुआ कॉन्टेंट</string>
+    <string name="share_no_app">कोई भी ऐप यह कॉन्टेंट नहीं ले सकता।</string>
+
+    <!-- Delivery status -->
+    <string name="status_received">मिला</string>
+    <string name="status_queued">भेजे जाने का इंतज़ार</string>
+    <string name="status_waiting_network">नेटवर्क का इंतज़ार</string>
+    <string name="status_sent">भेजा गया</string>
+    <string name="status_failed">भेजा नहीं जा सका</string>
+    <string name="status_delivered_all">सभी को डिलीवर किया गया</string>
+    <string name="status_delivered_partial">%2$d में से %1$d को डिलीवर किया गया</string>
+    <string name="status_expired">%1$d को डिलीवर किया गया · %2$s को डिलीवर होने से पहले समाप्त हो गया</string>
+
+    <!-- Expiry -->
+    <string name="expiry_hour1">1 घं॰</string>
+    <string name="expiry_day1">1 दिन</string>
+    <string name="expiry_day7">7 दिन</string>
+    <string name="expiry_day30">30 दिन</string>
+    <string name="expiry_never">कभी नहीं</string>
+    <string name="expiry_after_read">पढ़ने के बाद</string>
+    <string name="expiry_chip">समाप्ति: %1$s</string>
+    <string name="expiry_label">समाप्ति</string>
+    <string name="expiry_after_read_hint">“पढ़ने के बाद”: पहली बार खोलते ही हर जगह से मिटा दिया जाता है।</string>
+
+    <!-- Compose / send -->
+    <string name="send_title">भेजें</string>
+    <string name="send_title_label">शीर्षक (वैकल्पिक)</string>
+    <string name="send_content_label">टेक्स्ट या लिंक</string>
+    <string name="label_secret">कॉन्टेंट छिपाएँ</string>
+    <string name="label_secret_off">“दिखाएँ” दबाने तक प्रीव्यू हर जगह छिपा रहता है</string>
+    <string name="label_secret_on">अपने-आप चालू हुआ। आप इसे बंद कर सकते हैं।</string>
+    <string name="detect_link">लिंक मिला</string>
+    <string name="detect_text">टेक्स्ट</string>
+    <string name="detect_files">फ़ाइल अटैच की गई</string>
+    <string name="detect_masked">छिपा हुआ</string>
+    <string name="detect_masked_password">यह पासवर्ड जैसा लगता है।</string>
+    <string name="detect_to_devices">%1$s को</string>
+    <string name="hint_secret_sensitive">सोर्स ऐप ने इस कॉन्टेंट को संवेदनशील मार्क किया है: इसे छिपाकर भेजा जाता है।</string>
+    <string name="hint_secret_heuristic">यह कॉन्टेंट पासवर्ड या कुंजी जैसा लगता है: इसे छिपाया गया है। आप इसे बदल सकते हैं।</string>
+    <string name="notice_paste_empty">क्लिपबोर्ड में कोई टेक्स्ट नहीं है।</string>
+    <string name="notice_link_appended_to_draft">किसी दूसरे ऐप से एक लिंक आपके ड्राफ़्ट में जोड़ा गया। भेजने से पहले इसे जाँच लें।</string>
+    <string name="notice_params_dropped">लिंक के कुछ पैरामीटर अनदेखे किए गए (बहुत लंबे या अमान्य)।</string>
+    <string name="notice_too_late">बहुत देर हो गई: आइटम पहले ही भेजा जा चुका है।</string>
+    <string name="notice_undo_failed">भेजना रद्द नहीं किया जा सका। हो सकता है कि आइटम पहले ही भेजा जा चुका हो।</string>
+    <string name="notice_send_failed">भेजा नहीं जा सका। आपका टेक्स्ट रखा गया है, फिर से कोशिश करें।</string>
+    <string name="banner_sent">भेजा गया</string>
+    <plurals name="banner_files_skipped">
+        <item quantity="one">%1$d फ़ाइल छोड़ी गई: हर फ़ाइल के लिए ज़्यादा से ज़्यादा 25 MB</item>
+        <item quantity="other">%1$d फ़ाइलें छोड़ी गईं: हर फ़ाइल के लिए ज़्यादा से ज़्यादा 25 MB</item>
+    </plurals>
+    <string name="sheet_title">भेजने के विकल्प</string>
+
+    <!-- Share target -->
+    <string name="share_not_paired">Tomi किसी स्पेस से लिंक नहीं है। अपने स्पेस से जुड़ने के लिए ऐप खोलें।</string>
+    <string name="share_open_app">Tomi खोलें</string>
+    <string name="share_failed">भेजा नहीं जा सका। फिर से कोशिश करें।</string>
+    <string name="share_too_late">बहुत देर हो गई: आइटम पहले ही भेजा जा चुका है। आप इसे Tomi फ़ीड से डिलीट कर सकते हैं।</string>
+    <string name="share_secret_detected">यह छिपाने लायक कॉन्टेंट लगता है। भेजने से पहले पुष्टि करें।</string>
+    <string name="preview_secret_masked">••••••••••</string>
+    <plurals name="preview_files">
+        <item quantity="one">%1$d फ़ाइल</item>
+        <item quantity="other">%1$d फ़ाइलें</item>
+    </plurals>
+    <string name="shortcut_short_label">Tomi</string>
+    <string name="shortcut_long_label">Tomi से मेरे डिवाइस पर भेजें</string>
+    <string name="tile_label">भेजें</string>
+
+    <!-- Biometrics -->
+    <string name="biometric_title_secret">छिपा हुआ कॉन्टेंट दिखाएँ</string>
+    <string name="biometric_subtitle_secret">अपनी पहचान की पुष्टि करें। यह पुष्टि 2 मिनट तक मान्य रहती है।</string>
+    <string name="biometric_title_share">छिपा हुआ कॉन्टेंट शेयर करें</string>
+    <string name="biometric_subtitle_share">इसे किसी दूसरे ऐप पर भेजने से पहले अपनी पहचान की पुष्टि करें। यह पुष्टि 2 मिनट तक मान्य रहती है।</string>
+    <string name="biometric_title_copy_secret">छिपा हुआ कॉन्टेंट कॉपी करें</string>
+    <string name="biometric_subtitle_from_notification">कॉन्टेंट कॉपी किया जाएगा, फिर 30 से॰ बाद क्लिपबोर्ड से साफ़ कर दिया जाएगा।</string>
+    <string name="biometric_title_revoke">डिवाइस निरस्त करें</string>
+    <string name="biometric_subtitle_revoke">संवेदनशील कार्रवाई: अपने फ़िंगरप्रिंट, अपने चेहरे या फ़ोन के स्क्रीन लॉक कोड से पुष्टि करें।</string>
+    <string name="biometric_title_erase">इस फ़ोन से सब मिटाएँ</string>
+    <string name="biometric_subtitle_erase">इस कार्रवाई को वापस नहीं लिया जा सकता: अपने फ़िंगरप्रिंट, अपने चेहरे या फ़ोन के स्क्रीन लॉक कोड से पुष्टि करें।</string>
+    <string name="biometric_title_pair">डिवाइस जोड़ें</string>
+    <string name="biometric_subtitle_pair">नए डिवाइस को पूरा इतिहास मिलेगा, छिपे हुए आइटम भी। अपने फ़िंगरप्रिंट, अपने चेहरे या फ़ोन के स्क्रीन लॉक कोड से पुष्टि करें।</string>
+    <string name="biometric_title_delete_space">अपना स्पेस डिलीट करें</string>
+    <string name="biometric_subtitle_delete_space">इस कार्रवाई को वापस नहीं लिया जा सकता: अपने फ़िंगरप्रिंट, अपने चेहरे या फ़ोन के स्क्रीन लॉक कोड से पुष्टि करें।</string>
+    <string name="toast_biometric_unavailable">छिपा हुआ कॉन्टेंट दिखाने, कॉपी करने या शेयर करने के लिए स्क्रीन लॉक या बायोमेट्रिक्स सेट अप करें।</string>
+    <string name="toast_item_not_found">आइटम नहीं मिला</string>
+
+    <!-- Notifications -->
+    <string name="channel_group_incoming">मिले हुए आइटम</string>
+    <string name="channel_links">लिंक</string>
+    <string name="channel_links_desc">आपके दूसरे डिवाइस से मिले लिंक</string>
+    <string name="channel_text">टेक्स्ट</string>
+    <string name="channel_text_desc">आपके दूसरे डिवाइस से मिले टेक्स्ट</string>
+    <string name="channel_files">फ़ाइलें</string>
+    <string name="channel_files_desc">आपके दूसरे डिवाइस से मिली फ़ाइलें और इमेज</string>
+    <string name="channel_secrets">छिपे हुए</string>
+    <string name="channel_secrets_desc">मिला हुआ छिपा कॉन्टेंट। लॉक स्क्रीन पर कभी नहीं दिखाया जाता, कोई प्रीव्यू नहीं।</string>
+    <string name="channel_devices">डिवाइस</string>
+    <string name="channel_devices_desc">आपके स्पेस में कोई डिवाइस जुड़ने पर सूचना। कोई कॉन्टेंट नहीं, सिर्फ़ डिवाइस का नाम।</string>
+    <string name="notif_device_added_title">नया डिवाइस जोड़ा गया</string>
+    <string name="notif_device_added_body">“%1$s” आपके स्पेस से जुड़ गया। यह आप नहीं थे? डिवाइस खोलें और इसे निरस्त करें।</string>
+    <string name="notif_title_secret">छिपा हुआ कॉन्टेंट · %1$s</string>
+    <string name="notif_title_link">%1$s से लिंक</string>
+    <string name="notif_title_image">%1$s से इमेज</string>
+    <string name="notif_title_file">%1$s से फ़ाइल</string>
+    <string name="notif_title_text">%1$s से टेक्स्ट</string>
+    <string name="notif_title_unreadable">%1$s से आइटम</string>
+    <string name="notif_body_unreadable">अभी पढ़ा नहीं जा सकता: Tomi को अपडेट करना ज़रूरी है</string>
+    <string name="notif_body_secret">कॉपी करने के लिए टैप करें (पुष्टि ज़रूरी है)</string>
+    <string name="notif_body_generic">नया आइटम</string>
+    <string name="notif_public_title">Tomi: नया आइटम</string>
+    <string name="notif_action_copy">कॉपी करें</string>
+    <string name="notif_action_view">देखें</string>
+    <string name="notif_summary_text">आखिरी बार %1$s से भेजा गया</string>
+    <plurals name="notif_summary_title">
+        <item quantity="one">%1$d नया आइटम</item>
+        <item quantity="other">%1$d नए आइटम</item>
+    </plurals>
+
+    <!-- Pairing -->
+    <!-- Welcome: the two doors of a device that is not in a space yet -->
+    <string name="welcome_title">आपके डिवाइस, एक स्पेस</string>
+    <string name="welcome_intro">एक डिवाइस से दूसरे डिवाइस पर खुद को लिंक, नोट और पासवर्ड भेजें, एंड-टू-एंड एन्क्रिप्शन के साथ।</string>
+    <string name="welcome_question">आप कैसे शुरू करना चाहते हैं?</string>
+    <string name="welcome_create_title">अपना स्पेस बनाएँ</string>
+    <string name="welcome_create_hint">यह आपका पहला डिवाइस है। अपने Tomi सर्वर का QR कोड या इंस्टॉलेशन कुंजी पास रखें।</string>
+    <string name="welcome_join_title">अपने स्पेस से जुड़ें</string>
+    <string name="welcome_join_hint">क्या Tomi पहले से किसी दूसरे डिवाइस पर है? उसे खुला और पास रखें।</string>
+    <!-- Read by the screen reader for a whole door: title, then what it takes. -->
+    <string name="welcome_door_description">%1$s। %2$s</string>
+
+    <!-- Join a space -->
+    <string name="pair_title">अपने स्पेस से जुड़ें</string>
+    <string name="pair_intro">अपने दूसरे डिवाइस पर यह खोलें</string>
+    <string name="pair_other_device_caption">आपके दूसरे डिवाइस पर</string>
+    <string name="pair_illustration_description">चित्र: आपके दूसरे डिवाइस पर, “डिवाइस जोड़ें” स्क्रीन एक QR कोड और एक आमंत्रण कोड दिखाती है, जैसे 7-crayon-renard</string>
+    <string name="pair_scan_preview_description">दूसरे डिवाइस का QR कोड स्कैन करने के लिए कैमरा प्रीव्यू</string>
+    <string name="pair_link_received">आमंत्रण लिंक मिला</string>
+    <string name="pair_link_received_relay">रिले: %1$s</string>
+    <string name="pair_link_received_warning">यह लिंक किसी दूसरे ऐप या वेब पेज से आया है। सिर्फ़ उसी स्पेस से जुड़ें जो आपने अभी खुद बनाया है, ऐसे रिले के साथ जिसे आप पहचानते हैं।</string>
+    <string name="pair_link_received_hint">अपने-आप कुछ नहीं होता। जारी रखने के लिए “जुड़ें” पर टैप करें।</string>
+    <string name="pair_join">जुड़ें</string>
+    <string name="pair_scan_hint">कैमरे का इस्तेमाल सिर्फ़ इस स्कैन के लिए होता है।</string>
+    <string name="pair_scan_button">QR कोड स्कैन करें</string>
+    <string name="pair_enter_code_button">आमंत्रण कोड डालें</string>
+    <string name="demo_enter">सैंपल डेटा के साथ आज़माएँ</string>
+    <string name="demo_banner">डेमो मोड: सैंपल डेटा, कुछ भी भेजा नहीं जाता।</string>
+    <string name="demo_leave">डेमो से बाहर निकलें</string>
+    <string name="pair_camera_denied">कैमरे का ऐक्सेस नहीं दिया गया। इसके बजाय आप आमंत्रण कोड डाल सकते हैं।</string>
+    <string name="pair_code_title">आमंत्रण कोड डालें</string>
+    <string name="pair_code_intro">यह आपको दूसरे डिवाइस पर, QR कोड के नीचे मिलेगा।</string>
+    <string name="pair_code_label">आमंत्रण कोड</string>
+    <string name="pair_code_hint">नंबर के बाद दो शब्द। एक्सेंट या कैपिटल लेटर की ज़रूरत नहीं है।</string>
+    <string name="relay_field_label">रिले</string>
+    <string name="relay_field_hint">आपके Tomi सर्वर का पता, जैसे relay.example.org</string>
+    <string name="relay_other_button">दूसरा रिले</string>
+    <string name="relay_current">रिले: %1$s</string>
+    <string name="pair_scan_instead">इसके बजाय QR कोड स्कैन करें</string>
+    <string name="pair_verify_title">कोड जाँचें</string>
+    <string name="pair_verify_body">जाँचें कि दोनों डिवाइस पर एक ही कोड दिख रहा है।</string>
+    <plurals name="pair_verify_peer_members">
+        <item quantity="one">आपके स्पेस में %1$d डिवाइस है</item>
+        <item quantity="other">आपके स्पेस में %1$d डिवाइस हैं</item>
+    </plurals>
+    <string name="pair_verify_relay_label">रिले: %1$s</string>
+    <string name="pair_verify_relay_hint">जारी रखने से पहले जाँचें कि यह आपका ही रिले है।</string>
+    <string name="pair_verify_code_description">पुष्टि कोड %1$s</string>
+    <string name="pair_verify_validity">%1$s और मान्य</string>
+    <string name="pair_verify_same">कोड एक जैसे हैं</string>
+    <string name="pair_verify_different">कोड अलग हैं</string>
+    <string name="pair_verify_mismatch">कोड मेल नहीं खाए: डिवाइस जोड़ना रद्द कर दिया गया। दूसरे डिवाइस से फिर से शुरू करें।</string>
+    <string name="pair_working">दूसरे डिवाइस से कनेक्ट हो रहा है…</string>
+    <string name="pair_waiting_title">दूसरे डिवाइस का इंतज़ार</string>
+    <string name="pair_waiting_body">%1$s पर भी पुष्टि करें कि कोड एक जैसे हैं। ऐसा होते ही डिवाइस जोड़ना पूरा हो जाएगा।</string>
+    <string name="pair_history_title">इतिहास पाएँ?</string>
+    <plurals name="pair_history_body">
+        <item quantity="one">आपके स्पेस में पहले से %1$d आइटम है। आप इसे इस फ़ोन पर पा सकते हैं।</item>
+        <item quantity="other">आपके स्पेस में पहले से %1$d आइटम हैं। आप इन्हें इस फ़ोन पर पा सकते हैं।</item>
+    </plurals>
+    <string name="pair_history_size">लगभग %1$s का डेटा आएगा।</string>
+    <string name="pair_history_yes">हाँ, इतिहास पाएँ</string>
+    <string name="pair_history_yes_hint">आपके स्पेस की हर चीज़ यहाँ आएगी, छिपे हुए और पिन किए गए आइटम भी।</string>
+    <string name="pair_history_no">नहीं, खाली फ़ीड से शुरू करें</string>
+    <string name="pair_history_no_hint">अब से जो भेजा जाएगा, सिर्फ़ वही यहाँ आएगा।</string>
+    <string name="pair_history_footer">आप बाद में कभी भी कोई आइटम डिलीट कर सकते हैं।</string>
+    <string name="pair_done_title">डिवाइस जोड़ा गया</string>
+    <string name="pair_done_body">%1$s आपके स्पेस का हिस्सा है।</string>
+    <string name="pair_notifications_rationale">कोई डिवाइस आपको कुछ भेजे, तो पता चल सके, इसके लिए सूचनाओं की अनुमति दें।</string>
+    <string name="pair_notifications_enable">सूचनाओं की अनुमति दें</string>
+    <string name="pair_error_qr_unknown">यह QR कोड Tomi आमंत्रण नहीं है।</string>
+    <string name="pair_error_code_format">दूसरे डिवाइस पर दिख रहा आमंत्रण कोड डालें, जैसे 7-crayon-renard</string>
+    <string name="pair_error_invalid">यह आमंत्रण कोड मान्य नहीं है। नंबर और दोनों शब्द जाँचें।</string>
+    <string name="pair_error_wrong_code">गलत कोड। दूसरे डिवाइस पर नया आमंत्रण कोड बनाएँ।</string>
+    <string name="pair_error_taken">यह आमंत्रण कोड पहले ही इस्तेमाल हो चुका है। दूसरे डिवाइस पर नया कोड बनाएँ।</string>
+    <string name="pair_error_interrupted">कनेक्शन टूट गया। दूसरे डिवाइस पर नया आमंत्रण कोड बनाएँ।</string>
+    <string name="pair_error_cancelled">दूसरे डिवाइस पर डिवाइस जोड़ना रद्द कर दिया गया।</string>
+    <string name="pair_error_update">इस डिवाइस को जोड़ने के लिए दोनों डिवाइस पर Tomi अपडेट करें।</string>
+    <string name="pair_error_blocked">यह डिवाइस अब आपके Tomi सर्वर का इस्तेमाल नहीं कर सकता। जाँचें कि यह अब भी आपके स्पेस का हिस्सा है।</string>
+    <string name="pair_error_space_full">आपके स्पेस में डिवाइस की अधिकतम संख्या पूरी हो गई है। डिवाइस सूची से कोई एक डिवाइस हटाएँ।</string>
+    <string name="pair_error_relay_required">रिले का पता डालें।</string>
+    <string name="pair_error_relay_invalid">यह रिले पता मान्य नहीं है। इसे relay.example.org की तरह लिखें।</string>
+    <string name="pair_error_unexpected">डिवाइस जोड़ना पूरा नहीं हुआ। फिर से कोशिश करें।</string>
+    <string name="pair_error_expired">कोड समाप्त हो गया। नया कोड बनाएँ।</string>
+    <string name="pair_error_network">नेटवर्क उपलब्ध नहीं है। फिर से कोशिश करें।</string>
+
+    <!-- Devices -->
+    <string name="unreadable_title">डेटा पढ़ा नहीं जा सकता</string>
+    <string name="unreadable_message">Tomi इस फ़ोन पर अपना डेटा नहीं खोल पा रहा है। हो सकता है कि ऐप का डेटा मिट गया हो या खराब हो गया हो (फ़ोन रीस्टोर किया गया, ऐप स्टोरेज साफ़ किया गया), या उसे सुरक्षित रखने वाली कुंजी अब इस्तेमाल न की जा सके। आपके दूसरे डिवाइस पर इसका कोई असर नहीं है।</string>
+    <string name="unreadable_retry">फिर से कोशिश करें</string>
+    <string name="unreadable_reset">Tomi रीसेट करें</string>
+    <string name="unreadable_reset_title">इस फ़ोन पर Tomi का डेटा मिटाएँ?</string>
+    <string name="unreadable_reset_message">यहाँ Tomi का रखा सब कुछ मिटा दिया जाएगा और इस फ़ोन को आपके स्पेस से फिर से जुड़ना होगा। आपके दूसरे डिवाइस अपने आइटम रखेंगे; उनकी डिवाइस सूची से इस पुराने डिवाइस को हटाना न भूलें।</string>
+    <string name="unreadable_reset_confirm">मिटाएँ और रीसेट करें</string>
+    <string name="unreadable_reset_failed">मिटाया नहीं जा सका। फिर से कोशिश करें, या Android सेटिंग में ऐप का डेटा साफ़ करें।</string>
+    <string name="share_unreadable">Tomi अपना डेटा नहीं खोल पा रहा है। इसे ठीक करने के लिए ऐप खोलें।</string>
+    <string name="devices_title">डिवाइस</string>
+    <string name="devices_add">डिवाइस जोड़ें</string>
+    <string name="devices_empty">आपके स्पेस में अभी कोई डिवाइस नहीं है।</string>
+    <string name="devices_this_device">यह डिवाइस</string>
+    <string name="devices_rename">नाम बदलें</string>
+    <string name="devices_revoke">निरस्त करें</string>
+    <string name="devices_revoke_title">“%1$s” को निरस्त करें?</string>
+    <string name="devices_revoke_message">इस डिवाइस को स्पेस से हटा दिया जाएगा और स्पेस कुंजी बदल दी जाएगी। यह नए आइटम नहीं पढ़ पाएगा। आपसे आपका फ़िंगरप्रिंट, आपका चेहरा या आपका स्क्रीन लॉक कोड माँगा जाएगा।</string>
+    <string name="devices_rename_failed">डिवाइस का नाम नहीं बदला जा सका। अपना कनेक्शन देखें और फिर से कोशिश करें।</string>
+    <string name="devices_revoke_failed">डिवाइस निरस्त नहीं किया जा सका। अपना कनेक्शन देखें और फिर से कोशिश करें।</string>
+    <string name="devices_revoking">निरस्त किया जा रहा है: स्पेस कुंजी बदली जा रही है, इसमें कुछ सेकंड लग सकते हैं।</string>
+    <string name="devices_revoke_unavailable">इस फ़ोन पर कोई स्क्रीन लॉक सेट अप नहीं है: निरस्त करना संभव नहीं है। सेटिंग में कोड, फ़िंगरप्रिंट या चेहरा सेट अप करें।</string>
+    <string name="rotation_stalled_title">डिवाइस हटाना पूरा होना बाकी है</string>
+    <string name="rotation_stalled_message">हो सकता है कि हटाए गए डिवाइस के पास अब भी आपके स्पेस की मौजूदा कुंजी हो। Tomi हर घंटे इसे बदलने की फिर से कोशिश करता है। अपने दूसरे डिवाइस पर Tomi खोलने से मदद मिलती है।</string>
+    <string name="snackbar_relay_revoked_admin">रिले के एडमिनिस्ट्रेटर ने “%1$s” को हटा दिया।</string>
+    <string name="snackbar_relay_revoked_self">रिले के अनुसार, “%1$s” ने स्पेस छोड़ दिया।</string>
+    <string name="snackbar_relay_revoked_other">रिले ने “%1$s” को स्पेस से हटा दिया।</string>
+    <!-- Another device that has not shown up for a long time. Tomi only knows that, not that the app is uninstalled. -->
+    <string name="devices_inactive_hint">%1$s से निष्क्रिय। अब इसका इस्तेमाल नहीं करते? इसे हटाएँ।</string>
+    <plurals name="devices_inactive_duration">
+        <item quantity="one">%1$d दिन</item>
+        <item quantity="other">%1$d दिन</item>
+    </plurals>
+
+    <!-- Leaving the space (menu of the feed) -->
+    <string name="leave_title">अपने स्पेस से डिस्कनेक्ट करें?</string>
+    <string name="leave_message">यह डिवाइस आपका स्पेस छोड़ देगा। इसमें रखा सब कुछ मिटा दिया जाएगा: आइटम, छिपा हुआ कॉन्टेंट, फ़ाइलें और कुंजियाँ, वह भी जो अभी भेजा नहीं गया है। आपके दूसरे डिवाइस अपनी कॉपी रखेंगे। वापस आने के लिए आपको इस डिवाइस को किसी दूसरे डिवाइस से फिर से जोड़ना होगा।</string>
+    <string name="leave_confirm">डिस्कनेक्ट करें</string>
+    <string name="leave_in_progress">डिस्कनेक्ट हो रहा है…</string>
+    <string name="leave_error_update">डिस्कनेक्ट करने के लिए Tomi अपडेट करें। कुछ भी मिटाया नहीं गया है।</string>
+    <string name="leave_error_unexpected">आपके Tomi सर्वर ने डिस्कनेक्ट करने से मना कर दिया। कुछ भी मिटाया नहीं गया है: यह फ़ोन आपके स्पेस में बना रहेगा।</string>
+
+    <!-- The only device: deleting the space (after the relay answered "last device") -->
+    <string name="delete_space_title">अपना स्पेस डिलीट करें?</string>
+    <string name="delete_space_message">यह इकलौता डिवाइस है। डिस्कनेक्ट करने से आपका स्पेस और उसमें मौजूद सब कुछ हमेशा के लिए डिलीट हो जाएगा।</string>
+    <string name="delete_space_detail">आपका Tomi सर्वर स्पेस को मिटा देगा, फिर यह फ़ोन इसमें रखा सब कुछ मिटा देगा: आइटम, छिपा हुआ कॉन्टेंट, फ़ाइलें और कुंजियाँ। कोई भी इन्हें वापस नहीं पा सकेगा।</string>
+    <string name="delete_space_confirm">स्पेस डिलीट करें</string>
+    <string name="delete_space_in_progress">डिलीट हो रहा है…</string>
+    <string name="delete_space_error_relay_too_old">आपका Tomi सर्वर स्पेस डिलीट करने के लिए बहुत पुराना है। उसे अपडेट करें, फिर से कोशिश करें। कुछ भी मिटाया नहीं गया है।</string>
+    <string name="delete_space_error_update">अपना स्पेस डिलीट करने के लिए Tomi अपडेट करें। कुछ भी मिटाया नहीं गया है।</string>
+    <string name="delete_space_error_unexpected">आपके Tomi सर्वर ने स्पेस डिलीट करने से मना कर दिया। कुछ भी मिटाया नहीं गया है।</string>
+    <string name="delete_space_unavailable_biometric">अपना स्पेस डिलीट करने के लिए फ़ोन की सेटिंग में स्क्रीन लॉक (कोड, फ़िंगरप्रिंट या चेहरा) सेट अप करें। कुछ भी मिटाया नहीं गया है।</string>
+
+    <!-- A pending departure: banner at the top of the feed -->
+    <string name="departure_pending_leave_title">डिस्कनेक्ट होना बाकी है</string>
+    <string name="departure_pending_delete_title">स्पेस डिलीट होना बाकी है</string>
+    <string name="departure_pending_checking">Tomi आपके सर्वर से जाँच कर रहा है। कुछ भी मिटाया नहीं गया है।</string>
+    <string name="departure_pending_network">आपके Tomi सर्वर ने अभी तक पुष्टि नहीं की है। कुछ भी मिटाया नहीं गया है। नेटवर्क वापस आते ही Tomi फिर से कोशिश करेगा।</string>
+    <string name="departure_pending_server">आपके Tomi सर्वर में कुछ समय के लिए समस्या है। कुछ भी मिटाया नहीं गया है। Tomi फिर से कोशिश कर रहा है।</string>
+    <string name="departure_pending_not_sent">आपका अनुरोध नहीं पहुँचा: यह फ़ोन अब भी आपके स्पेस का हिस्सा है। कुछ भी मिटाया नहीं गया है।</string>
+    <string name="departure_pending_not_found">आपके Tomi सर्वर को अब आपका स्पेस नहीं मिल रहा है, या वह अब इस फ़ोन को नहीं पहचानता। कुछ भी मिटाया नहीं गया है।</string>
+    <string name="departure_cancelling_title">रद्द किया जा रहा है</string>
+    <string name="departure_cancelling">Tomi आपके सर्वर को पहले से भेजे गए अनुरोध के पूरा होने का इंतज़ार कर रहा है। इस फ़ोन पर कुछ भी नहीं मिटाया जाएगा।</string>
+    <string name="departure_wiping">इस फ़ोन से सब मिटाया जा रहा है…</string>
+    <string name="departure_retry">फिर से कोशिश करें</string>
+    <string name="departure_cancel">रद्द करें</string>
+    <string name="departure_cancelled_leave">डिस्कनेक्ट करना रद्द किया गया। अगर आपके सर्वर को यह पहले ही मिल चुका था, तो यह फ़ोन स्पेस से हटाया गया दिखेगा; इसमें रखा कॉन्टेंट पढ़ा जा सकेगा।</string>
+    <string name="departure_cancelled_delete">डिलीट करना रद्द किया गया। अगर आपका सर्वर इसे पहले ही कर चुका था, तो आपका स्पेस अब सिर्फ़ इस फ़ोन पर मौजूद है।</string>
+    <string name="departure_failed">मिटाना पूरा नहीं हुआ। कुछ भी मिटाया नहीं गया है। फिर से कोशिश करें।</string>
+    <string name="space_not_found_title">स्पेस नहीं मिला</string>
+    <string name="space_not_found_message">आपके Tomi सर्वर को अब आपका स्पेस नहीं मिल रहा है। अगर उसे रीसेट किया गया है, तो आप इस फ़ोन से सब मिटा सकते हैं; नहीं तो पहले अपना सर्वर जाँचें। इस फ़ोन पर कुछ भी मिटाया नहीं गया है।</string>
+    <string name="space_revoked_title">स्पेस से हटाया गया</string>
+    <string name="space_revoked_message">इस फ़ोन को आपके स्पेस से हटा दिया गया है। इसमें रखा कॉन्टेंट यहाँ पढ़ा जा सकता है। डिस्कनेक्ट करने पर वह मिट जाएगा।</string>
+
+    <!-- "Erase anyway": erasing without a proof of the relay -->
+    <string name="erase_anyway">फिर भी मिटाएँ</string>
+    <string name="erase_title">सर्वर की पुष्टि के बिना इस फ़ोन से सब मिटाएँ?</string>
+    <string name="erase_message">आपका Tomi सर्वर यह पुष्टि नहीं कर सकता कि आपका स्पेस डिलीट हो गया है। हो सकता है कि आपके सर्वर पर स्पेस डिलीट न हुआ हो; अगर वह अब भी मौजूद है, तो इस फ़ोन का उस पर ऐक्सेस नहीं रहेगा।</string>
+    <string name="erase_detail">इस फ़ोन में रखा सब कुछ हमेशा के लिए मिटा दिया जाएगा: आइटम, छिपा हुआ कॉन्टेंट, फ़ाइलें और कुंजियाँ।</string>
+    <string name="erase_checkbox">मुझे पता है: यह स्थायी है।</string>
+    <string name="erase_confirm">इस फ़ोन से सब मिटाएँ</string>
+    <string name="erase_in_progress">मिटाया जा रहा है…</string>
+    <string name="erase_checking">Tomi आपके सर्वर से जाँच कर रहा है…</string>
+    <string name="erase_waiting">आपके सर्वर को भेजा गया एक अनुरोध अभी चल रहा है। मिटाने से पहले Tomi उसके पूरा होने का इंतज़ार कर रहा है। कुछ भी मिटाया नहीं गया है।</string>
+    <string name="erase_not_allowed">Tomi को पहले आपके सर्वर से जाँच करनी होगी। थोड़ी देर में फिर से कोशिश करें।</string>
+    <string name="erase_expired">आपके सर्वर का जवाब अब मान्य नहीं है: वह बहुत पुराना है, या उसके बाद आपके सर्वर ने अलग जवाब दिया है। कुछ भी मिटाया नहीं गया है। थोड़ी देर में फिर से कोशिश करें।</string>
+    <string name="erase_unavailable_biometric">सर्वर की पुष्टि के बिना मिटाने के लिए फ़ोन की सेटिंग में स्क्रीन लॉक (कोड, फ़िंगरप्रिंट या चेहरा) सेट अप करें। Tomi को अनइंस्टॉल करने से भी उसका रखा सब कुछ मिट जाता है।</string>
+    <string name="platform_android">Android</string>
+    <string name="platform_windows">Windows</string>
+    <string name="platform_other">अन्य</string>
+
+    <!-- Add a device (the inviting device) -->
+    <string name="invite_title">डिवाइस जोड़ें</string>
+    <string name="invite_starting">कोड तैयार किया जा रहा है…</string>
+    <string name="invite_intro">नए डिवाइस पर Tomi खोलें, फिर यह QR कोड स्कैन करें या आमंत्रण कोड डालें।</string>
+    <string name="invite_qr_description">आमंत्रण QR कोड</string>
+    <string name="invite_single_use">यह कोड सिर्फ़ एक बार काम करता है। जब तक यह स्क्रीन खुली है, यह अपने-आप नया होता रहता है।</string>
+    <string name="invite_verify_body">जाँचें कि %1$s पर भी यही कोड दिख रहा है।</string>
+    <string name="invite_verify_hint">अगर दूसरा डिवाइस कोड के बजाय कोई गड़बड़ी दिखाता है, तो “कोड अलग हैं” पर टैप करें।</string>
+    <string name="invite_add">यह डिवाइस जोड़ें</string>
+    <string name="invite_adding_title">नए डिवाइस का इंतज़ार</string>
+    <string name="invite_adding_body">%1$s पर भी पुष्टि करें कि कोड एक जैसे हैं। ऐसा होते ही डिवाइस जुड़ जाएगा।</string>
+    <string name="invite_done_history">%1$s आपके स्पेस का इतिहास पाएगा। इसमें कुछ समय लग सकता है।</string>
+    <string name="invite_failed_title">डिवाइस नहीं जोड़ा गया</string>
+    <string name="invite_new_code">नया कोड</string>
+    <string name="invite_notice_failed">डिवाइस जोड़ना पूरा नहीं हुआ। नया आमंत्रण कोड तैयार है।</string>
+    <string name="invite_notice_refused">डिवाइस जोड़ना रद्द कर दिया गया। नया आमंत्रण कोड तैयार है।</string>
+    <string name="invite_error_expired">कोड समाप्त हो गया है। नया कोड बनाएँ।</string>
+    <string name="invite_error_cancelled">दूसरे डिवाइस पर डिवाइस जोड़ना रद्द कर दिया गया।</string>
+    <string name="invite_error_busy">एक डिवाइस पहले से जोड़ा जा रहा है। उसे पूरा करें या थोड़ी देर इंतज़ार करें, फिर से कोशिश करें।</string>
+    <string name="invite_error_failed">डिवाइस जोड़ना पूरा नहीं हुआ। फिर से कोशिश करें।</string>
+    <string name="invite_auth_required_title">पुष्टि ज़रूरी है</string>
+    <string name="invite_auth_required_body">डिवाइस जोड़ने के लिए अपने फ़िंगरप्रिंट, अपने चेहरे या फ़ोन के स्क्रीन लॉक कोड से अपनी पहचान की पुष्टि करें।</string>
+    <string name="invite_auth_unavailable_body">डिवाइस जोड़ने के लिए पहले फ़ोन की सेटिंग में स्क्रीन लॉक (कोड, फ़िंगरप्रिंट या चेहरा) सेट अप करें।</string>
+    <string name="invite_auth_retry">पुष्टि करें</string>
+    <string name="invite_notice_auth_denied">पुष्टि रद्द की गई: कुछ भी नहीं जोड़ा गया। तैयार होने पर “यह डिवाइस जोड़ें” पर फिर से टैप करें।</string>
+
+    <!-- Create the space (the first device) -->
+    <string name="create_title">अपना स्पेस बनाएँ</string>
+    <string name="create_intro">आपके Tomi सर्वर ने आपको QR कोड या टेक्स्ट के रूप में एक इंस्टॉलेशन कुंजी दी है।</string>
+    <string name="create_token_label">इंस्टॉलेशन कुंजी</string>
+    <string name="create_or_paste">या कुंजी पेस्ट करें</string>
+    <string name="create_scan_button">QR कोड स्कैन करें</string>
+    <string name="create_scan_button_description">कैमरे से इंस्टॉलेशन कुंजी का QR कोड स्कैन करें</string>
+    <string name="create_scan_preview_description">इंस्टॉलेशन कुंजी का QR कोड स्कैन करने के लिए कैमरा प्रीव्यू</string>
+    <string name="create_scan_cancel">स्कैनर बंद करें</string>
+    <string name="create_camera_denied">कैमरे का ऐक्सेस नहीं दिया गया। इसके बजाय आप कुंजी पेस्ट कर सकते हैं या डाल सकते हैं।</string>
+    <string name="create_error_qr">यह QR कोड न तो इंस्टॉलेशन कुंजी है, न ही स्पेस बनाने का लिंक। अपने Tomi सर्वर वाला QR कोड स्कैन करें या कुंजी डालें।</string>
+    <string name="create_where_button">कुंजी कहाँ मिलेगी?</string>
+    <string name="create_where_title">कुंजी कहाँ मिलेगी?</string>
+    <string name="create_where_body">आपके Tomi सर्वर ने इसे इंस्टॉलेशन के समय सिर्फ़ एक बार, QR कोड के साथ दिखाया था।</string>
+    <string name="create_where_other_title">दूसरी कुंजी पाने के लिए</string>
+    <string name="create_where_run">अपने सर्वर पर यह कमांड चलाएँ:</string>
+    <string name="create_where_command" translatable="false">$ tomi-relay admin invite --new</string>
+    <string name="create_where_ok">ठीक है</string>
+    <string name="create_name_label">इस डिवाइस का नाम</string>
+    <string name="create_name_edit">नाम बदलें</string>
+    <string name="create_submit">मेरा स्पेस बनाएँ</string>
+    <string name="create_join_instead">मौजूदा स्पेस से जुड़ें</string>
+    <string name="create_done_title">आपका स्पेस तैयार है</string>
+    <string name="create_done_body">%1$s आपके स्पेस का पहला डिवाइस है। बाकी डिवाइस “डिवाइस” से जोड़ें।</string>
+    <string name="create_relay_check_label">रिले: %1$s</string>
+    <string name="create_relay_check_hint">अपना स्पेस बनाने से पहले जाँचें कि यह आपका ही रिले है।</string>
+    <string name="create_relay_from_link">लिंक या QR कोड से पढ़ा गया।</string>
+    <string name="create_error_token">इंस्टॉलेशन कुंजी गलत है या पहले ही इस्तेमाल हो चुकी है। इसे जाँचें और फिर से कोशिश करें।</string>
+    <string name="create_error_token_empty">इंस्टॉलेशन कुंजी पेस्ट करें।</string>
+    <string name="create_error_name">डिवाइस का नाम 1 से 64 वर्णों का होना चाहिए, शुरुआत या आखिर में खाली जगह के बिना।</string>
+    <string name="create_error_space_exists">इस कुंजी से पहले ही एक स्पेस बनाया जा चुका है। इस डिवाइस को किसी ऐसे डिवाइस से जोड़ें जो पहले से स्पेस में है।</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_pin_title">अपने शेयर मेन्यू में Tomi को सबसे ऊपर पिन करें</string>
+    <string name="onboarding_pin_body">Tomi को दबाकर रखें, फिर “पिन करें” चुनें। यह हमेशा सबसे पहले, एक ही जगह पर रहेगा।</string>
+    <string name="onboarding_open_share">शेयर मेन्यू खोलें</string>
+    <string name="onboarding_later">बाद में</string>
+    <string name="onboarding_scene_pin_description">चित्र: शेयर मेन्यू में Tomi को दबाकर रखने पर “पिन करें” विकल्प दिखता है।</string>
+    <string name="onboarding_check_caption">आपको यह दिखना चाहिए</string>
+    <string name="onboarding_check_title">क्या Tomi सबसे ऊपर है?</string>
+    <string name="onboarding_check_body">ज़रूरत हो तो शेयर मेन्यू फिर से खोलें। Tomi पिन के साथ सबसे पहले दिखना चाहिए।</string>
+    <string name="onboarding_check_yes">हाँ, हो गया</string>
+    <string name="onboarding_check_again">अभी नहीं, मेन्यू फिर से खोलें</string>
+    <string name="onboarding_scene_check_description">चित्र: शेयर मेन्यू में Tomi पिन के साथ सबसे पहले दिखता है।</string>
+    <string name="onboarding_scene_share_title">शेयर करें</string>
+    <string name="onboarding_scene_notes">नोट</string>
+    <string name="onboarding_scene_browser">ब्राउज़र</string>
+    <string name="onboarding_scene_files">फ़ाइलें</string>
+    <string name="onboarding_sample_text">Tomi शेयर टेस्ट</string>
+</resources>

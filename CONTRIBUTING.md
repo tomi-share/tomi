@@ -35,7 +35,7 @@ contribution you agree that it is released under the same license.
 ## Conventions
 
 - Code, comments, documentation and commit messages are in English. User-facing strings live in the localization files
-  (French is the default locale; English can be added as a separate locale).
+  (English is the reference and the fallback; every other language is a locale, see `docs/LOCALIZATION.md`).
 - Do not add personal data, real hostnames or credentials to code, tests, docs or fixtures; use `relay.example.org`,
   `user@example.org` and similar placeholders.
 - Do not commit generated artifacts or secrets.

@@ -6,6 +6,13 @@ fallback**: a device in a language Tomi does not have shows English. Code, comme
 Strings that must stay language-independent: protocol labels, error codes and state names (see `spec/`), and the pairing word
 list (French, part of the pairing code format — `spec/vectors/pairing-v1/wordlist.json`).
 
+## Languages
+
+English (reference), French, German, Spanish, Italian, Portuguese (Brazilian wording), Dutch, Polish, Russian, Turkish,
+Simplified Chinese, Japanese, Korean, Hindi and Indonesian. The three apps carry the same list. Two tags differ by
+platform: Indonesian is `in` in the Android folder name and `id` everywhere else; Chinese is `zh` in the files and
+`zh-Hans` in the Apple catalog.
+
 ## Vocabulary
 
 Product words are translated once and used everywhere. In English: space, relay, device, feed, pairing, installation key,

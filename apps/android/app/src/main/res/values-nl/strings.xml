@@ -1,0 +1,579 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- All user-visible texts are Dutch, informal ("je"). Keep identifiers and comments in English.
+     Vocabulary: "Verborgen" / "Tonen" (never "Geheim" / "Onthullen"). -->
+<resources>
+    <string name="app_name">Tomi</string>
+
+    <!-- Generic actions -->
+    <string name="action_cancel">Annuleren</string>
+    <string name="action_cancel_send">Versturen annuleren</string>
+    <string name="action_close">Sluiten</string>
+    <string name="action_back">Terug</string>
+    <string name="action_save">Bewaren</string>
+    <string name="action_continue">Doorgaan</string>
+    <string name="action_later">Later</string>
+    <string name="action_done">Klaar</string>
+    <string name="action_copy">Kopiëren</string>
+    <string name="action_copy_link">Link kopiëren</string>
+    <string name="action_open">Openen</string>
+    <string name="action_more">Meer acties</string>
+    <string name="action_reveal">Tonen</string>
+    <string name="action_hide">Verbergen</string>
+    <string name="action_send">Versturen</string>
+    <string name="action_paste">Plakken</string>
+    <string name="action_attach">Bestand bijvoegen</string>
+    <string name="action_remove_attachment">%1$s weghalen</string>
+    <string name="action_undo">Ongedaan maken</string>
+    <string name="action_options">Opties</string>
+    <string name="action_search">Zoeken</string>
+    <string name="action_close_search">Zoeken sluiten</string>
+    <string name="action_filters">Filters</string>
+    <string name="action_clear_filter">Filter wissen</string>
+    <string name="action_delete">Verwijderen</string>
+    <string name="action_delete_local">Verwijderen van dit apparaat</string>
+    <string name="action_delete_everywhere">Overal verwijderen</string>
+    <string name="action_pin">Vastzetten</string>
+    <string name="action_unpin">Losmaken</string>
+    <string name="action_archive">Archiveren</string>
+    <string name="action_unarchive">Uit archief halen</string>
+    <string name="action_share">Delen</string>
+    <string name="action_details">Details</string>
+    <string name="action_read_more">Meer lezen</string>
+
+    <!-- Feed -->
+    <string name="search_placeholder">Zoeken in de feed</string>
+    <string name="filter_all">Alles</string>
+    <string name="filter_links">Links</string>
+    <string name="filter_text">Tekst</string>
+    <string name="filter_files">Bestanden</string>
+    <string name="filter_secrets">Verborgen</string>
+    <string name="filter_archives">Archief</string>
+    <string name="section_pinned">Vastgezet</string>
+    <string name="section_recent">Recent</string>
+    <string name="section_archives">Archief</string>
+    <string name="source_this_phone">Deze telefoon</string>
+    <string name="label_masked">Verborgen</string>
+    <plurals name="search_results">
+        <item quantity="one">%1$d resultaat</item>
+        <item quantity="other">%1$d resultaten</item>
+    </plurals>
+    <string name="search_masked_note">verborgen items worden doorzocht zonder titel of inhoud</string>
+    <!-- 1: the counter ("2 results"), 2: the note about the hidden items -->
+    <string name="search_summary_with_note">%1$s · %2$s</string>
+    <string name="feed_empty">Nog niets. Deel een link, een tekst of een bestand met Tomi om het naar je andere apparaten te versturen.</string>
+    <string name="feed_empty_archives">Geen gearchiveerde items. Veeg een kaart in Recent naar links om die te archiveren.</string>
+    <string name="feed_empty_filtered">Geen overeenkomende items.</string>
+    <string name="banner_offline">Offline · wachten</string>
+    <string name="menu_share_help">Tomi vastzetten in het deelmenu</string>
+    <string name="menu_leave_space">Loskoppelen</string>
+    <string name="snackbar_copied_secret">Gekopieerd · gewist over 30 s</string>
+    <string name="snackbar_deleted_local">Verwijderd van dit apparaat</string>
+    <string name="snackbar_deleted_everywhere">Verwijdering aangevraagd op alle apparaten</string>
+    <string name="snackbar_action_failed">De actie is niet gelukt. Controleer je verbinding en probeer het opnieuw.</string>
+    <string name="snackbar_pin_failed">Vastzetten kon niet worden gewijzigd. Probeer het opnieuw.</string>
+    <string name="snackbar_archived">Gearchiveerd</string>
+    <string name="snackbar_unarchived">Uit archief gehaald</string>
+    <string name="snackbar_archive_failed">Archief kon niet worden gewijzigd. Probeer het opnieuw.</string>
+    <string name="snackbar_nothing_to_share">Niets te delen in dit item.</string>
+    <string name="detail_not_found">Item niet gevonden. Het is misschien verlopen of verwijderd.</string>
+    <string name="detail_masked_hint">Voor Tonen, Kopiëren en Delen zijn je vingerafdruk of je schermvergrendelingscode nodig.</string>
+    <string name="detail_revealed_hint">Wordt weer verborgen zodra je het scherm verlaat.</string>
+    <string name="meta_type">Type</string>
+    <string name="meta_sent_at">Verstuurd op</string>
+    <string name="meta_expiry">Verloopt</string>
+    <string name="meta_pinned">Vastgezet</string>
+    <string name="meta_status">Status</string>
+    <string name="meta_yes">Ja</string>
+    <string name="meta_no">Nee</string>
+    <string name="meta_never">Nooit</string>
+    <string name="meta_after_read">Na lezen</string>
+    <plurals name="characters_count">
+        <item quantity="one">%1$d teken</item>
+        <item quantity="other">%1$d tekens</item>
+    </plurals>
+
+    <!-- Card -->
+    <string name="unread_badge">Ongelezen</string>
+    <string name="pinned_badge">Vastgezet</string>
+    <string name="archived_badge">Gearchiveerd</string>
+    <string name="time_yesterday">Gisteren</string>
+    <string name="expires_in">verloopt over %1$s</string>
+    <string name="expires_after_read">verdwijnt na de eerste keer lezen</string>
+    <!-- Attachment tiles (feed + detail). "More files": the button towards the detail, then the same as a caption when "Read more" takes its place. -->
+    <plurals name="more_files">
+        <item quantity="one">Nog %1$d bestand</item>
+        <item quantity="other">Nog %1$d bestanden</item>
+    </plurals>
+    <plurals name="more_files_caption">
+        <item quantity="one">+ nog %1$d bestand</item>
+        <item quantity="other">+ nog %1$d bestanden</item>
+    </plurals>
+    <!-- %1$d = count, %2$s = total size ("4 files · 4.9 MB"). Shown from 2 attachments on, so "one" is only for the form. -->
+    <plurals name="attachments_summary_files">
+        <item quantity="one">%1$d bestand · %2$s</item>
+        <item quantity="other">%1$d bestanden · %2$s</item>
+    </plurals>
+    <plurals name="attachments_summary_images">
+        <item quantity="one">%1$d afbeelding · %2$s</item>
+        <item quantity="other">%1$d afbeeldingen · %2$s</item>
+    </plurals>
+    <plurals name="secret_files_hidden">
+        <item quantity="one">%1$d verborgen bestand</item>
+        <item quantity="other">%1$d verborgen bestanden</item>
+    </plurals>
+    <plurals name="remaining_days">
+        <item quantity="one">%1$d dag</item>
+        <item quantity="other">%1$d dagen</item>
+    </plurals>
+    <plurals name="remaining_hours">
+        <item quantity="one">%1$d uur</item>
+        <item quantity="other">%1$d uur</item>
+    </plurals>
+    <plurals name="remaining_minutes">
+        <item quantity="one">%1$d minuut</item>
+        <item quantity="other">%1$d minuten</item>
+    </plurals>
+    <string name="kind_secret">Verborgen</string>
+    <string name="kind_image">Afbeelding</string>
+    <string name="kind_file">Bestand</string>
+    <string name="kind_link">Link</string>
+    <string name="kind_unreadable">Onleesbaar</string>
+    <string name="unreadable_update_required">Er is een update nodig om dit item te lezen. Het wordt bewaard en getoond zodra Tomi is bijgewerkt.</string>
+    <string name="unreadable_decryption_failed">Dit item is voorlopig onleesbaar. Het wordt bewaard: na een synchronisatie of een update kan het leesbaar worden.</string>
+    <string name="kind_rich_text">Opgemaakte tekst</string>
+    <string name="kind_text">Tekst</string>
+    <!-- Internal image viewer -->
+    <string name="action_view_image">Afbeelding bekijken</string>
+    <string name="viewer_save">Bewaren</string>
+    <string name="viewer_action_delete">Verwijderen</string>
+    <string name="viewer_delete_local">Afbeelding verwijderen van dit apparaat</string>
+    <string name="viewer_delete_everywhere">Afbeelding overal verwijderen</string>
+    <string name="viewer_image_description">Afbeelding %1$d van %2$d</string>
+    <string name="viewer_position">%1$d/%2$d</string>
+    <string name="viewer_locked">Verborgen afbeelding. Bevestig je identiteit om haar te tonen.</string>
+    <string name="viewer_load_failed">Kan deze afbeelding niet tonen.</string>
+    <string name="viewer_no_image">Geen afbeelding om te tonen.</string>
+    <string name="snackbar_image_saved">Afbeelding bewaard in de galerij</string>
+    <string name="snackbar_file_unavailable">Kan dit bestand niet openen. Het is misschien nog niet gedownload, of geen enkele app kan het openen.</string>
+    <string name="snackbar_file_downloaded">Bestand bewaard in Downloads/Tomi</string>
+    <string name="snackbar_file_download_failed">Kan het bestand niet bewaren. Probeer het opnieuw.</string>
+    <string name="snackbar_image_unavailable">Deze afbeelding is nu niet beschikbaar.</string>
+    <string name="snackbar_image_failed">De actie is mislukt. Probeer het opnieuw.</string>
+    <!-- Removal of ONE attachment of an item (the item stays) -->
+    <string name="snackbar_image_deleted_local">Afbeelding verwijderd van dit apparaat</string>
+    <string name="snackbar_image_deleted_everywhere">Afbeelding overal verwijderd</string>
+    <string name="snackbar_file_deleted_local">Bestand verwijderd van dit apparaat</string>
+    <string name="snackbar_file_deleted_everywhere">Bestand overal verwijderd</string>
+    <string name="file_row_delete">Dit bestand verwijderen</string>
+    <string name="file_row_actions">Acties voor dit bestand</string>
+    <string name="file_download">Downloaden</string>
+    <string name="file_delete_local">Bestand verwijderen van dit apparaat</string>
+    <string name="file_delete_everywhere">Bestand overal verwijderen</string>
+    <string name="dialog_delete_file_everywhere_title">Bestand overal verwijderen?</string>
+    <string name="dialog_delete_file_everywhere_named">“%1$s” wordt gewist van al je apparaten en van je Tomi-server. Apparaten die offline zijn, wissen het zodra ze weer verbinding hebben. Deze actie is definitief.</string>
+    <string name="dialog_delete_file_everywhere_secret">Dit verborgen bestand wordt gewist van al je apparaten en van je Tomi-server. Een apparaat dat het al heeft getoond, kan een kopie hebben bewaard. Deze actie is definitief.</string>
+    <string name="biometric_title_image">Verborgen afbeelding tonen</string>
+    <string name="biometric_subtitle_image">Bevestig je identiteit. De bevestiging blijft 2 minuten geldig.</string>
+    <string name="biometric_title_save_image">Verborgen afbeelding bewaren</string>
+    <string name="biometric_subtitle_save_image">Bevestig je identiteit voordat de afbeelding in de galerij wordt opgeslagen. De bevestiging blijft 2 minuten geldig.</string>
+    <!-- Text modes: "Preview" (styled, default) and "Markdown" (the literal source) -->
+    <string name="render_preview">Voorvertoning</string>
+    <string name="render_markdown">Markdown</string>
+
+    <!-- Code file screen -->
+    <string name="action_view_code">Bestand openen</string>
+    <string name="code_search">Zoeken in bestand</string>
+    <string name="code_search_placeholder">Zoeken in bestand</string>
+    <string name="code_search_previous">Vorige overeenkomst</string>
+    <string name="code_search_next">Volgende overeenkomst</string>
+    <string name="code_copy_file">Bestand kopiëren</string>
+    <string name="code_wrap">Regels afbreken</string>
+    <string name="code_locked">Verborgen bestand. Bevestig je identiteit om het te tonen.</string>
+    <string name="code_no_file">Geen codebestand om te tonen.</string>
+    <string name="code_unavailable">Kan dit bestand nu niet tonen.</string>
+    <string name="code_too_large">Dit bestand is te groot om te tonen (maximaal 2 MB).</string>
+    <string name="code_binary">Dit bestand is geen tekst: het kan hier niet worden getoond.</string>
+    <string name="code_no_colours_language">Geen syntaxiskleuring voor deze taal.</string>
+    <string name="code_no_colours_size">Syntaxiskleuring niet beschikbaar: bestand te lang (maximaal 50 kB of 2000 regels).</string>
+    <string name="biometric_title_file">Verborgen bestand tonen</string>
+    <string name="biometric_subtitle_file">Bevestig je identiteit. De bevestiging blijft 2 minuten geldig.</string>
+    <string name="dialog_delete_everywhere_title">Overal verwijderen?</string>
+    <string name="dialog_delete_everywhere_message">Het item wordt gewist van al je apparaten en van je Tomi-server. Apparaten die offline zijn, wissen het zodra ze weer verbinding hebben. Deze actie is definitief.</string>
+    <string name="dialog_delete_everywhere_secret">Deze verborgen inhoud wordt gewist van al je apparaten en van je Tomi-server. Een apparaat dat de inhoud al heeft getoond, kan een kopie hebben bewaard. Deze actie is definitief.</string>
+    <string name="dialog_delete_image_everywhere_title">Afbeelding overal verwijderen?</string>
+    <string name="dialog_delete_image_everywhere_message">Deze afbeelding wordt gewist van al je apparaten en van je Tomi-server. Apparaten die offline zijn, wissen haar zodra ze weer verbinding hebben. Deze actie is definitief.</string>
+    <string name="dialog_delete_image_everywhere_secret">Deze verborgen afbeelding wordt gewist van al je apparaten en van je Tomi-server. Een apparaat dat haar al heeft getoond, kan een kopie hebben bewaard. Deze actie is definitief.</string>
+
+    <!-- System share (Android ACTION_SEND) of an item -->
+    <string name="share_chooser_title">Delen via</string>
+    <!-- Neutral title of the preview of the system share sheet for a hidden item: the sheet must not show the content. -->
+    <string name="share_hidden_preview_title">Verborgen inhoud</string>
+    <string name="share_no_app">Geen enkele app kan deze inhoud ontvangen.</string>
+
+    <!-- Delivery status -->
+    <string name="status_received">Ontvangen</string>
+    <string name="status_queued">Wacht op versturen</string>
+    <string name="status_waiting_network">Wacht op netwerk</string>
+    <string name="status_sent">Verstuurd</string>
+    <string name="status_failed">Versturen mislukt</string>
+    <string name="status_delivered_all">Bij iedereen afgeleverd</string>
+    <string name="status_delivered_partial">Afgeleverd bij %1$d van %2$d</string>
+    <string name="status_expired">Afgeleverd bij %1$d · verlopen vóór aflevering bij %2$s</string>
+
+    <!-- Expiry -->
+    <string name="expiry_hour1">1 u</string>
+    <string name="expiry_day1">1 d</string>
+    <string name="expiry_day7">7 d</string>
+    <string name="expiry_day30">30 d</string>
+    <string name="expiry_never">Nooit</string>
+    <string name="expiry_after_read">Na lezen</string>
+    <string name="expiry_chip">Verloopt: %1$s</string>
+    <string name="expiry_label">Verloopt</string>
+    <string name="expiry_after_read_hint">“Na lezen”: overal gewist zodra het voor het eerst wordt geopend.</string>
+
+    <!-- Compose / send -->
+    <string name="send_title">Versturen</string>
+    <string name="send_title_label">Titel (optioneel)</string>
+    <string name="send_content_label">Tekst of link</string>
+    <string name="label_secret">Inhoud verbergen</string>
+    <string name="label_secret_off">Voorvertoning overal verborgen tot “Tonen”</string>
+    <string name="label_secret_on">Automatisch ingeschakeld. Je kunt het uitschakelen.</string>
+    <string name="detect_link">Link herkend</string>
+    <string name="detect_text">Tekst</string>
+    <string name="detect_files">Bestand bijgevoegd</string>
+    <string name="detect_masked">Verborgen</string>
+    <string name="detect_masked_password">Dit lijkt op een wachtwoord.</string>
+    <string name="detect_to_devices">Naar %1$s</string>
+    <string name="hint_secret_sensitive">De bron-app heeft deze inhoud als gevoelig gemarkeerd: hij wordt verborgen verstuurd.</string>
+    <string name="hint_secret_heuristic">Deze inhoud lijkt op een wachtwoord of een sleutel: hij wordt verborgen. Je kunt dit wijzigen.</string>
+    <string name="notice_paste_empty">Het klembord bevat geen tekst.</string>
+    <string name="notice_link_appended_to_draft">Er is een link uit een andere app aan je concept toegevoegd. Controleer hem voordat je verstuurt.</string>
+    <string name="notice_params_dropped">Sommige parameters van de link zijn genegeerd (te lang of ongeldig).</string>
+    <string name="notice_too_late">Te laat: het item is al verstuurd.</string>
+    <string name="notice_undo_failed">Kan het versturen niet annuleren. Het item is misschien al verstuurd.</string>
+    <string name="notice_send_failed">Versturen mislukt. Je tekst is bewaard, probeer het opnieuw.</string>
+    <string name="banner_sent">Verstuurd</string>
+    <plurals name="banner_files_skipped">
+        <item quantity="one">%1$d bestand overgeslagen: maximaal 25 MB per bestand</item>
+        <item quantity="other">%1$d bestanden overgeslagen: maximaal 25 MB per bestand</item>
+    </plurals>
+    <string name="sheet_title">Verzendopties</string>
+
+    <!-- Share target -->
+    <string name="share_not_paired">Tomi is aan geen enkele ruimte gekoppeld. Open de app om aan je ruimte deel te nemen.</string>
+    <string name="share_open_app">Tomi openen</string>
+    <string name="share_failed">Versturen mislukt. Probeer het opnieuw.</string>
+    <string name="share_too_late">Te laat: het item is al verstuurd. Je kunt het verwijderen uit de feed van Tomi.</string>
+    <string name="share_secret_detected">Dit lijkt op inhoud om te verbergen. Bevestig voordat je verstuurt.</string>
+    <string name="preview_secret_masked">••••••••••</string>
+    <plurals name="preview_files">
+        <item quantity="one">%1$d bestand</item>
+        <item quantity="other">%1$d bestanden</item>
+    </plurals>
+    <string name="shortcut_short_label">Tomi</string>
+    <string name="shortcut_long_label">Naar mijn apparaten versturen met Tomi</string>
+    <string name="tile_label">Versturen</string>
+
+    <!-- Biometrics -->
+    <string name="biometric_title_secret">Verborgen inhoud tonen</string>
+    <string name="biometric_subtitle_secret">Bevestig je identiteit. De bevestiging blijft 2 minuten geldig.</string>
+    <string name="biometric_title_share">Verborgen inhoud delen</string>
+    <string name="biometric_subtitle_share">Bevestig je identiteit voordat de inhoud naar een andere app gaat. De bevestiging blijft 2 minuten geldig.</string>
+    <string name="biometric_title_copy_secret">Verborgen inhoud kopiëren</string>
+    <string name="biometric_subtitle_from_notification">De inhoud wordt gekopieerd en na 30 s van het klembord gewist.</string>
+    <string name="biometric_title_revoke">Toegang van apparaat intrekken</string>
+    <string name="biometric_subtitle_revoke">Gevoelige actie: bevestig met je vingerafdruk, je gezicht of de schermvergrendelingscode van de telefoon.</string>
+    <string name="biometric_title_erase">Deze telefoon wissen</string>
+    <string name="biometric_subtitle_erase">Deze actie kan niet ongedaan worden gemaakt: bevestig met je vingerafdruk, je gezicht of de schermvergrendelingscode van de telefoon.</string>
+    <string name="biometric_title_pair">Apparaat toevoegen</string>
+    <string name="biometric_subtitle_pair">Het nieuwe apparaat ontvangt de hele geschiedenis, ook verborgen items. Bevestig met je vingerafdruk, je gezicht of de schermvergrendelingscode van de telefoon.</string>
+    <string name="biometric_title_delete_space">Je ruimte verwijderen</string>
+    <string name="biometric_subtitle_delete_space">Deze actie kan niet ongedaan worden gemaakt: bevestig met je vingerafdruk, je gezicht of de schermvergrendelingscode van de telefoon.</string>
+    <string name="toast_biometric_unavailable">Stel een schermvergrendeling of biometrie in om verborgen inhoud te tonen, te kopiëren of te delen.</string>
+    <string name="toast_item_not_found">Item niet gevonden</string>
+
+    <!-- Notifications -->
+    <string name="channel_group_incoming">Ontvangen items</string>
+    <string name="channel_links">Links</string>
+    <string name="channel_links_desc">Links ontvangen van je andere apparaten</string>
+    <string name="channel_text">Tekst</string>
+    <string name="channel_text_desc">Teksten ontvangen van je andere apparaten</string>
+    <string name="channel_files">Bestanden</string>
+    <string name="channel_files_desc">Bestanden en afbeeldingen ontvangen van je andere apparaten</string>
+    <string name="channel_secrets">Verborgen</string>
+    <string name="channel_secrets_desc">Ontvangen verborgen inhoud. Nooit getoond op het vergrendelscherm, geen voorvertoning.</string>
+    <string name="channel_devices">Apparaten</string>
+    <string name="channel_devices_desc">Melding wanneer er een apparaat aan je ruimte wordt toegevoegd. Geen inhoud, alleen de naam van het apparaat.</string>
+    <string name="notif_device_added_title">Nieuw apparaat toegevoegd</string>
+    <string name="notif_device_added_body">“%1$s” neemt nu deel aan je ruimte. Was jij dit niet? Open Apparaten en trek de toegang in.</string>
+    <string name="notif_title_secret">Verborgen inhoud · %1$s</string>
+    <string name="notif_title_link">Link van %1$s</string>
+    <string name="notif_title_image">Afbeelding van %1$s</string>
+    <string name="notif_title_file">Bestand van %1$s</string>
+    <string name="notif_title_text">Tekst van %1$s</string>
+    <string name="notif_title_unreadable">Item van %1$s</string>
+    <string name="notif_body_unreadable">Voorlopig onleesbaar: Tomi moet worden bijgewerkt</string>
+    <string name="notif_body_secret">Tik om te kopiëren (verificatie vereist)</string>
+    <string name="notif_body_generic">Nieuw item</string>
+    <string name="notif_public_title">Tomi: nieuw item</string>
+    <string name="notif_action_copy">Kopiëren</string>
+    <string name="notif_action_view">Bekijken</string>
+    <string name="notif_summary_text">Laatst verstuurd vanaf %1$s</string>
+    <plurals name="notif_summary_title">
+        <item quantity="one">%1$d nieuw item</item>
+        <item quantity="other">%1$d nieuwe items</item>
+    </plurals>
+
+    <!-- Pairing -->
+    <!-- Welcome: the two doors of a device that is not in a space yet -->
+    <string name="welcome_title">Je apparaten, één ruimte</string>
+    <string name="welcome_intro">Stuur jezelf links, notities en wachtwoorden van het ene apparaat naar het andere, end-to-end versleuteld.</string>
+    <string name="welcome_question">Hoe wil je beginnen?</string>
+    <string name="welcome_create_title">Je ruimte aanmaken</string>
+    <string name="welcome_create_hint">Dit is je eerste apparaat. Houd de QR-code of de installatiesleutel van je Tomi-server bij de hand.</string>
+    <string name="welcome_join_title">Deelnemen aan je ruimte</string>
+    <string name="welcome_join_hint">Staat Tomi al op een ander apparaat? Houd het open en binnen handbereik.</string>
+    <!-- Read by the screen reader for a whole door: title, then what it takes. -->
+    <string name="welcome_door_description">%1$s. %2$s</string>
+
+    <!-- Join a space -->
+    <string name="pair_title">Deelnemen aan je ruimte</string>
+    <string name="pair_intro">Open op je andere apparaat</string>
+    <string name="pair_other_device_caption">Op je andere apparaat</string>
+    <string name="pair_illustration_description">Illustratie: op je andere apparaat toont het scherm “Apparaat toevoegen” een QR-code en een uitnodigingscode, bijvoorbeeld 7-crayon-renard.</string>
+    <string name="pair_scan_preview_description">Camerabeeld om de QR-code van het andere apparaat te scannen</string>
+    <string name="pair_link_received">Uitnodigingslink ontvangen</string>
+    <string name="pair_link_received_relay">Relay: %1$s</string>
+    <string name="pair_link_received_warning">Deze link komt uit een andere app of van een webpagina. Neem alleen deel aan een ruimte die je zelf net hebt aangemaakt, met een relay die je herkent.</string>
+    <string name="pair_link_received_hint">Er gebeurt niets automatisch. Tik op “Deelnemen” om door te gaan.</string>
+    <string name="pair_join">Deelnemen</string>
+    <string name="pair_scan_hint">De camera wordt alleen voor deze scan gebruikt.</string>
+    <string name="pair_scan_button">QR-code scannen</string>
+    <string name="pair_enter_code_button">Uitnodigingscode invoeren</string>
+    <string name="demo_enter">Proberen met voorbeeldgegevens</string>
+    <string name="demo_banner">Demomodus: voorbeeldgegevens, er wordt niets verstuurd.</string>
+    <string name="demo_leave">Demo verlaten</string>
+    <string name="pair_camera_denied">Cameratoegang geweigerd. Je kunt in plaats daarvan de uitnodigingscode invoeren.</string>
+    <string name="pair_code_title">Uitnodigingscode invoeren</string>
+    <string name="pair_code_intro">Je vindt hem onder de QR-code, op je andere apparaat.</string>
+    <string name="pair_code_label">Uitnodigingscode</string>
+    <string name="pair_code_hint">Twee woorden na het getal. Accenten en hoofdletters zijn niet nodig.</string>
+    <string name="relay_field_label">Relay</string>
+    <string name="relay_field_hint">Adres van je Tomi-server, bijvoorbeeld relay.example.org.</string>
+    <string name="relay_other_button">Andere relay</string>
+    <string name="relay_current">Relay: %1$s</string>
+    <string name="pair_scan_instead">Toch de QR-code scannen</string>
+    <string name="pair_verify_title">Controleer de code</string>
+    <string name="pair_verify_body">Controleer of op beide apparaten dezelfde code staat.</string>
+    <plurals name="pair_verify_peer_members">
+        <item quantity="one">Je ruimte heeft %1$d apparaat</item>
+        <item quantity="other">Je ruimte heeft %1$d apparaten</item>
+    </plurals>
+    <string name="pair_verify_relay_label">Relay: %1$s</string>
+    <string name="pair_verify_relay_hint">Controleer of dit je relay is voordat je doorgaat.</string>
+    <string name="pair_verify_code_description">Verificatiecode %1$s</string>
+    <string name="pair_verify_validity">Nog %1$s geldig</string>
+    <string name="pair_verify_same">De codes zijn hetzelfde</string>
+    <string name="pair_verify_different">Ze zijn verschillend</string>
+    <string name="pair_verify_mismatch">De codes kwamen niet overeen: het toevoegen van het apparaat is geannuleerd. Begin opnieuw vanaf het andere apparaat.</string>
+    <string name="pair_working">Verbinden met het andere apparaat…</string>
+    <string name="pair_waiting_title">Wachten op het andere apparaat</string>
+    <string name="pair_waiting_body">Bevestig ook op %1$s dat de codes hetzelfde zijn. Het apparaat is toegevoegd zodra dat is gebeurd.</string>
+    <string name="pair_history_title">Geschiedenis ophalen?</string>
+    <plurals name="pair_history_body">
+        <item quantity="one">Je ruimte bevat al %1$d item. Je kunt het op deze telefoon ophalen.</item>
+        <item quantity="other">Je ruimte bevat al %1$d items. Je kunt ze op deze telefoon ophalen.</item>
+    </plurals>
+    <string name="pair_history_size">Ongeveer %1$s op te halen.</string>
+    <string name="pair_history_yes">Ja, geschiedenis ophalen</string>
+    <string name="pair_history_yes_hint">Alles in je ruimte komt hierheen, ook verborgen en vastgezette items.</string>
+    <string name="pair_history_no">Nee, beginnen met een lege feed</string>
+    <string name="pair_history_no_hint">Alleen wat vanaf nu wordt verstuurd, komt hier binnen.</string>
+    <string name="pair_history_footer">Je kunt een item later altijd verwijderen.</string>
+    <string name="pair_done_title">Apparaat toegevoegd</string>
+    <string name="pair_done_body">%1$s maakt deel uit van je ruimte.</string>
+    <string name="pair_notifications_rationale">Sta meldingen toe om te weten wanneer een apparaat je iets stuurt.</string>
+    <string name="pair_notifications_enable">Meldingen toestaan</string>
+    <string name="pair_error_qr_unknown">Deze QR-code is geen Tomi-uitnodiging.</string>
+    <string name="pair_error_code_format">Voer de uitnodigingscode in die op het andere apparaat staat, bijvoorbeeld 7-crayon-renard.</string>
+    <string name="pair_error_invalid">Deze uitnodigingscode is ongeldig. Controleer het getal en de twee woorden.</string>
+    <string name="pair_error_wrong_code">Onjuiste code. Maak een nieuwe uitnodigingscode aan op het andere apparaat.</string>
+    <string name="pair_error_taken">Deze uitnodigingscode is al gebruikt. Maak een nieuwe aan op het andere apparaat.</string>
+    <string name="pair_error_interrupted">De verbinding is onderbroken. Maak een nieuwe uitnodigingscode aan op het andere apparaat.</string>
+    <string name="pair_error_cancelled">Het toevoegen van het apparaat is geannuleerd op het andere apparaat.</string>
+    <string name="pair_error_update">Werk Tomi bij op beide apparaten om dit apparaat toe te voegen.</string>
+    <string name="pair_error_blocked">Dit apparaat kan je Tomi-server niet meer gebruiken. Controleer of het nog deel uitmaakt van je ruimte.</string>
+    <string name="pair_error_space_full">Je ruimte heeft het maximale aantal apparaten bereikt. Haal er een weg via de lijst met apparaten.</string>
+    <string name="pair_error_relay_required">Voer het adres van de relay in.</string>
+    <string name="pair_error_relay_invalid">Dit relay-adres is ongeldig. Schrijf het als relay.example.org.</string>
+    <string name="pair_error_unexpected">Het toevoegen van het apparaat is niet voltooid. Probeer het opnieuw.</string>
+    <string name="pair_error_expired">Code verlopen. Maak een nieuwe aan.</string>
+    <string name="pair_error_network">Netwerk niet beschikbaar. Probeer het opnieuw.</string>
+
+    <!-- Devices -->
+    <string name="unreadable_title">Onleesbare gegevens</string>
+    <string name="unreadable_message">Tomi kan zijn gegevens op deze telefoon niet openen. De gegevens van de app zijn misschien gewist of beschadigd (telefoon hersteld, app-opslag gewist), of de sleutel die ze beschermt, kan niet meer worden gebruikt. Je andere apparaten worden er niet door getroffen.</string>
+    <string name="unreadable_retry">Opnieuw proberen</string>
+    <string name="unreadable_reset">Tomi resetten</string>
+    <string name="unreadable_reset_title">Gegevens van Tomi op deze telefoon wissen?</string>
+    <string name="unreadable_reset_message">Alles wat Tomi hier bewaart, wordt gewist en deze telefoon moet opnieuw aan je ruimte deelnemen. Je andere apparaten houden hun items; vergeet niet dit oude apparaat uit hun lijst met apparaten weg te halen.</string>
+    <string name="unreadable_reset_confirm">Wissen en resetten</string>
+    <string name="unreadable_reset_failed">Wissen mislukt. Probeer het opnieuw, of wis de gegevens van de app in de Android-instellingen.</string>
+    <string name="share_unreadable">Tomi kan zijn gegevens niet openen. Open de app om ze te herstellen.</string>
+    <string name="devices_title">Apparaten</string>
+    <string name="devices_add">Apparaat toevoegen</string>
+    <string name="devices_empty">Nog geen apparaten in je ruimte.</string>
+    <string name="devices_this_device">Dit apparaat</string>
+    <string name="devices_rename">Naam wijzigen</string>
+    <string name="devices_revoke">Intrekken</string>
+    <string name="devices_revoke_title">Toegang van “%1$s” intrekken?</string>
+    <string name="devices_revoke_message">Dit apparaat wordt uit de ruimte gehaald en de sleutel van de ruimte wordt vernieuwd. Het kan geen nieuwe items meer lezen. Er wordt om je vingerafdruk, je gezicht of je schermvergrendelingscode gevraagd.</string>
+    <string name="devices_rename_failed">Kan de naam van het apparaat niet wijzigen. Controleer je verbinding en probeer het opnieuw.</string>
+    <string name="devices_revoke_failed">Kan de toegang van het apparaat niet intrekken. Controleer je verbinding en probeer het opnieuw.</string>
+    <string name="devices_revoking">Toegang wordt ingetrokken: de sleutel van de ruimte wordt vernieuwd, dit kan enkele seconden duren.</string>
+    <string name="devices_revoke_unavailable">Er is geen schermvergrendeling ingesteld op deze telefoon: intrekken is niet mogelijk. Stel een code, een vingerafdruk of een gezicht in via de instellingen.</string>
+    <string name="rotation_stalled_title">Verwijderen van apparaat nog niet voltooid</string>
+    <string name="rotation_stalled_message">Een verwijderd apparaat heeft misschien nog de huidige sleutel van je ruimte. Tomi probeert die elk uur opnieuw te vernieuwen. Tomi openen op je andere apparaten helpt.</string>
+    <string name="snackbar_relay_revoked_admin">“%1$s” is uit de ruimte gehaald door de beheerder van de relay.</string>
+    <string name="snackbar_relay_revoked_self">“%1$s” heeft de ruimte verlaten, volgens de relay.</string>
+    <string name="snackbar_relay_revoked_other">“%1$s” is door de relay uit de ruimte gehaald.</string>
+    <!-- Another device that has not shown up for a long time. Tomi only knows that, not that the app is uninstalled. -->
+    <string name="devices_inactive_hint">%1$s inactief. Gebruik je het niet meer? Haal het uit je ruimte.</string>
+    <plurals name="devices_inactive_duration">
+        <item quantity="one">%1$d dag</item>
+        <item quantity="other">%1$d dagen</item>
+    </plurals>
+
+    <!-- Leaving the space (menu of the feed) -->
+    <string name="leave_title">Loskoppelen van je ruimte?</string>
+    <string name="leave_message">Dit apparaat verlaat je ruimte. Alles wat het bewaart, wordt gewist: items, verborgen inhoud, bestanden en sleutels, ook wat nog niet is verstuurd. Je andere apparaten houden hun kopie. Om terug te komen, moet je dit apparaat opnieuw toevoegen vanaf een ander apparaat.</string>
+    <string name="leave_confirm">Loskoppelen</string>
+    <string name="leave_in_progress">Loskoppelen…</string>
+    <string name="leave_error_update">Werk Tomi bij om te kunnen loskoppelen. Er is niets gewist.</string>
+    <string name="leave_error_unexpected">Je Tomi-server heeft het loskoppelen geweigerd. Er is niets gewist: deze telefoon blijft in je ruimte.</string>
+
+    <!-- The only device: deleting the space (after the relay answered "last device") -->
+    <string name="delete_space_title">Je ruimte verwijderen?</string>
+    <string name="delete_space_message">Dit is het enige apparaat. Loskoppelen verwijdert je ruimte en alles erin, definitief.</string>
+    <string name="delete_space_detail">Je Tomi-server wist de ruimte, daarna wist deze telefoon alles wat hij bewaart: items, verborgen inhoud, bestanden en sleutels. Niemand kan ze terughalen.</string>
+    <string name="delete_space_confirm">Ruimte verwijderen</string>
+    <string name="delete_space_in_progress">Verwijderen…</string>
+    <string name="delete_space_error_relay_too_old">Je Tomi-server is te oud om de ruimte te verwijderen. Werk hem bij en probeer het opnieuw. Er is niets gewist.</string>
+    <string name="delete_space_error_update">Werk Tomi bij om je ruimte te kunnen verwijderen. Er is niets gewist.</string>
+    <string name="delete_space_error_unexpected">Je Tomi-server heeft geweigerd de ruimte te verwijderen. Er is niets gewist.</string>
+    <string name="delete_space_unavailable_biometric">Stel een schermvergrendeling (code, vingerafdruk of gezicht) in via de instellingen van de telefoon om je ruimte te verwijderen. Er is niets gewist.</string>
+
+    <!-- A pending departure: banner at the top of the feed -->
+    <string name="departure_pending_leave_title">Loskoppelen in behandeling</string>
+    <string name="departure_pending_delete_title">Verwijderen van ruimte in behandeling</string>
+    <string name="departure_pending_checking">Tomi controleert het bij je server. Er is niets gewist.</string>
+    <string name="departure_pending_network">Je Tomi-server heeft nog niet bevestigd. Er is niets gewist. Tomi probeert het opnieuw zodra het netwerk terug is.</string>
+    <string name="departure_pending_server">Je Tomi-server heeft een tijdelijk probleem. Er is niets gewist. Tomi probeert het opnieuw.</string>
+    <string name="departure_pending_not_sent">Je verzoek is niet aangekomen: deze telefoon maakt nog deel uit van je ruimte. Er is niets gewist.</string>
+    <string name="departure_pending_not_found">Je Tomi-server kan je ruimte niet meer vinden, of herkent deze telefoon niet meer. Er is niets gewist.</string>
+    <string name="departure_cancelling_title">Annuleren</string>
+    <string name="departure_cancelling">Tomi wacht tot het verzoek dat al naar je server is gestuurd, is afgerond. Er wordt niets gewist op deze telefoon.</string>
+    <string name="departure_wiping">Deze telefoon wissen…</string>
+    <string name="departure_retry">Opnieuw proberen</string>
+    <string name="departure_cancel">Annuleren</string>
+    <string name="departure_cancelled_leave">Loskoppelen geannuleerd. Als je server het al had ontvangen, wordt deze telefoon getoond als uit de ruimte gehaald; wat hij bewaart, blijft leesbaar.</string>
+    <string name="departure_cancelled_delete">Verwijderen geannuleerd. Als je server het al had uitgevoerd, bestaat je ruimte nu alleen nog op deze telefoon.</string>
+    <string name="departure_failed">Wissen is niet voltooid. Er is niets gewist. Probeer het opnieuw.</string>
+    <string name="space_not_found_title">Ruimte niet gevonden</string>
+    <string name="space_not_found_message">Je Tomi-server kan je ruimte niet meer vinden. Als de server is gereset, kun je deze telefoon wissen; controleer anders eerst je server. Er is niets gewist op deze telefoon.</string>
+    <string name="space_revoked_title">Uit de ruimte gehaald</string>
+    <string name="space_revoked_message">Deze telefoon is uit je ruimte gehaald. Wat hij bewaart, blijft hier leesbaar. Loskoppelen wist het.</string>
+
+    <!-- "Erase anyway": erasing without a proof of the relay -->
+    <string name="erase_anyway">Toch wissen</string>
+    <string name="erase_title">Deze telefoon wissen zonder bevestiging van de server?</string>
+    <string name="erase_message">Je Tomi-server kan niet bevestigen dat je ruimte is verwijderd. De ruimte is misschien niet verwijderd op je server; als ze nog bestaat, heeft deze telefoon er geen toegang meer toe.</string>
+    <string name="erase_detail">Alles wat deze telefoon bewaart, wordt definitief gewist: items, verborgen inhoud, bestanden en sleutels.</string>
+    <string name="erase_checkbox">Ik begrijp het: dit is definitief.</string>
+    <string name="erase_confirm">Deze telefoon wissen</string>
+    <string name="erase_in_progress">Wissen…</string>
+    <string name="erase_checking">Tomi controleert het bij je server…</string>
+    <string name="erase_waiting">Er loopt nog een verzoek naar je server. Tomi wacht tot het is afgerond voordat er wordt gewist. Er is niets gewist.</string>
+    <string name="erase_not_allowed">Tomi moet het eerst bij je server controleren. Probeer het zo opnieuw.</string>
+    <string name="erase_expired">Het antwoord van je server is niet meer geldig: het is te oud, of je server heeft sindsdien anders geantwoord. Er is niets gewist. Probeer het zo opnieuw.</string>
+    <string name="erase_unavailable_biometric">Stel een schermvergrendeling (code, vingerafdruk of gezicht) in via de instellingen van de telefoon om te wissen zonder bevestiging van de server. Tomi verwijderen wist ook alles wat het bewaart.</string>
+    <string name="platform_android">Android</string>
+    <string name="platform_windows">Windows</string>
+    <string name="platform_other">Overig</string>
+
+    <!-- Add a device (the inviting device) -->
+    <string name="invite_title">Apparaat toevoegen</string>
+    <string name="invite_starting">Code voorbereiden…</string>
+    <string name="invite_intro">Open Tomi op het nieuwe apparaat en scan dan deze QR-code of voer de uitnodigingscode in.</string>
+    <string name="invite_qr_description">QR-code voor uitnodiging</string>
+    <string name="invite_single_use">Deze code werkt maar één keer. Hij wordt vernieuwd zolang dit scherm open blijft.</string>
+    <string name="invite_verify_body">Controleer of dezelfde code op %1$s staat.</string>
+    <string name="invite_verify_hint">Als het andere apparaat een fout toont in plaats van een code, tik je op “Ze zijn verschillend”.</string>
+    <string name="invite_add">Dit apparaat toevoegen</string>
+    <string name="invite_adding_title">Wachten op het nieuwe apparaat</string>
+    <string name="invite_adding_body">Bevestig ook op %1$s dat de codes hetzelfde zijn. Het apparaat wordt toegevoegd zodra dat is gebeurd.</string>
+    <string name="invite_done_history">%1$s haalt de geschiedenis van je ruimte op. Dit kan even duren.</string>
+    <string name="invite_failed_title">Apparaat niet toegevoegd</string>
+    <string name="invite_new_code">Nieuwe code</string>
+    <string name="invite_notice_failed">Het toevoegen van het apparaat is niet voltooid. Er staat een nieuwe uitnodigingscode klaar.</string>
+    <string name="invite_notice_refused">Het toevoegen van het apparaat is geannuleerd. Er staat een nieuwe uitnodigingscode klaar.</string>
+    <string name="invite_error_expired">De code is verlopen. Maak een nieuwe aan.</string>
+    <string name="invite_error_cancelled">Het toevoegen van het apparaat is geannuleerd op het andere apparaat.</string>
+    <string name="invite_error_busy">Er wordt al een apparaat toegevoegd. Rond dat af of wacht even, en probeer het dan opnieuw.</string>
+    <string name="invite_error_failed">Het toevoegen van het apparaat is niet voltooid. Probeer het opnieuw.</string>
+    <string name="invite_auth_required_title">Bevestiging nodig</string>
+    <string name="invite_auth_required_body">Bevestig je identiteit met je vingerafdruk, je gezicht of de schermvergrendelingscode van de telefoon om een apparaat toe te voegen.</string>
+    <string name="invite_auth_unavailable_body">Stel eerst een schermvergrendeling (code, vingerafdruk of gezicht) in via de instellingen van de telefoon om een apparaat toe te voegen.</string>
+    <string name="invite_auth_retry">Bevestigen</string>
+    <string name="invite_notice_auth_denied">Bevestiging geannuleerd: er is niets toegevoegd. Tik opnieuw op “Dit apparaat toevoegen” wanneer je klaar bent.</string>
+
+    <!-- Create the space (the first device) -->
+    <string name="create_title">Je ruimte aanmaken</string>
+    <string name="create_intro">Je Tomi-server heeft je een installatiesleutel gegeven, als QR-code of als tekst.</string>
+    <string name="create_token_label">Installatiesleutel</string>
+    <string name="create_or_paste">of plak de sleutel</string>
+    <string name="create_scan_button">QR-code scannen</string>
+    <string name="create_scan_button_description">De QR-code van de installatiesleutel scannen met de camera</string>
+    <string name="create_scan_preview_description">Camerabeeld om de QR-code van de installatiesleutel te scannen</string>
+    <string name="create_scan_cancel">Scanner sluiten</string>
+    <string name="create_camera_denied">Cameratoegang geweigerd. Je kunt de sleutel in plaats daarvan plakken of invoeren.</string>
+    <string name="create_error_qr">Deze QR-code is geen installatiesleutel en geen aanmaaklink. Scan die van je Tomi-server of voer de sleutel in.</string>
+    <string name="create_where_button">Waar vind ik de sleutel?</string>
+    <string name="create_where_title">Waar vind ik de sleutel?</string>
+    <string name="create_where_body">Je Tomi-server heeft hem bij de installatie getoond, maar één keer, met een QR-code.</string>
+    <string name="create_where_other_title">Een nieuwe krijgen</string>
+    <string name="create_where_run">Voer deze opdracht uit op je server:</string>
+    <string name="create_where_command" translatable="false">$ tomi-relay admin invite --new</string>
+    <string name="create_where_ok">Begrepen</string>
+    <string name="create_name_label">Naam van dit apparaat</string>
+    <string name="create_name_edit">Naam wijzigen</string>
+    <string name="create_submit">Mijn ruimte aanmaken</string>
+    <string name="create_join_instead">Deelnemen aan de bestaande ruimte</string>
+    <string name="create_done_title">Je ruimte is klaar</string>
+    <string name="create_done_body">%1$s is het eerste apparaat in je ruimte. Voeg de andere toe via Apparaten.</string>
+    <string name="create_relay_check_label">Relay: %1$s</string>
+    <string name="create_relay_check_hint">Controleer of dit je relay is voordat je je ruimte aanmaakt.</string>
+    <string name="create_relay_from_link">Gelezen uit de link of de QR-code.</string>
+    <string name="create_error_token">Installatiesleutel onjuist of al gebruikt. Controleer hem en probeer het opnieuw.</string>
+    <string name="create_error_token_empty">Plak de installatiesleutel.</string>
+    <string name="create_error_name">De naam van het apparaat moet 1 tot 64 tekens lang zijn, zonder spatie aan het begin of aan het eind.</string>
+    <string name="create_error_space_exists">Deze sleutel is al gebruikt om een ruimte aan te maken. Voeg dit apparaat toe vanaf een apparaat dat al in de ruimte zit.</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_pin_title">Zet Tomi bovenaan in je deelmenu vast</string>
+    <string name="onboarding_pin_body">Houd Tomi ingedrukt en kies “Vastzetten”. Het blijft dan als eerste staan, altijd op dezelfde plek.</string>
+    <string name="onboarding_open_share">Deelmenu openen</string>
+    <string name="onboarding_later">Later</string>
+    <string name="onboarding_scene_pin_description">Illustratie: in het deelmenu verschijnt de optie Vastzetten als je Tomi ingedrukt houdt.</string>
+    <string name="onboarding_check_caption">Dit zou je moeten zien</string>
+    <string name="onboarding_check_title">Staat Tomi bovenaan?</string>
+    <string name="onboarding_check_body">Open het deelmenu zo nodig opnieuw. Tomi zou als eerste moeten staan, met een speld.</string>
+    <string name="onboarding_check_yes">Ja, het is gelukt</string>
+    <string name="onboarding_check_again">Nog niet, menu opnieuw openen</string>
+    <string name="onboarding_scene_check_description">Illustratie: in het deelmenu staat Tomi als eerste, met een speld.</string>
+    <string name="onboarding_scene_share_title">Delen</string>
+    <string name="onboarding_scene_notes">Notities</string>
+    <string name="onboarding_scene_browser">Browser</string>
+    <string name="onboarding_scene_files">Bestanden</string>
+    <string name="onboarding_sample_text">Deeltest van Tomi</string>
+</resources>

@@ -42,8 +42,13 @@ def languages() -> dict:
             tag = qualifier[2:].replace("+", "-")
         else:
             tag = re.sub(r"-r([A-Z]{2})$", r"-\1", qualifier)
-        found[tag] = source
+        # Android still spells Indonesian and Hebrew with their old codes.
+        found[{"in": "id", "iw": "he"}.get(tag, tag)] = source
     return found
+
+
+# The name of a language in the catalog when Apple wants more than the language code: `zh` here is Simplified Chinese.
+CATALOG_TAGS = {"zh": "zh-Hans"}
 
 
 def convert(text: str) -> str:
@@ -115,7 +120,7 @@ def main() -> int:
                 raise SystemExit(f"{language}: keys that {REFERENCE} does not have: {', '.join(unknown[:5])}")
         for name, localization in texts.items():
             entry = strings.setdefault(name, {"extractionState": "manual", "localizations": {}})
-            entry["localizations"][language] = localization
+            entry["localizations"][CATALOG_TAGS.get(language, language)] = localization
     catalog = {"sourceLanguage": REFERENCE, "strings": strings, "version": "1.0"}
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     text = json.dumps(catalog, ensure_ascii=False, indent=2, sort_keys=True, separators=(",", " : "))

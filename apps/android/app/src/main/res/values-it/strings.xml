@@ -1,0 +1,595 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- All user-visible texts are Italian, informal ("tu"). Keep identifiers and comments in English.
+     Vocabulary: "Nascosto" / "Mostra" (never "Segreto" / "Rivela"). -->
+<resources>
+    <string name="app_name">Tomi</string>
+
+    <!-- Generic actions -->
+    <string name="action_cancel">Annulla</string>
+    <string name="action_cancel_send">Annulla l’invio</string>
+    <string name="action_close">Chiudi</string>
+    <string name="action_back">Indietro</string>
+    <string name="action_save">Salva</string>
+    <string name="action_continue">Continua</string>
+    <string name="action_later">Più tardi</string>
+    <string name="action_done">Fine</string>
+    <string name="action_copy">Copia</string>
+    <string name="action_copy_link">Copia link</string>
+    <string name="action_open">Apri</string>
+    <string name="action_more">Altre azioni</string>
+    <string name="action_reveal">Mostra</string>
+    <string name="action_hide">Nascondi</string>
+    <string name="action_send">Invia</string>
+    <string name="action_paste">Incolla</string>
+    <string name="action_attach">Allega un file</string>
+    <string name="action_remove_attachment">Rimuovi %1$s</string>
+    <string name="action_undo">Annulla</string>
+    <string name="action_options">Opzioni</string>
+    <string name="action_search">Cerca</string>
+    <string name="action_close_search">Chiudi la ricerca</string>
+    <string name="action_filters">Filtri</string>
+    <string name="action_clear_filter">Togli il filtro</string>
+    <string name="action_delete">Elimina</string>
+    <string name="action_delete_local">Elimina da questo dispositivo</string>
+    <string name="action_delete_everywhere">Elimina ovunque</string>
+    <string name="action_pin">Fissa</string>
+    <string name="action_unpin">Non fissare</string>
+    <string name="action_archive">Archivia</string>
+    <string name="action_unarchive">Togli dall’archivio</string>
+    <string name="action_share">Condividi</string>
+    <string name="action_details">Dettagli</string>
+    <string name="action_read_more">Leggi tutto</string>
+
+    <!-- Feed -->
+    <string name="search_placeholder">Cerca nel feed</string>
+    <string name="filter_all">Tutti</string>
+    <string name="filter_links">Link</string>
+    <string name="filter_text">Testo</string>
+    <string name="filter_files">File</string>
+    <string name="filter_secrets">Nascosti</string>
+    <string name="filter_archives">Archivio</string>
+    <string name="section_pinned">Fissati</string>
+    <string name="section_recent">Recenti</string>
+    <string name="section_archives">Archivio</string>
+    <string name="source_this_phone">Questo telefono</string>
+    <string name="label_masked">Nascosto</string>
+    <plurals name="search_results">
+        <item quantity="one">%1$d risultato</item>
+        <item quantity="many">%1$d di risultati</item>
+        <item quantity="other">%1$d risultati</item>
+    </plurals>
+    <string name="search_masked_note">gli elementi nascosti vengono cercati senza titolo né contenuto</string>
+    <!-- 1: the counter ("2 results"), 2: the note about the hidden items -->
+    <string name="search_summary_with_note">%1$s · %2$s</string>
+    <string name="feed_empty">Ancora niente. Condividi un link, un testo o un file con Tomi per inviarlo agli altri tuoi dispositivi.</string>
+    <string name="feed_empty_archives">Nessun elemento archiviato. Scorri verso sinistra una scheda in Recenti per archiviarla.</string>
+    <string name="feed_empty_filtered">Nessun elemento corrispondente.</string>
+    <string name="banner_offline">Offline · in attesa</string>
+    <string name="menu_share_help">Fissa Tomi nel menu di condivisione</string>
+    <string name="menu_leave_space">Disconnetti</string>
+    <string name="snackbar_copied_secret">Copiato · cancellato tra 30 s</string>
+    <string name="snackbar_deleted_local">Eliminato da questo dispositivo</string>
+    <string name="snackbar_deleted_everywhere">Eliminazione richiesta su tutti i dispositivi</string>
+    <string name="snackbar_action_failed">Impossibile completare l’azione. Controlla la connessione e riprova.</string>
+    <string name="snackbar_pin_failed">Impossibile modificare il fissaggio. Riprova.</string>
+    <string name="snackbar_archived">Archiviato</string>
+    <string name="snackbar_unarchived">Tolto dall’archivio</string>
+    <string name="snackbar_archive_failed">Impossibile modificare l’archivio. Riprova.</string>
+    <string name="snackbar_nothing_to_share">Niente da condividere in questo elemento.</string>
+    <string name="detail_not_found">Elemento non trovato. Potrebbe essere scaduto o stato eliminato.</string>
+    <string name="detail_masked_hint">Mostra, Copia e Condividi richiedono l’impronta o il codice di blocco schermo.</string>
+    <string name="detail_revealed_hint">Si nasconde di nuovo appena lasci la schermata.</string>
+    <string name="meta_type">Tipo</string>
+    <string name="meta_sent_at">Inviato il</string>
+    <string name="meta_expiry">Scadenza</string>
+    <string name="meta_pinned">Fissato</string>
+    <string name="meta_status">Stato</string>
+    <string name="meta_yes">Sì</string>
+    <string name="meta_no">No</string>
+    <string name="meta_never">Mai</string>
+    <string name="meta_after_read">Dopo la lettura</string>
+    <plurals name="characters_count">
+        <item quantity="one">%1$d carattere</item>
+        <item quantity="many">%1$d di caratteri</item>
+        <item quantity="other">%1$d caratteri</item>
+    </plurals>
+
+    <!-- Card -->
+    <string name="unread_badge">Non letto</string>
+    <string name="pinned_badge">Fissato</string>
+    <string name="archived_badge">Archiviato</string>
+    <string name="time_yesterday">Ieri</string>
+    <string name="expires_in">scade tra %1$s</string>
+    <string name="expires_after_read">scompare dopo la prima lettura</string>
+    <!-- Attachment tiles (feed + detail). "More files": the button towards the detail, then the same as a caption when "Read more" takes its place. -->
+    <plurals name="more_files">
+        <item quantity="one">%1$d altro file</item>
+        <item quantity="many">Altri %1$d di file</item>
+        <item quantity="other">Altri %1$d file</item>
+    </plurals>
+    <plurals name="more_files_caption">
+        <item quantity="one">+ %1$d altro file</item>
+        <item quantity="many">+ altri %1$d di file</item>
+        <item quantity="other">+ altri %1$d file</item>
+    </plurals>
+    <!-- %1$d = count, %2$s = total size ("4 files · 4.9 MB"). Shown from 2 attachments on, so "one" is only for the form. -->
+    <plurals name="attachments_summary_files">
+        <item quantity="one">%1$d file · %2$s</item>
+        <item quantity="many">%1$d di file · %2$s</item>
+        <item quantity="other">%1$d file · %2$s</item>
+    </plurals>
+    <plurals name="attachments_summary_images">
+        <item quantity="one">%1$d immagine · %2$s</item>
+        <item quantity="many">%1$d di immagini · %2$s</item>
+        <item quantity="other">%1$d immagini · %2$s</item>
+    </plurals>
+    <plurals name="secret_files_hidden">
+        <item quantity="one">%1$d file nascosto</item>
+        <item quantity="many">%1$d di file nascosti</item>
+        <item quantity="other">%1$d file nascosti</item>
+    </plurals>
+    <plurals name="remaining_days">
+        <item quantity="one">%1$d giorno</item>
+        <item quantity="many">%1$d di giorni</item>
+        <item quantity="other">%1$d giorni</item>
+    </plurals>
+    <plurals name="remaining_hours">
+        <item quantity="one">%1$d ora</item>
+        <item quantity="many">%1$d di ore</item>
+        <item quantity="other">%1$d ore</item>
+    </plurals>
+    <plurals name="remaining_minutes">
+        <item quantity="one">%1$d minuto</item>
+        <item quantity="many">%1$d di minuti</item>
+        <item quantity="other">%1$d minuti</item>
+    </plurals>
+    <string name="kind_secret">Nascosto</string>
+    <string name="kind_image">Immagine</string>
+    <string name="kind_file">File</string>
+    <string name="kind_link">Link</string>
+    <string name="kind_unreadable">Illeggibile</string>
+    <string name="unreadable_update_required">Serve un aggiornamento per leggere questo elemento. Viene conservato e sarà mostrato dopo l’aggiornamento di Tomi.</string>
+    <string name="unreadable_decryption_failed">Per ora questo elemento è illeggibile. Viene conservato: una sincronizzazione o un aggiornamento potrebbero renderlo leggibile.</string>
+    <string name="kind_rich_text">Testo formattato</string>
+    <string name="kind_text">Testo</string>
+    <!-- Internal image viewer -->
+    <string name="action_view_image">Vedi immagine</string>
+    <string name="viewer_save">Salva</string>
+    <string name="viewer_action_delete">Elimina</string>
+    <string name="viewer_delete_local">Elimina l’immagine da questo dispositivo</string>
+    <string name="viewer_delete_everywhere">Elimina l’immagine ovunque</string>
+    <string name="viewer_image_description">Immagine %1$d di %2$d</string>
+    <string name="viewer_position">%1$d/%2$d</string>
+    <string name="viewer_locked">Immagine nascosta. Conferma la tua identità per mostrarla.</string>
+    <string name="viewer_load_failed">Impossibile mostrare questa immagine.</string>
+    <string name="viewer_no_image">Nessuna immagine da mostrare.</string>
+    <string name="snackbar_image_saved">Immagine salvata nella galleria</string>
+    <string name="snackbar_file_unavailable">Impossibile aprire questo file. Potrebbe non essere ancora stato scaricato, oppure nessuna app può aprirlo.</string>
+    <string name="snackbar_file_downloaded">File salvato in Download/Tomi</string>
+    <string name="snackbar_file_download_failed">Impossibile salvare il file. Riprova.</string>
+    <string name="snackbar_image_unavailable">Questa immagine non è disponibile al momento.</string>
+    <string name="snackbar_image_failed">Azione non riuscita. Riprova.</string>
+    <!-- Removal of ONE attachment of an item (the item stays) -->
+    <string name="snackbar_image_deleted_local">Immagine eliminata da questo dispositivo</string>
+    <string name="snackbar_image_deleted_everywhere">Immagine eliminata ovunque</string>
+    <string name="snackbar_file_deleted_local">File eliminato da questo dispositivo</string>
+    <string name="snackbar_file_deleted_everywhere">File eliminato ovunque</string>
+    <string name="file_row_delete">Elimina questo file</string>
+    <string name="file_row_actions">Azioni per questo file</string>
+    <string name="file_download">Scarica</string>
+    <string name="file_delete_local">Elimina il file da questo dispositivo</string>
+    <string name="file_delete_everywhere">Elimina il file ovunque</string>
+    <string name="dialog_delete_file_everywhere_title">Eliminare il file ovunque?</string>
+    <string name="dialog_delete_file_everywhere_named">“%1$s” sarà cancellato da tutti i tuoi dispositivi e dal tuo server Tomi. I dispositivi offline lo cancelleranno quando si riconnetteranno. Questa azione è definitiva.</string>
+    <string name="dialog_delete_file_everywhere_secret">Questo file nascosto sarà cancellato da tutti i tuoi dispositivi e dal tuo server Tomi. Un dispositivo che l’ha già mostrato potrebbe averne conservato una copia. Questa azione è definitiva.</string>
+    <string name="biometric_title_image">Mostra immagine nascosta</string>
+    <string name="biometric_subtitle_image">Conferma la tua identità. La conferma resta valida per 2 minuti.</string>
+    <string name="biometric_title_save_image">Salva immagine nascosta</string>
+    <string name="biometric_subtitle_save_image">Conferma la tua identità prima che l’immagine venga scritta nella galleria. La conferma resta valida per 2 minuti.</string>
+    <!-- Text modes: "Preview" (styled, default) and "Markdown" (the literal source) -->
+    <string name="render_preview">Anteprima</string>
+    <string name="render_markdown">Markdown</string>
+
+    <!-- Code file screen -->
+    <string name="action_view_code">Apri file</string>
+    <string name="code_search">Cerca nel file</string>
+    <string name="code_search_placeholder">Cerca nel file</string>
+    <string name="code_search_previous">Risultato precedente</string>
+    <string name="code_search_next">Risultato successivo</string>
+    <string name="code_copy_file">Copia file</string>
+    <string name="code_wrap">A capo automatico</string>
+    <string name="code_locked">File nascosto. Conferma la tua identità per mostrarlo.</string>
+    <string name="code_no_file">Nessun file di codice da mostrare.</string>
+    <string name="code_unavailable">Impossibile mostrare questo file al momento.</string>
+    <string name="code_too_large">Questo file è troppo grande per essere mostrato (massimo 2 MB).</string>
+    <string name="code_binary">Questo file non è testo: non può essere mostrato qui.</string>
+    <string name="code_no_colours_language">Nessuna evidenziazione della sintassi per questo linguaggio.</string>
+    <string name="code_no_colours_size">Evidenziazione della sintassi non disponibile: file troppo lungo (massimo 50 KB o 2.000 righe).</string>
+    <string name="biometric_title_file">Mostra file nascosto</string>
+    <string name="biometric_subtitle_file">Conferma la tua identità. La conferma resta valida per 2 minuti.</string>
+    <string name="dialog_delete_everywhere_title">Eliminare ovunque?</string>
+    <string name="dialog_delete_everywhere_message">L’elemento sarà cancellato da tutti i tuoi dispositivi e dal tuo server Tomi. I dispositivi offline lo cancelleranno quando si riconnetteranno. Questa azione è definitiva.</string>
+    <string name="dialog_delete_everywhere_secret">Questo contenuto nascosto sarà cancellato da tutti i tuoi dispositivi e dal tuo server Tomi. Un dispositivo che l’ha già mostrato potrebbe averne conservato una copia. Questa azione è definitiva.</string>
+    <string name="dialog_delete_image_everywhere_title">Eliminare l’immagine ovunque?</string>
+    <string name="dialog_delete_image_everywhere_message">Questa immagine sarà cancellata da tutti i tuoi dispositivi e dal tuo server Tomi. I dispositivi offline la cancelleranno quando si riconnetteranno. Questa azione è definitiva.</string>
+    <string name="dialog_delete_image_everywhere_secret">Questa immagine nascosta sarà cancellata da tutti i tuoi dispositivi e dal tuo server Tomi. Un dispositivo che l’ha già mostrata potrebbe averne conservato una copia. Questa azione è definitiva.</string>
+
+    <!-- System share (Android ACTION_SEND) of an item -->
+    <string name="share_chooser_title">Condividi con</string>
+    <!-- Neutral title of the preview of the system share sheet for a hidden item: the sheet must not show the content. -->
+    <string name="share_hidden_preview_title">Contenuto nascosto</string>
+    <string name="share_no_app">Nessuna app può ricevere questo contenuto.</string>
+
+    <!-- Delivery status -->
+    <string name="status_received">Ricevuto</string>
+    <string name="status_queued">In attesa di invio</string>
+    <string name="status_waiting_network">In attesa di rete</string>
+    <string name="status_sent">Inviato</string>
+    <string name="status_failed">Invio non riuscito</string>
+    <string name="status_delivered_all">Consegnato a tutti</string>
+    <string name="status_delivered_partial">Consegnato a %1$d su %2$d</string>
+    <string name="status_expired">Consegnato a %1$d · scaduto prima della consegna a %2$s</string>
+
+    <!-- Expiry -->
+    <string name="expiry_hour1">1 h</string>
+    <string name="expiry_day1">1 g</string>
+    <string name="expiry_day7">7 g</string>
+    <string name="expiry_day30">30 g</string>
+    <string name="expiry_never">Mai</string>
+    <string name="expiry_after_read">Dopo la lettura</string>
+    <string name="expiry_chip">Scadenza: %1$s</string>
+    <string name="expiry_label">Scadenza</string>
+    <string name="expiry_after_read_hint">“Dopo la lettura”: cancellato ovunque appena viene aperto per la prima volta.</string>
+
+    <!-- Compose / send -->
+    <string name="send_title">Invia</string>
+    <string name="send_title_label">Titolo (facoltativo)</string>
+    <string name="send_content_label">Testo o link</string>
+    <string name="label_secret">Nascondi il contenuto</string>
+    <string name="label_secret_off">Anteprima nascosta ovunque fino a “Mostra”</string>
+    <string name="label_secret_on">Attivato automaticamente. Puoi disattivarlo.</string>
+    <string name="detect_link">Link rilevato</string>
+    <string name="detect_text">Testo</string>
+    <string name="detect_files">File allegato</string>
+    <string name="detect_masked">Nascosto</string>
+    <string name="detect_masked_password">Sembra una password.</string>
+    <string name="detect_to_devices">A %1$s</string>
+    <string name="hint_secret_sensitive">L’app di origine ha contrassegnato questo contenuto come sensibile: viene inviato nascosto.</string>
+    <string name="hint_secret_heuristic">Questo contenuto sembra una password o una chiave: è nascosto. Puoi cambiarlo.</string>
+    <string name="notice_paste_empty">Gli appunti non contengono testo.</string>
+    <string name="notice_link_appended_to_draft">Un link proveniente da un’altra app è stato aggiunto alla tua bozza. Controllalo prima di inviare.</string>
+    <string name="notice_params_dropped">Alcuni parametri del link sono stati ignorati (troppo lunghi o non validi).</string>
+    <string name="notice_too_late">Troppo tardi: l’elemento è già stato inviato.</string>
+    <string name="notice_undo_failed">Impossibile annullare l’invio. L’elemento potrebbe essere già stato inviato.</string>
+    <string name="notice_send_failed">Invio non riuscito. Il testo è conservato, riprova.</string>
+    <string name="banner_sent">Inviato</string>
+    <plurals name="banner_files_skipped">
+        <item quantity="one">%1$d file escluso: massimo 25 MB per file</item>
+        <item quantity="many">%1$d di file esclusi: massimo 25 MB per file</item>
+        <item quantity="other">%1$d file esclusi: massimo 25 MB per file</item>
+    </plurals>
+    <string name="sheet_title">Opzioni di invio</string>
+
+    <!-- Share target -->
+    <string name="share_not_paired">Tomi non è collegato a nessuno spazio. Apri l’app per entrare nel tuo spazio.</string>
+    <string name="share_open_app">Apri Tomi</string>
+    <string name="share_failed">Invio non riuscito. Riprova.</string>
+    <string name="share_too_late">Troppo tardi: l’elemento è già stato inviato. Puoi eliminarlo dal feed di Tomi.</string>
+    <string name="share_secret_detected">Sembra un contenuto da nascondere. Conferma prima di inviare.</string>
+    <string name="preview_secret_masked">••••••••••</string>
+    <plurals name="preview_files">
+        <item quantity="one">%1$d file</item>
+        <item quantity="many">%1$d di file</item>
+        <item quantity="other">%1$d file</item>
+    </plurals>
+    <string name="shortcut_short_label">Tomi</string>
+    <string name="shortcut_long_label">Invia ai miei dispositivi con Tomi</string>
+    <string name="tile_label">Invia</string>
+
+    <!-- Biometrics -->
+    <string name="biometric_title_secret">Mostra contenuto nascosto</string>
+    <string name="biometric_subtitle_secret">Conferma la tua identità. La conferma resta valida per 2 minuti.</string>
+    <string name="biometric_title_share">Condividi contenuto nascosto</string>
+    <string name="biometric_subtitle_share">Conferma la tua identità prima di inviarlo a un’altra app. La conferma resta valida per 2 minuti.</string>
+    <string name="biometric_title_copy_secret">Copia contenuto nascosto</string>
+    <string name="biometric_subtitle_from_notification">Il contenuto sarà copiato, poi cancellato dagli appunti dopo 30 s.</string>
+    <string name="biometric_title_revoke">Revoca dispositivo</string>
+    <string name="biometric_subtitle_revoke">Azione sensibile: conferma con la tua impronta, il tuo volto o il codice di blocco schermo del telefono.</string>
+    <string name="biometric_title_erase">Cancella questo telefono</string>
+    <string name="biometric_subtitle_erase">Questa azione non può essere annullata: conferma con la tua impronta, il tuo volto o il codice di blocco schermo del telefono.</string>
+    <string name="biometric_title_pair">Aggiungi un dispositivo</string>
+    <string name="biometric_subtitle_pair">Il nuovo dispositivo riceverà tutta la cronologia, compresi gli elementi nascosti. Conferma con la tua impronta, il tuo volto o il codice di blocco schermo del telefono.</string>
+    <string name="biometric_title_delete_space">Elimina il tuo spazio</string>
+    <string name="biometric_subtitle_delete_space">Questa azione non può essere annullata: conferma con la tua impronta, il tuo volto o il codice di blocco schermo del telefono.</string>
+    <string name="toast_biometric_unavailable">Configura un blocco schermo o la biometria per mostrare, copiare o condividere contenuti nascosti.</string>
+    <string name="toast_item_not_found">Elemento non trovato</string>
+
+    <!-- Notifications -->
+    <string name="channel_group_incoming">Elementi ricevuti</string>
+    <string name="channel_links">Link</string>
+    <string name="channel_links_desc">Link ricevuti dagli altri tuoi dispositivi</string>
+    <string name="channel_text">Testo</string>
+    <string name="channel_text_desc">Testi ricevuti dagli altri tuoi dispositivi</string>
+    <string name="channel_files">File</string>
+    <string name="channel_files_desc">File e immagini ricevuti dagli altri tuoi dispositivi</string>
+    <string name="channel_secrets">Nascosti</string>
+    <string name="channel_secrets_desc">Contenuti nascosti ricevuti. Mai mostrati nella schermata di blocco, nessuna anteprima.</string>
+    <string name="channel_devices">Dispositivi</string>
+    <string name="channel_devices_desc">Avviso quando un dispositivo viene aggiunto al tuo spazio. Nessun contenuto, solo il nome del dispositivo.</string>
+    <string name="notif_device_added_title">Nuovo dispositivo aggiunto</string>
+    <string name="notif_device_added_body">“%1$s” è entrato nel tuo spazio. Non sei stato tu? Apri Dispositivi e revocalo.</string>
+    <string name="notif_title_secret">Contenuto nascosto · %1$s</string>
+    <string name="notif_title_link">Link da %1$s</string>
+    <string name="notif_title_image">Immagine da %1$s</string>
+    <string name="notif_title_file">File da %1$s</string>
+    <string name="notif_title_text">Testo da %1$s</string>
+    <string name="notif_title_unreadable">Elemento da %1$s</string>
+    <string name="notif_body_unreadable">Per ora illeggibile: Tomi deve essere aggiornato</string>
+    <string name="notif_body_secret">Tocca per copiare (autenticazione richiesta)</string>
+    <string name="notif_body_generic">Nuovo elemento</string>
+    <string name="notif_public_title">Tomi: nuovo elemento</string>
+    <string name="notif_action_copy">Copia</string>
+    <string name="notif_action_view">Vedi</string>
+    <string name="notif_summary_text">Ultimo invio da %1$s</string>
+    <plurals name="notif_summary_title">
+        <item quantity="one">%1$d nuovo elemento</item>
+        <item quantity="many">%1$d di nuovi elementi</item>
+        <item quantity="other">%1$d nuovi elementi</item>
+    </plurals>
+
+    <!-- Pairing -->
+    <!-- Welcome: the two doors of a device that is not in a space yet -->
+    <string name="welcome_title">I tuoi dispositivi, un solo spazio</string>
+    <string name="welcome_intro">Mandati link, note e password da un dispositivo all’altro, con crittografia end-to-end.</string>
+    <string name="welcome_question">Come vuoi iniziare?</string>
+    <string name="welcome_create_title">Crea il tuo spazio</string>
+    <string name="welcome_create_hint">Questo è il tuo primo dispositivo. Tieni a portata di mano il codice QR o la chiave di installazione del tuo server Tomi.</string>
+    <string name="welcome_join_title">Entra nel tuo spazio</string>
+    <string name="welcome_join_hint">Tomi è già su un altro dispositivo? Tienilo aperto e a portata di mano.</string>
+    <!-- Read by the screen reader for a whole door: title, then what it takes. -->
+    <string name="welcome_door_description">%1$s. %2$s</string>
+
+    <!-- Join a space -->
+    <string name="pair_title">Entra nel tuo spazio</string>
+    <string name="pair_intro">Sull’altro dispositivo, apri</string>
+    <string name="pair_other_device_caption">Sull’altro dispositivo</string>
+    <string name="pair_illustration_description">Illustrazione: sull’altro dispositivo, la schermata “Aggiungi un dispositivo” mostra un codice QR e un codice di invito, per esempio 7-crayon-renard.</string>
+    <string name="pair_scan_preview_description">Anteprima della fotocamera per scansionare il codice QR dell’altro dispositivo</string>
+    <string name="pair_link_received">Link di invito ricevuto</string>
+    <string name="pair_link_received_relay">Relay: %1$s</string>
+    <string name="pair_link_received_warning">Questo link proviene da un’altra app o da una pagina web. Entra solo in uno spazio che hai appena creato tu stesso, con un relay che riconosci.</string>
+    <string name="pair_link_received_hint">Niente avviene in automatico. Tocca “Entra” per continuare.</string>
+    <string name="pair_join">Entra</string>
+    <string name="pair_scan_hint">La fotocamera viene usata solo per questa scansione.</string>
+    <string name="pair_scan_button">Scansiona il codice QR</string>
+    <string name="pair_enter_code_button">Inserisci il codice di invito</string>
+    <string name="demo_enter">Prova con dati di esempio</string>
+    <string name="demo_banner">Modalità demo: dati di esempio, non viene inviato nulla.</string>
+    <string name="demo_leave">Esci dalla demo</string>
+    <string name="pair_camera_denied">Accesso alla fotocamera negato. Puoi invece inserire il codice di invito.</string>
+    <string name="pair_code_title">Inserisci il codice di invito</string>
+    <string name="pair_code_intro">Lo trovi sotto il codice QR, sull’altro dispositivo.</string>
+    <string name="pair_code_label">Codice di invito</string>
+    <string name="pair_code_hint">Due parole dopo il numero. Accenti e maiuscole non servono.</string>
+    <string name="relay_field_label">Relay</string>
+    <string name="relay_field_hint">Indirizzo del tuo server Tomi, per esempio relay.example.org.</string>
+    <string name="relay_other_button">Altro relay</string>
+    <string name="relay_current">Relay: %1$s</string>
+    <string name="pair_scan_instead">Scansiona invece il codice QR</string>
+    <string name="pair_verify_title">Controlla il codice</string>
+    <string name="pair_verify_body">Controlla che sui due dispositivi sia mostrato lo stesso codice.</string>
+    <plurals name="pair_verify_peer_members">
+        <item quantity="one">Il tuo spazio ha %1$d dispositivo</item>
+        <item quantity="many">Il tuo spazio ha %1$d di dispositivi</item>
+        <item quantity="other">Il tuo spazio ha %1$d dispositivi</item>
+    </plurals>
+    <string name="pair_verify_relay_label">Relay: %1$s</string>
+    <string name="pair_verify_relay_hint">Controlla che sia il tuo relay prima di continuare.</string>
+    <string name="pair_verify_code_description">Codice di verifica %1$s</string>
+    <string name="pair_verify_validity">Valido ancora per %1$s</string>
+    <string name="pair_verify_same">I codici sono identici</string>
+    <string name="pair_verify_different">Sono diversi</string>
+    <string name="pair_verify_mismatch">I codici non corrispondevano: l’aggiunta del dispositivo è stata annullata. Ricomincia dall’altro dispositivo.</string>
+    <string name="pair_working">Connessione all’altro dispositivo…</string>
+    <string name="pair_waiting_title">In attesa dell’altro dispositivo</string>
+    <string name="pair_waiting_body">Conferma anche su %1$s che i codici sono identici. L’aggiunta del dispositivo si completa appena fatto.</string>
+    <string name="pair_history_title">Recuperare la cronologia?</string>
+    <plurals name="pair_history_body">
+        <item quantity="one">Il tuo spazio contiene già %1$d elemento. Puoi averlo su questo telefono.</item>
+        <item quantity="many">Il tuo spazio contiene già %1$d di elementi. Puoi averli su questo telefono.</item>
+        <item quantity="other">Il tuo spazio contiene già %1$d elementi. Puoi averli su questo telefono.</item>
+    </plurals>
+    <string name="pair_history_size">Circa %1$s da recuperare.</string>
+    <string name="pair_history_yes">Sì, recupera la cronologia</string>
+    <string name="pair_history_yes_hint">Tutto ciò che è nel tuo spazio arriva qui, compresi gli elementi nascosti e fissati.</string>
+    <string name="pair_history_no">No, inizia da un feed vuoto</string>
+    <string name="pair_history_no_hint">Qui arriverà solo ciò che viene inviato da ora in poi.</string>
+    <string name="pair_history_footer">Puoi sempre eliminare un elemento in seguito.</string>
+    <string name="pair_done_title">Dispositivo aggiunto</string>
+    <string name="pair_done_body">%1$s fa parte del tuo spazio.</string>
+    <string name="pair_notifications_rationale">Consenti le notifiche per sapere quando un dispositivo ti invia qualcosa.</string>
+    <string name="pair_notifications_enable">Consenti notifiche</string>
+    <string name="pair_error_qr_unknown">Questo codice QR non è un invito Tomi.</string>
+    <string name="pair_error_code_format">Inserisci il codice di invito mostrato sull’altro dispositivo, per esempio 7-crayon-renard.</string>
+    <string name="pair_error_invalid">Questo codice di invito non è valido. Controlla il numero e le due parole.</string>
+    <string name="pair_error_wrong_code">Codice errato. Genera un nuovo codice di invito sull’altro dispositivo.</string>
+    <string name="pair_error_taken">Questo codice di invito è già stato usato. Generane uno nuovo sull’altro dispositivo.</string>
+    <string name="pair_error_interrupted">La connessione si è interrotta. Genera un nuovo codice di invito sull’altro dispositivo.</string>
+    <string name="pair_error_cancelled">L’aggiunta del dispositivo è stata annullata sull’altro dispositivo.</string>
+    <string name="pair_error_update">Aggiorna Tomi su entrambi i dispositivi per aggiungere questo.</string>
+    <string name="pair_error_blocked">Questo dispositivo non può più usare il tuo server Tomi. Controlla che faccia ancora parte del tuo spazio.</string>
+    <string name="pair_error_space_full">Il tuo spazio ha raggiunto il numero massimo di dispositivi. Rimuovine uno dall’elenco dei dispositivi.</string>
+    <string name="pair_error_relay_required">Inserisci l’indirizzo del relay.</string>
+    <string name="pair_error_relay_invalid">Questo indirizzo del relay non è valido. Scrivilo come relay.example.org.</string>
+    <string name="pair_error_unexpected">L’aggiunta del dispositivo non è stata completata. Riprova.</string>
+    <string name="pair_error_expired">Codice scaduto. Generane uno nuovo.</string>
+    <string name="pair_error_network">Rete non disponibile. Riprova.</string>
+
+    <!-- Devices -->
+    <string name="unreadable_title">Dati illeggibili</string>
+    <string name="unreadable_message">Tomi non riesce ad aprire i suoi dati su questo telefono. I dati dell’app potrebbero essere stati cancellati o danneggiati (telefono ripristinato, spazio di archiviazione dell’app svuotato), oppure la chiave che li protegge non è più utilizzabile. Gli altri tuoi dispositivi non sono coinvolti.</string>
+    <string name="unreadable_retry">Riprova</string>
+    <string name="unreadable_reset">Reimposta Tomi</string>
+    <string name="unreadable_reset_title">Cancellare i dati di Tomi su questo telefono?</string>
+    <string name="unreadable_reset_message">Tutto ciò che Tomi contiene qui sarà cancellato e questo telefono dovrà entrare di nuovo nel tuo spazio. Gli altri tuoi dispositivi conservano i loro elementi; ricordati di rimuovere questo vecchio dispositivo dal loro elenco dei dispositivi.</string>
+    <string name="unreadable_reset_confirm">Cancella e reimposta</string>
+    <string name="unreadable_reset_failed">Cancellazione non riuscita. Riprova, oppure cancella i dati dell’app nelle impostazioni di Android.</string>
+    <string name="share_unreadable">Tomi non riesce ad aprire i suoi dati. Apri l’app per ripararli.</string>
+    <string name="devices_title">Dispositivi</string>
+    <string name="devices_add">Aggiungi un dispositivo</string>
+    <string name="devices_empty">Ancora nessun dispositivo nel tuo spazio.</string>
+    <string name="devices_this_device">Questo dispositivo</string>
+    <string name="devices_rename">Rinomina</string>
+    <string name="devices_revoke">Revoca</string>
+    <string name="devices_revoke_title">Revocare “%1$s”?</string>
+    <string name="devices_revoke_message">Questo dispositivo sarà rimosso dallo spazio e la chiave dello spazio sarà rinnovata. Non potrà più leggere i nuovi elementi. Ti verrà chiesta la tua impronta, il tuo volto o il codice di blocco schermo.</string>
+    <string name="devices_rename_failed">Impossibile rinominare il dispositivo. Controlla la connessione e riprova.</string>
+    <string name="devices_revoke_failed">Impossibile revocare il dispositivo. Controlla la connessione e riprova.</string>
+    <string name="devices_revoking">Revoca in corso: la chiave dello spazio viene rinnovata, può richiedere qualche secondo.</string>
+    <string name="devices_revoke_unavailable">Nessun blocco schermo configurato su questo telefono: impossibile revocare. Configura un codice, un’impronta o un volto nelle impostazioni.</string>
+    <string name="rotation_stalled_title">Rimozione del dispositivo da completare</string>
+    <string name="rotation_stalled_message">Un dispositivo rimosso potrebbe avere ancora la chiave attuale del tuo spazio. Tomi riprova a rinnovarla ogni ora. Aprire Tomi sugli altri tuoi dispositivi aiuta.</string>
+    <string name="snackbar_relay_revoked_admin">“%1$s” è stato rimosso dall’amministratore del relay.</string>
+    <string name="snackbar_relay_revoked_self">“%1$s” ha lasciato lo spazio, secondo il relay.</string>
+    <string name="snackbar_relay_revoked_other">“%1$s” è stato rimosso dallo spazio dal relay.</string>
+    <!-- Another device that has not shown up for a long time. Tomi only knows that, not that the app is uninstalled. -->
+    <string name="devices_inactive_hint">Inattivo da %1$s. Non lo usi più? Rimuovilo.</string>
+    <plurals name="devices_inactive_duration">
+        <item quantity="one">%1$d giorno</item>
+        <item quantity="many">%1$d di giorni</item>
+        <item quantity="other">%1$d giorni</item>
+    </plurals>
+
+    <!-- Leaving the space (menu of the feed) -->
+    <string name="leave_title">Disconnetterti dal tuo spazio?</string>
+    <string name="leave_message">Questo dispositivo lascerà il tuo spazio. Tutto ciò che contiene sarà cancellato: elementi, contenuti nascosti, file e chiavi, compreso ciò che non è ancora stato inviato. Gli altri tuoi dispositivi conservano la loro copia. Per tornare, dovrai aggiungere di nuovo questo dispositivo da un altro dispositivo.</string>
+    <string name="leave_confirm">Disconnetti</string>
+    <string name="leave_in_progress">Disconnessione…</string>
+    <string name="leave_error_update">Aggiorna Tomi per poterti disconnettere. Non è stato cancellato nulla.</string>
+    <string name="leave_error_unexpected">Il tuo server Tomi ha rifiutato la disconnessione. Non è stato cancellato nulla: questo telefono resta nel tuo spazio.</string>
+
+    <!-- The only device: deleting the space (after the relay answered "last device") -->
+    <string name="delete_space_title">Eliminare il tuo spazio?</string>
+    <string name="delete_space_message">Questo è l’unico dispositivo. Disconnetterti elimina il tuo spazio e tutto ciò che contiene, in modo definitivo.</string>
+    <string name="delete_space_detail">Il tuo server Tomi cancella lo spazio, poi questo telefono cancella tutto ciò che contiene: elementi, contenuti nascosti, file e chiavi. Nessuno potrà recuperarli.</string>
+    <string name="delete_space_confirm">Elimina lo spazio</string>
+    <string name="delete_space_in_progress">Eliminazione…</string>
+    <string name="delete_space_error_relay_too_old">Il tuo server Tomi è troppo vecchio per eliminare lo spazio. Aggiornalo, poi riprova. Non è stato cancellato nulla.</string>
+    <string name="delete_space_error_update">Aggiorna Tomi per poter eliminare il tuo spazio. Non è stato cancellato nulla.</string>
+    <string name="delete_space_error_unexpected">Il tuo server Tomi ha rifiutato di eliminare lo spazio. Non è stato cancellato nulla.</string>
+    <string name="delete_space_unavailable_biometric">Per eliminare il tuo spazio, configura un blocco schermo (codice, impronta o volto) nelle impostazioni del telefono. Non è stato cancellato nulla.</string>
+
+    <!-- A pending departure: banner at the top of the feed -->
+    <string name="departure_pending_leave_title">Disconnessione in sospeso</string>
+    <string name="departure_pending_delete_title">Eliminazione dello spazio in sospeso</string>
+    <string name="departure_pending_checking">Tomi sta verificando con il tuo server. Non è stato cancellato nulla.</string>
+    <string name="departure_pending_network">Il tuo server Tomi non ha ancora confermato. Non è stato cancellato nulla. Tomi riprova appena torna la rete.</string>
+    <string name="departure_pending_server">Il tuo server Tomi ha un problema temporaneo. Non è stato cancellato nulla. Tomi sta riprovando.</string>
+    <string name="departure_pending_not_sent">La richiesta non è andata a buon fine: questo telefono fa ancora parte del tuo spazio. Non è stato cancellato nulla.</string>
+    <string name="departure_pending_not_found">Il tuo server Tomi non trova più il tuo spazio, o non riconosce più questo telefono. Non è stato cancellato nulla.</string>
+    <string name="departure_cancelling_title">Annullamento</string>
+    <string name="departure_cancelling">Tomi attende che la richiesta già inviata al tuo server finisca. Su questo telefono non sarà cancellato nulla.</string>
+    <string name="departure_wiping">Cancellazione di questo telefono…</string>
+    <string name="departure_retry">Riprova</string>
+    <string name="departure_cancel">Annulla</string>
+    <string name="departure_cancelled_leave">Disconnessione annullata. Se il tuo server l’aveva già ricevuta, questo telefono risulterà rimosso dallo spazio; ciò che contiene resta leggibile.</string>
+    <string name="departure_cancelled_delete">Eliminazione annullata. Se il tuo server l’aveva già eseguita, ora il tuo spazio esiste solo su questo telefono.</string>
+    <string name="departure_failed">La cancellazione non è stata completata. Non è stato cancellato nulla. Riprova.</string>
+    <string name="space_not_found_title">Spazio non trovato</string>
+    <string name="space_not_found_message">Il tuo server Tomi non trova più il tuo spazio. Se è stato reimpostato, puoi cancellare questo telefono; altrimenti, controlla prima il tuo server. Su questo telefono non è stato cancellato nulla.</string>
+    <string name="space_revoked_title">Rimosso dallo spazio</string>
+    <string name="space_revoked_message">Questo telefono è stato rimosso dal tuo spazio. Ciò che contiene resta leggibile qui. Disconnetterti lo cancella.</string>
+
+    <!-- "Erase anyway": erasing without a proof of the relay -->
+    <string name="erase_anyway">Cancella comunque</string>
+    <string name="erase_title">Cancellare questo telefono senza conferma dal server?</string>
+    <string name="erase_message">Il tuo server Tomi non può confermare che il tuo spazio sia eliminato. Lo spazio potrebbe non essere eliminato sul tuo server; se esiste ancora, questo telefono non vi avrà più accesso.</string>
+    <string name="erase_detail">Tutto ciò che questo telefono contiene sarà cancellato in modo definitivo: elementi, contenuti nascosti, file e chiavi.</string>
+    <string name="erase_checkbox">Ho capito: è definitivo.</string>
+    <string name="erase_confirm">Cancella questo telefono</string>
+    <string name="erase_in_progress">Cancellazione…</string>
+    <string name="erase_checking">Tomi sta verificando con il tuo server…</string>
+    <string name="erase_waiting">Una richiesta al tuo server è ancora in corso. Tomi attende che finisca prima di cancellare. Non è stato cancellato nulla.</string>
+    <string name="erase_not_allowed">Tomi deve prima verificare con il tuo server. Riprova tra un momento.</string>
+    <string name="erase_expired">La risposta del tuo server non è più valida: è troppo vecchia, o nel frattempo il tuo server ha risposto diversamente. Non è stato cancellato nulla. Riprova tra un momento.</string>
+    <string name="erase_unavailable_biometric">Per cancellare senza conferma dal server, configura un blocco schermo (codice, impronta o volto) nelle impostazioni del telefono. Anche disinstallare Tomi cancella tutto ciò che contiene.</string>
+    <string name="platform_android">Android</string>
+    <string name="platform_windows">Windows</string>
+    <string name="platform_other">Altro</string>
+
+    <!-- Add a device (the inviting device) -->
+    <string name="invite_title">Aggiungi un dispositivo</string>
+    <string name="invite_starting">Preparazione del codice…</string>
+    <string name="invite_intro">Sul nuovo dispositivo, apri Tomi, poi scansiona questo codice QR o inserisci il codice di invito.</string>
+    <string name="invite_qr_description">Codice QR di invito</string>
+    <string name="invite_single_use">Questo codice funziona una sola volta. Si rinnova finché questa schermata resta aperta.</string>
+    <string name="invite_verify_body">Controlla che su %1$s sia mostrato lo stesso codice.</string>
+    <string name="invite_verify_hint">Se l’altro dispositivo mostra un errore invece di un codice, tocca “Sono diversi”.</string>
+    <string name="invite_add">Aggiungi questo dispositivo</string>
+    <string name="invite_adding_title">In attesa del nuovo dispositivo</string>
+    <string name="invite_adding_body">Conferma anche su %1$s che i codici sono identici. Il dispositivo viene aggiunto appena fatto.</string>
+    <string name="invite_done_history">%1$s recupererà la cronologia del tuo spazio. Potrebbe volerci un po’.</string>
+    <string name="invite_failed_title">Dispositivo non aggiunto</string>
+    <string name="invite_new_code">Nuovo codice</string>
+    <string name="invite_notice_failed">L’aggiunta del dispositivo non è stata completata. È pronto un nuovo codice di invito.</string>
+    <string name="invite_notice_refused">L’aggiunta del dispositivo è stata annullata. È pronto un nuovo codice di invito.</string>
+    <string name="invite_error_expired">Il codice è scaduto. Generane uno nuovo.</string>
+    <string name="invite_error_cancelled">L’aggiunta del dispositivo è stata annullata sull’altro dispositivo.</string>
+    <string name="invite_error_busy">È già in corso l’aggiunta di un dispositivo. Completala o attendi un momento, poi riprova.</string>
+    <string name="invite_error_failed">L’aggiunta del dispositivo non è stata completata. Riprova.</string>
+    <string name="invite_auth_required_title">Conferma necessaria</string>
+    <string name="invite_auth_required_body">Per aggiungere un dispositivo, conferma la tua identità con la tua impronta, il tuo volto o il codice di blocco schermo del telefono.</string>
+    <string name="invite_auth_unavailable_body">Per aggiungere un dispositivo, configura prima un blocco schermo (codice, impronta o volto) nelle impostazioni del telefono.</string>
+    <string name="invite_auth_retry">Conferma</string>
+    <string name="invite_notice_auth_denied">Conferma annullata: non è stato aggiunto nulla. Tocca di nuovo “Aggiungi questo dispositivo” quando sei pronto.</string>
+
+    <!-- Create the space (the first device) -->
+    <string name="create_title">Crea il tuo spazio</string>
+    <string name="create_intro">Il tuo server Tomi ti ha dato una chiave di installazione, come codice QR o come testo.</string>
+    <string name="create_token_label">Chiave di installazione</string>
+    <string name="create_or_paste">oppure incolla la chiave</string>
+    <string name="create_scan_button">Scansiona il codice QR</string>
+    <string name="create_scan_button_description">Scansiona con la fotocamera il codice QR della chiave di installazione</string>
+    <string name="create_scan_preview_description">Anteprima della fotocamera per scansionare il codice QR della chiave di installazione</string>
+    <string name="create_scan_cancel">Chiudi lo scanner</string>
+    <string name="create_camera_denied">Accesso alla fotocamera negato. Puoi invece incollare o inserire la chiave.</string>
+    <string name="create_error_qr">Questo codice QR non è né una chiave di installazione né un link di creazione. Scansiona quello del tuo server Tomi o inserisci la chiave.</string>
+    <string name="create_where_button">Dove trovo la chiave?</string>
+    <string name="create_where_title">Dove trovo la chiave?</string>
+    <string name="create_where_body">Il tuo server Tomi l’ha mostrata durante l’installazione, una sola volta, con un codice QR.</string>
+    <string name="create_where_other_title">Per ottenerne un’altra</string>
+    <string name="create_where_run">Esegui questo comando sul tuo server:</string>
+    <string name="create_where_command" translatable="false">$ tomi-relay admin invite --new</string>
+    <string name="create_where_ok">Ho capito</string>
+    <string name="create_name_label">Nome di questo dispositivo</string>
+    <string name="create_name_edit">Modifica il nome</string>
+    <string name="create_submit">Crea il mio spazio</string>
+    <string name="create_join_instead">Entra nello spazio esistente</string>
+    <string name="create_done_title">Il tuo spazio è pronto</string>
+    <string name="create_done_body">%1$s è il primo dispositivo del tuo spazio. Aggiungi gli altri da Dispositivi.</string>
+    <string name="create_relay_check_label">Relay: %1$s</string>
+    <string name="create_relay_check_hint">Controlla che sia il tuo relay prima di creare il tuo spazio.</string>
+    <string name="create_relay_from_link">Letto dal link o dal codice QR.</string>
+    <string name="create_error_token">Chiave di installazione errata o già usata. Controllala e riprova.</string>
+    <string name="create_error_token_empty">Incolla la chiave di installazione.</string>
+    <string name="create_error_name">Il nome del dispositivo deve avere da 1 a 64 caratteri, senza spazi all’inizio o alla fine.</string>
+    <string name="create_error_space_exists">Questa chiave è già stata usata per creare uno spazio. Aggiungi questo dispositivo da un dispositivo che fa già parte dello spazio.</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_pin_title">Fissa Tomi in cima al menu di condivisione</string>
+    <string name="onboarding_pin_body">Tieni premuto su Tomi, poi scegli “Fissa”. Resterà primo, sempre nello stesso posto.</string>
+    <string name="onboarding_open_share">Apri il menu di condivisione</string>
+    <string name="onboarding_later">Più tardi</string>
+    <string name="onboarding_scene_pin_description">Illustrazione: nel menu di condivisione, tenendo premuto su Tomi compare l’opzione Fissa.</string>
+    <string name="onboarding_check_caption">Ecco cosa dovresti vedere</string>
+    <string name="onboarding_check_title">Tomi è in cima?</string>
+    <string name="onboarding_check_body">Se serve, riapri il menu di condivisione. Tomi dovrebbe comparire per primo, con una puntina.</string>
+    <string name="onboarding_check_yes">Sì, fatto</string>
+    <string name="onboarding_check_again">Non ancora, riapri il menu</string>
+    <string name="onboarding_scene_check_description">Illustrazione: nel menu di condivisione, Tomi compare per primo, con una puntina.</string>
+    <string name="onboarding_scene_share_title">Condividi</string>
+    <string name="onboarding_scene_notes">Note</string>
+    <string name="onboarding_scene_browser">Browser</string>
+    <string name="onboarding_scene_files">File</string>
+    <string name="onboarding_sample_text">Test di condivisione di Tomi</string>
+</resources>
