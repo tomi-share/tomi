@@ -1,12 +1,6 @@
 {
   "sourceLanguage" : "fr",
   "strings" : {
-    "" : {
-
-    },
-    "%lld" : {
-
-    },
     "action_archive" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -426,25 +420,47 @@
       }
     },
     "attachments_summary_files" : {
-      "comment" : "Shown from 2 attachments on only (AttachmentLogic.showsSummary): always the plural, so no plural variation (it would vary a string with two arguments).",
       "extractionState" : "manual",
       "localizations" : {
         "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld fichiers · %2$@"
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$lld fichier · %2$@"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$lld fichiers · %2$@"
+                }
+              }
+            }
           }
         }
       }
     },
     "attachments_summary_images" : {
-      "comment" : "Shown from 2 attachments on only (AttachmentLogic.showsSummary): always the plural.",
       "extractionState" : "manual",
       "localizations" : {
         "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld images · %2$@"
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$lld image · %2$@"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$lld images · %2$@"
+                }
+              }
+            }
           }
         }
       }
@@ -453,9 +469,21 @@
       "extractionState" : "manual",
       "localizations" : {
         "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld fichier(s) ignoré(s) : 25 Mo maximum par fichier"
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$lld fichier ignoré : 25 Mo maximum par fichier"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$lld fichiers ignorés : 25 Mo maximum par fichier"
+                }
+              }
+            }
           }
         }
       }
@@ -1363,6 +1391,39 @@
         }
       }
     },
+    "demo_banner" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mode démo : données fictives, rien n’est envoyé."
+          }
+        }
+      }
+    },
+    "demo_enter" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Essayer avec des données de démonstration"
+          }
+        }
+      }
+    },
+    "demo_leave" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quitter la démo"
+          }
+        }
+      }
+    },
     "departure_cancel" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1561,17 +1622,6 @@
         }
       }
     },
-    "detail_title" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Détail"
-          }
-        }
-      }
-    },
     "detect_files" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1656,6 +1706,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aucun appareil dans ton espace pour l’instant."
+          }
+        }
+      }
+    },
+    "devices_inactive_duration" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$lld jour"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$lld jours"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "devices_inactive_hint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inactif depuis %1$@. Tu ne l’utilises plus ? Retire-le."
           }
         }
       }
@@ -1803,24 +1887,68 @@
         }
       }
     },
-    "direction_received" : {
+    "dialog_delete_file_everywhere_named" : {
       "extractionState" : "manual",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Reçu"
+            "value" : "« %1$@ » sera effacé sur tous tes appareils et sur ton serveur Tomi. Les appareils hors ligne l’effaceront à leur reconnexion. Cette action est définitive."
           }
         }
       }
     },
-    "direction_sent" : {
+    "dialog_delete_file_everywhere_secret" : {
       "extractionState" : "manual",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Envoyé"
+            "value" : "Ce fichier masqué sera effacé sur tous tes appareils et sur ton serveur Tomi. Un appareil qui l’a déjà affiché a pu en garder une copie. Cette action est définitive."
+          }
+        }
+      }
+    },
+    "dialog_delete_file_everywhere_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer le fichier partout ?"
+          }
+        }
+      }
+    },
+    "dialog_delete_image_everywhere_message" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette image sera effacée sur tous tes appareils et sur ton serveur Tomi. Les appareils hors ligne l’effaceront à leur reconnexion. Cette action est définitive."
+          }
+        }
+      }
+    },
+    "dialog_delete_image_everywhere_secret" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette image masquée sera effacée sur tous tes appareils et sur ton serveur Tomi. Un appareil qui l’a déjà affichée a pu en garder une copie. Cette action est définitive."
+          }
+        }
+      }
+    },
+    "dialog_delete_image_everywhere_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer l’image partout ?"
           }
         }
       }
@@ -2107,6 +2235,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aucun élément ne correspond."
+          }
+        }
+      }
+    },
+    "file_delete_everywhere" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer le fichier partout"
+          }
+        }
+      }
+    },
+    "file_delete_local" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer le fichier de cet appareil"
+          }
+        }
+      }
+    },
+    "file_row_actions" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actions pour ce fichier"
+          }
+        }
+      }
+    },
+    "file_row_delete" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer ce fichier"
           }
         }
       }
@@ -2738,6 +2910,17 @@
         }
       }
     },
+    "ios_detail_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Détail"
+          }
+        }
+      }
+    },
     "ios_devices_revoke_reason" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2998,6 +3181,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Un partage n’a pas pu être envoyé. Tomi réessaiera."
+          }
+        }
+      }
+    },
+    "ios_snackbar_copied" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copié"
           }
         }
       }
@@ -3572,7 +3766,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Contenu masqué reçu de %1$@"
+            "value" : "Contenu masqué · %1$@"
           }
         }
       }
@@ -4485,9 +4679,21 @@
       "extractionState" : "manual",
       "localizations" : {
         "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld fichier(s)"
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$lld fichier"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$lld fichiers"
+                }
+              }
+            }
           }
         }
       }
@@ -4805,6 +5011,17 @@
         }
       }
     },
+    "share_hidden_preview_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contenu masqué"
+          }
+        }
+      }
+    },
     "share_no_app" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4937,17 +5154,6 @@
         }
       }
     },
-    "snackbar_copied" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Copié"
-          }
-        }
-      }
-    },
     "snackbar_copied_secret" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4977,6 +5183,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Supprimé de cet appareil"
+          }
+        }
+      }
+    },
+    "snackbar_file_deleted_everywhere" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fichier supprimé partout"
+          }
+        }
+      }
+    },
+    "snackbar_file_deleted_local" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fichier supprimé de cet appareil"
+          }
+        }
+      }
+    },
+    "snackbar_image_deleted_everywhere" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Image supprimée partout"
+          }
+        }
+      }
+    },
+    "snackbar_image_deleted_local" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Image supprimée de cet appareil"
           }
         }
       }
@@ -5234,39 +5484,6 @@
         }
       }
     },
-    "toolbar_compose" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Contenu"
-          }
-        }
-      }
-    },
-    "toolbar_feed" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Actions du fil"
-          }
-        }
-      }
-    },
-    "toolbar_item" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Actions de l’élément"
-          }
-        }
-      }
-    },
     "unread_badge" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -5388,6 +5605,39 @@
         }
       }
     },
+    "viewer_action_delete" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer"
+          }
+        }
+      }
+    },
+    "viewer_delete_everywhere" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer l’image partout"
+          }
+        }
+      }
+    },
+    "viewer_delete_local" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer l’image de cet appareil"
+          }
+        }
+      }
+    },
     "viewer_image_description" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -5449,7 +5699,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Enregistrer dans la galerie"
+            "value" : "Enregistrer"
           }
         }
       }

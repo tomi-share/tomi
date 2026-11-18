@@ -4,15 +4,13 @@ import TomiKit
 
 /// Markdown rendered natively, never from anything but the tree `MarkdownGuard.render` checked (no image can be in it,
 /// so nothing is ever fetched). Port of `RichMarkdownView` (RichTextViews.kt): paragraph Inter 15/22, headings 20 / 18
-/// / 16 semibold, code in mono 13 on `surfaceAlt`. Links open only for http, https, mailto and tel. Returns nil when the
-/// guard refuses the text: the caller shows the plain text.
+/// / 16 semibold, code in mono 13 on `surfaceAlt`. Links open only for http, https, mailto and tel.
+///
+/// The view only draws blocks that were prepared before (`MarkdownRendering.blocks`, once per text: the card cache, the
+/// chunks of the detail): nothing is guarded nor parsed when the view is built, which happens at every evaluation of
+/// the `body` above it.
 struct MarkdownView: View {
     let blocks: [MarkdownBlock]
-
-    init?(markdown: String) {
-        guard let rendered = MarkdownGuard.render(markdown, syntax: .full) else { return nil }
-        blocks = MarkdownBlock.split(rendered)
-    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: TomiSpace.s2) {
@@ -26,6 +24,16 @@ struct MarkdownView: View {
     }
 }
 
+enum MarkdownRendering {
+    /// The blocks of `markdown`, guarded and parsed, or nil when the guard refuses the text (the caller shows the plain
+    /// text). Pure: may run off the main thread. What is given here is what gets rendered: a card gives its bounded
+    /// preview, the detail one chunk at a time, never a whole long document.
+    nonisolated static func blocks(_ markdown: String) -> [MarkdownBlock]? {
+        guard let rendered = MarkdownGuard.render(markdown, syntax: .full) else { return nil }
+        return MarkdownBlock.split(rendered)
+    }
+}
+
 enum SafeLinks {
     static func isOpenable(_ url: URL) -> Bool {
         ["http", "https", "mailto", "tel"].contains(url.scheme?.lowercased() ?? "")
@@ -33,7 +41,7 @@ enum SafeLinks {
 }
 
 /// One block of the parsed markdown (paragraph, heading, list item, quote, code block), with its inline text styled.
-struct MarkdownBlock: Identifiable {
+struct MarkdownBlock: Identifiable, Sendable {
     enum Kind: Equatable {
         case paragraph
         case heading(Int)

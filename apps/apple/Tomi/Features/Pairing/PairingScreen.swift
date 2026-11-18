@@ -117,7 +117,7 @@ private struct ScanContent: View {
                 .buttonStyle(.tomiSecondary)
                 .disabled(working)
                 #if DEBUG
-                if let openDemo {
+                if let openDemo, !model.canEnterDemo {
                     Button(L10n.text("ios_debug_enter_demo")) {
                         Task { if await model.enterDemo(open: openDemo) { onDemoEntered() } }
                     }
@@ -125,6 +125,14 @@ private struct ScanContent: View {
                     .disabled(working)
                 }
                 #endif
+                // The demo of the core: made-up data, no network. Small and discreet, under the two real ways in.
+                if model.canEnterDemo {
+                    Button(L10n.text("demo_enter")) {
+                        Task { if await model.enterBundledDemo() { onDemoEntered() } }
+                    }
+                    .buttonStyle(.tomiText)
+                    .disabled(working)
+                }
             }
         }
         .onChange(of: model.phase) { _, phase in if phase != .input { scanning = false } }

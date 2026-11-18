@@ -95,18 +95,19 @@ final class RustTomiCoreTests: XCTestCase {
         }
         XCTAssertEqual(device.name, "PC-Bureau")
         XCTAssertEqual(code, "482913")
-        XCTAssertEqual(count, 23)
+        // The items of the Android demo on top of a generated week and years of history.
+        XCTAssertGreaterThan(count, 23)
         XCTAssertEqual(members, 2)
         XCTAssertEqual(relayAuthority, "relay.example.org", "shown in full next to the verification code")
         try core.confirmPairing(importHistory: true)
         XCTAssertTrue(core.isPaired())
 
         let items = try core.items()
-        XCTAssertEqual(items.count, 23)
-        XCTAssertEqual(items.filter(\.archived).count, 4)
-        XCTAssertEqual(items.filter(\.pinned).count, 2)
+        XCTAssertEqual(items.count, Int(count))
+        XCTAssertGreaterThanOrEqual(items.filter(\.archived).count, 4)
+        XCTAssertGreaterThanOrEqual(items.filter(\.pinned).count, 2)
 
         try core.simulateIncoming(kind: .link)
-        XCTAssertEqual(try core.items().count, 24)
+        XCTAssertEqual(try core.items().count, items.count + 1)
     }
 }

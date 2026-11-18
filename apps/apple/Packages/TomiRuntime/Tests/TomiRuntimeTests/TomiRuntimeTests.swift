@@ -53,6 +53,9 @@ private final class RacingKeyStore: WrapKeyStoring, @unchecked Sendable {
 
 @MainActor
 final class TomiRuntimeTests: XCTestCase {
+    /// Items of the Android demo, on top of the demo feed of the core (a generated week and years of history follow).
+    private static let androidDemoItems = 23
+
     private func tempPaths() throws -> CorePaths {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         let paths = CorePaths(root: root)
@@ -76,17 +79,19 @@ final class TomiRuntimeTests: XCTestCase {
     func testTheDemoCoreShowsTheDemoFeedAndReceivesItems() async throws {
         let core = try await open(.demo(startPaired: true, assets: nil))
         XCTAssertTrue(core.isDemo)
-        await eventually("demo feed loaded") { core.state.loaded && core.state.items.count == 23 }
+        // The demo feed of the core: the items of the Android demo on top of a generated week and years of history.
+        await eventually("demo feed loaded") { core.state.loaded && core.state.items.count > Self.androidDemoItems }
         XCTAssertTrue(core.state.isPaired)
-        XCTAssertEqual(core.state.items.filter(\.archived).count, 4)
-        XCTAssertEqual(core.state.items.filter(\.pinned).count, 2)
+        XCTAssertGreaterThanOrEqual(core.state.items.filter(\.archived).count, 4)
+        XCTAssertGreaterThanOrEqual(core.state.items.filter(\.pinned).count, 2)
         XCTAssertEqual(core.state.devices.count, 3)
         XCTAssertEqual(core.state.localDevice?.name, "iPhone")
         XCTAssertEqual(core.state.localDevice?.platform, .ios)
         XCTAssertTrue(core.state.items.contains { $0.kind == .unreadable })
 
+        let feed = core.state.items.count
         try await core.simulateIncoming(.link)
-        await eventually("the listener publishes the new item") { core.state.items.count == 24 }
+        await eventually("the listener publishes the new item") { core.state.items.count == feed + 1 }
         let link = try XCTUnwrap(core.state.items.first)
         XCTAssertEqual(link.title, "Documentation Android")
         XCTAssertFalse(link.read)
@@ -112,7 +117,7 @@ final class TomiRuntimeTests: XCTestCase {
         }
         XCTAssertEqual(prompt.peer, PairingPeer(name: "PC-Bureau", platform: .windows))
         XCTAssertEqual(prompt.verificationCode, "482913")
-        XCTAssertEqual(prompt.historyItemCount, 23)
+        XCTAssertGreaterThan(prompt.historyItemCount, Self.androidDemoItems)
         XCTAssertGreaterThan(prompt.historyBytes, 0)
         XCTAssertEqual(prompt.memberCount, 2)
         XCTAssertEqual(prompt.expiresInMs, 120_000)
@@ -253,6 +258,44 @@ final class TomiRuntimeTests: XCTestCase {
         XCTAssertFalse(reader.hasTokenShape("4821-crayon-renard"))
         XCTAssertEqual(RelayAddress.canonical("relay.example.org", reader: reader), "https://relay.example.org")
         XCTAssertNil(RelayAddress.canonical("http://relay.example.org", reader: reader))
+    }
+
+    func testARealCoreEntersTheDemoAndLeavesIt() async throws {
+        let core = try await open(.real(relayURL: URL(string: "https://relay.example.org")!))
+        await eventually("first reading") { core.state.loaded }
+        XCTAssertFalse(core.isDemo)
+        XCTAssertTrue(core.canEnterDemo)
+        XCTAssertFalse(core.canLeaveDemo)
+
+        try await core.enterDemo()
+        XCTAssertTrue(core.state.isPaired)
+        XCTAssertTrue(core.isDemo)
+        XCTAssertTrue(core.canLeaveDemo)
+        XCTAssertFalse(core.canEnterDemo)
+        XCTAssertGreaterThan(core.state.items.count, Self.androidDemoItems)
+
+        await core.leaveDemo()
+        XCTAssertFalse(core.state.isPaired)
+        XCTAssertFalse(core.isDemo)
+        XCTAssertTrue(core.state.items.isEmpty)
+        XCTAssertTrue(core.canEnterDemo)
+
+        // Leaving the space inside the demo leaves the demo too.
+        try await core.enterDemo()
+        let result = await core.leaveSpace()
+        XCTAssertEqual(result, .erased)
+        XCTAssertFalse(core.isDemo)
+        XCTAssertFalse(core.state.isPaired)
+        core.shutdown()
+    }
+
+    func testACoreOpenedAsADemoCannotEnterNorLeaveTheDemo() async throws {
+        let core = try await open(.demo(startPaired: true, assets: nil))
+        await eventually("first reading") { core.state.loaded }
+        XCTAssertTrue(core.isDemo)
+        XCTAssertFalse(core.canEnterDemo)
+        XCTAssertFalse(core.canLeaveDemo)
+        core.shutdown()
     }
 
     func testTheWrapKeyIsKeptAndNeverRecreatedForAnExistingDatabase() throws {

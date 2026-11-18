@@ -217,6 +217,26 @@ final class PairingViewModelTests: XCTestCase {
         XCTAssertEqual(core.calls, ["pairWithCode:7-crayon-lune", "confirmPairing:true"])
     }
 
+    func testTheDemoEntryJoinsTheDemoInOneStep() async {
+        let model = await makeModel()
+        core.canEnterDemo = true
+        XCTAssertTrue(model.canEnterDemo)
+        let entered = await model.enterBundledDemo()
+        XCTAssertTrue(entered)
+        XCTAssertEqual(core.calls, ["enterDemo"])
+        XCTAssertTrue(core.state.isPaired)
+    }
+
+    func testAFailedDemoEntryComesBackToTheInput() async {
+        let model = await makeModel()
+        core.canEnterDemo = true
+        core.enterDemoError = TomiCoreError(.internal, reason: "x")
+        let entered = await model.enterBundledDemo()
+        XCTAssertFalse(entered)
+        XCTAssertEqual(model.phase, .input)
+        XCTAssertEqual(model.error, "pair_error_unexpected")
+    }
+
     // MARK: The relay (spec/pairing-v1.md 4.4 rules 6 and 7)
 
     func testTheFieldIsRequiredOnlyWhenTheDeviceHasNoRelay() async {

@@ -11,6 +11,8 @@ import Observation
 public final class CoreState {
     /// True once this device belongs to a space.
     public var isPaired = false
+    /// The space on screen is the demo space (made-up data, no network).
+    public var isDemo = false
     public var spaceState = SpaceState.active
     /// Link to open when `spaceState` is `.updateRequired`.
     public var updateURL: URL?
@@ -37,8 +39,17 @@ public final class CoreState {
 @MainActor
 public protocol TomiCore: AnyObject {
     var state: CoreState { get }
-    /// A demo core: no network, simulated pairing, `simulateIncoming` available.
+    /// The calls go to a demo space: a core opened as a demo, or the real core once it entered the demo.
     var isDemo: Bool { get }
+    /// The demo can be entered now (`enterDemo`): a real core built with the demo, on a device in no space.
+    var canEnterDemo: Bool { get }
+    /// The demo was entered from the real core and can be left (`leaveDemo`). False on a core opened as a demo.
+    var canLeaveDemo: Bool { get }
+    /// Enters the demo space from the real core: no pairing, no network, the demo feed at once (`state.isPaired`
+    /// and `state.isDemo` become true). The real space data is untouched. Throws `TomiCoreError`.
+    func enterDemo() async throws
+    /// Leaves the demo entered with `enterDemo`: back to the real core, in no space. Never throws.
+    func leaveDemo() async
 
     func getItem(id: String) async throws -> TomiItem?
 
@@ -140,4 +151,11 @@ public protocol TomiCore: AnyObject {
     func enterForeground()
     /// The app left the screen: stop the doorbell, erase the decrypted files.
     func enterBackground()
+}
+
+public extension TomiCore {
+    var canEnterDemo: Bool { false }
+    var canLeaveDemo: Bool { false }
+    func enterDemo() async throws { throw TomiCoreError(.invalidInput, reason: "demo entry not supported") }
+    func leaveDemo() async {}
 }

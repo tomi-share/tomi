@@ -252,6 +252,15 @@ final class PreviewCore: TomiCore {
     }
 
     func resumePairing() async -> ResumeOutcome { .nothingPending }
+    /// What `enterDemo` does: nil joins the demo, an error is thrown.
+    var enterDemoError: Error?
+    var canEnterDemo = false
+    func enterDemo() async throws {
+        calls.append("enterDemo")
+        if let enterDemoError { throw enterDemoError }
+        state.isPaired = true
+        state.isDemo = true
+    }
 
     // Departure: the preview core leaves at once, with the proof.
     var departureResults: [DepartureResult] = []

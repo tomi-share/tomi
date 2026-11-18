@@ -302,6 +302,10 @@ final class AppContainer {
     func start() async {
         guard case .starting = phase else { return }
         phase = .opening
+        // While the core opens: the first use of the text rendering code, off the main thread (`TextRenderingWarmUp`).
+        Task.detached(priority: .utility) { TextRenderingWarmUp.run() }
+        // The card texts of the core that was open before (the demo, another space) are not this one's.
+        CardTexts.clear()
         do {
             let paths = try self.paths()
             try paths.prepareSendDirectories()
@@ -310,7 +314,8 @@ final class AppContainer {
                 mode: mode,
                 paths: paths,
                 appVersion: Self.appVersion,
-                deviceName: Self.deviceName
+                deviceName: Self.deviceName,
+                demoAssets: Bundle.main.url(forResource: "demo", withExtension: nil)
             )
             let picked = PickedFiles(root: paths.picked)
             picked.wipe()
@@ -455,6 +460,8 @@ final class AppContainer {
         prefs.onboardingDone = false
         gate.window.invalidate()
         feed?.hideAll()
+        // What the cards prepared from the texts of the space goes with it.
+        CardTexts.clear()
         picked?.wipe()
         // The copies of the files of pending sends (the core refuses them now).
         if let outgoing = try? paths().outgoing {
@@ -603,6 +610,8 @@ final class AppContainer {
             if !core.isDemo { BackgroundWork.schedule(hasQueued: hasQueuedSends) }
             gate.window.invalidate()
             core.enterBackground()
+            // What the cards prepared from the texts is not kept while the app is off screen.
+            CardTexts.clear()
         default:
             break
         }

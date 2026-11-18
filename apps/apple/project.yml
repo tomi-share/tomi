@@ -35,7 +35,7 @@ targets:
       - path: Tomi
       # Demo files of the core's demo mode (images, code files of the demo space). They were the
       # Android debug assets; Android now runs on the real core only, so they live here.
-      # Left out of Release builds (EXCLUDED_SOURCE_FILE_NAMES in Config/Release.xcconfig).
+      # Shipped in every build: the released app can enter the demo from the real core.
       - path: DemoAssets/demo
         type: folder
         buildPhase: resources

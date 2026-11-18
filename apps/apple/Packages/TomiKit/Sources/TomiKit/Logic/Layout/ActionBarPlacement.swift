@@ -57,13 +57,16 @@ public enum ActionBarPlacement: Sendable, Hashable {
 /// The top band of a screen whose status bar only fills a corner of it: on the unfolded iPhone Duo in portrait the
 /// system keeps 82 pt at the top, but the time, the camera and the Wi-Fi sit in a 144 × 82 pt block at the top right
 /// (`containerCornerInsets`, iOS 26); the rest of the band is empty. The top of the screen (logotype and menu, or the
-/// search field and its filters) then goes into the band, beside the block instead of under it.
+/// search field and its filters) then goes into the band, beside the block instead of under it. Same for a resized
+/// window of iPadOS 26, whose controls (close, minimise, full screen) take its top-leading corner.
 public struct TopCornerBand: Sendable, Hashable {
-    /// Height of the band (the top safe-area inset).
+    /// Height of the band: the top safe-area inset, or the occupied corner when it goes below it (iPad window).
     public let height: Double
     /// Room to leave free from each edge for the occupied corners, in points (0 when the corner is free).
     public let leading: Double
     public let trailing: Double
+    /// The top safe-area inset: the height of the band on iPhone Duo, less on an iPad window (the controls go below).
+    public let inset: Double
 
     /// Narrowest free middle that still holds the header (logotype and menu, or the search field).
     public static let minimumFreeWidth: Double = 280
@@ -73,9 +76,15 @@ public struct TopCornerBand: Sendable, Hashable {
     /// the camera and the Wi-Fi are drawn there, folded or not (measured on the simulator, as Safari aligns its buttons).
     public static let statusRowCenter: Double = 48
 
-    /// Centre line of the status content inside the band: the system draws it between the first third (the clearance
-    /// of the rounded screen corner) and the last sixth (its touch margin) of the occupied corner, 47.8 pt in 82 pt.
-    public var rowCenter: Double { height * 7 / 12 }
+    /// The band is the top inset and holds the status content (iPhone Duo), not window controls below the inset. Only
+    /// then does the page put glass behind it (`backdropHeight`): the window controls have a platter of their own.
+    public var holdsStatus: Bool { inset >= height - 1 }
+
+    /// Centre line of the top row inside the band, from the top of the screen. Status content: the system draws it
+    /// between the first third (the clearance of the rounded screen corner) and the last sixth (its touch margin) of
+    /// the occupied corner, 47.8 pt in 82 pt. Window controls: in the middle of the corner below the inset (measured
+    /// 31 pt for a corner of 53 pt under 10 pt, 53 pt for 75 pt under 32 pt at the top of the screen).
+    public var rowCenter: Double { holdsStatus ? height * 7 / 12 : (inset + height) / 2 }
 
     /// Height of the glass behind the status content: the content (half the band) plus 7 pt above and below.
     public var backdropHeight: Double { height / 2 + 14 }
@@ -91,10 +100,12 @@ public struct TopCornerBand: Sendable, Hashable {
         return max(statusRowCenter - top, 0)
     }
 
-    public init(height: Double, leading: Double, trailing: Double) {
+    /// `inset` defaults to `height`: a band that is the whole top inset.
+    public init(height: Double, leading: Double, trailing: Double, inset: Double? = nil) {
         self.height = height
         self.leading = leading
         self.trailing = trailing
+        self.inset = inset ?? height
     }
 
     /// - Parameters:
@@ -102,19 +113,32 @@ public struct TopCornerBand: Sendable, Hashable {
     ///   - safeTop, safeLeading, safeTrailing: safe-area insets of the screen.
     ///   - topLeadingCorner, topTrailingCorner: the occupied corners (`containerCornerInsets`), width and height.
     ///
-    /// A band only when the system bars are at the top (no side strip) and an occupied corner spans its whole height:
-    /// then nothing else is in it. A classic iPhone (Dynamic Island in the middle, rounded corners shorter than the
-    /// band) and the side strip of iPhone Duo keep the usual layout.
+    /// A band only when the system bars are at the top (no side strip) and a corner is occupied: at least
+    /// `minimumHeight` both ways, and down to the bottom of the top inset or below it. Two cases:
+    /// - the status block of iPhone Duo unfolded in portrait spans the whole inset (144 × 82 pt in 82 pt): the band is
+    ///   the inset, and nothing else is in it;
+    /// - the window controls of iPadOS 26 in a resized window go below the inset (66 × 53 pt in 10 pt): the band is the
+    ///   corner, so the header goes beside the controls, on their line, instead of under them.
+    ///
+    /// A classic iPhone (Dynamic Island in the middle, rounded corners shorter than the inset), the rounded corners of a
+    /// window (22 × 22 pt) and the side strip of iPhone Duo keep the usual layout.
     public static func resolve(
         width: Double, safeTop: Double, safeLeading: Double, safeTrailing: Double,
         topLeadingCorner: (width: Double, height: Double), topTrailingCorner: (width: Double, height: Double)
     ) -> TopCornerBand? {
         let width = validInset(width)
         let top = validInset(safeTop)
-        guard top >= minimumHeight, validInset(safeLeading) < 1, validInset(safeTrailing) < 1 else { return nil }
-        let corners = [topLeadingCorner, topTrailingCorner].map { (width: validInset($0.width), height: validInset($0.height)) }
-        guard corners.contains(where: { $0.width > 0 && $0.height >= top - 1 }) else { return nil }
-        let band = TopCornerBand(height: top, leading: corners[0].width, trailing: corners[1].width)
+        guard safeTop.isFinite, validInset(safeLeading) < 1, validInset(safeTrailing) < 1 else { return nil }
+        let occupied = [topLeadingCorner, topTrailingCorner].map { corner -> (width: Double, height: Double) in
+            let width = validInset(corner.width), height = validInset(corner.height)
+            let isOccupied = width >= minimumHeight && height >= max(top - 1, minimumHeight)
+            return isOccupied ? (width, height) : (0, 0)
+        }
+        guard occupied.contains(where: { $0.width > 0 }) else { return nil }
+        let band = TopCornerBand(
+            height: max(top, occupied[0].height, occupied[1].height), leading: occupied[0].width, trailing: occupied[1].width,
+            inset: top
+        )
         guard width - band.leading - band.trailing >= minimumFreeWidth else { return nil }
         return band
     }

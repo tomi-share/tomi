@@ -5,7 +5,7 @@
 Execution document. It is written to be followed step by step by a contributor, one pull request at a time,
 without having to reread the whole repository. The general rules of the repository are in `AGENTS.md` and `docs/DEV.md`, which take precedence.
 
-Last updated: 10 November 2026 (rebase onto `main` of 10 November and follow-ups of PR-14, section 0.2). Sections 0 and 12
+Last updated: 12 November 2026 (unified core: demo from the real core, section 0.3; long texts, section 0.4). Sections 0 and 12
 (status) must be kept up to date with each PR.
 
 ---
@@ -34,6 +34,8 @@ work is there, commit by commit, for a single pull request. The earlier stacked 
 | PR-14 | Switch to the real core, background tasks, TestFlight (formerly PR-10, section 12) | done (except TestFlight) |
 | — | Fixes after testing on an iPhone (viewer, capture cache, files) | done (0.2) |
 | — | Rebase onto the `main` of 10 November, carry-over of its changes, Dev configuration | done (0.2) |
+| — | Unified core: demo from the real core, in the Release | done (0.3) |
+| — | Long texts: capped previews in the feed, chunked detail | done (0.4) |
 
 Sections 9 to 12 keep their former PR numbers (PR-7 to PR-10) in their titles: read them as PR-11 to PR-14.
 
@@ -250,6 +252,76 @@ and corrected; iPhone Duo simulator: feed, header on scroll, back to the feed af
 Dev build installed on the iPhone. Not verified: "Undo" from the feed on the simulator (3 s window), the
 "Unreadable data" screen under real conditions.
 
+### 0.3 Unified core (November 2026)
+
+The real core can enter the demo and leave it without closing its engine (`runtime/unified.rs`, FFI `enter_demo`,
+`leave_demo`, `supports_demo_entry`). The iOS app keeps the same core for its whole life: "Rejoins ton espace" (Join
+your space) offers a small "Essayer avec des données de démonstration" (Try with demo data) button, the feed shows a
+"Quitter la démo" (Leave the demo) banner, and the Release embeds the demo and its files. The Debug mode that starts on
+a demo core stays. Trade-offs: `demo` feature off by default; demo refused if the core is in a space or has a pairing
+pending (A2); the demo always comes already joined (A3); the "Simuler la réception…" (Simulate receiving…) menus in
+Debug and Dev only (A4); what arrives through sharing lands in the demo feed, erased on exit (A5). Android and Windows
+take the same entry and banner from their own branches, with texts shared through `strings.xml` (`demo_enter`,
+`demo_banner`, `demo_leave`). Not compiled here: to validate on a Mac (TomiKit, TomiDesign, TomiRuntime and app tests, a
+Release build for the simulator with the `demo` folder, a manual run on a real iPhone, a TestFlight archive).
+
+### 0.4 Long texts (November 2026)
+
+Port of the Android solution for long texts and a smooth feed and detail view. No change to the protocol, the core or the
+relay.
+
+- **Pure logic (`TomiKit`)**: `Logic/Render/MarkdownBlocks.swift` ports `MarkdownBlocks.kt` file for file (`preview`,
+  `head`, `chunks`, `sourceChunks`, same thresholds), with the tests of `MarkdownBlocksTest.kt` and
+  `MarkdownChunksTest.kt`. `MarkdownParityTests` compares the outputs with those of Android's Kotlin (compiled as is and
+  run on the JVM) over the 5,000 documents of the two fuzzers: identical to the character. `Model/ItemReuse.swift` ports
+  `ItemReuse.kt`, `Logic/Render/ProgressiveReveal.swift` the estimates of `ProgressiveColumn.kt`.
+- **Feed card**: capped preview prepared once per card (`CardTexts`, in memory, emptied on a core change, on leaving the
+  space and in the background), fixed height of 220 pt when it is truncated, "Lire la suite" (Read more) without
+  measuring; `MarkdownView` no longer keeps or parses anything, it draws blocks that were prepared before
+  (`MarkdownRendering.blocks`); `MarkdownGuard.render` no longer parses the text twice.
+- **Detail**: column of chunks (`ChunkedMarkdown`, `ChunkedLiteral`), guard per chunk, splitting off the main thread
+  above 8,000 characters, first-screen chunks parsed before display, the next ones ahead of the scroll.
+- **Around it**: warm-up of the rendering code at launch (`TextRenderingWarmUp`), unchanged feed items reused at each
+  reading of the core (the adapter only republishes the feed when it changed), `FeedViewModel.item(id:)` no longer sorts
+  the feed.
+- **Secret items**: nothing is computed for a closed secret item; a revealed one is cut in place (`head`, chunks of the
+  detail), never cached; `Preview`, `Chunk`, `CardText` and `DetailPart` print no content.
+
+Differences with Android (noted in the matrix):
+
+1. Names under the `MarkdownBlocks` namespace (`MarkdownBlocks.preview`, `.Budget`, `.Preview`, `.Chunk`): `Preview`
+   alone would clash with SwiftUI. The text is read in UTF-16 units to count like Kotlin; the regular expressions are
+   written by hand; `head` only reads the beginning of the text.
+2. The detail is a `LazyVStack`, not a `ProgressiveColumn`: Compose cannot nest a lazy list in a scrolling column,
+   SwiftUI can. No hand-reserved space, no 600 ms grace delay, no saved chunk count: the stack builds the chunks near the
+   screen, releases the distant ones and estimates the height of the others. Checked when opening the 200 KB document:
+   2 chunks built out of 66.
+3. No `RenderedHeights`: SwiftUI rendering is synchronous, a card has its height from its first frame.
+4. A long revealed secret item, in the detail: each chunk is in the capture-excluded layer (`CaptureShield`), the block
+   background around it; a single protected block would force the whole text to be laid out at once.
+5. As on Android, the guard applies per chunk: a Markdown of more than 200,000 characters is rendered in chunks in the
+   detail, it is no longer shown as plain text in one block.
+
+Measurements (iPhone Duo simulator, iOS 27.2, Release build, core demo: 3,049 items, one 200 KB Markdown): time during
+which the main thread stays busy without yielding, read by a temporary probe, not committed.
+
+| Scenario | Before (unified-core branch) | After |
+|---|---|---|
+| The 200 KB Markdown card arrives in the feed | 2.7 s, then a 17.0 s block | no pass above 30 ms |
+| Scrolling with that card on screen | ≈ 28 ms per frame (all above 16.7 ms) | no pass above 16.7 ms |
+| Opening the detail of that Markdown | 29.0 s block | 0.22 to 0.48 s on first opening (screen push), 0.08 to 0.10 s afterwards |
+| Scrolling the detail | 0.84 s and 0.66 s, then ≈ 30 ms per frame | passes of 22 to 54 ms when a chunk arrives, 2 per second at most |
+
+What remains and does not come from long texts (same values before and after): the first HTML card of the feed creates
+the process's first `WKWebView` (≈ 0.6 s on the simulator), image thumbnails are decoded on the main thread at their
+first appearance (≈ 0.2 s for the demo's large image), and entering the demo costs ≈ 0.3 s.
+
+Checked by the author on a Mac: `swift test` of TomiKit (536 tests), TomiRuntime tests (11) and app tests (79) on a
+simulator, parity with Android's Kotlin, a manual run on a Release simulator (feed, "Lire la suite", detail in Preview
+and Markdown). Hand-tested on a real iPhone (Dev build): smooth feed and detail. Not checked: measurements on a real
+iPhone (the above are from the simulator), rotation, a long revealed secret item on screen (Face ID), Dynamic Type, iPad.
+This slice of the port has not been compiled in the open-source repository: validate on a Mac.
+
 ---
 
 ## 1. Architecture decisions (closed)
@@ -392,7 +464,8 @@ ffi = [...]             # unchanged
 demo = ["runtime"]
 ```
 
-`apps/apple/tools/build-core.sh` builds with `--features ffi,demo`. Android and Windows do not change.
+`apps/apple/tools/build-core.sh` builds with `--features ffi,demo`. Android and Windows do not change (Android builds
+`demo` too since 12 November 2026, see 0.3).
 
 ### 4.3 `runtime/mock.rs`: make the double available outside tests
 
@@ -560,8 +633,9 @@ Deviations from sections 4.4 to 4.7, all in the direction of compatibility:
 8. **No doorbell in demo**: `run_doorbell` blocks until `stop_doorbell` without network; a background thread syncs
    PC-Bureau and this device every 2 s (disabled in unit tests, which start it explicitly).
 9. **Demo pairing latency**: 800 ms as on Android, none in tests.
-10. The Apple script builds with `--features ffi,demo` by default; **`--no-demo` is mandatory for a TestFlight or
-    App Store archive** (`openDemo` then returns an error). The recipe `just apple-core --no-demo` passes it to the script.
+10. The Apple script builds with `--features ffi,demo` by default; **never pass `--no-demo` for a TestFlight or App
+    Store archive** since the unified core (0.3): the released app offers the demo (`openDemo` and `enterDemo` return an
+    error without it, and the app hides its entry). The recipe `just apple-core --no-demo` passes it to the script.
 11. **Archive table**: `item_archives (item_id, archived, at_ms)`, last decision (archiving as unarchiving),
     same shape as `pins`, so that a future shared last-writer-wins state can merge into it without a new migration.
     Re-archiving after a pin has won takes a new time.
