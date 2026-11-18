@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- How Tomi works: devices encrypt, the blind relay only forwards opaque bytes. Colours follow design/tomi/tokens.json (light and dark). -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 290" width="960" height="290" role="img" aria-label="Your devices encrypt content and sign it. The blind relay only forwards opaque bytes. Your other devices decrypt it.">
+<style>
+  :root { --bg:#F6F4EF; --card:#FFFFFF; --alt:#ECE9E2; --text:#1B2130; --muted:#565C6B; --line:#858996; --brand:#2E4C80; --brand-bg:#E3E9F4; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#121620; --card:#1A1F2B; --alt:#242A38; --text:#E9E7E1; --muted:#A6ABB8; --line:#6F7587; --brand:#A9BFEA; --brand-bg:#24324A; } }
+  text { font-family: Inter, 'Segoe UI', system-ui, -apple-system, sans-serif; }
+  .t { fill: var(--text); font-size: 20px; font-weight: 600; }
+  .m { fill: var(--muted); font-size: 15px; }
+  .b { fill: var(--brand); font-size: 15px; font-weight: 600; }
+  .box { fill: var(--card); stroke: var(--line); stroke-width: 1.5; }
+  .relay { fill: var(--alt); stroke: var(--line); stroke-width: 1.5; stroke-dasharray: 6 5; }
+  .pill { fill: var(--brand-bg); }
+  .arrow { stroke: var(--brand); stroke-width: 2.5; fill: none; }
+  .head { fill: var(--brand); }
+</style>
+<rect width="960" height="290" rx="16" fill="var(--bg)"/>
+
+<!-- Sending device -->
+<rect class="box" x="30" y="70" width="230" height="130" rx="14"/>
+<text class="t" x="145" y="115" text-anchor="middle">Your PC</text>
+<text class="m" x="145" y="143" text-anchor="middle">text, links, files, secrets</text>
+<text class="m" x="145" y="167" text-anchor="middle">encrypted and signed here</text>
+
+<!-- Relay -->
+<rect class="relay" x="360" y="70" width="240" height="130" rx="14"/>
+<text class="t" x="480" y="115" text-anchor="middle">Blind relay</text>
+<text class="m" x="480" y="143" text-anchor="middle">stores and forwards</text>
+<text class="m" x="480" y="167" text-anchor="middle">opaque bytes only</text>
+
+<!-- Receiving device -->
+<rect class="box" x="700" y="70" width="230" height="130" rx="14"/>
+<text class="t" x="815" y="115" text-anchor="middle">Your phone</text>
+<text class="m" x="815" y="143" text-anchor="middle">notified in real time</text>
+<text class="m" x="815" y="167" text-anchor="middle">decrypted here</text>
+
+<!-- Arrows -->
+<line class="arrow" x1="268" y1="135" x2="342" y2="135"/>
+<polygon class="head" points="352,135 338,127 338,143"/>
+<line class="arrow" x1="608" y1="135" x2="682" y2="135"/>
+<polygon class="head" points="692,135 678,127 678,143"/>
+
+<!-- Captions -->
+<rect class="pill" x="30" y="226" width="230" height="34" rx="17"/>
+<text class="b" x="145" y="248" text-anchor="middle">keys stay on your devices</text>
+<rect class="pill" x="340" y="226" width="280" height="34" rx="17"/>
+<text class="b" x="480" y="248" text-anchor="middle">never sees content or keys</text>
+<rect class="pill" x="700" y="226" width="230" height="34" rx="17"/>
+<text class="b" x="815" y="248" text-anchor="middle">keys stay on your devices</text>
+
+<text class="m" x="480" y="42" text-anchor="middle">One person, several devices, one shared space key</text>
+</svg>
