@@ -527,6 +527,8 @@ impl MockRelay {
     /// What `GET /v1/devices` reports from now on for `device_id`: `last_seen_at` (`None` =
     /// absent) and `active`. `active: None` makes the record look like one of a relay that
     /// does not report the activity at all (both fields absent).
+    // Demo/test helper: an unknown device is a caller bug, so failing loudly is intended.
+    #[allow(clippy::expect_used)]
     pub fn set_device_activity(
         &self,
         device_id: &str,
