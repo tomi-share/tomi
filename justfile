@@ -49,7 +49,7 @@ dev-relay:
 # and the Rust targets: rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android
 
 android-ndk-libs:
-    cargo ndk -t arm64-v8a -t armeabi-v7a -t x86_64 -t x86 -o apps/android/app/src/main/jniLibs build --release -p tomi-core
+    cargo ndk -t arm64-v8a -t armeabi-v7a -t x86_64 -t x86 -o apps/android/app/src/main/jniLibs build --release -p tomi-core --features demo
 
 [working-directory('apps/android')]
 android-build:
@@ -73,7 +73,7 @@ android-lint:
 # See apps/apple/README.md and docs/archive/apple-spec-implementation.md.
 
 # Builds tomi-core for iOS, generates the Swift bindings and assembles apps/apple/Packages/TomiCore/tomi_coreFFI.xcframework.
-# Demo mode is included; use `just apple-core --no-demo` for a TestFlight / App Store archive.
+# Demo mode is included, also for a TestFlight / App Store archive (the published app offers the demo).
 apple-core *ARGS:
     apps/apple/tools/build-core.sh {{ ARGS }}
 

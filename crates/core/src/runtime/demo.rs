@@ -6,10 +6,14 @@
 //! the demo files under `files_dir` are erased when the demo is dropped (and at the next
 //! opening, after a crash).
 //!
-//! The demo space holds the demo feed of the Android app ([`super::demo_data`]), written by
-//! those devices through the normal protocol (encryption, relay log, receipts, pins), so a
-//! demo behaves like the product: undo of a send, "after first read", delivery states,
-//! deletion everywhere, attachments downloaded on demand... PC-Bureau catches up every two
+//! The demo space holds the demo feed ([`super::demo_data`]: the demo feed of the Android app on
+//! top, a week of every kind of item with heavy files, then about three years of history),
+//! written by those devices through the normal protocol (encryption, relay log, receipts, pins),
+//! so a demo behaves like the product (undo of a send, "after first read", delivery states,
+//! deletion everywhere, attachments downloaded on demand...) and measures the apps on a feed of
+//! several years. The relay double keeps the items as long as the history goes back (no 30-day
+//! purge in a demo), and the demo files stay on disk only once (about 45 MB after the opening,
+//! more as attachments are opened). PC-Bureau catches up every two
 //! seconds (items sent from here become "delivered" to it); PC-Maison stays offline.
 //!
 //! Pairing is simulated (the demo relay is the in-memory double, already founded by PC-Bureau):
@@ -32,7 +36,8 @@ use std::time::Duration;
 
 use zeroize::Zeroizing;
 
-use super::demo_data::{self, Author, DemoEntry, DemoFile};
+use super::demo_data::{self, Author, DemoEntry, DemoFile, Scale};
+use super::demo_files;
 use super::engine::{Clock, Engine, EngineConfig, Provision, SystemClock};
 use super::mock::MockRelay;
 use super::store::{DeviceState, Store};
@@ -44,6 +49,12 @@ use crate::{
     new_item_id, new_space_id, relay_expires_at_ms, seal_item, DeviceKeys, DevicePublic, SpaceKey,
     TrustStore, DEFAULT_MAX_TTL_SECS, FORMAT_MAX,
 };
+
+/// What the feed of a demo joined with its history holds.
+#[cfg(test)]
+pub(crate) fn expected_feed() -> demo_data::FeedCounts {
+    demo_data::counts(Scale::DEFAULT)
+}
 
 /// Verification code shown by a demo pairing (the Android demo uses the same).
 pub const DEMO_VERIFICATION_CODE: &str = "482913";
@@ -71,6 +82,9 @@ const GUEST_CONFIRM_DELAY: Duration = if cfg!(test) {
 };
 const HOME_NAME: &str = "PC-Maison";
 const MIN_CODE_LENGTH: usize = 4;
+const DEMO_DAY_MS: i64 = 86_400_000;
+/// Store of this device in the past, which writes the items "sent from this phone".
+const PAST_SELF_DIR: &str = "peers/past-self";
 /// A pairing takes a moment, as with a real relay (none in the tests).
 const PAIRING_LATENCY: Duration = if cfg!(test) {
     Duration::ZERO
@@ -203,7 +217,11 @@ struct Seeded {
     item_id: String,
     /// Position in the demo list (pins are decided in this order).
     order: usize,
-    entry: DemoEntry,
+    from: Author,
+    read: bool,
+    archived: bool,
+    pinned: bool,
+    unreadable: bool,
 }
 
 /// The demo space: the relay double, this device and the two simulated ones.
@@ -283,9 +301,13 @@ fn remove_demo_dirs(root: &std::path::Path) -> Result<()> {
 }
 
 impl DemoWorld {
-    /// Builds the demo space and writes its history. Blocks for a moment (a few dozen
-    /// encrypted items): call it off the main thread.
+    /// Builds the demo space and writes its history. Blocks for a few seconds (thousands of
+    /// encrypted items, tens of megabytes of files): call it off the main thread.
     pub fn open(config: DemoConfig) -> Result<Arc<Self>> {
+        Self::open_scaled(config, Scale::DEFAULT)
+    }
+
+    fn open_scaled(config: DemoConfig, scale: Scale) -> Result<Arc<Self>> {
         let root = config.files_dir.clone();
         if !root.is_absolute() {
             return Err(CoreError::input(
@@ -296,7 +318,7 @@ impl DemoWorld {
         let staging = root.join("staging");
         std::fs::create_dir_all(&staging)?;
 
-        let entries = demo_data::entries();
+        let entries = demo_data::entries(scale);
         let oldest = entries.iter().map(|e| e.age_ms).max().unwrap_or(0);
         let now0 = SystemClock.now_ms();
         let clock = Arc::new(DemoClock::default());
@@ -311,6 +333,13 @@ impl DemoWorld {
         let home_keys = DeviceKeys::generate()?;
         let publics = [this_keys.public(), office_keys.public(), home_keys.public()];
         let relay = MockRelay::new(&space_id, clock.clone());
+        // The relay of the demo keeps its items for as long as the history goes back (a real
+        // relay purges them after `max_ttl`, 30 days by default): the oldest items are still
+        // there for this device to receive when it joins.
+        let ttl_secs = u64::try_from((oldest + 60 * DEMO_DAY_MS) / 1000)
+            .unwrap_or(0)
+            .max(DEFAULT_MAX_TTL_SECS);
+        relay.with(|s| s.limits.max_ttl_secs = ttl_secs);
 
         // PC-Bureau founded the space and vouches for every device. This device is
         // registered first so that it sees the registration (name, platform) of the others.
@@ -371,7 +400,7 @@ impl DemoWorld {
         provision(&home, &home_keys, HOME_NAME)?;
         // This device in the past, for the items "sent from this phone"; it is dropped
         // after the history is written and this device later reads them from the relay.
-        let past_self = engine("peers/past-self", &config.platform)?;
+        let past_self = engine(PAST_SELF_DIR, &config.platform)?;
         provision(&past_self, &this_keys, &config.device_name)?;
         let this = engine("this", &config.platform)?;
 
@@ -440,13 +469,20 @@ impl DemoWorld {
             world.seeded.push(Seeded {
                 item_id,
                 order: i,
-                entry,
+                from: entry.from,
+                read: entry.read,
+                archived: entry.archived,
+                pinned: entry.pinned,
+                unreadable: entry.unreadable,
             });
         }
         // PC-Bureau receives everything: its receipts make the items sent from here
         // "delivered" to it.
         office.sync()?;
+        // Its encrypted copies of the files sent "from here" are of no use any more (this
+        // device downloads them from the relay like any other): tens of megabytes less on disk.
         drop(past_self);
+        let _ = std::fs::remove_dir_all(root.join(PAST_SELF_DIR));
         clock.reset();
 
         let world = Arc::new(world);
@@ -738,16 +774,15 @@ impl DemoWorld {
         let mut by_order: Vec<&Seeded> = self.seeded.iter().collect();
         by_order.sort_by_key(|s| s.order);
         for s in &by_order {
-            let e = &s.entry;
-            if e.read && e.from != Author::This && !e.unreadable {
+            if s.read && s.from != Author::This && !s.unreadable {
                 self.this.mark_read(&s.item_id)?;
             }
-            if e.archived {
+            if s.archived {
                 self.this.archive(&s.item_id)?;
             }
         }
         // Pins in list order, so the last one listed is the most recent decision.
-        for s in by_order.iter().filter(|s| s.entry.pinned) {
+        for s in by_order.iter().filter(|s| s.pinned) {
             std::thread::sleep(Duration::from_millis(2));
             self.this.pin(&s.item_id)?;
         }
@@ -760,7 +795,7 @@ impl DemoWorld {
     fn send(&self, author: &Engine, entry: &DemoEntry) -> Result<String> {
         let mut attachments = Vec::new();
         let mut staged = Vec::new();
-        for file in entry.files {
+        for file in &entry.files {
             let (name, mime, data, thumbnail) = self.materialize(file);
             self.count_bytes(data.len());
             let path = self.staging.join(format!("{}-{name}", new_item_id()?));
@@ -773,21 +808,21 @@ impl DemoWorld {
             });
             staged.push(path);
         }
-        let text_len = entry.title.map_or(0, str::len)
-            + entry.url.map_or(0, str::len)
-            + entry.text.map_or(0, |t| t.plain.len());
+        let text_len = entry.title.as_ref().map_or(0, |t| t.len())
+            + entry.url.as_ref().map_or(0, |u| u.len())
+            + entry.text.as_ref().map_or(0, |t| t.plain.len());
         self.count_bytes(text_len);
         let now = self.clock.now_ms();
         let draft = OutgoingDraft {
             id: None,
-            title: entry.title.map(Into::into),
-            text: entry.text.map(|t| DraftText {
-                plain: t.plain.into(),
-                html: t.html.map(Into::into),
-                markdown: t.markdown.map(Into::into),
+            title: entry.title.as_ref().map(|t| t.to_string()),
+            text: entry.text.as_ref().map(|t| DraftText {
+                plain: t.plain.to_string(),
+                html: t.html.as_ref().map(|h| h.to_string()),
+                markdown: t.markdown.as_ref().map(|m| m.to_string()),
                 source_format: t.source_format,
             }),
-            url: entry.url.map(Into::into),
+            url: entry.url.as_ref().map(|u| u.to_string()),
             attachments,
             secret: entry.secret,
             expires_at_ms: entry.expires_after_ms.map(|d| now + d),
@@ -818,6 +853,8 @@ impl DemoWorld {
     /// Posts, as `author`, an item sealed in a format this build does not know: every
     /// device keeps it as "update required" (DEV.md invariant 7).
     fn post_unreadable(&self, author: &Engine, author_id: &str) -> Result<String> {
+        // The session first: it brings the limits of the relay (its retention).
+        author.ensure_session()?;
         let key = SpaceKey::from_bytes(1, &self.space_key)?;
         let now = self.clock.now_ms();
         let item = Item {
@@ -844,12 +881,11 @@ impl DemoWorld {
         }
         let request = PostItem {
             item_id: item.id.clone(),
-            expires_at_ms: relay_expires_at_ms(None, now, DEFAULT_MAX_TTL_SECS),
+            expires_at_ms: relay_expires_at_ms(None, now, author.limits().max_ttl_secs),
             key_epoch: 1,
             envelope,
             blob_ids: Vec::new(),
         };
-        author.ensure_session()?;
         author.authed(|| author.transport.post_item(&request))?;
         Ok(item.id)
     }
@@ -857,8 +893,8 @@ impl DemoWorld {
     /// Name, type, bytes and thumbnail of a demo file. A bundled file the app did not
     /// provide is replaced by a built-in stand-in (never an error).
     fn materialize(&self, file: &DemoFile) -> (String, String, Vec<u8>, Option<Thumbnail>) {
-        match *file {
-            DemoFile::Asset { name, mime } => {
+        match file {
+            &DemoFile::Asset { name, mime } => {
                 if let Some(data) = self.asset(name) {
                     let thumbnail = mime
                         .starts_with("image/")
@@ -884,16 +920,25 @@ impl DemoWorld {
                 (name.into(), mime.into(), code.as_bytes().to_vec(), None)
             }
             DemoFile::Pdf { name, title } => (
-                name.into(),
+                name.to_string(),
                 "application/pdf".into(),
-                demo_data::pdf(title),
+                demo_files::pdf(title),
                 None,
             ),
             DemoFile::Text {
                 name,
                 mime,
                 content,
-            } => (name.into(), mime.into(), content.as_bytes().to_vec(), None),
+            } => (
+                name.to_string(),
+                mime.to_string(),
+                content.as_bytes().to_vec(),
+                None,
+            ),
+            DemoFile::Generated { name, file } => {
+                let g = file.generate(self.clock.now_ms());
+                (name.to_string(), g.mime.into(), g.data, g.thumbnail)
+            }
         }
     }
 
@@ -1031,9 +1076,13 @@ mod tests {
         let e = world.engine();
         assert!(e.is_provisioned());
         let items = e.list_items().unwrap();
-        assert_eq!(items.len(), 23);
-        assert_eq!(items.iter().filter(|v| v.archived).count(), 4);
-        assert_eq!(items.iter().filter(|v| v.pinned).count(), 2);
+        let expected = expected_feed();
+        assert_eq!(items.len(), expected.items);
+        assert_eq!(
+            items.iter().filter(|v| v.archived).count(),
+            expected.archived
+        );
+        assert_eq!(items.iter().filter(|v| v.pinned).count(), expected.pinned);
         assert!(
             !e.take_resync_notice(),
             "no 'older items lost' notice in a demo"
@@ -1065,7 +1114,8 @@ mod tests {
             .all(|d| d.state == DeliveryState::Delivered));
         let sent_secret = items
             .iter()
-            .find(|v| v.origin == ItemOrigin::Sent && v.read_policy == ReadPolicy::AfterFirstRead)
+            .filter(|v| v.origin == ItemOrigin::Sent && v.read_policy == ReadPolicy::AfterFirstRead)
+            .max_by_key(|v| v.created_at_ms)
             .unwrap();
         let states: Vec<_> = sent_secret
             .deliveries
@@ -1090,6 +1140,93 @@ mod tests {
         let photo = titled(&items, "Photos du week-end");
         let path = e.attachment_path(&photo.id, 1).unwrap().unwrap();
         assert!(std::fs::metadata(path).unwrap().len() > 0);
+    }
+
+    fn dir_size(path: &Path) -> u64 {
+        std::fs::read_dir(path).map_or(0, |entries| {
+            entries
+                .flatten()
+                .map(|e| match e.metadata() {
+                    Ok(m) if m.is_dir() => dir_size(&e.path()),
+                    Ok(m) => m.len(),
+                    Err(_) => 0,
+                })
+                .sum()
+        })
+    }
+
+    /// The full public demo, as the apps open it: time to write the history, time to join it,
+    /// size of the feed and of the demo directory. A measure, not a check of the build:
+    /// `cargo test --release -p tomi-core --features demo -- --ignored --nocapture full_demo`.
+    #[test]
+    #[ignore = "measure, in release"]
+    fn full_demo_opening_time_and_disk() {
+        let mb = |b: u64| b as f64 / 1_048_576.0;
+        let dir = tempfile::tempdir().unwrap();
+        let t = std::time::Instant::now();
+        let world =
+            DemoWorld::open_scaled(config(dir.path(), false, android_assets()), Scale::Full)
+                .unwrap();
+        let written = t.elapsed();
+        let t = std::time::Instant::now();
+        world.pair_with_code("7-crayon-lune", None).unwrap();
+        world.confirm_pairing(true).unwrap();
+        let joined = t.elapsed();
+        let e = world.engine();
+        let t = std::time::Instant::now();
+        let items = e.list_items().unwrap();
+        let listed = t.elapsed();
+        let expected = demo_data::counts(Scale::Full);
+        assert_eq!(items.len(), expected.items);
+        assert_eq!(
+            items.iter().filter(|v| v.archived).count(),
+            expected.archived
+        );
+        assert_eq!(items.iter().filter(|v| v.pinned).count(), expected.pinned);
+        let disk = dir_size(dir.path());
+        println!(
+            "full demo: {} items ({} archived, {} pinned), {:.1} MB of history",
+            items.len(),
+            expected.archived,
+            expected.pinned,
+            mb(world.history_bytes.load(Ordering::SeqCst)),
+        );
+        println!(
+            "opening: {:.2} s = {:.2} s to write the history + {:.2} s to join it; list_items {} ms",
+            (written + joined).as_secs_f64(),
+            written.as_secs_f64(),
+            joined.as_secs_f64(),
+            listed.as_millis(),
+        );
+        println!("demo directory after opening: {:.1} MB", mb(disk));
+        // Every attachment of the last week opened once (downloaded and decrypted here).
+        let t = std::time::Instant::now();
+        let week_start = SystemClock.now_ms() - 7 * DEMO_DAY_MS;
+        let (mut opened, mut heavy, mut heavy_bytes, mut all_bytes) = (0, 0, 0, 0);
+        for v in items.iter().filter(|v| v.created_at_ms >= week_start) {
+            if let ItemContentView::Readable { attachments, .. } = &v.content {
+                for a in attachments {
+                    all_bytes += a.size;
+                    if a.size >= 1_000_000 {
+                        heavy += 1;
+                        heavy_bytes += a.size;
+                    }
+                    if e.attachment_path(&v.id, a.slot).unwrap().is_some() {
+                        opened += 1;
+                    }
+                }
+            }
+        }
+        println!(
+            "files of the week: {:.1} MB in all, {heavy} of 1 MB or more ({:.1} MB)",
+            mb(all_bytes),
+            mb(heavy_bytes)
+        );
+        println!(
+            "{opened} attachments of the week opened in {:.2} s; demo directory then: {:.1} MB",
+            t.elapsed().as_secs_f64(),
+            mb(dir_size(dir.path()))
+        );
     }
 
     #[test]
@@ -1126,7 +1263,7 @@ mod tests {
                 assert_eq!(verification_code, DEMO_VERIFICATION_CODE);
                 assert_eq!(peer.name, "PC-Bureau");
                 assert_eq!(peer.platform, "windows");
-                assert_eq!(history_item_count, 23);
+                assert_eq!(history_item_count as usize, expected_feed().items);
                 assert!(history_bytes > 0);
                 assert_eq!(member_count, 2);
                 assert_eq!(expires_in_ms, DEMO_PAIRING_EXPIRES_MS);
@@ -1359,7 +1496,7 @@ mod tests {
             .unwrap();
         world.confirm_pairing(true).unwrap();
         let e = world.engine();
-        assert_eq!(e.list_items().unwrap().len(), 23);
+        assert_eq!(e.list_items().unwrap().len(), expected_feed().items);
         // Without the bundled images, a stand-in is attached (never an empty item).
         let items = e.list_items().unwrap();
         match &titled(&items, "Photos du week-end").content {

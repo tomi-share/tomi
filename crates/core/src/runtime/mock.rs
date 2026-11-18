@@ -536,9 +536,11 @@ impl MockRelay {
         active: Option<bool>,
     ) {
         self.with(|s| {
-            let d = s.devices.get_mut(device_id).expect("known device");
-            d.record.last_seen_at_ms = last_seen_at_ms;
-            d.record.active = active;
+            // An unknown device is ignored (no panic outside the tests: the demo links this).
+            if let Some(d) = s.devices.get_mut(device_id) {
+                d.record.last_seen_at_ms = last_seen_at_ms;
+                d.record.active = active;
+            }
         });
     }
 

@@ -7,6 +7,7 @@
 //! | transport trait (REST + doorbell) | [`transport`], [`http`] (feature `http`) | nothing |
 //! | orchestration (session, sync, outbox, history transfer) | [`engine`], [`actions`], [`transfer`] | store + transport trait |
 //! | pairing over the relay (founder, inviter, new device, resumption) | [`pairing`] | engine + the pure machines of [`crate::pairing`] |
+//! | real engine + demo entered from it | [`unified`] | engine (+ `demo`) |
 //! | bindings (UniFFI, feature `ffi`) | `crate::ffi` | engine |
 //!
 //! The engine never talks to the network except through [`transport::RelayTransport`], so
@@ -18,6 +19,10 @@ pub mod actions;
 pub mod demo;
 #[cfg(feature = "demo")]
 mod demo_data;
+#[cfg(feature = "demo")]
+mod demo_files;
+#[cfg(feature = "demo")]
+mod demo_history;
 pub mod engine;
 #[cfg(feature = "http")]
 pub mod http;
@@ -33,6 +38,7 @@ pub mod store;
 pub(crate) mod tests;
 pub mod transfer;
 pub mod transport;
+pub mod unified;
 
 pub use actions::{
     AttachmentView, DeliveryState, DeliveryView, DeviceView, DispatchOutcome, DraftAttachment,
@@ -48,3 +54,4 @@ pub use removal::AttachmentRemoval;
 pub use store::{DeviceState, ItemOrigin, SendStatus, Store};
 pub use transfer::TransferView;
 pub use transport::{RelayError, RelayTransport, Wake, WakeClosed, WakeSource};
+pub use unified::UnifiedCore;
