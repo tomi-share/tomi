@@ -189,10 +189,14 @@ class CardTapTest {
     fun severalCodeFilesOrAMixOpenTheDetailAndEachRowRoutesByItsType() {
         assertEquals(CardTapAction.OpenDetail, CardTap.actionFor(item(attachments = listOf(rs, js)), revealed = false))
         assertEquals(CardTapAction.OpenDetail, CardTap.actionFor(item(attachments = listOf(png, rs)), revealed = false))
-        // Row by row: image -> image viewer, code -> code screen, other file -> inert.
+        // Row by row: image -> image viewer, code -> code screen, other file -> system viewer (inert without a callback).
         assertEquals(AttachmentRowAction.OpenImage, AttachmentRowAction.of(png, imageOpenable = true, codeOpenable = true))
         assertEquals(AttachmentRowAction.OpenCodeFile, AttachmentRowAction.of(rs, imageOpenable = true, codeOpenable = true))
         assertEquals(AttachmentRowAction.None, AttachmentRowAction.of(pdf, imageOpenable = true, codeOpenable = true))
+        assertEquals(
+            AttachmentRowAction.OpenExternal,
+            AttachmentRowAction.of(pdf, imageOpenable = true, codeOpenable = true, fileOpenable = true),
+        )
         // A screen that gave no callback for a type leaves that row inert.
         assertEquals(AttachmentRowAction.None, AttachmentRowAction.of(png, imageOpenable = false, codeOpenable = true))
         assertEquals(AttachmentRowAction.None, AttachmentRowAction.of(rs, imageOpenable = true, codeOpenable = false))

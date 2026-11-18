@@ -813,6 +813,10 @@ fun rememberCardActions(
             onOpenImage = { index -> currentOnOpenImage(index) },
             // Code screen (route "code/{id}/{slot}"): the gate for a hidden item is asked by the screen itself.
             onOpenCodeFile = { index -> currentOnOpenCodeFile(index) },
+            // Any other file of the item (PDF...): system viewer, after the gate for a hidden item.
+            onOpenFile = { slot ->
+                viewModel.openFile(item, slot, authenticate) { uri, mime -> openAttachmentUri(context, uri, mime) }
+            },
             onReveal = { viewModel.reveal(item, authenticate) },
             onHide = { viewModel.hide(item.id) },
             onCopy = { mode -> viewModel.copy(item, mode, authenticate) },
@@ -823,8 +827,8 @@ fun rememberCardActions(
             onShare = {
                 if (FileSharing.canShare(item)) {
                     // File / image item: the files go to the share sheet (after the gate for a hidden item).
-                    viewModel.shareFiles(item, authenticateForShare) { files ->
-                        val opened = launchFileShare(context, files, chooserTitle)
+                    viewModel.shareFiles(item, authenticateForShare) { files, text ->
+                        val opened = launchFileShare(context, files, chooserTitle, text)
                         if (!opened) android.widget.Toast.makeText(context, noApp, android.widget.Toast.LENGTH_SHORT).show()
                         opened
                     }
@@ -893,6 +897,7 @@ fun FeedEventsEffect(viewModel: FeedViewModel, snackbar: SnackbarHostState) {
                     FeedEvent.NothingToShare -> R.string.snackbar_nothing_to_share
                     FeedEvent.ImageSaved -> R.string.snackbar_image_saved
                     FeedEvent.ImageUnavailable -> R.string.snackbar_image_unavailable
+                    FeedEvent.FileUnavailable -> R.string.snackbar_file_unavailable
                     FeedEvent.ImageActionFailed -> R.string.snackbar_image_failed
                     is FeedEvent.AttachmentDeleted -> when {
                         event.image && event.everywhere -> R.string.snackbar_image_deleted_everywhere

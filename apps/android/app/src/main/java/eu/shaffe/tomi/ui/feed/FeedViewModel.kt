@@ -72,6 +72,9 @@ sealed interface FeedEvent {
     data object ImageUnavailable : FeedEvent
     data object ImageActionFailed : FeedEvent
 
+    /** A file could not be handed to the system viewer: not downloaded yet, or no app on the phone opens that type. */
+    data object FileUnavailable : FeedEvent
+
     /**
      * ONE attachment of an item was removed (the item stays): an [image] or another file, from this device only or [everywhere].
      * When it was the last thing in the item, the core deleted the item and the event is [DeletedLocal] / [DeletedEverywhere] instead.
@@ -290,14 +293,14 @@ class FeedViewModel(private val container: AppContainer) : ViewModel() {
     }
 
     /**
-     * "Partager" of a file / image item ([FileSharing.canShare]): the attachments go to [launch] (share sheet), decrypted on
-     * demand and only after [authenticate] for a hidden item. A read like the text share: marks the item read once opened.
+     * "Partager" of an item that has files ([FileSharing.canShare]): the attachments go to [launch] (share sheet), with the
+     * description of the item as a caption when it has one, decrypted on demand and only after [authenticate] for a hidden item. A read like the text share: marks the item read once opened.
      */
-    fun shareFiles(item: TomiItem, authenticate: suspend () -> AuthOutcome, launch: (List<SharedFile>) -> Boolean) {
+    fun shareFiles(item: TomiItem, authenticate: suspend () -> AuthOutcome, launch: (files: List<SharedFile>, text: String?) -> Boolean) {
         viewModelScope.launch {
             when (val outcome = FileSharing.prepare(item, authenticate) { id, slot -> attachmentUriOrNull(id, slot) }) {
                 is FileShareOutcome.Ready -> {
-                    val opened = launch(outcome.files)
+                    val opened = launch(outcome.files, outcome.text)
                     if (opened && (!item.read || item.readPolicy == ReadPolicy.AfterFirstRead)) markReadQuietly(item.id)
                 }
                 FileShareOutcome.NothingToShare -> eventChannel.send(FeedEvent.NothingToShare)
@@ -332,6 +335,36 @@ class FeedViewModel(private val container: AppContainer) : ViewModel() {
             // The slot of the one attachment left: it is not 0 once the others were removed.
             val uri = attachmentUriOrNull(item.id, item.attachments.slotOf(0))
             if (uri == null || !launch(uri, attachment.mime)) onUnavailable()
+        }
+    }
+
+    /**
+     * Opens ONE file of [item] (by its [slot]) with the system viewer: a row of the detail, or of a card, that is neither an image nor
+     * code. A hidden item goes through [authenticate] first (same gate and window as "Afficher"): the file is not decrypted before.
+     * [launch] gets the `content://` URI and the MIME type and returns false when no app can open it; that, or a file that is not
+     * available, is reported as [FeedEvent.FileUnavailable].
+     */
+    fun openFile(
+        item: TomiItem,
+        slot: Int,
+        authenticate: suspend () -> AuthOutcome,
+        launch: (uri: String, mime: String) -> Boolean,
+    ) {
+        val attachment = item.attachments.findBySlot(slot) ?: return
+        if (!item.isReadable) return
+        viewModelScope.launch {
+            if (item.secret) {
+                when (authenticate()) {
+                    AuthOutcome.Success -> Unit
+                    AuthOutcome.Unavailable -> {
+                        eventChannel.send(FeedEvent.BiometricUnavailable)
+                        return@launch
+                    }
+                    AuthOutcome.Cancelled, AuthOutcome.Failed -> return@launch
+                }
+            }
+            val uri = attachmentUriOrNull(item.id, slot)
+            if (uri == null || !launch(uri, attachment.mime)) eventChannel.send(FeedEvent.FileUnavailable)
         }
     }
 

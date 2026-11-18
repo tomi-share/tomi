@@ -84,7 +84,8 @@ data class CardOverflow(
  * | Image, exactly one                     | [CardTapAction.OpenImage] (internal full-screen viewer)   |
  * | Code file, exactly one                 | [CardTapAction.OpenCodeFile] (internal code screen)       |
  * | Other file, exactly one                | [CardTapAction.OpenAttachment] (system viewer)            |
- * | Files or images, several               | [CardTapAction.OpenDetail] (each row opens its viewer)    |
+ * | Files or images, several               | [CardTapAction.OpenDetail] (each row opens its viewer; a  |
+ * |                                        | file of another type goes to the system viewer)           |
  * | Unreadable                             | [CardTapAction.None] (the card already explains why)      |
  * | Title only, nothing cut                | [CardTapAction.None]                                      |
  */
@@ -142,15 +143,23 @@ enum class AttachmentRowAction {
     /** Tomi's code screen. */
     OpenCodeFile,
 
-    /** Inert row (other files are opened with a tap on the card when alone, or from the detail). */
+    /** Any other file (PDF, archive, office document...): handed to the system viewer. */
+    OpenExternal,
+
+    /** Inert row: the screen gave no callback for its type. */
     None;
 
     companion object {
-        /** [imageOpenable] / [codeOpenable]: the screen gave a callback for that type. */
-        fun of(attachment: Attachment, imageOpenable: Boolean, codeOpenable: Boolean): AttachmentRowAction = when {
+        /** [imageOpenable] / [codeOpenable] / [fileOpenable]: the screen gave a callback for that type (other files: [fileOpenable]). */
+        fun of(
+            attachment: Attachment,
+            imageOpenable: Boolean,
+            codeOpenable: Boolean,
+            fileOpenable: Boolean = false,
+        ): AttachmentRowAction = when {
             attachment.isImage -> if (imageOpenable) OpenImage else None
             CodeFiles.isCodeFile(attachment) -> if (codeOpenable) OpenCodeFile else None
-            else -> None
+            else -> if (fileOpenable) OpenExternal else None
         }
     }
 }

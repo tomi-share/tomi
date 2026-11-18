@@ -108,6 +108,8 @@ internal fun AttachmentList(
     onOpenImage: ((Int) -> Unit)? = null,
     /** Called with the SLOT of the attachment when a code file is tapped; code files are not clickable when null. */
     onOpenCodeFile: ((Int) -> Unit)? = null,
+    /** Called with the SLOT of the attachment when any other file (PDF...) is tapped: it goes to the system viewer; such files are not clickable when null. */
+    onOpenFile: ((Int) -> Unit)? = null,
     /** Opens the detail ("+N" of a mosaic, "N autres fichiers"); those are not shown when null. */
     onOpenDetail: (() -> Unit)? = null,
     /** "Supprimer ce fichier" next to each row (the detail of an item with several files); no such action when null. */
@@ -119,6 +121,7 @@ internal fun AttachmentList(
     val context = LocalContext.current
     val viewLabel = stringResource(R.string.action_view_image)
     val codeLabel = stringResource(R.string.action_view_code)
+    val openLabel = stringResource(R.string.action_open)
     val plan = AttachmentLogic.plan(attachments, expanded, showThumbnails)
     // Only the thumbnails the plan draws are decoded (a batch of 20 photos must not cost 20 decodes on every scroll back).
     val drawn: Set<Int> = when (plan) {
@@ -156,17 +159,19 @@ internal fun AttachmentList(
                 plan.entries.forEach { entry ->
                     val attachment = attachments[entry.index]
                     val bitmap = bitmaps[entry.index]
-                    val action = AttachmentRowAction.of(attachment, onOpenImage != null, onOpenCodeFile != null)
+                    val action = AttachmentRowAction.of(attachment, onOpenImage != null, onOpenCodeFile != null, onOpenFile != null)
                     // The core is asked for the SLOT of the attachment: its position here is not it once a file was removed.
                     val slot = attachments.slotOf(entry.index)
                     val onClick: (() -> Unit)? = when (action) {
                         AttachmentRowAction.OpenImage -> ({ onOpenImage?.invoke(slot) })
                         AttachmentRowAction.OpenCodeFile -> ({ onOpenCodeFile?.invoke(slot) })
+                        AttachmentRowAction.OpenExternal -> ({ onOpenFile?.invoke(slot) })
                         AttachmentRowAction.None -> null
                     }
                     val clickLabel = when (action) {
                         AttachmentRowAction.OpenImage -> viewLabel
                         AttachmentRowAction.OpenCodeFile -> codeLabel
+                        AttachmentRowAction.OpenExternal -> openLabel
                         AttachmentRowAction.None -> null
                     }
                     val isFrame = entry.look == AttachmentLogic.Look.Frame && bitmap != null
@@ -484,14 +489,20 @@ private fun FileTile(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        TypeBadge(attachment, thumbnail, tonal = action != AttachmentRowAction.None, onAltBackground = onAltBackground)
+        // Tonal = opens in Tomi; a file that goes to another app keeps the neutral badge.
+        TypeBadge(
+            attachment,
+            thumbnail,
+            tonal = action == AttachmentRowAction.OpenImage || action == AttachmentRowAction.OpenCodeFile,
+            onAltBackground = onAltBackground,
+        )
         Column(Modifier.weight(1f)) {
             FileName(attachment.name, nameStyle(emphasized), maxLines = if (full) null else 2)
             SizeText(attachment)
         }
         val trailing: ImageVector? = when {
+            action == AttachmentRowAction.OpenExternal || external -> Icons.AutoMirrored.Outlined.OpenInNew
             action != AttachmentRowAction.None -> Icons.AutoMirrored.Outlined.KeyboardArrowRight
-            external -> Icons.AutoMirrored.Outlined.OpenInNew
             else -> null
         }
         if (trailing != null) {

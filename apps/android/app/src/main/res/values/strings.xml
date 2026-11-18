@@ -154,6 +154,7 @@
     <string name="viewer_load_failed">Impossible d’afficher cette image.</string>
     <string name="viewer_no_image">Aucune image à afficher.</string>
     <string name="snackbar_image_saved">Image enregistrée dans la galerie</string>
+    <string name="snackbar_file_unavailable">Impossible d’ouvrir ce fichier. Il n’est peut-être pas encore téléchargé, ou aucune application ne peut l’ouvrir.</string>
     <string name="snackbar_image_unavailable">Cette image n’est pas disponible pour l’instant.</string>
     <string name="snackbar_image_failed">L’action a échoué. Réessaie.</string>
     <!-- Removal of ONE attachment of an item (the item stays) -->
