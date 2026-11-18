@@ -113,6 +113,27 @@ export function showsCopyButton(item: ItemView): boolean {
 
 // ---------------------------------------------------------------- attachments
 
+/**
+ * Every delivery of the item is still queued (it has not left this PC): the core refuses to remove
+ * a file then, so the UI offers no removal for those few seconds (Android: `AttachmentRemovals`).
+ */
+export function isQueued(item: ItemView): boolean {
+  return item.delivery.length > 0 && item.delivery.every((d) => d.state === "queued");
+}
+
+/** A file of the item may be removed from here: a readable item that has left this PC. */
+export function canRemoveAttachment(item: ItemView): boolean {
+  return !item.unreadable && item.attachmentCount > 0 && !isQueued(item);
+}
+
+/**
+ * The rows of the files of the detail get a "Supprimer ce fichier" action. An item with a single
+ * file has none: that file IS the item, and "Supprimer…" already says so.
+ */
+export function canRemoveFromBatch(item: ItemView): boolean {
+  return canRemoveAttachment(item) && item.attachmentCount >= 2;
+}
+
 export function isImage(a: Pick<AttachmentView, "mime">): boolean {
   return a.mime.startsWith("image/");
 }

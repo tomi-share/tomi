@@ -124,6 +124,8 @@ pub fn run() {
             commands::save_item,
             commands::reveal_in_folder,
             commands::delete_item,
+            commands::delete_attachment,
+            commands::attachment_removal_everywhere,
             commands::mark_read,
             commands::consume_revealed,
             commands::start_drag,

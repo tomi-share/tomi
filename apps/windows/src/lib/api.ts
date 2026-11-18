@@ -44,7 +44,15 @@ export interface AttachmentView {
   thumbnail: string | null;
   /** false when the file cannot be fetched any more. */
   available: boolean;
+  /**
+   * Position of the file in the payload of its item, stable for its life: what the core is
+   * asked for (read, open, remove). NOT its position in the list, which changes once a file is
+   * removed (here or on another device).
+   */
+  slot: number;
 }
+/** What `deleteAttachment` did. */
+export type AttachmentRemoval = "attachmentRemoved" | "itemDeleted";
 export interface ItemView {
   id: string;
   kind: ContentKind;
@@ -89,7 +97,7 @@ export interface RevealedSecret {
   title: string | null;
   text: string | null;
   url: string | null;
-  attachments: { name: string; size: number }[];
+  attachments: { name: string; size: number; slot: number }[];
   /** Read once and not consumed yet: call `consumeRevealed` once the value is really on screen. */
   consumeAfterShow: boolean;
 }
@@ -364,11 +372,11 @@ export const api = {
   renderItem: (id: string, mode?: RenderMode, dark?: boolean) =>
     invoke<RenderedItem>("render_item", { id, mode, dark }),
   /** The text of a code file (2 Mo at most). Never for a hidden item. */
-  readCodeFile: (id: string, index: number) =>
-    invoke<{ name: string; text: string }>("read_code_file", { id, index }),
+  readCodeFile: (id: string, slot: number) =>
+    invoke<{ name: string; text: string }>("read_code_file", { id, slot }),
   /** One image as a data: URL (16 Mo at most). Never for a hidden item. */
-  readImage: (id: string, index: number) =>
-    invoke<{ name: string; dataUrl: string }>("read_image", { id, index }),
+  readImage: (id: string, slot: number) =>
+    invoke<{ name: string; dataUrl: string }>("read_image", { id, slot }),
   copyItem: (id: string, mode?: RenderMode) => invoke<void>("copy_item", { id, mode }),
   copySecret: (id: string) => invoke<void>("copy_secret", { id }),
   revealSecret: (id: string) => invoke<RevealedSecret>("reveal_secret", { id }),
@@ -381,6 +389,14 @@ export const api = {
   revealInFolder: (path: string) => invoke<void>("reveal_in_folder", { path }),
   deleteItem: (id: string, scope: "local" | "everywhere") =>
     invoke<void>("delete_item", { id, scope }),
+  /**
+   * Removes ONE file of an item (by slot), from this PC or everywhere. `itemDeleted`: it was the
+   * last thing in the item, which the core deleted instead (same scope).
+   */
+  deleteAttachment: (id: string, slot: number, everywhere: boolean) =>
+    invoke<AttachmentRemoval>("delete_attachment", { id, slot, everywhere }),
+  /** The relay takes "remove this file everywhere"; otherwise only "from this PC" is offered. */
+  attachmentRemovalEverywhere: () => invoke<boolean>("attachment_removal_everywhere"),
   markRead: (id: string) => invoke<void>("mark_read", { id }),
   /** Consumes a read-once hidden item after its value was displayed (Windows Hello window open). */
   consumeRevealed: (id: string) => invoke<void>("consume_revealed", { id }),

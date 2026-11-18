@@ -6,7 +6,7 @@
   import { feed } from "./feed.svelte";
   import { fr, format, formatBytes, formatRemainingTime, formatTimestamp, plural } from "./i18n/fr";
   import Icon from "./Icon.svelte";
-  import { copyItem, deleteItem, openItem, saveItem } from "./itemActions";
+  import { copyItem, deleteItem, openItem, removeAttachment, saveItem } from "./itemActions";
   import {
     NO_OVERFLOW,
     attachmentPlan,
@@ -15,6 +15,7 @@
     deliverySummary,
     isCodeFile,
     canArchive,
+    canRemoveFromBatch,
     isImage,
     itemActionFlags,
     kindIcon,
@@ -90,13 +91,13 @@
     bodyCut = false;
   });
 
-  const footer = $derived.by(() => {
   // The countdown ("expire dans…") refreshes by itself; only cards that expire keep the shared clock running.
   $effect(() => {
     if (item.expiresAt === null || item.readPolicy === "afterFirstRead") return;
     return clock.subscribe();
   });
 
+  const footer = $derived.by(() => {
     if (item.unreadable) return null;
     const parts: string[] = [];
     const s = deliverySummary(item);
@@ -188,9 +189,9 @@
       case "hide":
         return feed.hideValues(item.id);
       case "openCodeFile":
-        return feed.openCode(item.id, 0);
+        return feed.openCode(item.id, item.attachments[0]?.slot ?? 0);
       case "openImage":
-        return feed.openImage(item.id, 0);
+        return feed.openImage(item.id, item.attachments[0]?.slot ?? 0);
       case "openDetail":
         return void feed.openDetail(item.id);
       case "none":
@@ -240,14 +241,14 @@
   }
 
   /** A click on an attachment (tile, frame, mosaic cell): its own viewer, or nothing for an inert file. */
-  function onRow(act: ReturnType<typeof rowAction>, index: number) {
+  function onRow(act: ReturnType<typeof rowAction>, slot: number) {
     if (dragged) {
       dragged = false;
       return;
     }
     opened();
-    if (act === "openImage") feed.openImage(item.id, index);
-    else if (act === "openCodeFile") feed.openCode(item.id, index);
+    if (act === "openImage") feed.openImage(item.id, slot);
+    else if (act === "openCodeFile") feed.openCode(item.id, slot);
   }
 
   /** "N autres fichiers ›" and the "+N" of a mosaic: the detail (opening it counts as opening the card). */
@@ -264,6 +265,62 @@
   const opensExternally = $derived(!expanded && tap === "openAttachment");
   /** Unread without a title: the names carry the weight the title would (semi-bold). */
   const emphasizeNames = $derived(showUnread && !item.title);
+
+  // ---- removal of ONE file of a batch (the detail only; the item stays)
+
+  /** The rows of the files get a "⋮": a batch of 2 or more, readable, already out of this PC. */
+  const rowMenus = $derived(expanded && canRemoveFromBatch(item) && !gone);
+  /** Slot of the file whose "partout" removal waits for its confirmation. */
+  let confirmFileSlot = $state<number | null>(null);
+  let removingFile = false;
+  $effect(() => {
+    if (expanded) void feed.refreshRemovalSupport();
+  });
+
+  function rowEntries(a: AttachmentView): MenuEntry[] {
+    const list: MenuEntry[] = [
+      { label: fr.card.fileDeleteLocal, icon: "delete", onselect: () => void removeFile(a.slot, a, false) },
+    ];
+    if (feed.removalEverywhere) {
+      list.push({
+        label: fr.card.fileDeleteEverywhere,
+        icon: "delete_forever",
+        danger: true,
+        onselect: () => (confirmFileSlot = a.slot),
+      });
+    }
+    return list;
+  }
+
+  async function removeFile(slot: number, a: Pick<AttachmentView, "mime">, everywhere: boolean) {
+    if (removingFile) return;
+    removingFile = true;
+    try {
+      const removal = await removeAttachment(item, slot, everywhere, isImage(a));
+      if (removal === "itemDeleted") {
+        if (expanded) feed.closeDetail();
+      } else if (removal && item.secret) {
+        // What "Afficher" showed lists the old files: masked again, shown anew on request.
+        feed.hideValues(item.id);
+      }
+    } finally {
+      removingFile = false;
+    }
+  }
+
+  function confirmFile() {
+    const slot = confirmFileSlot;
+    confirmFileSlot = null;
+    if (slot === null) return;
+    const a = (item.secret ? revealedFiles : item.attachments).find((f) => f.slot === slot);
+    if (a) void removeFile(slot, a, true);
+  }
+
+  const confirmFileName = $derived(
+    confirmFileSlot === null
+      ? ""
+      : ((item.secret ? revealedFiles : item.attachments).find((f) => f.slot === confirmFileSlot)?.name ?? ""),
+  );
 
   // ---- menu
 
@@ -387,7 +444,7 @@
     title={onAlt ? a.name : expanded ? hintOf(act) : `${a.name} — ${hintOf(act)}`}
     onmousedown={onAlt ? undefined : dragDown}
     onmousemove={onAlt ? undefined : dragMove}
-    onclick={onAlt ? undefined : () => onRow(act, index)}
+    onclick={onAlt ? undefined : () => onRow(act, a.slot)}
     role={act === "none" ? undefined : "button"}
   >
     <span class="badge" class:tonal class:gen={!tonal} class:th={!!thumb} aria-hidden="true">
@@ -423,7 +480,7 @@
     title={expanded ? hintOf(act) : `${a.name} — ${hintOf(act)}`}
     onmousedown={dragDown}
     onmousemove={dragMove}
-    onclick={() => onRow(act, index)}
+    onclick={() => onRow(act, a.slot)}
     role={act === "none" ? undefined : "button"}
   >
     <img
@@ -460,7 +517,7 @@
         aria-label={plus ? plural(fr.card.moreFiles, more) : a.name}
         onmousedown={plus ? undefined : dragDown}
         onmousemove={plus ? undefined : dragMove}
-        onclick={plus ? openMore : () => onRow(act, i)}
+        onclick={plus ? openMore : () => onRow(act, a.slot)}
         role={plus || act !== "none" ? "button" : undefined}
       >
         <img src={a.thumbnail} alt="" draggable="false" />
@@ -468,6 +525,17 @@
       </svelte:element>
     {/each}
   </div>
+{/snippet}
+
+<!-- One file of the list: a frame (image with a thumbnail) or a tile. -->
+{#snippet oneFile(list: AttachmentView[], e: { index: number; look: "frame" | "tile" }, secretShown: boolean)}
+  {@const a = list[e.index]}
+  {@const act = rowAction(a, secretShown)}
+  {#if e.look === "frame"}
+    {@render frame(a, e.index, act, list.length)}
+  {:else}
+    {@render tile(a, e.index, act, secretShown)}
+  {/if}
 {/snippet}
 
 <!--
@@ -490,13 +558,14 @@
       {#if summary}<div class="muted small">{summary}</div>{/if}
     {:else}
       {#if expanded && summary}<div class="group muted small">{summary}</div>{/if}
-      {#each plan.entries as e (`${e.index}:${list[e.index].name}`)}
-        {@const a = list[e.index]}
-        {@const act = rowAction(a, secretShown)}
-        {#if e.look === "frame"}
-          {@render frame(a, e.index, act, list.length)}
+      {#each plan.entries as e (`${list[e.index].slot}:${list[e.index].name}`)}
+        {#if rowMenus}
+          <div class="frow" class:top={e.look === "frame"}>
+            <div class="fgrow">{@render oneFile(list, e, secretShown)}</div>
+            <Menu entries={rowEntries(list[e.index])} label={fr.card.fileActions} />
+          </div>
         {:else}
-          {@render tile(a, e.index, act, secretShown)}
+          {@render oneFile(list, e, secretShown)}
         {/if}
       {/each}
       {#if plan.more > 0}
@@ -668,6 +737,16 @@
   />
 {/if}
 
+{#if confirmFileSlot !== null}
+  <Dialog
+    title={fr.card.fileDeleteTitle}
+    message={item.secret ? fr.card.fileDeleteSecretMessage : format(fr.card.fileDeleteMessage, { name: confirmFileName })}
+    confirmLabel={fr.card.fileDeleteEverywhere}
+    onconfirm={confirmFile}
+    oncancel={() => (confirmFileSlot = null)}
+  />
+{/if}
+
 <style>
   .card {
     display: flex;
@@ -832,6 +911,19 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
+  }
+  /* A file with its "⋮" next to it (the detail of a batch): the menu is a sibling, a button never holds a button. */
+  .frow {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
+  .frow.top {
+    align-items: flex-start;
+  }
+  .fgrow {
+    flex: 1;
+    min-width: 0;
   }
   .group {
     padding-top: var(--space-1);

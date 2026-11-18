@@ -116,6 +116,19 @@ export const fr = {
     deleteEverywhere: "Supprimer partout",
     deletedLocal: "Supprimé de cet appareil",
     deletedEverywhere: "Suppression demandée sur tous les appareils",
+    // Removal of ONE file of an item (the item stays), same words as Android.
+    imageDeletedLocal: "Image supprimée de cet appareil",
+    imageDeletedEverywhere: "Suppression de l'image demandée sur tous les appareils",
+    fileDeletedLocal: "Fichier supprimé de cet appareil",
+    fileDeletedEverywhere: "Suppression du fichier demandée sur tous les appareils",
+    fileActions: "Actions pour ce fichier",
+    fileDeleteLocal: "Supprimer le fichier de cet appareil",
+    fileDeleteEverywhere: "Supprimer le fichier partout",
+    fileDeleteTitle: "Supprimer le fichier partout ?",
+    fileDeleteMessage:
+      "« {name} » sera effacé sur tous tes appareils et sur le relais. Les appareils hors ligne l'effaceront à leur reconnexion. Cette action est définitive.",
+    fileDeleteSecretMessage:
+      "Ce fichier masqué sera effacé sur tous tes appareils et sur le relais. Un appareil qui l'a déjà affiché a pu en garder une copie. Cette action est définitive.",
     secret: "Masqué",
     pin: "Épingler",
     unpin: "Désépingler",
@@ -209,6 +222,14 @@ export const fr = {
     zoomOut: "Zoom arrière",
     zoomReset: "Taille réelle",
     fit: "Ajuster à la fenêtre",
+    delete: "Supprimer",
+    deleteLocal: "Supprimer l'image de cet appareil",
+    deleteEverywhere: "Supprimer l'image partout",
+    deleteTitle: "Supprimer l'image partout ?",
+    deleteMessage:
+      "Cette image sera effacée sur tous tes appareils et sur le relais. Les appareils hors ligne l'effaceront à leur reconnexion. Cette action est définitive.",
+    deleteSecretMessage:
+      "Cette image masquée sera effacée sur tous tes appareils et sur le relais. Un appareil qui l'a déjà affichée a pu en garder une copie. Cette action est définitive.",
     loadFailed: "Impossible d'afficher cette image.",
     tooLarge: "Cette image est trop volumineuse pour être affichée ici. Ouvre-la avec « Ouvrir ».",
     loading: "Chargement de l'image…",

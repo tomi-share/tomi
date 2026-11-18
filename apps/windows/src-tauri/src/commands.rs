@@ -16,7 +16,7 @@ use crate::error::{AppError, AppResult};
 use crate::expiry::{self, AllExpiryRules};
 use crate::files;
 use crate::ingest::{self, FilesResult};
-use crate::model::{now_ms, Attachment, Device, SourceFormat, Transfer};
+use crate::model::{now_ms, Attachment, AttachmentRemoval, Device, SourceFormat, Transfer};
 #[cfg(any(test, debug_assertions))]
 use crate::model::{Item, ReadPolicy, TextBody, UnreadableReason};
 use crate::popover;
@@ -110,14 +110,13 @@ pub struct CodeText {
 }
 
 #[tauri::command]
-pub async fn read_code_file(app: AppHandle, id: String, index: usize) -> AppResult<CodeText> {
+pub async fn read_code_file(app: AppHandle, id: String, slot: usize) -> AppResult<CodeText> {
     let item = app.state::<AppState>().core.get_item(&id).await?;
     if item.secret || item.unreadable {
         return Err(AppError::new("error.nothing_to_open"));
     }
-    let attachment = item
-        .attachments
-        .get(index)
+    let (_, attachment) = item
+        .attachment_by_slot(slot)
         .ok_or_else(|| AppError::new("error.nothing_to_open"))?;
     if attachment.mime.starts_with("image/") {
         return Err(AppError::new("error.nothing_to_open"));
@@ -126,7 +125,7 @@ pub async fn read_code_file(app: AppHandle, id: String, index: usize) -> AppResu
         return Err(AppError::new("error.code_too_large"));
     }
     let name = attachment.name.clone();
-    let path = actions::attachment_path_at(&app, &item, index).await?;
+    let path = actions::attachment_path_of_slot(&app, &item, slot).await?;
     let bytes = blocking(move || -> AppResult<Vec<u8>> {
         use std::io::Read;
         let file = std::fs::File::open(path)?;
@@ -165,14 +164,13 @@ pub struct ImageData {
 }
 
 #[tauri::command]
-pub async fn read_image(app: AppHandle, id: String, index: usize) -> AppResult<ImageData> {
+pub async fn read_image(app: AppHandle, id: String, slot: usize) -> AppResult<ImageData> {
     let item = app.state::<AppState>().core.get_item(&id).await?;
     if item.secret || item.unreadable {
         return Err(AppError::new("error.nothing_to_open"));
     }
-    let attachment = item
-        .attachments
-        .get(index)
+    let (_, attachment) = item
+        .attachment_by_slot(slot)
         .ok_or_else(|| AppError::new("error.nothing_to_open"))?;
     if !attachment.mime.starts_with("image/") {
         return Err(AppError::new("error.nothing_to_open"));
@@ -181,7 +179,7 @@ pub async fn read_image(app: AppHandle, id: String, index: usize) -> AppResult<I
         return Err(AppError::new("error.image_too_large"));
     }
     let name = attachment.name.clone();
-    let path = actions::attachment_path_at(&app, &item, index).await?;
+    let path = actions::attachment_path_of_slot(&app, &item, slot).await?;
     let data_url = blocking(move || -> AppResult<String> {
         use std::io::Read;
         let file = std::fs::File::open(path)?;
@@ -292,6 +290,27 @@ pub async fn reveal_in_folder(app: AppHandle, path: String) -> AppResult<()> {
 #[tauri::command]
 pub async fn delete_item(app: AppHandle, id: String, scope: DeleteScope) -> AppResult<()> {
     actions::delete_item(&app, &id, scope).await
+}
+
+/// Removes ONE attachment of an item (by `slot`) from this PC or everywhere. No Windows Hello: like
+/// deleting an item. The core refuses while the item is still queued; the page does not offer it then.
+#[tauri::command]
+pub async fn delete_attachment(
+    app: AppHandle,
+    id: String,
+    slot: usize,
+    everywhere: bool,
+) -> AppResult<AttachmentRemoval> {
+    actions::delete_attachment(&app, &id, slot, everywhere).await
+}
+
+/// Whether the relay takes "remove this file everywhere" (otherwise only "from this PC" is offered).
+#[tauri::command]
+pub async fn attachment_removal_everywhere(app: AppHandle) -> bool {
+    app.state::<AppState>()
+        .core
+        .supports_attachment_removal()
+        .await
 }
 
 /// Marks an item read (a tap on a card). Never consumes a hidden item read once: that is

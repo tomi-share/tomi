@@ -27,8 +27,8 @@ use crate::core_api::{
 use crate::files;
 use crate::inactivity::{inactive_days, INACTIVE_AFTER_DAYS};
 use crate::model::{
-    now_ms, Delivery, DeliveryState, Device, DeviceRef, DeviceState, Item, ItemDraft, ReadPolicy,
-    Transfer,
+    now_ms, AttachmentRemoval, Delivery, DeliveryState, Device, DeviceRef, DeviceState, Item,
+    ItemDraft, ReadPolicy, Transfer,
 };
 use crate::qr;
 use crate::secret::SecretText;
@@ -430,6 +430,54 @@ impl TomiCore for FakeCore {
     async fn delete_everywhere(&self, id: &str) -> Result<(), CoreError> {
         // A real core would also publish a tombstone to the relay and the other devices.
         self.delete_local(id).await
+    }
+
+    async fn delete_attachment(
+        &self,
+        id: &str,
+        slot: usize,
+        everywhere: bool,
+    ) -> Result<AttachmentRemoval, CoreError> {
+        let updated = {
+            let mut items = self.lock();
+            let Some(item) = items.iter_mut().find(|i| i.id == id) else {
+                // Idempotent, like the core: an unknown item does nothing.
+                return Ok(AttachmentRemoval::AttachmentRemoved);
+            };
+            if item.is_queued() {
+                return Err(CoreError::Rejected("queued".into()));
+            }
+            // Like the core, the removed file leaves a hole: the others keep their slot.
+            for (position, a) in item.attachments.iter_mut().enumerate() {
+                a.slot.get_or_insert(position as u32);
+            }
+            let before = item.attachments.len();
+            item.attachments
+                .retain(|a| a.slot.map(|s| s as usize) != Some(slot));
+            if item.attachments.len() == before {
+                return Ok(AttachmentRemoval::AttachmentRemoved);
+            }
+            let left = !item.attachments.is_empty() || item.text.is_some() || item.url.is_some();
+            left.then(|| item.clone())
+        };
+        match updated {
+            Some(item) => {
+                self.emit(CoreEvent::ItemUpdated(item));
+                Ok(AttachmentRemoval::AttachmentRemoved)
+            }
+            None => {
+                if everywhere {
+                    self.delete_everywhere(id).await?;
+                } else {
+                    self.delete_local(id).await?;
+                }
+                Ok(AttachmentRemoval::ItemDeleted)
+            }
+        }
+    }
+
+    async fn supports_attachment_removal(&self) -> bool {
+        true
     }
 
     async fn mark_read(&self, id: &str) -> Result<(), CoreError> {
@@ -942,6 +990,57 @@ mod tests {
         let core = FakeCore::new(dir.path().to_path_buf()).without_delay();
         core.pin("nope").await.unwrap();
         core.unpin("nope").await.unwrap();
+    }
+
+    fn staged(dir: &std::path::Path, name: &str) -> Attachment {
+        let path = dir.join(name);
+        std::fs::write(&path, b"x").unwrap();
+        Attachment {
+            name: name.into(),
+            mime: "application/octet-stream".into(),
+            size: 1,
+            path: Some(path.to_string_lossy().into_owned()),
+            thumbnail: None,
+            available: true,
+            slot: None,
+        }
+    }
+
+    #[tokio::test]
+    async fn removing_one_attachment_keeps_the_others_under_their_slot() {
+        let dir = tempfile::tempdir().unwrap();
+        let core = FakeCore::new(dir.path().join("store")).without_delay();
+        let mut d = text_draft("x");
+        d.text = None;
+        d.attachments = vec![
+            staged(dir.path(), "a.bin"),
+            staged(dir.path(), "b.bin"),
+            staged(dir.path(), "c.bin"),
+        ];
+        let item = send(&core, d).await;
+        let id = item.id.clone();
+        assert!(!item.is_queued(), "the fake delivers at once");
+        let mut rx = core.subscribe();
+        let removal = core.delete_attachment(&id, 1, false).await;
+        assert_eq!(removal.unwrap(), AttachmentRemoval::AttachmentRemoved);
+        assert!(matches!(rx.try_recv(), Ok(CoreEvent::ItemUpdated(_))));
+        let after = core.get_item(&id).await.unwrap();
+        let slots: Vec<_> = after.attachments.iter().map(|a| a.slot).collect();
+        assert_eq!(slots, vec![Some(0), Some(2)]);
+        // Asking again is idempotent; the file of slot 2 is still reachable by its slot.
+        assert_eq!(
+            core.delete_attachment(&id, 1, false).await.unwrap(),
+            AttachmentRemoval::AttachmentRemoved
+        );
+        assert!(core.attachment_path(&id, 2).await.is_ok());
+        assert!(core.attachment_path(&id, 1).await.is_err());
+        // Nothing left in the item (no text, no URL): the item itself goes.
+        core.delete_attachment(&id, 0, true).await.unwrap();
+        assert_eq!(
+            core.delete_attachment(&id, 2, true).await.unwrap(),
+            AttachmentRemoval::ItemDeleted
+        );
+        assert!(core.get_item(&id).await.is_err());
     }
 
     fn rejected(code: &str) -> CoreError {

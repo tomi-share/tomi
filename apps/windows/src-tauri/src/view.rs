@@ -23,6 +23,9 @@ pub struct AttachmentView {
     pub thumbnail: Option<String>,
     /// `false` when the file cannot be fetched any more.
     pub available: bool,
+    /// `Attachment::slot` (the position without a removal): what the page sends to read, open or
+    /// remove ONE file, never its position in the list.
+    pub slot: usize,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -145,12 +148,14 @@ impl ItemView {
             } else {
                 item.attachments
                     .iter()
-                    .map(|a| AttachmentView {
+                    .enumerate()
+                    .map(|(position, a)| AttachmentView {
                         name: a.name.clone(),
                         mime: a.mime.clone(),
                         size: a.size,
                         thumbnail: a.thumbnail.clone(),
                         available: a.available,
+                        slot: a.slot.map_or(position, |s| s as usize),
                     })
                     .collect()
             },

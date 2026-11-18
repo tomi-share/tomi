@@ -1,4 +1,4 @@
-import { api, type ItemView } from "./api";
+import { api, type AttachmentRemoval, type ItemView } from "./api";
 import { feed } from "./feed.svelte";
 import { format, fr } from "./i18n/fr";
 
@@ -38,4 +38,32 @@ export function deleteItem(item: ItemView, scope: "local" | "everywhere"): Promi
     () => api.deleteItem(item.id, scope),
     scope === "local" ? fr.card.deletedLocal : fr.card.deletedEverywhere,
   );
+}
+
+/**
+ * Removes ONE file of an item (by slot), from this PC or everywhere, and says what happened. The
+ * core deletes the whole item, with the same scope, when nothing else is left in it: the message is
+ * then the one of an item deletion. Returns the answer of the core, `null` when it failed.
+ */
+export async function removeAttachment(
+  item: ItemView,
+  slot: number,
+  everywhere: boolean,
+  image: boolean,
+): Promise<AttachmentRemoval | null> {
+  try {
+    const removal = await api.deleteAttachment(item.id, slot, everywhere);
+    if (removal === "itemDeleted") {
+      feed.say(everywhere ? fr.card.deletedEverywhere : fr.card.deletedLocal);
+    } else if (image) {
+      feed.say(everywhere ? fr.card.imageDeletedEverywhere : fr.card.imageDeletedLocal);
+    } else {
+      feed.say(everywhere ? fr.card.fileDeletedEverywhere : fr.card.fileDeletedLocal);
+    }
+    void feed.refresh();
+    return removal;
+  } catch (e) {
+    feed.fail(e);
+    return null;
+  }
 }

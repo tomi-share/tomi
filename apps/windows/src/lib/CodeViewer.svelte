@@ -27,8 +27,8 @@
   const CHUNK = 100;
 
   interface CodeEntry {
-    /** Index of the attachment in the whole item (what Rust is asked for). */
-    index: number;
+    /** Slot of the attachment in its item (what Rust is asked for), never its position. */
+    slot: number;
     name: string;
   }
   interface Run {
@@ -81,16 +81,14 @@
 
   // ---- loading
 
-  async function open(itemId: string, attachmentIndex: number) {
+  async function open(itemId: string, attachmentSlot: number) {
     status = "loading";
     try {
       const view: ItemView = await api.itemView(itemId);
-      entries = view.attachments
-        .map((a, index) => ({ a, index }))
-        .filter(({ a }) => isCodeFile(a))
-        .map(({ a, index }) => ({ index, name: a.name }));
+      // By SLOT: the position in the list changes once a file is removed.
+      entries = view.attachments.filter((a) => isCodeFile(a)).map((a) => ({ slot: a.slot, name: a.name }));
       if (entries.length === 0) throw { code: "error.nothing_to_open", params: {} };
-      position = Math.max(0, entries.findIndex((e) => e.index === attachmentIndex));
+      position = Math.max(0, entries.findIndex((e) => e.slot === attachmentSlot));
       await load(itemId);
     } catch (e) {
       fail(e);
@@ -102,7 +100,7 @@
     query = "";
     current = 0;
     try {
-      const file = await api.readCodeFile(itemId, entries[position].index);
+      const file = await api.readCodeFile(itemId, entries[position].slot);
       original = file.text;
       // Same display text as Android: uniform line ends, tabs as 4 spaces.
       const display = file.text.replace(/\r\n?/g, "\n").replaceAll("\t", "    ");
@@ -166,7 +164,7 @@
   $effect(() => {
     const t = target;
     if (!t) return;
-    void open(t.itemId, t.index);
+    void open(t.itemId, t.slot);
   });
 
   async function pick(i: number) {
@@ -322,7 +320,7 @@
     </button>
     <div class="grow tabs" role="tablist" aria-label={fr.code.title}>
       {#if entries.length > 1}
-        {#each entries as f, i (f.index)}
+        {#each entries as f, i (f.slot)}
           <button
             class="chip mono"
             type="button"
