@@ -2,7 +2,7 @@
   import type { PendingReason } from "./api";
   import { departure } from "./departure.svelte";
   import { feed } from "./feed.svelte";
-  import { fr } from "./i18n/fr";
+  import { msg } from "./i18n";
   import Icon from "./Icon.svelte";
 
   // The departure, always visible while it lasts (never a waiting departure nobody can see):
@@ -15,10 +15,10 @@
   const pending = $derived(snap?.departure ?? null);
 
   const REASONS: Record<PendingReason, string> = {
-    network: fr.departure.pendingNetwork,
-    server: fr.departure.pendingServer,
-    notFound: fr.departure.pendingNotFound,
-    notSent: fr.departure.pendingNotSent,
+    network: msg.departure.pendingNetwork,
+    server: msg.departure.pendingServer,
+    notFound: msg.departure.pendingNotFound,
+    notSent: msg.departure.pendingNotSent,
   };
 
   type View = {
@@ -36,15 +36,15 @@
   const view = $derived.by((): View | null => {
     if (!snap || !snap.available) return null;
     if (pending?.wiping) {
-      return { tone: "waiting", title: fr.departure.wiping, text: "", wiping: true };
+      return { tone: "waiting", title: msg.departure.wiping, text: "", wiping: true };
     }
     // "Annuler" was pressed while an attempt was still out: the marker is already gone, but the
     // attempt goes on to its end (it erases nothing). Said until it ends, with no buttons.
     if (snap.cancelling) {
       return {
         tone: "waiting",
-        title: fr.departure.cancellingTitle,
-        text: fr.departure.cancellingText,
+        title: msg.departure.cancellingTitle,
+        text: msg.departure.cancellingText,
         cancelling: true,
       };
     }
@@ -53,9 +53,9 @@
         tone: pending.last === "notFound" ? "error" : "waiting",
         title:
           pending.kind === "deleteSpace"
-            ? fr.departure.pendingDeleteTitle
-            : fr.departure.pendingLeaveTitle,
-        text: pending.last ? REASONS[pending.last] : fr.departure.pendingChecking,
+            ? msg.departure.pendingDeleteTitle
+            : msg.departure.pendingLeaveTitle,
+        text: pending.last ? REASONS[pending.last] : msg.departure.pendingChecking,
         retry: true,
         cancel: true,
         erase: pending.last === "notFound",
@@ -64,16 +64,16 @@
     if (feed.status?.space === "notFound") {
       return {
         tone: "error",
-        title: fr.departure.notFoundTitle,
-        text: fr.departure.notFoundMessage,
+        title: msg.departure.notFoundTitle,
+        text: msg.departure.notFoundMessage,
         erase: true,
       };
     }
     if (feed.status?.paired && feed.status.space === "revoked") {
       return {
         tone: "error",
-        title: fr.departure.revokedTitle,
-        text: fr.departure.revokedMessage,
+        title: msg.departure.revokedTitle,
+        text: msg.departure.revokedMessage,
         leave: true,
       };
     }
@@ -100,21 +100,21 @@
     {#if view.wiping || view.cancelling || working}
       <progress
         aria-label={view.wiping
-          ? fr.departure.wiping
+          ? msg.departure.wiping
           : view.cancelling
-            ? fr.departure.cancellingTitle
-            : fr.departure.pendingChecking}
+            ? msg.departure.cancellingTitle
+            : msg.departure.pendingChecking}
       ></progress>
     {/if}
     {#if snap?.authenticating}
       <!-- One live region only (the banner): no role="status" inside it. -->
-      <div class="text">{fr.departure.authenticating}</div>
+      <div class="text">{msg.departure.authenticating}</div>
     {/if}
     {#if view.retry || view.cancel || view.erase || view.leave}
       <div class="row actions">
         {#if view.retry}
           <button type="button" disabled={working} onclick={() => void departure.retry()}>
-            {fr.departure.retry}
+            {msg.departure.retry}
           </button>
         {/if}
         {#if view.cancel}
@@ -124,17 +124,17 @@
             disabled={cancelLocked}
             onclick={() => void departure.cancel()}
           >
-            {fr.departure.cancel}
+            {msg.departure.cancel}
           </button>
         {/if}
         {#if view.erase}
           <button class="danger" type="button" disabled={working} onclick={() => void departure.openErase()}>
-            {fr.departure.eraseAnyway}
+            {msg.departure.eraseAnyway}
           </button>
         {/if}
         {#if view.leave}
           <button class="danger" type="button" onclick={() => void departure.openLeave()}>
-            {fr.departure.leave}
+            {msg.departure.leave}
           </button>
         {/if}
       </div>

@@ -1,6 +1,6 @@
 import { api, type AttachmentRemoval, type ItemView } from "./api";
 import { feed } from "./feed.svelte";
-import { format, fr } from "./i18n/fr";
+import { format, msg } from "./i18n";
 
 /**
  * The actions of an item, shared by its card ("⋮" menu, copy icon) and by the toolbar of the
@@ -11,7 +11,7 @@ export async function copyItem(item: ItemView): Promise<void> {
   const consumed = item.secret && item.readPolicy === "afterFirstRead" && !item.outgoing;
   const ok = await feed.run(
     () => (item.secret ? api.copySecret(item.id) : api.copyItem(item.id, feed.preferredMode ?? undefined)),
-    consumed ? fr.card.copiedAndGone : item.secret ? fr.card.copiedSecret : fr.card.copied,
+    consumed ? msg.card.copiedAndGone : item.secret ? msg.card.copiedSecret : msg.card.copied,
   );
   if (ok) void feed.refresh();
 }
@@ -26,7 +26,7 @@ export async function openItem(item: ItemView): Promise<void> {
 export async function saveItem(item: ItemView): Promise<void> {
   try {
     const r = await api.saveItem(item.id);
-    feed.say(format(fr.card.saved, { dir: r.dir }));
+    feed.say(format(msg.card.saved, { dir: r.dir }));
   } catch (e) {
     feed.fail(e);
   }
@@ -36,7 +36,7 @@ export async function saveItem(item: ItemView): Promise<void> {
 export function deleteItem(item: ItemView, scope: "local" | "everywhere"): Promise<boolean> {
   return feed.run(
     () => api.deleteItem(item.id, scope),
-    scope === "local" ? fr.card.deletedLocal : fr.card.deletedEverywhere,
+    scope === "local" ? msg.card.deletedLocal : msg.card.deletedEverywhere,
   );
 }
 
@@ -54,11 +54,11 @@ export async function removeAttachment(
   try {
     const removal = await api.deleteAttachment(item.id, slot, everywhere);
     if (removal === "itemDeleted") {
-      feed.say(everywhere ? fr.card.deletedEverywhere : fr.card.deletedLocal);
+      feed.say(everywhere ? msg.card.deletedEverywhere : msg.card.deletedLocal);
     } else if (image) {
-      feed.say(everywhere ? fr.card.imageDeletedEverywhere : fr.card.imageDeletedLocal);
+      feed.say(everywhere ? msg.card.imageDeletedEverywhere : msg.card.imageDeletedLocal);
     } else {
-      feed.say(everywhere ? fr.card.fileDeletedEverywhere : fr.card.fileDeletedLocal);
+      feed.say(everywhere ? msg.card.fileDeletedEverywhere : msg.card.fileDeletedLocal);
     }
     void feed.refresh();
     return removal;

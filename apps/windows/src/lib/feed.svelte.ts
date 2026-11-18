@@ -12,7 +12,7 @@ import {
   type RenderMode,
   type RevealedSecret,
 } from "./api";
-import { errorMessage, fr, relayNoticeText } from "./i18n/fr";
+import { errorMessage, msg, relayNoticeText } from "./i18n";
 import { archiveAction, type ArchiveAction } from "./itemLogic";
 
 /** A hidden value shown on screen goes back to "Masqué" after this long, or when the window loses focus. */
@@ -365,15 +365,15 @@ class Feed {
     try {
       await this.#applyArchive(action, item.id);
     } catch {
-      this.say(fr.card.archiveFailed, "error");
+      this.say(msg.card.archiveFailed, "error");
       return false;
     }
     await this.refresh();
     this.say(
-      action === "archive" ? fr.card.archivedToast : fr.card.unarchivedToast,
+      action === "archive" ? msg.card.archivedToast : msg.card.unarchivedToast,
       "info",
       UNDO_MS,
-      { label: fr.card.undo, run: () => void this.undoArchive(action, item.id, wasPinned) },
+      { label: msg.card.undo, run: () => void this.undoArchive(action, item.id, wasPinned) },
     );
     return true;
   }
@@ -387,7 +387,7 @@ class Feed {
       await this.#applyArchive(action === "archive" ? "unarchive" : "archive", id);
       if (action === "archive" && wasPinned) await api.pinItem(id);
     } catch {
-      this.say(fr.card.archiveFailed, "error");
+      this.say(msg.card.archiveFailed, "error");
     }
     await this.refresh();
     // The item that came back is outlined for a moment, so that it is found again in the list.

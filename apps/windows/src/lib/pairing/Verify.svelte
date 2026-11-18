@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { PairingSession } from "../api";
-  import { format, formatBytes, fr } from "../i18n/fr";
+  import { format, formatBytes, msg } from "../i18n";
 
   /**
    * The two codes to compare (spec/pairing-v1.md §5.3): shown, grouped by three, never typed,
@@ -35,13 +35,13 @@
 </script>
 
 <div class="verify">
-  <h3>{fr.pairing.verifyTitle}</h3>
+  <h3>{msg.pairing.verifyTitle}</h3>
   <p>
-    {format(role === "join" ? fr.pairing.verifyJoin : fr.pairing.verifyInvite, { device })}
+    {format(role === "join" ? msg.pairing.verifyJoin : msg.pairing.verifyInvite, { device })}
   </p>
 
   {#if session.sas}
-    <div class="sas" aria-label={format(fr.pairing.codeDescription, { code: session.sas })}>
+    <div class="sas" aria-label={format(msg.pairing.codeDescription, { code: session.sas })}>
       {session.sas}
     </div>
   {/if}
@@ -50,24 +50,24 @@
        full, next to the code, and confirmed with it (§4.4). -->
   {#if role === "join" && session.relayAuthority}
     <div class="relay">
-      <strong class="mono">{format(fr.pairing.relayOnScreen, { relay: session.relayAuthority })}</strong>
-      <span class="small">{fr.pairing.relayVerify}</span>
+      <strong class="mono">{format(msg.pairing.relayOnScreen, { relay: session.relayAuthority })}</strong>
+      <span class="small">{msg.pairing.relayVerify}</span>
     </div>
   {/if}
 
   {#if role === "join" && session.memberCount}
     <p class="muted small">
       {session.memberCount === 1
-        ? fr.pairing.spaceSizeOne
-        : format(fr.pairing.spaceSizeMany, { n: session.memberCount })}
+        ? msg.pairing.spaceSizeOne
+        : format(msg.pairing.spaceSizeMany, { n: session.memberCount })}
     </p>
   {/if}
 
   {#if history}
     <fieldset class="history">
-      <legend>{fr.pairing.historyTitle}</legend>
+      <legend>{msg.pairing.historyTitle}</legend>
       <p class="muted small">
-        {format(fr.pairing.historySize, { items: history.items, size: formatBytes(history.bytes) })}
+        {format(msg.pairing.historySize, { items: history.items, size: formatBytes(history.bytes) })}
       </p>
       <label class="choice">
         <input
@@ -78,8 +78,8 @@
           onchange={() => (importHistory = true)}
         />
         <span>
-          <strong>{fr.pairing.historyYes}</strong>
-          <span class="muted small hint">{fr.pairing.historyYesHint}</span>
+          <strong>{msg.pairing.historyYes}</strong>
+          <span class="muted small hint">{msg.pairing.historyYesHint}</span>
         </span>
       </label>
       <label class="choice">
@@ -91,8 +91,8 @@
           onchange={() => (importHistory = false)}
         />
         <span>
-          <strong>{fr.pairing.historyNo}</strong>
-          <span class="muted small hint">{fr.pairing.historyNoHint}</span>
+          <strong>{msg.pairing.historyNo}</strong>
+          <span class="muted small hint">{msg.pairing.historyNoHint}</span>
         </span>
       </label>
     </fieldset>
@@ -100,13 +100,13 @@
 
   <div class="row actions">
     <button class="primary" disabled={sending} onclick={confirm}>
-      {role === "join" ? fr.pairing.same : format(fr.pairing.add, { device })}
+      {role === "join" ? msg.pairing.same : format(msg.pairing.add, { device })}
     </button>
     <button disabled={sending} onclick={onrefuse}>
-      {role === "join" ? fr.pairing.different : fr.pairing.refuse}
+      {role === "join" ? msg.pairing.different : msg.pairing.refuse}
     </button>
   </div>
-  <p class="muted small">{fr.pairing.verifyHint}</p>
+  <p class="muted small">{msg.pairing.verifyHint}</p>
 </div>
 
 <style>

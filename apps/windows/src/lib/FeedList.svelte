@@ -2,7 +2,7 @@
   import ItemCard from "./ItemCard.svelte";
   import { masonryCell } from "./actions";
   import { feed } from "./feed.svelte";
-  import { fr, plural } from "./i18n/fr";
+  import { msg, plural } from "./i18n";
 
   /** The full window shows the cards in a masonry grid (no gap under a short card), the popover in a column. */
   let { wide = false }: { wide?: boolean } = $props();
@@ -11,7 +11,7 @@
   const empty = $derived(count === 0);
   const searching = $derived(feed.query.trim() !== "");
   /** Title of the section below "Épinglés": "Archives" under that filter, "Récents" otherwise. */
-  const otherTitle = $derived(feed.filter === "archives" ? fr.sections.archives : fr.sections.recent);
+  const otherTitle = $derived(feed.filter === "archives" ? msg.sections.archives : msg.sections.recent);
   /** The counter is noise for an empty query with the "Tous" filter (Android: FeedSearchDisplay). */
   const showCounter = $derived(searching || feed.filter !== "all");
   /** Only the boolean `secret` is read, never a title or a content (golden rule 3). */
@@ -28,7 +28,7 @@
 
 {#if showCounter && feed.loaded}
   <p class="muted small count" role="status">
-    {plural(fr.searchResults, count)}{#if showMaskedNote} · {fr.searchMaskedNote}{/if}
+    {plural(msg.searchResults, count)}{#if showMaskedNote} · {msg.searchMaskedNote}{/if}
   </p>
 {/if}
 
@@ -41,8 +41,8 @@
   </div>
 {:else}
   {#if feed.sections.pinned.length > 0}
-    <section class="group" aria-label={fr.sections.pinned}>
-      <h3 class="title">{fr.sections.pinned}</h3>
+    <section class="group" aria-label={msg.sections.pinned}>
+      <h3 class="title">{msg.sections.pinned}</h3>
       <div class="cards" class:grid={wide}>
         {#each feed.sections.pinned as item (item.id)}
           {@render card(item)}
@@ -67,14 +67,14 @@
 {#if empty && feed.loaded}
   <p class="muted empty">
     {searching
-      ? fr.empty.search
+      ? msg.empty.search
       : feed.filter === "archives"
-        ? fr.empty.archives
+        ? msg.empty.archives
         : feed.filter !== "all"
-          ? fr.empty.filtered
+          ? msg.empty.filtered
           : feed.canSend
-            ? fr.empty.all
-            : fr.empty.receiveOnly}
+            ? msg.empty.all
+            : msg.empty.receiveOnly}
   </p>
 {/if}
 

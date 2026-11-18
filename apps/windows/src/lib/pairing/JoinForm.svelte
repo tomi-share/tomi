@@ -1,7 +1,7 @@
 <script lang="ts">
   import { untrack } from "svelte";
   import { api, type AppError, type InputRead } from "../api";
-  import { errorMessage, fr } from "../i18n/fr";
+  import { errorMessage, msg } from "../i18n";
   import { relayUrlOf } from "./relay";
 
   /**
@@ -165,13 +165,13 @@
 
 {#snippet relayField()}
   <div class="field">
-    <label for="pair-relay">{fr.pairing.relayLabel}</label>
+    <label for="pair-relay">{msg.pairing.relayLabel}</label>
     <input
       id="pair-relay"
       class="mono"
       type="text"
       bind:value={relay}
-      placeholder={fr.pairing.relayPlaceholder}
+      placeholder={msg.pairing.relayPlaceholder}
       autocomplete="off"
       autocapitalize="off"
       spellcheck="false"
@@ -185,29 +185,29 @@
     />
     <span class="muted small">
       {#if relayRead}
-        {fr.pairing.relayFromLink}
+        {msg.pairing.relayFromLink}
       {:else if needsRelay}
-        {fr.pairing.relayHintRequired}
+        {msg.pairing.relayHintRequired}
       {:else}
-        {fr.pairing.relayHint}
+        {msg.pairing.relayHint}
       {/if}
     </span>
   </div>
 {/snippet}
 
 <div class="form">
-  <h3>{fr.pairing.joinTitle}</h3>
+  <h3>{msg.pairing.joinTitle}</h3>
   {#if fromLink}
     <div class="note">
-      <strong>{fr.pairing.linkReceived}</strong>
-      <span class="small">{fr.pairing.linkReceivedHint}</span>
+      <strong>{msg.pairing.linkReceived}</strong>
+      <span class="small">{msg.pairing.linkReceivedHint}</span>
     </div>
   {:else}
-    <p class="muted">{fr.pairing.joinIntro}</p>
+    <p class="muted">{msg.pairing.joinIntro}</p>
   {/if}
 
   <div class="field">
-    <label for="pair-code">{fr.pairing.codeLabel}</label>
+    <label for="pair-code">{msg.pairing.codeLabel}</label>
     <!-- The code is typed or pasted, never saved: no autofill, no spell check. -->
     <div class="codebox">
       <input
@@ -215,7 +215,7 @@
         class="mono"
         type="text"
         bind:value={code}
-        placeholder={fr.pairing.codePlaceholder}
+        placeholder={msg.pairing.codePlaceholder}
         autocomplete="off"
         autocapitalize="off"
         spellcheck="false"
@@ -227,14 +227,14 @@
         <span class="ghost mono" aria-hidden="true"><span class="typed">{code}</span>{ghost}</span>
       {/if}
     </div>
-    <span class="muted small">{fr.pairing.codeHint}</span>
+    <span class="muted small">{msg.pairing.codeHint}</span>
   </div>
 
   {#if oncreate && read && (read.kind === "setupLink" || read.kind === "token")}
     <div class="note">
-      <span class="small">{fr.pairing.setupLinkPasted}</span>
+      <span class="small">{msg.pairing.setupLinkPasted}</span>
       <button type="button" disabled={busy} onclick={() => oncreate(code.trim())}>
-        {fr.pairing.create}
+        {msg.pairing.create}
       </button>
     </div>
   {/if}
@@ -243,13 +243,13 @@
     {@render relayField()}
   {:else}
     <details bind:open={otherOpen}>
-      <summary>{fr.pairing.relayOther}</summary>
+      <summary>{msg.pairing.relayOther}</summary>
       {@render relayField()}
     </details>
   {/if}
 
   <div class="field">
-    <label for="pair-name">{fr.pairing.deviceName}</label>
+    <label for="pair-name">{msg.pairing.deviceName}</label>
     <input
       id="pair-name"
       type="text"
@@ -259,14 +259,14 @@
       disabled={busy}
       onkeydown={(e) => e.key === "Enter" && submit()}
     />
-    <span class="muted small">{fr.pairing.deviceNameHint}</span>
+    <span class="muted small">{msg.pairing.deviceNameHint}</span>
   </div>
 
   {#if error}<p class="error" role="alert">{errorMessage(error)}</p>{/if}
 
   <div class="row">
     <button class="primary" disabled={!ready} onclick={submit}>
-      {busy ? fr.pairing.joining : fr.pairing.joinDo}
+      {busy ? msg.pairing.joining : msg.pairing.joinDo}
     </button>
   </div>
 </div>

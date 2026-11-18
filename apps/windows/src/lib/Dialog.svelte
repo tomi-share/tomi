@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, tick, type Snippet } from "svelte";
   import { feed } from "./feed.svelte";
-  import { fr } from "./i18n/fr";
+  import { msg } from "./i18n";
 
   /**
    * A confirmation (Android's AlertDialog): a title, a sentence, a destructive action and "Annuler".
@@ -166,7 +166,7 @@
         disabled={busy && !cancellable}
         onclick={cancelButtonClick}
       >
-        {fr.common.cancel}
+        {msg.common.cancel}
       </button>
       {#if secondaryLabel && onsecondary}
         <button class="ghost danger" type="button" disabled={busy} onclick={onsecondary}>

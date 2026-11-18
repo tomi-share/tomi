@@ -2,7 +2,7 @@
   import { api, type JobView } from "./api";
   import { feed } from "./feed.svelte";
   import Icon from "./Icon.svelte";
-  import { errorMessage, formatBytes, fr } from "./i18n/fr";
+  import { errorMessage, formatBytes, msg } from "./i18n";
 
   let now = $state(Date.now());
 
@@ -43,29 +43,29 @@
       <div class="job" class:failed={job.state === "failed"} role="status" aria-live="polite">
         {#if job.state === "pending"}
           <!-- "Envoi dans 3 s · Annuler": the undo window. -->
-          <span class="text">{fr.job.pending} <span class="tnum count">{seconds(job)} s</span></span>
-          <button class="action" type="button" onclick={() => cancel(job.id)}>{fr.job.cancel}</button>
+          <span class="text">{msg.job.pending} <span class="tnum count">{seconds(job)} s</span></span>
+          <button class="action" type="button" onclick={() => cancel(job.id)}>{msg.job.cancel}</button>
         {:else if job.state === "sending"}
           <span class="text">
-            {fr.job.sending}
+            {msg.job.sending}
             {#if job.totalBytes > 0}<span class="tnum count">{formatBytes(job.sentBytes)} / {formatBytes(job.totalBytes)}</span>{/if}
           </span>
-          {#if job.totalBytes > 0}<progress value={progress(job)} max="1" aria-label={fr.job.sending}></progress>{/if}
+          {#if job.totalBytes > 0}<progress value={progress(job)} max="1" aria-label={msg.job.sending}></progress>{/if}
         {:else if job.state === "done"}
           <Icon name="check" size={20} />
-          <span class="text">{fr.job.done}</span>
+          <span class="text">{msg.job.done}</span>
         {:else if job.state === "queued"}
           <Icon name="schedule" size={20} />
-          <span class="text wrap">{fr.job.queued}</span>
+          <span class="text wrap">{msg.job.queued}</span>
         {:else if job.state === "failed"}
           <Icon name="error" size={20} />
-          <span class="text wrap">{fr.job.failed} : {errorMessage(job.error)}</span>
-          <button class="action" type="button" onclick={() => feed.run(() => api.retryJob(job.id))}>{fr.job.retry}</button>
+          <span class="text wrap">{msg.job.failed} : {errorMessage(job.error)}</span>
+          <button class="action" type="button" onclick={() => feed.run(() => api.retryJob(job.id))}>{msg.job.retry}</button>
           <button
             class="action quiet"
             type="button"
             onclick={() => feed.run(() => api.dismissJob(job.id)).then(() => feed.dropJob(job.id))}
-            >{fr.job.dismiss}</button
+            >{msg.job.dismiss}</button
           >
         {/if}
       </div>

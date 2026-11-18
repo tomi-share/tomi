@@ -1,8 +1,8 @@
-// Every string shown in the webview. Rust-side strings (tray, toasts) live in strings.rs.
+// Every string shown in the webview, in French. The helpers that format with it are in `index.ts`; Rust-side
+// strings (tray, toasts) live in strings.rs.
 // Tutoiement everywhere; "Masqué" / "Afficher" (never "Secret" / "Révéler").
 
 import type {
-  AppError,
   ContentKind,
   ExpiryChoice,
   ItemFilter,
@@ -696,142 +696,18 @@ export const fr = {
   } as Record<string, string>,
   unknownError: "Une erreur est survenue.",
   truncatedPrefill: "Le contenu reçu était trop long et a été coupé.",
+  // Sizes and short delays (`formatBytes`, `formatRemaining`).
+  units: {
+    bytes: "{n} o",
+    kilobytes: "{n} Ko",
+    megabytes: "{n} Mo",
+    minutesSeconds: "{m} min {s} s",
+    seconds: "{s} s",
+  },
+  // Time left before an item expires (`formatRemainingTime`).
+  duration: {
+    minutes: { one: "{n} minute", other: "{n} minutes" },
+    hours: { one: "{n} heure", other: "{n} heures" },
+    days: { one: "{n} jour", other: "{n} jours" },
+  },
 };
-
-/** `format("de {device}", { device: "Pixel" })` */
-export function format(template: string, params: Record<string, unknown> = {}): string {
-  return template.replace(/\{(\w+)\}/g, (_, k: string) => String(params[k] ?? ""));
-}
-
-export function errorMessage(err: AppError | string): string {
-  const code = typeof err === "string" ? err : err.code;
-  const params = typeof err === "string" ? {} : err.params;
-  const template = fr.errors[code];
-  return template ? format(template, params) : fr.unknownError;
-}
-
-/**
- * The message of the error that ended a pairing. "Code incorrect" is told differently to the
- * device that typed the code and to the one that showed it (spec/pairing-v1.md §11.5).
- */
-export function pairingErrorMessage(err: AppError | null, role: "invite" | "join"): string {
-  if (!err) return "";
-  if (err.code === "error.pairing_failed") {
-    return role === "join" ? fr.pairing.failedJoin : fr.pairing.failedInvite;
-  }
-  return errorMessage(err);
-}
-
-export function formatBytes(n: number): string {
-  if (n < 1024) return `${n} o`;
-  if (n < 1024 * 1024) return `${(n / 1024).toFixed(n < 10 * 1024 ? 1 : 0)} Ko`;
-  return `${(n / 1024 / 1024).toFixed(n < 10 * 1024 * 1024 ? 1 : 0)} Mo`;
-}
-
-/** A short delay, `1 min 42 s` or `42 s`, rounded up to the second. */
-export function formatRemaining(ms: number): string {
-  const total = Math.max(0, Math.ceil(ms / 1000));
-  const minutes = Math.floor(total / 60);
-  const seconds = total % 60;
-  return minutes > 0 ? `${minutes} min ${seconds} s` : `${seconds} s`;
-}
-
-/** Relative time, past or future, in French. */
-export function relativeTime(ts: number, now = Date.now()): string {
-  const diff = ts - now;
-  const abs = Math.abs(diff);
-  const min = Math.round(abs / 60_000);
-  const t = fr.time;
-  if (diff <= 0) {
-    if (min < 1) return t.now;
-    if (min < 60) return format(t.minutes, { n: min });
-    const h = Math.round(min / 60);
-    if (h < 24) return format(t.hours, { n: h });
-    return format(t.days, { n: Math.round(h / 24) });
-  }
-  if (min < 60) return format(t.inMinutes, { n: Math.max(min, 1) });
-  const h = Math.round(min / 60);
-  if (h < 48) return format(t.inHours, { n: h });
-  return format(t.inDays, { n: Math.round(h / 24) });
-}
-
-/** French plural: 0 and 1 are singular. `plural({ one: "{n} jour", other: "{n} jours" }, 3)` */
-export function plural(forms: { one: string; other: string }, n: number): string {
-  return format(n < 2 ? forms.one : forms.other, { n });
-}
-
-const TIME = new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit" });
-const DAY = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short" });
-const DAY_YEAR = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", year: "numeric" });
-const DATE_TIME = new Intl.DateTimeFormat("fr-FR", {
-  day: "numeric",
-  month: "long",
-  year: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-});
-
-/** `14:02` today, `Hier`, `7 nov.` this year, `7 nov. 2025` before (charter 7, like Android). */
-export function formatTimestamp(ts: number, now = Date.now()): string {
-  const d = new Date(ts);
-  const n = new Date(now);
-  const startOf = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
-  const days = Math.round((startOf(n) - startOf(d)) / 86_400_000);
-  if (days <= 0) return TIME.format(d);
-  if (days === 1) return fr.card.yesterday;
-  return (d.getFullYear() === n.getFullYear() ? DAY : DAY_YEAR).format(d);
-}
-
-/** `7 novembre 2026 à 14:02`, for the detail screen. */
-export function formatDateTime(ts: number): string {
-  return DATE_TIME.format(new Date(ts));
-}
-
-const DATE_TIME_SECONDS = new Intl.DateTimeFormat("fr-FR", {
-  day: "numeric",
-  month: "long",
-  year: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-  second: "2-digit",
-});
-
-/** `7 novembre 2026 à 14:02:37`: the exact send date, for the detail screen. */
-export function formatPreciseDateTime(ts: number): string {
-  return DATE_TIME_SECONDS.format(new Date(ts));
-}
-
-/** `3 jours`, `2 heures`, `1 minute`: time left before an item expires. */
-export function formatRemainingTime(ms: number): string {
-  const minutes = Math.max(1, Math.round(ms / 60_000));
-  if (minutes < 60) return `${minutes} minute${minutes > 1 ? "s" : ""}`;
-  const hours = Math.round(minutes / 60);
-  if (hours < 48) return `${hours} heure${hours > 1 ? "s" : ""}`;
-  const days = Math.round(hours / 24);
-  return `${days} jours`;
-}
-
-/** "A", "A et B", "A, B et C". */
-function joinNames(names: string[]): string {
-  if (names.length < 2) return names.join("");
-  return `${names.slice(0, -1).join(", ")} et ${names[names.length - 1]}`;
-}
-
-/**
- * The one-time notice of devices the relay removed on its own: one sentence per cause (the
- * administrator, the device itself, anything else), several devices grouped in a sentence.
- */
-export function relayNoticeText(list: { name: string; via: "admin" | "self" | "other" }[]): string {
-  const sentences: string[] = [];
-  for (const via of ["admin", "self", "other"] as const) {
-    const names = [...new Set(list.filter((r) => r.via === via).map((r) => r.name))];
-    if (names.length === 0) continue;
-    const forms = {
-      admin: [fr.relayNotice.admin, fr.relayNotice.adminMany],
-      self: [fr.relayNotice.self, fr.relayNotice.selfMany],
-      other: [fr.relayNotice.other, fr.relayNotice.otherMany],
-    }[via];
-    sentences.push(format(forms[names.length === 1 ? 0 : 1], { names: joinNames(names) }));
-  }
-  return sentences.join(" ");
-}

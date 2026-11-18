@@ -3,7 +3,7 @@
   import { api, asAppError, type AppInfo } from "../lib/api";
   import { departure } from "../lib/departure.svelte";
   import { feed } from "../lib/feed.svelte";
-  import { errorMessage, format, fr } from "../lib/i18n/fr";
+  import { errorMessage, format, msg } from "../lib/i18n";
   import { theme, type ThemeChoice } from "../lib/theme.svelte";
 
   let info = $state<AppInfo | null>(null);
@@ -36,7 +36,7 @@
     shortcutError = null;
     try {
       const s = await api.setShortcut(shortcut);
-      feed.say(format(fr.settings.shortcutSaved, { shortcut: s }));
+      feed.say(format(msg.settings.shortcutSaved, { shortcut: s }));
       await load();
     } catch (e) {
       shortcutError = errorMessage(asAppError(e));
@@ -47,28 +47,28 @@
 {#if info}
   <section class="panel scroll">
     <div class="inner">
-    <h1 class="wide">{fr.settings.title}</h1>
+    <h1 class="wide">{msg.settings.title}</h1>
 
     <div class="group">
       <div class="field">
-        <span id="theme-label" class="label">{fr.settings.theme}</span>
+        <span id="theme-label" class="label">{msg.settings.theme}</span>
         <div class="row themes" role="radiogroup" aria-labelledby="theme-label">
           {#each THEMES as c (c)}
             <button
               class="chip"
               role="radio"
               aria-checked={theme.choice === c}
-              onclick={() => theme.set(c)}>{fr.settings.themes[c]}</button
+              onclick={() => theme.set(c)}>{msg.settings.themes[c]}</button
             >
           {/each}
         </div>
-        <span class="muted small">{fr.settings.themeHelp}</span>
+        <span class="muted small">{msg.settings.themeHelp}</span>
       </div>
     </div>
 
     <div class="group">
       <div class="field">
-        <label class="label" for="shortcut">{fr.settings.shortcut}</label>
+        <label class="label" for="shortcut">{msg.settings.shortcut}</label>
         <div class="row">
           <input
             id="shortcut"
@@ -78,12 +78,12 @@
             onkeydown={(e) => e.key === "Enter" && saveShortcut()}
           />
           <button onclick={saveShortcut} disabled={shortcut === info.settings.shortcut}>
-            {fr.settings.shortcutApply}
+            {msg.settings.shortcutApply}
           </button>
         </div>
-        <span class="muted small">{fr.settings.shortcutHelp}</span>
+        <span class="muted small">{msg.settings.shortcutHelp}</span>
         {#if shortcutError}<span class="error small" role="alert">{shortcutError}</span>{/if}
-        {#if !info.shortcutRegistered}<span class="error small">{fr.settings.shortcutNotRegistered}</span>{/if}
+        {#if !info.shortcutRegistered}<span class="error small">{msg.settings.shortcutNotRegistered}</span>{/if}
       </div>
 
       <label class="check">
@@ -92,7 +92,7 @@
           checked={info.settings.autostart}
           onchange={(e) => apply(() => api.setAutostart(e.currentTarget.checked))}
         />
-        {fr.settings.autostart}
+        {msg.settings.autostart}
       </label>
 
       <label class="check">
@@ -101,24 +101,24 @@
           checked={info.settings.notifications}
           onchange={(e) => apply(() => api.setNotifications(e.currentTarget.checked))}
         />
-        {fr.settings.notifications}
+        {msg.settings.notifications}
       </label>
     </div>
 
     <div class="group">
       <div class="field">
-        <span class="label">{fr.settings.downloadDir}</span>
+        <span class="label">{msg.settings.downloadDir}</span>
         <div class="row">
           <span class="grow selectable ellipsis mono dir">
-            {info.settings.downloadDir ?? fr.settings.downloadDirDefault}
+            {info.settings.downloadDir ?? msg.settings.downloadDirDefault}
           </span>
           {#if !info.settings.downloadDir}
-            <span class="muted small tag">{fr.settings.downloadDirIsDefault}</span>
+            <span class="muted small tag">{msg.settings.downloadDirIsDefault}</span>
           {/if}
-          <button onclick={() => apply(() => api.chooseDownloadDir())}>{fr.settings.choose}</button>
+          <button onclick={() => apply(() => api.chooseDownloadDir())}>{msg.settings.choose}</button>
           {#if info.settings.downloadDir}
             <button class="ghost" onclick={() => apply(() => api.chooseDownloadDir(true))}>
-              {fr.settings.reset}
+              {msg.settings.reset}
             </button>
           {/if}
         </div>
@@ -128,10 +128,10 @@
     {#if feed.status?.paired}
       <div class="group">
         <div class="field">
-          <span class="label">{fr.departure.sectionTitle}</span>
-          <span class="muted small">{fr.departure.sectionHelp}</span>
+          <span class="label">{msg.departure.sectionTitle}</span>
+          <span class="muted small">{msg.departure.sectionHelp}</span>
           {#if !departure.available}
-            <span class="muted small">{fr.departure.unavailable}</span>
+            <span class="muted small">{msg.departure.unavailable}</span>
           {/if}
         </div>
         <div class="row">
@@ -142,7 +142,7 @@
               (departure.snap?.working ?? false)}
             onclick={() => void departure.openLeave()}
           >
-            {fr.departure.leave}
+            {msg.departure.leave}
           </button>
         </div>
       </div>
@@ -153,8 +153,8 @@
     {/if}
 
     <footer class="row wide">
-      <span class="muted small grow">{format(fr.settings.about, { version: info.version })}</span>
-      <button class="danger" onclick={() => api.quitApp()}>{fr.settings.quit}</button>
+      <span class="muted small grow">{format(msg.settings.about, { version: info.version })}</span>
+      <button class="danger" onclick={() => api.quitApp()}>{msg.settings.quit}</button>
     </footer>
     </div>
   </section>

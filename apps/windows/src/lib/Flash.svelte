@@ -1,6 +1,6 @@
 <script lang="ts">
   import { feed } from "./feed.svelte";
-  import { fr } from "./i18n/fr";
+  import { msg } from "./i18n";
 </script>
 
 {#if feed.flash}
@@ -16,7 +16,7 @@
       <button
         class="action"
         type="button"
-        title="{flash.action.label} ({fr.card.undoKey})"
+        title="{flash.action.label} ({msg.card.undoKey})"
         onclick={() => {
           const run = flash.action?.run;
           feed.clearFlash();

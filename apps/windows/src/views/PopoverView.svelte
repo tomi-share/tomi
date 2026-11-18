@@ -10,7 +10,7 @@
   import RotationBanner from "../lib/RotationBanner.svelte";
   import StatusBanner from "../lib/StatusBanner.svelte";
   import { feed } from "../lib/feed.svelte";
-  import { fr } from "../lib/i18n/fr";
+  import { msg } from "../lib/i18n";
 
   const FILTERS: ItemFilter[] = ["all", "links", "text", "files", "secrets", "archives"];
 
@@ -72,12 +72,12 @@
 <main class="popover">
   <header class="row top">
     <Logo />
-    <strong class="grow name">{fr.appName}</strong>
+    <strong class="grow name">{msg.appName}</strong>
     <button
       class="ghost icon"
       class:on={searching}
-      title={fr.popover.search}
-      aria-label={fr.popover.search}
+      title={msg.popover.search}
+      aria-label={msg.popover.search}
       aria-pressed={searching}
       onclick={() => {
         if (searching) feed.setQuery("");
@@ -89,17 +89,17 @@
     <button
       class="ghost icon"
       class:on={pinned}
-      title={pinned ? fr.popover.unpin : fr.popover.pin}
-      aria-label={pinned ? fr.popover.unpin : fr.popover.pin}
+      title={pinned ? msg.popover.unpin : msg.popover.pin}
+      aria-label={pinned ? msg.popover.unpin : msg.popover.pin}
       aria-pressed={pinned}
       onclick={togglePin}
     >
       <Icon name={pinned ? "push_pin_fill1" : "push_pin"} size={20} />
     </button>
-    <button class="ghost icon" title={fr.popover.history} aria-label={fr.popover.history} onclick={() => api.openWindow("history")}>
+    <button class="ghost icon" title={msg.popover.history} aria-label={msg.popover.history} onclick={() => api.openWindow("history")}>
       <Icon name="open_in_new" size={20} />
     </button>
-    <button class="ghost icon" title={fr.popover.settings} aria-label={fr.popover.settings} onclick={() => api.openWindow("settings")}>
+    <button class="ghost icon" title={msg.popover.settings} aria-label={msg.popover.settings} onclick={() => api.openWindow("settings")}>
       <Icon name="tune" size={20} />
     </button>
   </header>
@@ -116,8 +116,8 @@
     {#if searching}
       <input
         type="search"
-        placeholder={fr.popover.search}
-        aria-label={fr.popover.search}
+        placeholder={msg.popover.search}
+        aria-label={msg.popover.search}
         value={feed.query}
         oninput={(e) => feed.setQuery(e.currentTarget.value)}
         onkeydown={(e) => {
@@ -131,7 +131,7 @@
       />
     {/if}
 
-    <div class="row filters" role="group" aria-label={fr.filtersLabel}>
+    <div class="row filters" role="group" aria-label={msg.filtersLabel}>
       {#each FILTERS as f (f)}
         <button
           class="chip"
@@ -140,7 +140,7 @@
           onclick={() => feed.setFilter(f)}
         >
           {#if f === "secrets"}<Icon name="visibility_off" size={16} />{:else if f === "archives"}<Icon name="archive" size={16} />{/if}
-          {fr.filters[f]}
+          {msg.filters[f]}
         </button>
       {/each}
     </div>

@@ -10,7 +10,7 @@
   import RotationBanner from "../lib/RotationBanner.svelte";
   import StatusBanner from "../lib/StatusBanner.svelte";
   import { feed } from "../lib/feed.svelte";
-  import { fr } from "../lib/i18n/fr";
+  import { msg } from "../lib/i18n";
   import DevicesPanel from "./DevicesPanel.svelte";
   import OnboardingPanel from "./OnboardingPanel.svelte";
   import SettingsPanel from "./SettingsPanel.svelte";
@@ -57,15 +57,15 @@
     <header class="top">
       <div class="brand row">
         <Logo />
-        <span class="name">{fr.appName}</span>
+        <span class="name">{msg.appName}</span>
       </div>
-      <nav class="tabs row" aria-label={fr.sectionsLabel}>
+      <nav class="tabs row" aria-label={msg.sectionsLabel}>
         {#each TABS as t (t)}
           <button
             class="tab"
             class:active={tab === t}
             aria-current={tab === t ? "page" : undefined}
-            onclick={() => (tab = t)}>{fr.tabs[t]}</button
+            onclick={() => (tab = t)}>{msg.tabs[t]}</button
           >
         {/each}
       </nav>
@@ -81,8 +81,8 @@
           <span class="search-icon"><Icon name="search" size={20} /></span>
           <input
             type="search"
-            placeholder={fr.popover.search}
-            aria-label={fr.popover.search}
+            placeholder={msg.popover.search}
+            aria-label={msg.popover.search}
             value={feed.query}
             oninput={(e) => feed.setQuery(e.currentTarget.value)}
             onkeydown={(e) => {
@@ -94,7 +94,7 @@
             }}
           />
         </div>
-        <div class="row filters" role="group" aria-label={fr.filtersLabel}>
+        <div class="row filters" role="group" aria-label={msg.filtersLabel}>
           {#each FILTERS as f (f)}
             <button
               class="chip"
@@ -103,14 +103,14 @@
               onclick={() => feed.setFilter(f)}
             >
               {#if f === "secrets"}<Icon name="visibility_off" size={16} />{:else if f === "archives"}<Icon name="archive" size={16} />{/if}
-              {fr.filters[f]}
+              {msg.filters[f]}
             </button>
           {/each}
         </div>
         {#if feed.canSend}
           <button class="primary send" aria-expanded={composing} onclick={() => (composing = !composing)}>
             <Icon name="send" size={20} />
-            {fr.composer.send}
+            {msg.composer.send}
           </button>
         {/if}
       </div>

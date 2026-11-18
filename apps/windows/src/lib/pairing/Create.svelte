@@ -1,7 +1,7 @@
 <script lang="ts">
   import { untrack } from "svelte";
   import { api, type AppError } from "../api";
-  import { errorMessage, format, fr } from "../i18n/fr";
+  import { errorMessage, format, msg } from "../i18n";
   import { relayShown, relayUrlOf } from "./relay";
 
   /**
@@ -46,7 +46,7 @@
   let name = $state(untrack(() => deviceName));
   let shown = $state(false);
 
-  const introParts = fr.pairing.createIntro.split("{command}");
+  const introParts = msg.pairing.createIntro.split("{command}");
   const needsRelay = $derived(relayAuthority === null);
   /** The relay the space will be created at, as the user is shown it, in full. */
   const retained = $derived(relay.trim() !== "" ? relayShown(relay) : relayAuthority);
@@ -94,13 +94,13 @@
 
 {#snippet relayField()}
   <div class="field">
-    <label for="pair-create-relay">{fr.pairing.relayLabel}</label>
+    <label for="pair-create-relay">{msg.pairing.relayLabel}</label>
     <input
       id="pair-create-relay"
       class="mono"
       type="text"
       bind:value={relay}
-      placeholder={fr.pairing.relayPlaceholder}
+      placeholder={msg.pairing.relayPlaceholder}
       autocomplete="off"
       autocapitalize="off"
       spellcheck="false"
@@ -114,22 +114,22 @@
     />
     <span class="muted small">
       {#if relayRead}
-        {fr.pairing.relayFromLink}
+        {msg.pairing.relayFromLink}
       {:else if needsRelay}
-        {fr.pairing.relayHintRequired}
+        {msg.pairing.relayHintRequired}
       {:else}
-        {fr.pairing.relayHint}
+        {msg.pairing.relayHint}
       {/if}
     </span>
   </div>
 {/snippet}
 
 <div class="form">
-  <h3>{fr.pairing.createTitle}</h3>
+  <h3>{msg.pairing.createTitle}</h3>
   {#if initialToken !== ""}
     <div class="note">
-      <strong>{fr.pairing.setupLinkReceived}</strong>
-      <span class="small">{fr.pairing.setupLinkReceivedHint}</span>
+      <strong>{msg.pairing.setupLinkReceived}</strong>
+      <span class="small">{msg.pairing.setupLinkReceivedHint}</span>
     </div>
   {/if}
   <!-- The command is exact text: monospace, no ligature. -->
@@ -138,7 +138,7 @@
   </p>
 
   <div class="field">
-    <label for="pair-token">{fr.pairing.tokenLabel}</label>
+    <label for="pair-token">{msg.pairing.tokenLabel}</label>
     <div class="row">
       <input
         id="pair-token"
@@ -152,23 +152,23 @@
         onkeydown={(e) => e.key === "Enter" && submit()}
       />
       <button class="ghost" type="button" onclick={() => (shown = !shown)}>
-        {shown ? fr.pairing.hideInput : fr.pairing.showInput}
+        {shown ? msg.pairing.hideInput : msg.pairing.showInput}
       </button>
     </div>
-    <span class="muted small">{fr.pairing.tokenHint}</span>
+    <span class="muted small">{msg.pairing.tokenHint}</span>
   </div>
 
   {#if needsRelay}
     {@render relayField()}
   {:else}
     <details bind:open={otherOpen}>
-      <summary>{fr.pairing.relayOther}</summary>
+      <summary>{msg.pairing.relayOther}</summary>
       {@render relayField()}
     </details>
   {/if}
 
   <div class="field">
-    <label for="pair-create-name">{fr.pairing.deviceName}</label>
+    <label for="pair-create-name">{msg.pairing.deviceName}</label>
     <input
       id="pair-create-name"
       type="text"
@@ -178,16 +178,16 @@
       disabled={busy}
       onkeydown={(e) => e.key === "Enter" && submit()}
     />
-    <span class="muted small">{fr.pairing.deviceNameHint}</span>
+    <span class="muted small">{msg.pairing.deviceNameHint}</span>
   </div>
 
   <!-- The relay that will be used, in full, before anything is sent (§4.4). -->
   <p class="relay-used" class:warn={retained === null}>
     {#if retained !== null}
-      <strong class="mono">{format(fr.pairing.relayUsed, { relay: retained })}</strong>
-      {#if relayRead}<span class="muted small">{fr.pairing.relayVerify}</span>{/if}
+      <strong class="mono">{format(msg.pairing.relayUsed, { relay: retained })}</strong>
+      {#if relayRead}<span class="muted small">{msg.pairing.relayVerify}</span>{/if}
     {:else}
-      {fr.pairing.relayNone}
+      {msg.pairing.relayNone}
     {/if}
   </p>
 
@@ -195,11 +195,11 @@
 
   <div class="row">
     <button class="primary" disabled={!ready} onclick={submit}>
-      {busy ? fr.pairing.creating : fr.pairing.createDo}
+      {busy ? msg.pairing.creating : msg.pairing.createDo}
     </button>
-    <button disabled={busy} onclick={onback}>{fr.pairing.back}</button>
+    <button disabled={busy} onclick={onback}>{msg.pairing.back}</button>
   </div>
-  {#if busy}<progress aria-label={fr.pairing.creating}></progress>{/if}
+  {#if busy}<progress aria-label={msg.pairing.creating}></progress>{/if}
 </div>
 
 <style>

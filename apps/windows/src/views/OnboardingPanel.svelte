@@ -4,7 +4,7 @@
   import Logo from "../lib/Logo.svelte";
   import StatusBanner from "../lib/StatusBanner.svelte";
   import { feed } from "../lib/feed.svelte";
-  import { format, fr } from "../lib/i18n/fr";
+  import { format, msg } from "../lib/i18n";
   import PairingPanel from "./PairingPanel.svelte";
 
   let { ondone }: { ondone: () => void } = $props();
@@ -32,21 +32,21 @@
 
 <section class="onboarding scroll">
   <Logo />
-  <h1>{fr.onboarding.title}</h1>
-  <p>{fr.onboarding.intro}</p>
+  <h1>{msg.onboarding.title}</h1>
+  <p>{msg.onboarding.intro}</p>
   <StatusBanner />
   {#if showPairing}
     <div class="pairing"><PairingPanel /></div>
   {/if}
   <ol>
-    {#each fr.onboarding.steps as step (step)}
+    {#each msg.onboarding.steps as step (step)}
       <li>{format(step, { shortcut: info?.settings.shortcut ?? "" })}</li>
     {/each}
   </ol>
   {#if info && !info.shortcutRegistered}
-    <p class="warn">{fr.settings.shortcutNotRegistered}</p>
+    <p class="warn">{msg.settings.shortcutNotRegistered}</p>
   {/if}
-  <button class="primary" onclick={finish}>{fr.onboarding.done}</button>
+  <button class="primary" onclick={finish}>{msg.onboarding.done}</button>
 </section>
 
 <style>

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { api } from "./api";
   import { feed } from "./feed.svelte";
-  import { fr } from "./i18n/fr";
+  import { msg } from "./i18n";
   import Icon from "./Icon.svelte";
 
   /** In the popover: a button leads to the Appareils tab. */
@@ -20,11 +20,11 @@
   <div class="banner row" role="status">
     <Icon name="info" size={20} />
     <span class="grow">
-      <strong>{fr.status.rotationStalledTitle}</strong>
-      <span class="text">{fr.status.rotationStalled}</span>
+      <strong>{msg.status.rotationStalledTitle}</strong>
+      <span class="text">{msg.status.rotationStalled}</span>
     </span>
     {#if link}
-      <button onclick={() => api.openWindow("devices")}>{fr.status.seeDevices}</button>
+      <button onclick={() => api.openWindow("devices")}>{msg.status.seeDevices}</button>
     {/if}
   </div>
 {/if}

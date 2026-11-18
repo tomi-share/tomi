@@ -5,7 +5,7 @@
   import { feed } from "../lib/feed.svelte";
   import Icon from "../lib/Icon.svelte";
   import Menu, { type MenuEntry } from "../lib/Menu.svelte";
-  import { errorMessage, format, fr, plural, relativeTime } from "../lib/i18n/fr";
+  import { errorMessage, format, msg, plural, relativeTime } from "../lib/i18n";
   import PairingPanel from "./PairingPanel.svelte";
 
   /** Finished transfers shown below the running ones. */
@@ -73,7 +73,7 @@
   /** The sentence for a failed device action. Without network nothing is queued, unlike a send. */
   function deviceError(e: unknown): string {
     const err = asAppError(e);
-    return err.code === "error.offline" ? fr.devices.offline : errorMessage(err);
+    return err.code === "error.offline" ? msg.devices.offline : errorMessage(err);
   }
 
   async function startRename(d: Device) {
@@ -100,7 +100,7 @@
     try {
       await api.renameDevice(d.id, name);
       stopRename();
-      feed.say(fr.devices.renamed);
+      feed.say(msg.devices.renamed);
     } catch (e) {
       nameError = deviceError(e);
     } finally {
@@ -126,7 +126,7 @@
     try {
       // Windows Hello is asked in Rust before the core is called (`error.auth_*` otherwise).
       await api.revokeDevice(d.id);
-      feed.say(format(fr.devices.revoked, { device: d.name }));
+      feed.say(format(msg.devices.revoked, { device: d.name }));
     } catch (e) {
       // A prompt the user closed is not a failure: nothing was done, and the message says so.
       const cancelled = asAppError(e).code === "error.auth_cancelled";
@@ -138,11 +138,11 @@
   }
 
   function menuEntries(d: Device): MenuEntry[] {
-    const entries: MenuEntry[] = [{ label: fr.devices.rename, icon: "edit", onselect: () => startRename(d) }];
+    const entries: MenuEntry[] = [{ label: msg.devices.rename, icon: "edit", onselect: () => startRename(d) }];
     // This PC is never offered a revocation: the core refuses it too.
     if (!d.thisDevice) {
       entries.push({
-        label: fr.devices.revoke,
+        label: msg.devices.revoke,
         icon: "link_off",
         danger: true,
         separator: true,
@@ -153,11 +153,11 @@
   }
 
   function platformLabel(p: string): string {
-    return p === "windows" ? fr.devices.platforms.windows : p === "android" ? fr.devices.platforms.android : fr.devices.platforms.other;
+    return p === "windows" ? msg.devices.platforms.windows : p === "android" ? msg.devices.platforms.android : msg.devices.platforms.other;
   }
 
   function peerLabel(t: Transfer): string {
-    return format(t.direction === "send" ? fr.transfer.toDevice : fr.transfer.fromDevice, {
+    return format(t.direction === "send" ? msg.transfer.toDevice : msg.transfer.fromDevice, {
       device: t.peer.name,
     });
   }
@@ -165,7 +165,7 @@
 
 <section class="panel scroll">
  <div class="inner">
-  <h1>{fr.devices.title}</h1>
+  <h1>{msg.devices.title}</h1>
 
   <div class="layout">
   <div class="side">
@@ -173,11 +173,11 @@
 
   {#each offers as t (t.id)}
     <div class="card offer">
-      <strong>{format(fr.transfer.offer, { device: t.peer.name })}</strong>
-      <p class="muted small">{fr.transfer.offerBody}</p>
+      <strong>{format(msg.transfer.offer, { device: t.peer.name })}</strong>
+      <p class="muted small">{msg.transfer.offerBody}</p>
       <div class="row">
-        <button class="primary" onclick={() => answer(t, true)}>{fr.transfer.accept}</button>
-        <button onclick={() => answer(t, false)}>{fr.transfer.decline}</button>
+        <button class="primary" onclick={() => answer(t, true)}>{msg.transfer.accept}</button>
+        <button onclick={() => answer(t, false)}>{msg.transfer.decline}</button>
       </div>
     </div>
   {/each}
@@ -194,31 +194,31 @@
           <div class="grow">
             <div class="name">
               <strong>{d.name}</strong>
-              {#if d.thisDevice}<span class="badge">{fr.devices.thisDevice}</span>{/if}
-              {#if d.state === "unverified"}<span class="badge warn">{fr.devices.unverified}</span>{/if}
+              {#if d.thisDevice}<span class="badge">{msg.devices.thisDevice}</span>{/if}
+              {#if d.state === "unverified"}<span class="badge warn">{msg.devices.unverified}</span>{/if}
             </div>
             <div class="muted small">
               {platformLabel(d.platform)} ·
-              {d.lastSeen ? format(fr.devices.lastSeen, { when: relativeTime(d.lastSeen) }) : fr.devices.never}
+              {d.lastSeen ? format(msg.devices.lastSeen, { when: relativeTime(d.lastSeen) }) : msg.devices.never}
             </div>
           </div>
           {#if !d.thisDevice && d.state === "verified" && asking !== d.id && busy?.id !== d.id}
-            <button onclick={() => (asking = d.id)}>{fr.transfer.send}</button>
+            <button onclick={() => (asking = d.id)}>{msg.transfer.send}</button>
           {/if}
           {#if busy === null}
-            <Menu entries={menuEntries(d)} label={format(fr.devices.more, { device: d.name })} />
+            <Menu entries={menuEntries(d)} label={format(msg.devices.more, { device: d.name })} />
           {/if}
         </div>
         {#if busy?.id === d.id && busy.what === "revoke"}
-          <p class="small muted" role="status">{fr.devices.revoking}</p>
+          <p class="small muted" role="status">{msg.devices.revoking}</p>
         {:else if d.inactiveDays !== null && !d.thisDevice && d.state !== "revoked"}
           <!-- A hint, never an action taken: the usual confirmation follows. -->
           <div class="ask">
             <p class="small">
-              {format(fr.devices.inactive, { duration: plural(fr.devices.inactiveDuration, d.inactiveDays) })}
+              {format(msg.devices.inactive, { duration: plural(msg.devices.inactiveDuration, d.inactiveDays) })}
             </p>
             <div class="row">
-              <button disabled={busy !== null} onclick={() => (revoking = d)}>{fr.devices.revoke}</button>
+              <button disabled={busy !== null} onclick={() => (revoking = d)}>{msg.devices.revoke}</button>
             </div>
           </div>
         {/if}
@@ -230,7 +230,7 @@
               void saveName(d);
             }}
           >
-            <label class="small" for="rename-{d.id}">{fr.devices.renameLabel}</label>
+            <label class="small" for="rename-{d.id}">{msg.devices.renameLabel}</label>
             <input
               id="rename-{d.id}"
               type="text"
@@ -244,23 +244,23 @@
               disabled={busy?.id === d.id}
             />
             <p id="rename-help-{d.id}" class="small" class:muted={nameError === ""} class:error={nameError !== ""} role={nameError ? "alert" : undefined}>
-              {nameError || fr.devices.renameHint}
+              {nameError || msg.devices.renameHint}
             </p>
             <div class="row">
               <button class="primary" type="submit" disabled={busy !== null || nameDraft.trim() === "" || nameDraft.trim() === d.name}>
-                {busy?.id === d.id ? fr.devices.renameSaving : fr.devices.renameSave}
+                {busy?.id === d.id ? msg.devices.renameSaving : msg.devices.renameSave}
               </button>
-              <button type="button" onclick={stopRename} disabled={busy?.id === d.id}>{fr.common.cancel}</button>
+              <button type="button" onclick={stopRename} disabled={busy?.id === d.id}>{msg.common.cancel}</button>
             </div>
           </form>
         {/if}
         {#if asking === d.id}
           <!-- One question, yes or no: the whole history, no choice per type. -->
           <div class="ask">
-            <p class="small">{format(fr.transfer.sendAsk, { device: d.name })}</p>
+            <p class="small">{format(msg.transfer.sendAsk, { device: d.name })}</p>
             <div class="row">
-              <button class="primary" onclick={() => sendHistory(d.id)}>{fr.transfer.sendYes}</button>
-              <button onclick={() => (asking = null)}>{fr.transfer.sendNo}</button>
+              <button class="primary" onclick={() => sendHistory(d.id)}>{msg.transfer.sendYes}</button>
+              <button onclick={() => (asking = null)}>{msg.transfer.sendNo}</button>
             </div>
           </div>
         {/if}
@@ -268,7 +268,7 @@
     {:else}
       {#if loaded}
         <li class="muted empty">
-          {feed.status && !feed.status.paired ? fr.devices.notPaired : fr.devices.empty}
+          {feed.status && !feed.status.paired ? msg.devices.notPaired : msg.devices.empty}
         </li>
       {/if}
     {/each}
@@ -277,27 +277,27 @@
   {#if revoking}
     {@const target = revoking}
     <Dialog
-      title={format(fr.devices.revokeTitle, { device: target.name })}
-      message={fr.devices.revokeMessage}
-      confirmLabel={fr.devices.revoke}
+      title={format(msg.devices.revokeTitle, { device: target.name })}
+      message={msg.devices.revokeMessage}
+      confirmLabel={msg.devices.revoke}
       onconfirm={() => revoke(target)}
       oncancel={() => (revoking = null)}
     />
   {/if}
 
   {#if running.length > 0 || finished.length > 0}
-    <h2>{fr.transfer.title}</h2>
+    <h2>{msg.transfer.title}</h2>
     <ul class="list cards">
       {#each [...running, ...finished] as t (t.id)}
         <li class="card">
           <div class="row">
             <div class="grow">
               <strong>{peerLabel(t)}</strong>
-              <span class="badge" class:warn={t.phase === "failed"}>{fr.transfer.phases[t.phase]}</span>
+              <span class="badge" class:warn={t.phase === "failed"}>{msg.transfer.phases[t.phase]}</span>
               <div class="muted small tnum">
-                {format(fr.transfer.progress, { done: t.itemsDone, total: t.itemsTotal })}
+                {format(msg.transfer.progress, { done: t.itemsDone, total: t.itemsTotal })}
                 {#if t.filesTotal > 0}
-                  · {format(fr.transfer.files, { done: t.filesDone, total: t.filesTotal })}
+                  · {format(msg.transfer.files, { done: t.filesDone, total: t.filesTotal })}
                 {/if}
               </div>
               {#if t.phase === "running" && t.itemsTotal > 0}
@@ -305,7 +305,7 @@
               {/if}
             </div>
             {#if t.phase === "running"}
-              <button class="ghost" onclick={() => cancel(t)}>{fr.transfer.cancel}</button>
+              <button class="ghost" onclick={() => cancel(t)}>{msg.transfer.cancel}</button>
             {/if}
           </div>
         </li>

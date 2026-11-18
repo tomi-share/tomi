@@ -2,7 +2,7 @@
   import { api } from "./api";
   import Dialog from "./Dialog.svelte";
   import { feed } from "./feed.svelte";
-  import { format, formatDateTime, formatPreciseDateTime, fr } from "./i18n/fr";
+  import { format, formatDateTime, formatPreciseDateTime, msg } from "./i18n";
   import Icon from "./Icon.svelte";
   import { copyItem, deleteItem, openItem, saveItem } from "./itemActions";
   import { canArchive, consumedButShown, deliverySummary, itemActionFlags } from "./itemLogic";
@@ -186,43 +186,43 @@
     const i = item;
     if (!i) return [];
     const type = i.unreadable
-      ? fr.card.unreadableShort
+      ? msg.card.unreadableShort
       : i.secret
-        ? fr.card.secret
-        : fr.kinds[i.kind];
+        ? msg.card.secret
+        : msg.kinds[i.kind];
     const expiry =
       i.readPolicy === "afterFirstRead"
-        ? fr.detail.meta.afterRead
+        ? msg.detail.meta.afterRead
         : i.expiresAt !== null
           ? formatDateTime(i.expiresAt)
-          : fr.detail.meta.never;
+          : msg.detail.meta.never;
     const s = deliverySummary(i);
     const status =
       s.state === "received"
-        ? fr.detail.meta.received
+        ? msg.detail.meta.received
         : s.state === "queued"
-          ? fr.card.status.queued
+          ? msg.card.status.queued
           : s.state === "failed"
-            ? fr.card.status.failed
+            ? msg.card.status.failed
             : s.state === "sent"
-              ? fr.card.status.sent
+              ? msg.card.status.sent
               : s.state === "delivered"
                 ? s.delivered === s.total
-                  ? fr.card.status.deliveredAll
-                  : format(fr.card.status.deliveredSome, { delivered: s.delivered, total: s.total })
-                : format(fr.card.status.expired, { delivered: s.delivered, devices: s.devices.join(", ") });
+                  ? msg.card.status.deliveredAll
+                  : format(msg.card.status.deliveredSome, { delivered: s.delivered, total: s.total })
+                : format(msg.card.status.expired, { delivered: s.delivered, devices: s.devices.join(", ") });
     return [
-      { key: fr.detail.meta.type, value: type, pin: false },
-      { key: fr.detail.meta.sentAt, value: formatPreciseDateTime(i.createdAt), pin: false },
-      { key: fr.detail.meta.expiry, value: expiry, pin: false },
-      { key: fr.detail.meta.pinned, value: i.pinned ? fr.detail.meta.yes : fr.detail.meta.no, pin: i.pinned },
-      { key: fr.detail.meta.status, value: status, pin: false },
+      { key: msg.detail.meta.type, value: type, pin: false },
+      { key: msg.detail.meta.sentAt, value: formatPreciseDateTime(i.createdAt), pin: false },
+      { key: msg.detail.meta.expiry, value: expiry, pin: false },
+      { key: msg.detail.meta.pinned, value: i.pinned ? msg.detail.meta.yes : msg.detail.meta.no, pin: i.pinned },
+      { key: msg.detail.meta.status, value: status, pin: false },
     ];
   });
 
-  const copyLabel = $derived(flags?.linkOnly ? fr.card.copyLink : fr.card.copy);
-  const archiveLabel = $derived(item?.archived ? fr.card.unarchive : fr.card.archive);
-  const pinLabel = $derived(item?.pinned ? fr.card.unpin : fr.card.pin);
+  const copyLabel = $derived(flags?.linkOnly ? msg.card.copyLink : msg.card.copy);
+  const archiveLabel = $derived(item?.archived ? msg.card.unarchive : msg.card.archive);
+  const pinLabel = $derived(item?.pinned ? msg.card.unpin : msg.card.pin);
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
@@ -231,7 +231,7 @@
   class="screen"
   role="dialog"
   aria-modal="true"
-  aria-label={fr.detail.title}
+  aria-label={msg.detail.title}
   tabindex="-1"
   onkeydown={onKey}
   onmouseup={onMouseUp}
@@ -240,16 +240,16 @@
     <button
       class="ghost back"
       type="button"
-      title="{fr.detail.back} ({fr.detail.keys.back})"
-      aria-label={fr.detail.back}
+      title="{msg.detail.back} ({msg.detail.keys.back})"
+      aria-label={msg.detail.back}
       onclick={close}
     >
       <Icon name="arrow_back" size={24} />
     </button>
-    <span class="esc muted small" aria-hidden="true">{fr.detail.keys.back}</span>
-    <h2 class="grow ellipsis">{fr.detail.title}</h2>
+    <span class="esc muted small" aria-hidden="true">{msg.detail.keys.back}</span>
+    <h2 class="grow ellipsis">{msg.detail.title}</h2>
     {#if item && flags && !gone}
-      <div class="tools" role="toolbar" aria-label={fr.detail.actions} use:roving>
+      <div class="tools" role="toolbar" aria-label={msg.detail.actions} use:roving>
         <button
           class="ghost tool"
           class:on={item.pinned}
@@ -279,31 +279,31 @@
           <button
             class="ghost tool"
             type="button"
-            title="{fr.card.open} ({fr.detail.keys.open})"
-            aria-label={fr.card.open}
+            title="{msg.card.open} ({msg.detail.keys.open})"
+            aria-label={msg.card.open}
             onclick={() => void openItem(item)}
           >
             <Icon name="open_in_new" size={20} />
-            <span class="lbl">{fr.card.open}</span>
+            <span class="lbl">{msg.card.open}</span>
           </button>
         {/if}
         {#if flags.canSave}
           <button
             class="ghost tool"
             type="button"
-            title="{fr.card.save} ({fr.detail.keys.save})"
-            aria-label={fr.card.save}
+            title="{msg.card.save} ({msg.detail.keys.save})"
+            aria-label={msg.card.save}
             onclick={() => void saveItem(item)}
           >
             <Icon name="download" size={20} />
-            <span class="lbl">{fr.card.save}</span>
+            <span class="lbl">{msg.card.save}</span>
           </button>
         {/if}
         {#if flags.canCopy}
           <button
             class="primary tool copy"
             type="button"
-            title="{copyLabel} ({fr.detail.keys.copy})"
+            title="{copyLabel} ({msg.detail.keys.copy})"
             onclick={() => void copyItem(item)}
           >
             <Icon name={flags.linkOnly ? "link" : "content_copy"} size={20} />
@@ -320,11 +320,11 @@
         <div class="main">
           <ItemCard {item} expanded showMenu={false} />
           {#if item.secret && !revealed}
-            <p class="muted small hint">{fr.detail.maskedHint}</p>
+            <p class="muted small hint">{msg.detail.maskedHint}</p>
           {/if}
         </div>
         <aside class="side" aria-labelledby="detail-info">
-          <h3 id="detail-info" class="muted small">{fr.detail.info}</h3>
+          <h3 id="detail-info" class="muted small">{msg.detail.info}</h3>
           <dl class="meta">
             {#each rows as r (r.key)}
               <div class="row-meta">
@@ -340,28 +340,28 @@
             <button
               class="ghost danger delete"
               type="button"
-              title="{fr.detail.deleteMenu} ({fr.detail.keys.delete})"
+              title="{msg.detail.deleteMenu} ({msg.detail.keys.delete})"
               onclick={() => (confirmDelete = true)}
             >
               <Icon name="delete" size={20} />
-              {fr.detail.deleteMenu}
+              {msg.detail.deleteMenu}
             </button>
           {/if}
         </aside>
       </div>
     {:else if feed.detailId !== null}
-      <p class="not-found">{fr.detail.notFound}</p>
+      <p class="not-found">{msg.detail.notFound}</p>
     {/if}
   </div>
 </div>
 
 {#if confirmDelete && item}
   <Dialog
-    title={fr.detail.deleteTitle}
-    message={item.secret ? fr.detail.deleteSecretMessage : fr.detail.deleteMessage}
-    secondaryLabel={fr.card.deleteLocal}
+    title={msg.detail.deleteTitle}
+    message={item.secret ? msg.detail.deleteSecretMessage : msg.detail.deleteMessage}
+    secondaryLabel={msg.card.deleteLocal}
     onsecondary={() => void remove("local")}
-    confirmLabel={fr.card.deleteEverywhere}
+    confirmLabel={msg.card.deleteEverywhere}
     onconfirm={() => void remove("everywhere")}
     oncancel={() => (confirmDelete = false)}
   />
