@@ -26,6 +26,8 @@ struct ImageViewerScreen: View {
     @Environment(AppContainer.self) private var container
     @State private var unlocked = false
     @State private var existed = false
+    /// The viewer showed pages once: when the last image goes (removed here or on another device) it closes.
+    @State private var hadPages = false
 
     var body: some View {
         let item = model.item(id: request.itemId)
@@ -74,6 +76,16 @@ struct ImageViewerScreen: View {
         .onChange(of: item == nil, initial: true) { _, gone in
             if !gone { existed = true } else if existed { onClose() }
         }
+        // Removing the last image of an item that has other content leaves nothing to page through: back to the feed.
+        .onChange(of: content, initial: true) { _, new in
+            if case .pages = new {
+                hadPages = true
+            } else if hadPages, case .empty = new {
+                onClose()
+            }
+        }
+        // "Supprimer l'image partout" is offered only when the relay can carry it.
+        .task { await model.refreshAttachmentRemovalSupport() }
         // A hidden image does not stay on screen when the app leaves it.
         .onChange(of: scenePhase) { _, phase in
             if phase == .background, item?.secret == true { onClose() }
@@ -110,11 +122,16 @@ private struct ViewerPages: View {
     @State private var pull: CGFloat = 0
     private static let pullToClose: CGFloat = 120
     @State private var recentlyActive = true
-    @State private var confirmDeleteEverywhere = false
+    /// Attachment index of the image whose "partout" removal waits for its confirmation (fixed when chosen, even if the
+    /// pager moves meanwhile).
+    @State private var confirmDeleteIndex: Int?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.accessibilityVoiceOverEnabled) private var voiceOver
 
-    private var current: Int { page ?? ViewerImages.pageFor(images, attachmentIndex: startAttachmentIndex) }
+    /// Clamped: the last image may have just been removed.
+    private var current: Int {
+        min(page ?? ViewerImages.pageFor(images, attachmentIndex: startAttachmentIndex), max(0, images.count - 1))
+    }
 
     var body: some View {
         ActionBarScaffold { layout in
@@ -188,7 +205,17 @@ private struct ViewerPages: View {
             try? await Task.sleep(for: .milliseconds(ViewerCounter.idleMs))
             if !Task.isCancelled { recentlyActive = false }
         }
-        .deleteEverywhereConfirmation(isPresented: $confirmDeleteEverywhere, item: item, model: model)
+        .alert(
+            L10n.text("dialog_delete_image_everywhere_title"),
+            isPresented: Binding(get: { confirmDeleteIndex != nil }, set: { if !$0 { confirmDeleteIndex = nil } })
+        ) {
+            Button(L10n.text("action_cancel"), role: .cancel) {}
+            Button(L10n.text("viewer_delete_everywhere"), role: .destructive) {
+                if let index = confirmDeleteIndex { model.deleteAttachment(item, index: index, everywhere: true) }
+            }
+        } message: {
+            Text(L10n.text(item.secret ? "dialog_delete_image_everywhere_secret" : "dialog_delete_image_everywhere_message"))
+        }
     }
 
     /// The controls show with the bars, and step aside while the image is pulled down.
@@ -228,15 +255,21 @@ private struct ViewerPages: View {
                     model.copyImage(item, attachmentIndex: attachmentIndex)
                 }
             }
-            Menu {
-                Button { model.deleteLocal(item) } label: {
-                    Label(L10n.text("action_delete_local"), systemImage: TomiIcon.delete.systemName)
-                }
-                Button(role: .destructive) { confirmDeleteEverywhere = true } label: {
-                    Label(L10n.text("action_delete_everywhere"), systemImage: "trash.slash")
-                }
-            } label: { FloatingBarIcon(icon: .delete) }
-            .accessibilityLabel(Text("action_delete"))
+            // "Supprimer" concerns the image on screen only (the item stays; the core deletes it when nothing is left in it).
+            // Not offered while the item is still queued: the core refuses it then.
+            if AttachmentRemovals.canRemove(item) {
+                Menu {
+                    Button { model.deleteAttachment(item, index: attachmentIndex, everywhere: false) } label: {
+                        Label(L10n.text("viewer_delete_local"), systemImage: TomiIcon.delete.systemName)
+                    }
+                    if model.attachmentRemovalEverywhere {
+                        Button(role: .destructive) { confirmDeleteIndex = attachmentIndex } label: {
+                            Label(L10n.text("viewer_delete_everywhere"), systemImage: "trash.slash")
+                        }
+                    }
+                } label: { FloatingBarIcon(icon: .delete) }
+                .accessibilityLabel(Text("viewer_action_delete"))
+            }
             Menu {
                 // Never Files for a hidden item (no lasting clear copy).
                 if ViewerActions.canSaveToGallery(item) {

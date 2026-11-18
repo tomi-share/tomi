@@ -1,6 +1,12 @@
 {
   "sourceLanguage" : "fr",
   "strings" : {
+    "" : {
+
+    },
+    "%lld" : {
+
+    },
     "action_archive" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1622,6 +1628,17 @@
         }
       }
     },
+    "detail_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Détail"
+          }
+        }
+      }
+    },
     "detect_files" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1949,6 +1966,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Supprimer l’image partout ?"
+          }
+        }
+      }
+    },
+    "direction_received" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reçu"
+          }
+        }
+      }
+    },
+    "direction_sent" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envoyé"
           }
         }
       }
@@ -5154,6 +5193,17 @@
         }
       }
     },
+    "snackbar_copied" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copié"
+          }
+        }
+      }
+    },
     "snackbar_copied_secret" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -5480,6 +5530,39 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Élément introuvable"
+          }
+        }
+      }
+    },
+    "toolbar_compose" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contenu"
+          }
+        }
+      }
+    },
+    "toolbar_feed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actions du fil"
+          }
+        }
+      }
+    },
+    "toolbar_item" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actions de l’élément"
           }
         }
       }

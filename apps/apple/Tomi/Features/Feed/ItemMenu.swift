@@ -101,6 +101,10 @@ struct FileActions: View {
     let index: Int
     let model: FeedViewModel
     var onOpen: (() -> Void)?
+    /// "Supprimer le fichier": the rows of a batch in the detail give them (see `AttachmentRemovals.canRemoveFromBatch`).
+    /// "Partout" is nil when the relay cannot carry it; it asks for a confirmation that names the file.
+    var onDeleteLocal: (() -> Void)?
+    var onDeleteEverywhere: (() -> Void)?
 
     var body: some View {
         let attachment = item.attachments[index]
@@ -120,6 +124,17 @@ struct FileActions: View {
             }
             Button { model.saveAttachmentToFiles(item, index: index) } label: {
                 Label(L10n.text("ios_save_to_files"), systemImage: "folder")
+            }
+        }
+        if let onDeleteLocal {
+            Divider()
+            Button(action: onDeleteLocal) {
+                Label(L10n.text("file_delete_local"), systemImage: TomiIcon.delete.systemName)
+            }
+            if let onDeleteEverywhere {
+                Button(role: .destructive, action: onDeleteEverywhere) {
+                    Label(L10n.text("file_delete_everywhere"), systemImage: "trash.slash")
+                }
             }
         }
     }

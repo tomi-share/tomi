@@ -262,6 +262,19 @@ public final class RustTomiCoreAdapter: TomiKit.TomiCore {
         return try await call(on: network) { try $0.attachmentPath(itemId: itemId, index: slot) }
     }
 
+    /// Local first (no network): "everywhere" is signed and leaves through the outbox. A slot that does not fit the core's
+    /// index never designates an attachment: nothing to do.
+    public func deleteAttachment(itemId: String, slot: Int, everywhere: Bool) async throws -> AttachmentRemoval {
+        guard let slot = UInt32(exactly: slot) else { return .attachmentRemoved }
+        return try await call(on: local) {
+            CoreMapping.removal(try $0.deleteAttachment(id: itemId, slot: slot, everywhere: everywhere))
+        }
+    }
+
+    public func supportsAttachmentRemoval() async -> Bool {
+        (try? await call(on: local) { $0.supportsAttachmentRemoval() }) ?? false
+    }
+
     public func renameDevice(id: String, name: String) async throws {
         try await call(on: network) { try $0.renameDevice(id: id, name: name) }
     }

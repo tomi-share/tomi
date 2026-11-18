@@ -59,6 +59,8 @@ private final class InvitingCore: TomiCore {
     func deleteEverywhere(id: String) async throws { fatalError("unused") }
     func markRead(id: String) async throws { fatalError("unused") }
     func attachmentPath(itemId: String, slot: Int) async throws -> String? { fatalError("unused") }
+    func deleteAttachment(itemId: String, slot: Int, everywhere: Bool) async throws -> AttachmentRemoval { fatalError("unused") }
+    func supportsAttachmentRemoval() async -> Bool { fatalError("unused") }
     func renameDevice(id: String, name: String) async throws { fatalError("unused") }
     func revokeDevice(id: String) async throws { fatalError("unused") }
     func currentRelay() async -> String? { fatalError("unused") }

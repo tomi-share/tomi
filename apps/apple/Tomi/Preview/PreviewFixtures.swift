@@ -197,6 +197,23 @@ final class PreviewCore: TomiCore {
     }
 
     func attachmentPath(itemId: String, slot: Int) async throws -> String? { nil }
+    func deleteAttachment(itemId: String, slot: Int, everywhere: Bool) async throws -> AttachmentRemoval {
+        calls.append("deleteAttachment:\(itemId):\(slot):\(everywhere)")
+        guard let item = state.items.first(where: { $0.id == itemId }) else { return .attachmentRemoved }
+        let remaining = item.attachments.enumerated().filter { item.attachments.slot(at: $0.offset) != slot }.map { $0.element }
+        if remaining.isEmpty && item.text == nil && item.url == nil {
+            state.items.removeAll { $0.id == itemId }
+            return .itemDeleted
+        }
+        update(itemId) { changed in
+            if case var .readable(content) = changed.content {
+                content.attachments = remaining
+                changed.content = .readable(content)
+            }
+        }
+        return .attachmentRemoved
+    }
+    func supportsAttachmentRemoval() async -> Bool { true }
     func renameDevice(id: String, name: String) async throws {
         calls.append("rename:\(id):\(name)")
         if let index = state.devices.firstIndex(where: { $0.id == id }) { state.devices[index].name = name }

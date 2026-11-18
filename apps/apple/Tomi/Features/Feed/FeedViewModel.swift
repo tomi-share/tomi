@@ -30,6 +30,9 @@ final class FeedViewModel {
     /// The image viewer over the stack, and the code screen to push (a tap on an image or a code file).
     var viewerRequest: ViewerRequest?
     var codeRequest: ViewerRequest?
+    /// The relay takes "remove this file everywhere" (`TomiCore.supportsAttachmentRemoval`); the screens offer that scope
+    /// only then. False until `refreshAttachmentRemovalSupport` heard the core.
+    var attachmentRemovalEverywhere = false
 
     init(core: any TomiCore, prefs: UserPrefs, gate: BiometricGate, network: NetworkMonitor, feedback: FeedbackCenter) {
         self.core = core

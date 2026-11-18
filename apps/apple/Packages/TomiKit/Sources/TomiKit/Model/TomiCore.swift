@@ -78,6 +78,13 @@ public protocol TomiCore: AnyObject {
     /// Path of the decrypted attachment, downloading it if needed. Nil if unavailable or removed. `slot` is `Attachment.slot`
     /// (stable position in the payload), NOT the position in `attachments`: they differ once an attachment was removed.
     func attachmentPath(itemId: String, slot: Int) async throws -> String?
+    /// Removes ONE attachment of an item (`slot` is `Attachment.slot`, never the position), from this device only or
+    /// `everywhere` (signed declaration to the relay and the devices). The others stay; when nothing else is left in the item
+    /// the whole item is deleted with the same scope (`.itemDeleted`). Idempotent. Throws while the item is still queued
+    /// (both scopes): the UI does not offer it then. No biometry, like deleting an item.
+    func deleteAttachment(itemId: String, slot: Int, everywhere: Bool) async throws -> AttachmentRemoval
+    /// The relay takes "remove everywhere" (capability heard at the last session); "from this device" is always possible.
+    func supportsAttachmentRemoval() async -> Bool
 
     func renameDevice(id: String, name: String) async throws
     /// Removes a device from the space and rotates the space key. The UI asks for strong biometrics first.
