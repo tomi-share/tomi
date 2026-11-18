@@ -9,8 +9,8 @@ contribution you agree that it is released under the same license.
 - For anything that touches the protocol, crypto, wire format or security properties, open an issue first to discuss the
   design. The golden rules in `AGENTS.md` (blind relay, secrets never in clear at rest, additive format changes) are not
   negotiable without a protocol-level discussion.
-- Security vulnerabilities must not be reported in public issues; contact the maintainers privately (see the repository
-  security policy once published).
+- Security vulnerabilities must not be reported in public issues; follow [SECURITY.md](SECURITY.md) (private reporting).
+- Forking and distributing your own build: see [docs/FORKING.md](docs/FORKING.md) and [TRADEMARKS.md](TRADEMARKS.md).
 
 ## Workflow
 
@@ -42,4 +42,5 @@ contribution you agree that it is released under the same license.
 
 ## Code of conduct
 
-Be respectful and constructive. Harassment and personal attacks are not tolerated.
+Participation is governed by the [Code of Conduct](CODE_OF_CONDUCT.md): be respectful and constructive.
+Harassment and personal attacks are not tolerated.

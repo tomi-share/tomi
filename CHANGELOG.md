@@ -1,0 +1,38 @@
+# Changelog
+
+All notable changes are listed here, newest first. The format follows
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+
+Tomi ships several products with their own tags and versions (see [`docs/RELEASES.md`](docs/RELEASES.md)); this file
+tracks the project as a whole and names the products concerned. Protocol compatibility is carried by the `format`
+version and the frozen vectors in `spec/vectors/`, not by application versions.
+
+## [Unreleased]
+
+### Added
+- Community files for the public repository: `SECURITY.md`, `CODE_OF_CONDUCT.md`, `TRADEMARKS.md`, issue and pull
+  request templates, `CODEOWNERS`, Dependabot configuration and a dependency audit workflow (`cargo-deny`, `npm audit`).
+- `docs/FORKING.md`: where the identity of each platform lives, for forks that distribute their own build.
+- Android: the application id can be overridden with `-PtomiApplicationId=...` (default unchanged: `eu.shaffe.tomi`).
+- Core: unified core, with a demo mode that is entered and left from the real core (Android, Windows, iOS).
+- Windows, iOS: delete a single attachment, on this device only or everywhere.
+
+### Changed
+- iOS: long texts get bounded previews; String Catalog and generated design tokens cleaned up.
+
+### Fixed
+- Android: a Markdown view whose rendering never lands is recreated.
+- Core: `expect()` is allowed in the demo mock helper so that `clippy --features demo` passes.
+
+## [0.5.2] - 2026-11-18
+
+Relay and core (`relay-v0.5.2`, Cargo workspace version 0.5.2).
+
+### Changed
+- CI: a missing default relay is reported as a notice, not a warning.
+
+## Before 0.5.2
+
+First public state of the repository: the Rust core (protocol, crypto, format, runtime), the blind relay with
+multi-space support, the Android, Windows and iOS clients on the real core, the specification and its frozen test
+vectors (`spec/vectors/v1`, `spec/vectors/pairing-v1`), and the deployment material in `infra/`.

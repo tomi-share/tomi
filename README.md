@@ -110,8 +110,12 @@ tomi/
 - [`docs/DEV.md`](docs/DEV.md): developer guide (setup, builds, releases).
 - [`docs/FEATURES.md`](docs/FEATURES.md): feature matrix across platforms.
 - [`design/tomi/brand-guidelines.md`](design/tomi/brand-guidelines.md): brand guidelines and assets.
-- [`CONTRIBUTING.md`](CONTRIBUTING.md): how to contribute.
+- [`CONTRIBUTING.md`](CONTRIBUTING.md): how to contribute. Please follow the [Code of Conduct](CODE_OF_CONDUCT.md).
+- [`SECURITY.md`](SECURITY.md): how to report a vulnerability (privately, not in a public issue).
+- [`CHANGELOG.md`](CHANGELOG.md) and [`docs/RELEASES.md`](docs/RELEASES.md): what changed, and how releases are cut.
+- [`docs/FORKING.md`](docs/FORKING.md): building and distributing your own version.
 
 ## License
 
 Licensed under the Apache License, Version 2.0. See [`LICENSE`](LICENSE).
+The name "Tomi" and the logo are not covered by that license, see [`TRADEMARKS.md`](TRADEMARKS.md).
