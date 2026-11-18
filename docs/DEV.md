@@ -96,3 +96,5 @@ Tag naming, stable releases and changelog rules: see [RELEASES.md](RELEASES.md).
 - The Windows installer is not signed (a SmartScreen warning is expected).
 - Relay address for CI builds: the repository variable TOMI_RELAY_URL (see Environment).
 - Optional secret FORGE_DEPLOY_URL: URL of a deploy hook called after a relay release is published (see infra/forge/); the step does nothing when the secret is absent.
+- Android: `libtomi_core.so` is built with `--features demo` (entering the demo from "Join your space"), in two places that must stay in agreement: the Gradle task `buildTomiCoreLibs` (`app/build.gradle.kts`) and the `cargo ndk` pre-step of `ci.yml` (same in the `just android-ndk-libs` recipe).
+- Windows app CI (`ci.yml`, job `windows-app`, on `windows-latest`, on every push/PR touching `apps/windows/`, `crates/core/` or `ci.yml`): `npm ci`, `npm run check`, `npm run build` in `apps/windows`, then `cargo test --locked` in `apps/windows/src-tauri`. No clippy and no installer (the installer stays in `build-apps.yml`). Counts double against the quota.

@@ -131,6 +131,15 @@
 //! Pairing, archive and [`RustTomiCore::simulate_incoming`] are part of the contract in both
 //! modes; where the real implementation does not exist yet (pairing) the real core answers
 //! `Unsupported`.
+//!
+//! # Unified core
+//!
+//! A core opened by [`RustTomiCore::open`] can also *enter* the demo
+//! ([`RustTomiCore::enter_demo`]) and leave it ([`RustTomiCore::leave_demo`]) without closing
+//! its real engine (`runtime::unified`): for an app, entering is "this device just joined a
+//! space" and leaving is "this device left it". Only while the real device is in no space.
+//! [`RustTomiCore::supports_demo_entry`] says whether the build has it. This is the core the
+//! released apps run on; `open_demo` stays for development builds that start in the demo.
 
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -148,7 +157,7 @@ use crate::runtime::{
     self, AwaitedHistory, Blocked, DispatchOutcome, DraftAttachment, DraftText, Engine,
     EngineConfig, InviteOutcome, InvitePhase, InviteSession, ItemContentView, JoinOutcome,
     JoinPhase, JoinPrompt, JoinSession, OutgoingDraft, PairingPeer, Provision, ResumeOutcome,
-    SpaceStatus, SystemClock, VerifyPrompt,
+    SpaceStatus, SystemClock, UnifiedCore, VerifyPrompt,
 };
 use crate::{CoreError, DeviceKeys, SpaceKey, TrustStore, UnreadableReason};
 
@@ -1262,11 +1271,13 @@ fn remaining_ms(engine: &Engine, expires_at_ms: i64) -> i64 {
 /// The core, as the apps hold it for the whole life of the process.
 #[derive(uniffi::Object)]
 pub struct RustTomiCore {
-    engine: Arc<Engine>,
+    /// The real engine of this device and, while a demo is entered, the demo space
+    /// (`runtime::unified`). Read the active engine through `engine()`.
+    hub: UnifiedCore,
     doorbell_stop: DoorbellStop,
     #[allow(clippy::type_complexity)]
     listener: Mutex<Option<Arc<dyn CoreListener>>>,
-    /// Set once by `open_demo`: the demo space behind `engine`.
+    /// Set once by `open_demo`: this core IS a demo (the former demo core, no real engine behind).
     #[cfg(feature = "demo")]
     demo: OnceLock<Arc<crate::runtime::demo::DemoWorld>>,
 }
@@ -1318,14 +1329,14 @@ impl RustTomiCore {
     /// Wraps an engine built by the caller (tests, desktop shells with their own transport).
     pub fn with_engine(engine: Arc<Engine>) -> Arc<Self> {
         let core = Arc::new(Self {
-            engine,
+            hub: UnifiedCore::new(engine),
             doorbell_stop: DoorbellStop::new(),
             listener: Mutex::new(None),
             #[cfg(feature = "demo")]
             demo: OnceLock::new(),
         });
         let weak = Arc::downgrade(&core);
-        core.engine.subscribe(Arc::new(move || {
+        core.hub.subscribe(Arc::new(move || {
             if let Some(c) = weak.upgrade() {
                 // Cloned out of the lock: the callback runs with no lock held.
                 let l = c.current_listener();
@@ -1346,6 +1357,29 @@ impl RustTomiCore {
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
             .clone()
+    }
+
+    /// The engine the calls go to: the demo's while a demo is entered, the real one otherwise.
+    fn engine(&self) -> Arc<Engine> {
+        self.hub.engine()
+    }
+
+    /// The demo space behind this core: the one `open_demo` built, or the one `enter_demo`
+    /// entered.
+    #[cfg(feature = "demo")]
+    fn demo_world(&self) -> Option<Arc<crate::runtime::demo::DemoWorld>> {
+        self.demo.get().cloned().or_else(|| self.hub.demo_world())
+    }
+
+    /// After a departure attempt: the doorbell stops once the device is erased, and a demo whose
+    /// device left is over.
+    fn departed(
+        &self,
+        outcome: crate::runtime::DepartureOutcome,
+    ) -> FfiResult<FfiDepartureOutcome> {
+        let result = departure_done(&self.doorbell_stop, outcome);
+        self.hub.settle_demo();
+        result
     }
 }
 
@@ -1410,16 +1444,75 @@ impl RustTomiCore {
         }
     }
 
-    /// `true` for a core opened by [`open_demo`](Self::open_demo).
+    /// `true` while the calls go to a demo space: a core opened by [`open_demo`](Self::open_demo), or a real core that entered the demo ([`enter_demo`](Self::enter_demo)).
     pub fn is_demo(&self) -> bool {
         #[cfg(feature = "demo")]
         {
-            self.demo.get().is_some()
+            self.demo_world().is_some()
         }
         #[cfg(not(feature = "demo"))]
         {
             false
         }
+    }
+
+    /// `true` when this core can enter the demo ([`enter_demo`](Self::enter_demo)): the demo is
+    /// compiled in (feature `demo`) and this core was opened by [`open`](Self::open), not by
+    /// [`open_demo`](Self::open_demo). It says nothing about the state: `enter_demo` still
+    /// refuses a device that is in a space. Constant for the life of the core.
+    pub fn supports_demo_entry(&self) -> bool {
+        #[cfg(feature = "demo")]
+        {
+            self.demo.get().is_none()
+        }
+        #[cfg(not(feature = "demo"))]
+        {
+            false
+        }
+    }
+
+    /// Enters the demo from the real core: a fresh demo space (in memory, no network), already
+    /// joined, with the demo feed. From then on every call of this object goes to the demo,
+    /// [`is_demo`](Self::is_demo) and [`is_paired`](Self::is_paired) are `true`, and the listener
+    /// is told. The real engine is neither closed nor changed. Nothing is kept after the process
+    /// ends. **Blocks** while the demo history is written: call it off the main thread.
+    ///
+    /// `config.start_paired` is ignored (always joined). Already in the demo: nothing happens.
+    /// Errors: `InvalidInput` (this device is in a space, a pairing is pending, or this core is a
+    /// demo core already), `Internal` (demo not compiled in), `Storage`.
+    pub fn enter_demo(&self, config: DemoConfig) -> FfiResult<()> {
+        #[cfg(feature = "demo")]
+        {
+            use crate::runtime::demo;
+            if self.demo.get().is_some() {
+                return Err(TomiError::InvalidInput {
+                    reason: "already a demo core".into(),
+                });
+            }
+            Ok(self.hub.enter_demo(demo::DemoConfig {
+                files_dir: PathBuf::from(config.files_dir),
+                assets_dir: config.assets_dir.map(PathBuf::from),
+                platform: config.platform,
+                app_version: config.app_version,
+                device_name: config.device_name,
+                start_paired: true,
+            })?)
+        }
+        #[cfg(not(feature = "demo"))]
+        {
+            let _ = config;
+            Err(TomiError::Internal {
+                reason: "demo mode not compiled in".into(),
+            })
+        }
+    }
+
+    /// Leaves the demo entered with [`enter_demo`](Self::enter_demo): the demo space is dropped
+    /// (files erased), the calls go to the real engine again and the listener is told. `false`
+    /// when no demo was entered (also on a core opened by `open_demo`, which cannot leave). A
+    /// successful `leave_space` inside the demo leaves it too.
+    pub fn leave_demo(&self) -> bool {
+        self.hub.leave_demo()
     }
 
     /// Registers the single listener (replaces the previous one).
@@ -1436,7 +1529,7 @@ impl RustTomiCore {
     /// paired; before, the one a pairing or a creation under way is using, the one chosen with
     /// [`set_relay`](Self::set_relay), or the build's default; `null` when there is none.
     pub fn relay_url(&self) -> Option<String> {
-        self.engine.relay_url()
+        self.engine().relay_url()
     }
 
     /// Chooses the relay of a device that is not paired and keeps it (the "Relais" field when
@@ -1451,14 +1544,14 @@ impl RustTomiCore {
     /// Does no network call. Prefer passing the relay to [`join_space`](Self::join_space) /
     /// [`create_space`](Self::create_space): nothing is then kept before it worked.
     pub fn set_relay(&self, url: String) -> FfiResult<()> {
-        Ok(self.engine.set_relay(&url)?)
+        Ok(self.engine().set_relay(&url)?)
     }
 
     // --- state ---------------------------------------------------------------
 
     /// `isPaired`: this device belongs to a space.
     pub fn is_paired(&self) -> bool {
-        self.engine.is_provisioned()
+        self.engine().is_provisioned()
     }
 
     /// Stores the identity and keys obtained by pairing or space creation, once.
@@ -1470,7 +1563,7 @@ impl RustTomiCore {
         let keys = DeviceKeys::from_secrets(&ed25519_seed, &x25519_secret)?;
         let trust = TrustStore::from_json(&data.trust_json)?;
         let space_key = SpaceKey::from_bytes(data.key_epoch, &space_key_bytes)?;
-        Ok(self.engine.provision(Provision {
+        Ok(self.engine().provision(Provision {
             keys,
             trust,
             space_key,
@@ -1480,7 +1573,7 @@ impl RustTomiCore {
 
     /// `spaceState`.
     pub fn space_state(&self) -> SpaceStateKind {
-        match self.engine.space_status() {
+        match self.engine().space_status() {
             SpaceStatus::Active => SpaceStateKind::Active,
             SpaceStatus::Revoked => SpaceStateKind::Revoked,
             SpaceStatus::UpdateRequired => SpaceStateKind::UpdateRequired,
@@ -1491,7 +1584,7 @@ impl RustTomiCore {
 
     /// Link to open when the state is `UpdateRequired`.
     pub fn update_url(&self) -> Option<String> {
-        match self.engine.blocked() {
+        match self.engine().blocked() {
             Some(Blocked::UpdateRequired { update_url }) => update_url,
             _ => None,
         }
@@ -1499,13 +1592,13 @@ impl RustTomiCore {
 
     /// `localDevice`.
     pub fn local_device(&self) -> FfiResult<FfiDevice> {
-        Ok(to_device(self.engine.local_device()?))
+        Ok(to_device(self.engine().local_device()?))
     }
 
     /// `devices`: all devices known, revoked ones included (filter on `state`).
     pub fn devices(&self) -> FfiResult<Vec<FfiDevice>> {
         Ok(self
-            .engine
+            .engine()
             .list_devices()?
             .into_iter()
             .map(to_device)
@@ -1516,11 +1609,16 @@ impl RustTomiCore {
 
     /// `items`: newest first, queued outgoing items included, expired ones excluded.
     pub fn items(&self) -> FfiResult<Vec<FfiItem>> {
-        Ok(self.engine.list_items()?.into_iter().map(to_item).collect())
+        Ok(self
+            .engine()
+            .list_items()?
+            .into_iter()
+            .map(to_item)
+            .collect())
     }
 
     pub fn get_item(&self, id: String) -> FfiResult<Option<FfiItem>> {
-        Ok(self.engine.get_item(&id)?.map(to_item))
+        Ok(self.engine().get_item(&id)?.map(to_item))
     }
 
     // --- sync ----------------------------------------------------------------
@@ -1531,7 +1629,7 @@ impl RustTomiCore {
     /// (`PUT /v1/me/push`) is not implemented yet.
     pub fn sync(&self, push_token: Option<String>) -> FfiResult<FfiSyncReport> {
         let _ = push_token;
-        let r = self.engine.sync()?;
+        let r = self.engine().sync()?;
         Ok(FfiSyncReport {
             already_running: r.already_running,
             events_applied: r.events_applied,
@@ -1576,15 +1674,15 @@ impl RustTomiCore {
     pub fn run_doorbell(&self) {
         let stop = self.doorbell_stop.begin();
         #[cfg(feature = "demo")]
-        if self.demo.get().is_some() {
+        if self.demo_world().is_some() {
             // No doorbell in a demo: its own worker keeps this device up to date. Block like
-            // the real one until `stop_doorbell`.
-            while !stop.load(Ordering::SeqCst) {
+            // the real one until `stop_doorbell`, or until the demo is left.
+            while !stop.load(Ordering::SeqCst) && self.demo_world().is_some() {
                 std::thread::sleep(std::time::Duration::from_millis(100));
             }
             return;
         }
-        self.engine.run_doorbell(&stop);
+        self.engine().run_doorbell(&stop);
     }
 
     /// Tells the doorbell loop started last to return. Does not wait for it. A stop that
@@ -1597,7 +1695,7 @@ impl RustTomiCore {
 
     /// `true` once after a full resync ("older items could not be recovered").
     pub fn take_resync_notice(&self) -> bool {
-        self.engine.take_resync_notice()
+        self.engine().take_resync_notice()
     }
 
     // --- sending ---------------------------------------------------------------
@@ -1605,12 +1703,12 @@ impl RustTomiCore {
     /// `enqueue`: stores the draft locally (queued, in the feed) and in the outbox.
     /// Attachment files are read before this returns. Returns the item id.
     pub fn enqueue(&self, draft: FfiDraft) -> FfiResult<String> {
-        Ok(self.engine.enqueue(from_draft(draft))?)
+        Ok(self.engine().enqueue(from_draft(draft))?)
     }
 
     /// `dispatch`: tries to push one queued item now. Safe to repeat.
     pub fn dispatch(&self, id: String) -> FfiResult<DispatchKind> {
-        Ok(match self.engine.dispatch(&id)? {
+        Ok(match self.engine().dispatch(&id)? {
             DispatchOutcome::Sent => DispatchKind::Sent,
             DispatchOutcome::RetryLater => DispatchKind::RetryLater,
             DispatchOutcome::NotFound => DispatchKind::NotFound,
@@ -1620,17 +1718,17 @@ impl RustTomiCore {
 
     /// `cancelIfQueued`: the "Undo" of the send banner; atomic with `dispatch`.
     pub fn cancel_if_queued(&self, id: String) -> FfiResult<bool> {
-        Ok(self.engine.cancel_if_queued(&id)?)
+        Ok(self.engine().cancel_if_queued(&id)?)
     }
 
     // --- deleting, reading, pinning, archiving ---------------------------------------------
 
     pub fn delete_local(&self, id: String) -> FfiResult<()> {
-        Ok(self.engine.delete_local(&id)?)
+        Ok(self.engine().delete_local(&id)?)
     }
 
     pub fn delete_everywhere(&self, id: String) -> FfiResult<()> {
-        Ok(self.engine.delete_everywhere(&id)?)
+        Ok(self.engine().delete_everywhere(&id)?)
     }
 
     /// `deleteAttachment`: removes ONE attachment of an item, designated by the `slot` of
@@ -1649,7 +1747,7 @@ impl RustTomiCore {
         everywhere: bool,
     ) -> FfiResult<AttachmentRemovalKind> {
         Ok(
-            match self.engine.delete_attachment(&id, slot, everywhere)? {
+            match self.engine().delete_attachment(&id, slot, everywhere)? {
                 runtime::AttachmentRemoval::AttachmentRemoved => {
                     AttachmentRemovalKind::AttachmentRemoved
                 }
@@ -1662,12 +1760,12 @@ impl RustTomiCore {
     /// "everywhere" (capability `attachment_tombstones`, read at the last session; false until
     /// a session has told). "On this device" is always possible.
     pub fn supports_attachment_removal(&self) -> bool {
-        self.engine.supports_attachment_removal()
+        self.engine().supports_attachment_removal()
     }
 
     /// `markRead`; consumes an `after_first_read` item everywhere.
     pub fn mark_read(&self, id: String) -> FfiResult<()> {
-        Ok(self.engine.mark_read(&id)?)
+        Ok(self.engine().mark_read(&id)?)
     }
 
     /// `pin`: idempotent, immediate local effect, unknown id is a no-op. The network never
@@ -1675,11 +1773,11 @@ impl RustTomiCore {
     /// (not provisioned), `Crypto { code: "malformed_statement" }` (time beyond 2^53 - 1 ms)
     /// or another refusal to sign (this device no longer trusted).
     pub fn pin(&self, id: String) -> FfiResult<()> {
-        Ok(self.engine.pin(&id)?)
+        Ok(self.engine().pin(&id)?)
     }
 
     pub fn unpin(&self, id: String) -> FfiResult<()> {
-        Ok(self.engine.unpin(&id)?)
+        Ok(self.engine().unpin(&id)?)
     }
 
     /// `archive`: same guarantees as `pin` (idempotent, immediate local effect, unknown id is
@@ -1687,11 +1785,11 @@ impl RustTomiCore {
     /// sends an ack / read / release, never downloads anything. Archiving a pinned item
     /// unpins it first. Pin and archive are exclusive at display (`FfiItem.pinned` wins).
     pub fn archive(&self, id: String) -> FfiResult<()> {
-        Ok(self.engine.archive(&id)?)
+        Ok(self.engine().archive(&id)?)
     }
 
     pub fn unarchive(&self, id: String) -> FfiResult<()> {
-        Ok(self.engine.unarchive(&id)?)
+        Ok(self.engine().unarchive(&id)?)
     }
 
     // --- pairing (Kotlin `pairWithQr` / `pairWithCode` / `confirmPairing` / `cancelPairing`) --
@@ -1700,7 +1798,7 @@ impl RustTomiCore {
     /// answers `Failure { Unsupported }`; the demo core simulates it.
     pub fn pair_with_qr(&self, payload: String) -> FfiResult<PairingOutcome> {
         #[cfg(feature = "demo")]
-        if let Some(world) = self.demo.get() {
+        if let Some(world) = self.demo_world() {
             return Ok(world.pair_with_qr(&payload)?.into());
         }
         let _ = payload;
@@ -1718,7 +1816,7 @@ impl RustTomiCore {
         relay_url: Option<String>,
     ) -> FfiResult<PairingOutcome> {
         #[cfg(feature = "demo")]
-        if let Some(world) = self.demo.get() {
+        if let Some(world) = self.demo_world() {
             return Ok(world.pair_with_code(&code, relay_url.as_deref())?.into());
         }
         let _ = (code, relay_url);
@@ -1731,7 +1829,7 @@ impl RustTomiCore {
     /// yes/no answer about the history. Without a pairing in progress nothing happens.
     pub fn confirm_pairing(&self, import_history: bool) -> FfiResult<()> {
         #[cfg(feature = "demo")]
-        if let Some(world) = self.demo.get() {
+        if let Some(world) = self.demo_world() {
             return Ok(world.confirm_pairing(import_history)?);
         }
         let _ = import_history;
@@ -1743,7 +1841,7 @@ impl RustTomiCore {
     /// The codes differ, or the user left the verification: nothing is joined.
     pub fn cancel_pairing(&self) -> FfiResult<()> {
         #[cfg(feature = "demo")]
-        if let Some(world) = self.demo.get() {
+        if let Some(world) = self.demo_world() {
             world.cancel_pairing();
         }
         Ok(())
@@ -1752,7 +1850,7 @@ impl RustTomiCore {
     /// Demo core only: another device sends an item of `kind` now (debug menus of the apps).
     pub fn simulate_incoming(&self, kind: DemoIncomingKind) -> FfiResult<()> {
         #[cfg(feature = "demo")]
-        if let Some(world) = self.demo.get() {
+        if let Some(world) = self.demo_world() {
             return Ok(world.simulate_incoming(to_demo_incoming(kind))?);
         }
         let _ = kind;
@@ -1766,7 +1864,7 @@ impl RustTomiCore {
     /// relay). The departure itself runs the real code against the relay double.
     pub fn simulate_departure(&self, mode: DemoDepartureMode) -> FfiResult<()> {
         #[cfg(feature = "demo")]
-        if let Some(world) = self.demo.get() {
+        if let Some(world) = self.demo_world() {
             use crate::runtime::demo::DemoDeparture as D;
             world.simulate_departure(match mode {
                 DemoDepartureMode::Normal => D::Normal,
@@ -1794,7 +1892,7 @@ impl RustTomiCore {
     /// unavailable.
     pub fn attachment_path(&self, item_id: String, index: u32) -> FfiResult<Option<String>> {
         Ok(self
-            .engine
+            .engine()
             .attachment_path(&item_id, index)?
             .map(|p| p.to_string_lossy().into_owned()))
     }
@@ -1803,24 +1901,24 @@ impl RustTomiCore {
     /// (Android `onStop`; window hidden or locked on Windows). Also done at start. Fails
     /// with `Storage` if a file is still open elsewhere (Windows); the rest is erased.
     pub fn purge_plaintext_cache(&self) -> FfiResult<()> {
-        Ok(self.engine.purge_plaintext_cache()?)
+        Ok(self.engine().purge_plaintext_cache()?)
     }
 
     // --- devices ---------------------------------------------------------------
 
     pub fn rename_device(&self, id: String, name: String) -> FfiResult<()> {
-        Ok(self.engine.rename_device(&id, &name)?)
+        Ok(self.engine().rename_device(&id, &name)?)
     }
 
     /// `revokeDevice`: revokes and rotates the space key. Needs the network.
     pub fn revoke_device(&self, id: String) -> FfiResult<()> {
-        Ok(self.engine.revoke_device(&id)?)
+        Ok(self.engine().revoke_device(&id)?)
     }
 
     /// Rotation required after a revocation by the relay; `false` if nothing to do. The core
     /// now does it by itself; kept for compatibility.
     pub fn maybe_rotate(&self) -> FfiResult<bool> {
-        Ok(self.engine.maybe_rotate()?)
+        Ok(self.engine().maybe_rotate()?)
     }
 
     // --- leaving the space (`spec/api-v1.md` §7.9); all block: call them off the main thread ---
@@ -1830,20 +1928,20 @@ impl RustTomiCore {
     /// **Blocks** up to 520 s (about 9 minutes) on a network that answers nothing in time, see
     /// the module documentation.
     pub fn leave_space(&self) -> FfiResult<FfiDepartureOutcome> {
-        departure_done(&self.doorbell_stop, self.engine.leave_space()?)
+        self.departed(self.engine().leave_space()?)
     }
 
     /// Gesture "Delete space", only after `Refused { LastDevice }` and its irreversible
     /// confirmation (`DELETE /v1/space`). Same contract as `leave_space`; **blocks** up to
     /// 1060 s (about 18 minutes) in the worst case.
     pub fn delete_space(&self) -> FfiResult<FfiDepartureOutcome> {
-        departure_done(&self.doorbell_stop, self.engine.delete_space()?)
+        self.departed(self.engine().delete_space()?)
     }
 
     /// Gesture "Retry": sends the pending request again. `InvalidInput` if none. Blocks as
     /// long as the gesture it repeats (520 s, or 1060 s for a deletion).
     pub fn retry_departure(&self) -> FfiResult<FfiDepartureOutcome> {
-        departure_done(&self.doorbell_stop, self.engine.retry_departure()?)
+        self.departed(self.engine().retry_departure()?)
     }
 
     /// Automatic attempt: at start-up (before `resume_pairing`), on a back-off, when the network
@@ -1851,18 +1949,18 @@ impl RustTomiCore {
     /// only verifies. `NothingPending` when nothing is pending. Blocks up to 520 s inside the
     /// window (1060 s for a deletion), 280 s when it only verifies.
     pub fn continue_departure(&self) -> FfiResult<FfiDepartureOutcome> {
-        departure_done(&self.doorbell_stop, self.engine.continue_departure()?)
+        self.departed(self.engine().continue_departure()?)
     }
 
     /// "Annuler": immediate, never erases. `true` if a departure was cancelled; `false` when
     /// none was pending or the erasure already runs.
     pub fn cancel_departure(&self) -> FfiResult<bool> {
-        Ok(self.engine.cancel_departure()?)
+        Ok(self.engine().cancel_departure()?)
     }
 
     /// The departure pending on this device, null when none. Read it again on every change.
     pub fn departure(&self) -> Option<FfiDeparture> {
-        self.engine.departure().map(|d| FfiDeparture {
+        self.engine().departure().map(|d| FfiDeparture {
             kind: match d.kind {
                 crate::runtime::DepartureKind::Leave => FfiDepartureKind::Leave,
                 crate::runtime::DepartureKind::DeleteSpace => FfiDepartureKind::DeleteSpace,
@@ -1876,7 +1974,7 @@ impl RustTomiCore {
     /// "Erase anyway" (D4) is allowed right now: the relay said "not found" or "too old"
     /// less than 10 minutes ago, in this process. Never after a mere network error.
     pub fn can_erase_without_proof(&self) -> bool {
-        self.engine.can_erase_without_proof()
+        self.engine().can_erase_without_proof()
     }
 
     /// D4: erases everything this device holds **without any call to the relay** (the device
@@ -1886,8 +1984,9 @@ impl RustTomiCore {
     /// `InvalidInput` (not paired, or `can_erase_without_proof()` is false), `Storage`. It
     /// waits for a departure attempt in progress (see the module documentation).
     pub fn erase_without_proof(&self) -> FfiResult<()> {
-        self.engine.erase_without_proof()?;
+        self.engine().erase_without_proof()?;
         self.doorbell_stop.stop();
+        self.hub.settle_demo();
         Ok(())
     }
 
@@ -1895,12 +1994,12 @@ impl RustTomiCore {
 
     /// Sends the whole history (secrets and files included) to `device_id`.
     pub fn start_history_export(&self, device_id: String) -> FfiResult<String> {
-        Ok(self.engine.start_export(&device_id)?)
+        Ok(self.engine().start_export(&device_id)?)
     }
 
     pub fn transfers(&self) -> FfiResult<Vec<FfiTransfer>> {
         Ok(self
-            .engine
+            .engine()
             .transfers()?
             .into_iter()
             .map(|t| FfiTransfer {
@@ -1921,15 +2020,15 @@ impl RustTomiCore {
 
     /// Lets a waiting incoming transfer run (only when `auto_import` is off).
     pub fn accept_import(&self, transfer_id: String) -> FfiResult<()> {
-        Ok(self.engine.accept_import(&transfer_id)?)
+        Ok(self.engine().accept_import(&transfer_id)?)
     }
 
     pub fn decline_import(&self, transfer_id: String) -> FfiResult<()> {
-        Ok(self.engine.decline_import(&transfer_id)?)
+        Ok(self.engine().decline_import(&transfer_id)?)
     }
 
     pub fn cancel_transfer(&self, transfer_id: String) -> FfiResult<()> {
-        Ok(self.engine.cancel_transfer(&transfer_id)?)
+        Ok(self.engine().cancel_transfer(&transfer_id)?)
     }
 
     // --- pairing and space creation ----------------------------------------------------
@@ -1968,12 +2067,12 @@ impl RustTomiCore {
     ) -> FfiResult<()> {
         let token = Zeroizing::new(install_token);
         #[cfg(feature = "demo")]
-        if let Some(world) = self.demo.get() {
+        if let Some(world) = self.demo_world() {
             let _ = relay_url;
             return Ok(world.create_space(&token, &device_name)?);
         }
         Ok(self
-            .engine
+            .engine()
             .create_space_at(&token, &device_name, relay_url.as_deref())?)
     }
 
@@ -1988,9 +2087,9 @@ impl RustTomiCore {
     /// On the demo core a new device of the demo ("Tablette") answers the invitation a moment
     /// later, with the real protocol (`demo::DemoWorld::answer_invitation`).
     pub fn start_invitation(&self) -> FfiResult<Arc<FfiInviteSession>> {
-        let inner = self.engine.start_invitation()?;
+        let inner = self.engine().start_invitation()?;
         #[cfg(feature = "demo")]
-        if let (Some(world), Some(code)) = (self.demo.get(), inner.code()) {
+        if let (Some(world), Some(code)) = (self.demo_world(), inner.code()) {
             if let Err(e) = world.answer_invitation(Zeroizing::new(code)) {
                 // No guest: the channel must not stay open at the relay.
                 inner.cancel();
@@ -1999,7 +2098,7 @@ impl RustTomiCore {
         }
         Ok(Arc::new(FfiInviteSession {
             inner,
-            engine: self.engine.clone(),
+            engine: self.engine(),
         }))
     }
 
@@ -2040,11 +2139,11 @@ impl RustTomiCore {
         // the call ends.
         let input = Zeroizing::new(code_or_link);
         let inner = self
-            .engine
+            .engine()
             .join_space_at(&input, &device_name, relay_url.as_deref())?;
         Ok(Arc::new(FfiJoinSession {
             inner,
-            engine: self.engine.clone(),
+            engine: self.engine(),
         }))
     }
 
@@ -2054,7 +2153,7 @@ impl RustTomiCore {
     /// the device is provisioned, a session opened and a sync run; if not the batch is erased.
     /// A batch that a live [`FfiJoinSession`] owns is left alone.
     pub fn resume_pairing(&self) -> FfiResult<ResumeKind> {
-        Ok(match self.engine.resume_pairing()? {
+        Ok(match self.engine().resume_pairing()? {
             ResumeOutcome::Nothing => ResumeKind::Nothing,
             ResumeOutcome::Provisioned => ResumeKind::Provisioned,
             ResumeOutcome::Discarded => ResumeKind::Discarded,
@@ -2065,14 +2164,14 @@ impl RustTomiCore {
     /// batch of a new device, or the keys of a founder): then call
     /// [`resume_pairing`](Self::resume_pairing).
     pub fn has_pending_pairing(&self) -> FfiResult<bool> {
-        Ok(self.engine.has_pending_pairing()?)
+        Ok(self.engine().has_pending_pairing()?)
     }
 
     /// The history transfer announced to this device at pairing and not received yet, if any
     /// ("History being prepared on PC-Bureau"). Forgotten once the transfer exists as a
     /// task ([`transfers`](Self::transfers)), or when the relay would have dropped it.
     pub fn awaited_history(&self) -> FfiResult<Option<FfiAwaitedHistory>> {
-        Ok(self.engine.awaited_history()?.map(to_awaited))
+        Ok(self.engine().awaited_history()?.map(to_awaited))
     }
 }
 
@@ -2827,6 +2926,44 @@ mod tests {
         assert!(matches!(r, Err(TomiError::Internal { .. })));
     }
 
+    #[cfg(not(feature = "demo"))]
+    #[test]
+    fn a_build_without_the_demo_feature_refuses_enter_demo() {
+        let w = World::new(1, 1);
+        let a = RustTomiCore::with_engine(w.nodes[0].engine.clone());
+        assert!(!a.supports_demo_entry());
+        let dir = tempfile::tempdir().unwrap();
+        let r = a.enter_demo(DemoConfig {
+            files_dir: dir.path().to_string_lossy().into(),
+            assets_dir: None,
+            platform: "ios".into(),
+            app_version: "0.1.0".into(),
+            device_name: "iPhone".into(),
+            start_paired: true,
+        });
+        assert!(matches!(r, Err(TomiError::Internal { .. })));
+        assert!(!a.leave_demo());
+    }
+
+    #[cfg(feature = "demo")]
+    #[test]
+    fn a_core_in_a_space_refuses_the_demo() {
+        let w = World::new(1, 1);
+        let a = RustTomiCore::with_engine(w.nodes[0].engine.clone());
+        assert!(a.supports_demo_entry());
+        let dir = tempfile::tempdir().unwrap();
+        let r = a.enter_demo(DemoConfig {
+            files_dir: dir.path().to_string_lossy().into(),
+            assets_dir: None,
+            platform: "ios".into(),
+            app_version: "0.1.0".into(),
+            device_name: "iPhone".into(),
+            start_paired: true,
+        });
+        assert!(matches!(r, Err(TomiError::InvalidInput { .. })));
+        assert!(!a.is_demo());
+    }
+
     #[cfg(feature = "demo")]
     #[test]
     fn the_demo_core_goes_through_the_binding_layer() {
@@ -2858,7 +2995,10 @@ mod tests {
                 assert_eq!(relay_authority, "relay.example.org");
                 assert_eq!(device.platform, "windows");
                 assert_eq!(verification_code, "482913");
-                assert_eq!(history_item_count, 23);
+                assert_eq!(
+                    history_item_count as usize,
+                    crate::runtime::demo::expected_feed().items
+                );
                 assert!(history_bytes > 0);
                 assert_eq!(member_count, Some(2));
                 assert_eq!(expires_in_ms, 120_000);
@@ -2871,14 +3011,18 @@ mod tests {
         assert_eq!(core.space_state(), SpaceStateKind::Active);
         assert!(core.local_device().unwrap().is_this_device);
         let items = core.items().unwrap();
-        assert_eq!(items.len(), 23);
-        assert_eq!(items.iter().filter(|i| i.archived).count(), 4);
-        assert_eq!(items.iter().filter(|i| i.pinned).count(), 2);
+        let expected = crate::runtime::demo::expected_feed();
+        assert_eq!(items.len(), expected.items);
+        assert_eq!(
+            items.iter().filter(|i| i.archived).count(),
+            expected.archived
+        );
+        assert_eq!(items.iter().filter(|i| i.pinned).count(), expected.pinned);
         assert!(!items.iter().any(|i| i.archived && i.pinned));
 
         core.simulate_incoming(DemoIncomingKind::Secret).unwrap();
         let items = core.items().unwrap();
-        assert_eq!(items.len(), 24);
+        assert_eq!(items.len(), expected.items + 1);
         let secret = &items[0];
         assert!(matches!(
             &secret.content,
@@ -2888,7 +3032,7 @@ mod tests {
         // Reading it once consumes it, like on the real product.
         core.mark_read(secret.id.clone()).unwrap();
         assert!(core.get_item(secret.id.clone()).unwrap().is_none());
-        assert_eq!(core.items().unwrap().len(), 23);
+        assert_eq!(core.items().unwrap().len(), expected.items);
     }
 
     #[test]
@@ -3040,6 +3184,55 @@ mod tests {
         const T0: i64 = 1_793_836_800_000;
         const TOKEN: &str = "h7k2-m9qv-d4xr-8tbn-c3wz-p6fj-a5ye-q2ns";
         const WRAP: [u8; 32] = [9u8; 32];
+
+        #[cfg(feature = "demo")]
+        #[test]
+        fn a_real_core_enters_the_demo_and_comes_back() {
+            let lab = Lab::new();
+            let phone = lab.phone("ios");
+            let core = phone.core.clone();
+            let counter = Arc::new(Counter(AtomicUsize::new(0)));
+            core.set_listener(Some(counter.clone()));
+            assert!(core.supports_demo_entry());
+            assert!(!core.is_demo() && !core.is_paired());
+
+            let demo_dir = tempfile::tempdir().unwrap();
+            let config = || DemoConfig {
+                files_dir: demo_dir.path().to_string_lossy().into(),
+                assets_dir: None,
+                platform: "ios".into(),
+                app_version: "0.1.0".into(),
+                device_name: "iPhone".into(),
+                start_paired: false,
+            };
+            core.enter_demo(config()).unwrap();
+            assert!(core.is_demo() && core.is_paired());
+            assert!(counter.0.load(Ordering::SeqCst) > 0, "the app is told");
+            assert_eq!(
+                core.items().unwrap().len(),
+                crate::runtime::demo::expected_feed().items
+            );
+            assert_eq!(core.devices().unwrap().len(), 3);
+            // The simulated pairing and the demo token are out of reach: already in the space.
+            assert!(core.pair_with_code("7-crayon-lune".into(), None).is_err());
+            assert!(core
+                .create_space(
+                    "2345-6789-abcd-efgh-jkmn-pqrs-tvwx-yz23".into(),
+                    "iPhone".into(),
+                    None
+                )
+                .is_err());
+
+            assert!(core.leave_demo());
+            assert!(!core.is_demo() && !core.is_paired());
+            assert!(core.items().map(|i| i.is_empty()).unwrap_or(true));
+            assert!(!core.leave_demo());
+
+            // "Se déconnecter" inside the demo leaves it too.
+            core.enter_demo(config()).unwrap();
+            assert_eq!(core.leave_space().unwrap(), FfiDepartureOutcome::Erased);
+            assert!(!core.is_demo() && !core.is_paired());
+        }
 
         /// One relay that was just installed, one clock, and the devices that talk to them.
         struct Lab {
@@ -3258,7 +3451,7 @@ mod tests {
             assert_eq!(joined, join.wait_done().unwrap());
             assert_eq!(invited.device_id, joined.device_id);
             assert_eq!(joined.device_id, n.core.local_device().unwrap().id);
-            assert_eq!(joined.space_id, a.core.engine.space_id().unwrap());
+            assert_eq!(joined.space_id, a.core.engine().space_id().unwrap());
             assert_eq!(
                 (invited.name.as_str(), invited.platform.as_str()),
                 ("Pixel", "android")
