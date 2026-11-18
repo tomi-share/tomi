@@ -1610,6 +1610,47 @@ fn p27_the_announced_history_is_exported_with_its_id_and_imported_without_a_ques
     assert_eq!(w.relay.count("ack_item"), 0);
 }
 
+/// The exporter received a file and never opened it (a phone downloads on demand): the file is
+/// still only on the relay. The export fetches it, so the new device gets it instead of an
+/// "unavailable" file that stays so for good.
+#[test]
+fn p27b_a_file_never_opened_on_the_exporter_still_reaches_the_new_device() {
+    let w = World::new();
+    let a = w.founder("PC-Bureau");
+    let b = w.device("android");
+    w.pair(&a, &b, "Pixel", false);
+
+    let file: Vec<u8> = (0..70_000u32).map(|i| (i % 193) as u8).collect();
+    let src = a.dir.path().join("doc.pdf");
+    std::fs::write(&src, &file).unwrap();
+    let mut with_file = draft("avec fichier", false);
+    with_file.attachments.push(DraftAttachment {
+        path: src.to_string_lossy().into_owned(),
+        name: "doc.pdf".into(),
+        mime: "application/pdf".into(),
+        thumbnail: None,
+    });
+    let id = send(&a, with_file);
+    a.engine.sync().unwrap();
+    b.engine.sync().unwrap();
+    // B has the item but not the file: it is only on the relay.
+    let on_b = b.engine.get_item(&id).unwrap().unwrap();
+    assert_eq!(on_b.origin, ItemOrigin::Received);
+
+    let c = w.device("windows");
+    w.pair(&b, &c, "Portable", true);
+    b.engine.sync().unwrap();
+    c.engine.sync().unwrap();
+
+    assert_eq!(c.engine.list_items().unwrap().len(), 1);
+    let path = c
+        .engine
+        .attachment_path(&id, 0)
+        .unwrap()
+        .expect("the file reached the new device");
+    assert_eq!(std::fs::read(path).unwrap(), file);
+}
+
 #[test]
 fn p28_a_no_to_the_history_announces_and_exports_nothing() {
     let w = World::new();

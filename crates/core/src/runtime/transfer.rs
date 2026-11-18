@@ -396,7 +396,6 @@ impl Engine {
         for row in &rows {
             let Some(sealed) = &row.sealed else { continue };
             let item = a.lsk.open_item(sealed, &row.item_id)?;
-            let local_files = self.store.read(|db| db.files(&row.item_id))?;
             // Removed attachments are exported as removed, whatever the scope (spec §8.10.5).
             let removed = self
                 .store
@@ -408,11 +407,11 @@ impl Engine {
                     files.push(None);
                     continue;
                 }
-                let src = local_files
-                    .iter()
-                    .find(|f| f.idx == idx && f.state == FileState::Done)
-                    .and_then(|f| f.path.as_ref().map(|p| (f, self.store.file_path(p))))
-                    .filter(|(_, p)| p.exists());
+                // A file this device never opened is still on the relay: it is fetched now
+                // (the new device must not get it as "unavailable" for good). A network
+                // failure fails this step, which is retried; only a file gone everywhere
+                // is exported as unavailable.
+                let src = self.local_encrypted_copy(row, &item, idx)?;
                 files.push(match src {
                     None => None,
                     Some((file, src)) => {
@@ -420,7 +419,7 @@ impl Engine {
                         let rel = format!("{dir_rel}/{blob_id}");
                         let fin = reencrypt_file(
                             &src,
-                            &local_attachment(att, file),
+                            &local_attachment(att, &file),
                             &self.store.file_path(&rel),
                             &row.item_id,
                             idx,

@@ -3,6 +3,7 @@
 
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 use crate::crypto::{new_blob_id, new_item_id};
 use crate::envelope::seal_item;
@@ -1251,12 +1252,36 @@ impl Engine {
                 }
             }
         }
+        match self.fetch_remote_file(&a, &row, &file, &att, &base_blob)? {
+            Some(rel) => {
+                let path = self.decrypt_to_cache(item_id, index, &att, &self.store.file_path(&rel));
+                self.notify();
+                path.map(|p| self.unless_removed(item_id, index, &base_blob, p))
+            }
+            None => Ok(None),
+        }
+    }
+
+    /// Downloads the encrypted copy of a file that is not on this device yet (`Remote`, or `Done`
+    /// with its copy gone) and records it as `Done`. Returns the relative path of the copy, or
+    /// `None` when the file is not available: purged by the relay (the row becomes `Unavailable`)
+    /// or removed meanwhile (its row stays gone). Network errors are returned, nothing is recorded.
+    fn fetch_remote_file(
+        &self,
+        a: &Arc<Active>,
+        row: &ItemRow,
+        file: &FileRow,
+        att: &Attachment,
+        base_blob: &str,
+    ) -> Result<Option<String>> {
+        let item_id = row.item_id.as_str();
+        let index = file.idx;
         self.ensure_session()?;
-        match self.download_encrypted(item_id, index, &att) {
+        match self.download_encrypted(item_id, index, att) {
             Ok(rel) => {
                 // Erased while downloading: nothing is written into the emptied store.
                 // Removed while downloading: neither is the file, and its row stays gone.
-                let release = self.live_tx(&a, |db| {
+                let release = self.live_tx(a, |db| {
                     if db
                         .attachment_removal(item_id, index)?
                         .is_some_and(|r| r.blob_id == base_blob)
@@ -1283,19 +1308,17 @@ impl Engine {
                 };
                 if release {
                     // Everything wanted is here: the relay may purge (`release`).
-                    self.live_tx(&a, |db| {
+                    self.live_tx(a, |db| {
                         let mut op = NewOp::new(OpKind::Ack);
                         op.item_id = Some(item_id.to_owned());
                         op.flag = true;
                         db.enqueue_op(&op, self.clock.now_ms()).map(|_| ())
                     })?;
                 }
-                let path = self.decrypt_to_cache(item_id, index, &att, &self.store.file_path(&rel));
-                self.notify();
-                path.map(|p| self.unless_removed(item_id, index, &base_blob, p))
+                Ok(Some(rel))
             }
             Err(StepErr::Relay(RelayError::Api(p))) if p.status == 404 => {
-                self.live_tx(&a, |db| {
+                self.live_tx(a, |db| {
                     db.put_file(&FileRow {
                         state: FileState::Unavailable,
                         ..file.clone()
@@ -1307,6 +1330,51 @@ impl Engine {
             Err(StepErr::Relay(e)) => Err(e.into()),
             Err(StepErr::Local(e)) => Err(e),
         }
+    }
+
+    /// The local encrypted copy of a file of an item, for the export of the history: the copy
+    /// on this device, or — when the file was never opened here and is still on the relay — the
+    /// one downloaded now, so that the new device does not get it as "unavailable". `None` when
+    /// the file is not available anywhere. Never decrypts into the cache.
+    pub(crate) fn local_encrypted_copy(
+        &self,
+        row: &ItemRow,
+        item: &Item,
+        idx: u32,
+    ) -> Result<Option<(FileRow, PathBuf)>> {
+        let Some(file) = self
+            .store
+            .read(|db| db.files(&row.item_id))?
+            .into_iter()
+            .find(|f| f.idx == idx)
+        else {
+            return Ok(None);
+        };
+        if file.state == FileState::Unavailable {
+            return Ok(None);
+        }
+        if file.state == FileState::Done {
+            if let Some(p) = &file.path {
+                let path = self.store.file_path(p);
+                if path.exists() {
+                    return Ok(Some((file, path)));
+                }
+            }
+        }
+        let Some(base) = item.attachments.get(idx as usize) else {
+            return Ok(None);
+        };
+        let a = self.active()?;
+        let att = local_attachment(base, &file);
+        let Some(rel) = self.fetch_remote_file(&a, row, &file, &att, &base.blob_id)? else {
+            return Ok(None);
+        };
+        let done = FileRow {
+            state: FileState::Done,
+            path: Some(rel.clone()),
+            ..file
+        };
+        Ok(Some((done, self.store.file_path(&rel))))
     }
 
     /// `Some(path)`, unless the attachment was removed meanwhile (a concurrent removal): the
