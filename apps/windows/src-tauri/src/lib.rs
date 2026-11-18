@@ -140,6 +140,8 @@ pub fn run() {
             commands::active_jobs,
             commands::take_prefill,
             commands::app_info,
+            commands::enter_demo,
+            commands::leave_demo,
             commands::devices,
             commands::rename_device,
             commands::revoke_device,
@@ -234,9 +236,10 @@ fn setup(app: &mut tauri::App) -> SetupResult {
     std::fs::create_dir_all(&staging_dir)?;
     let paths = Arc::new(PathRegistry::new(&staging_dir));
 
-    // The real core, unless this is a debug build started in demo mode (`TOMI_DEMO=1`):
-    // the in-memory stand-in, nothing is encrypted, stored or sent. A release build has
-    // no way into the demo: the stand-in is not even compiled.
+    // The real core, unless this is a debug build started with `TOMI_DEMO=1`: the in-memory
+    // stand-in, nothing is encrypted, stored or sent. A release build does not compile the
+    // stand-in; its way into a demo is the real core's demo space, entered from the pairing
+    // screen (`commands::enter_demo`).
     #[cfg(debug_assertions)]
     let (core, fake): (Arc<dyn TomiCore>, Option<Arc<FakeCore>>) =
         if std::env::var_os("TOMI_DEMO").is_some() {

@@ -34,6 +34,7 @@ env:
 #   android-actions/setup-android    v4.0.4   be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd
 #   gradle/actions/setup-gradle      v6.4.1   8da46b539cd8fe6ab27ca75128919a18d757604c
 #   actions/upload-artifact          v7.0.2   cf430e030ddbb5b0abf93d22962f4752f3646cd9
+#   actions/setup-node               v7.1.0   949feb2413d6458794dcd2491c4babbbce0c15c1
 
 jobs:
   changes:
@@ -44,6 +45,7 @@ jobs:
       rust: ${{ steps.filter.outputs.rust }}
       android: ${{ steps.filter.outputs.android }}
       spec: ${{ steps.filter.outputs.spec }}
+      windows: ${{ steps.filter.outputs.windows }}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
@@ -63,6 +65,7 @@ jobs:
             echo "Full run ($1)"
             echo "rust=true" >> "$GITHUB_OUTPUT"
             echo "spec=true" >> "$GITHUB_OUTPUT"
+            echo "windows=true" >> "$GITHUB_OUTPUT"
             if [ -f apps/android/gradlew ]; then echo "android=true" >> "$GITHUB_OUTPUT"; else echo "android=false" >> "$GITHUB_OUTPUT"; fi
           }
 
@@ -91,6 +94,8 @@ jobs:
           android="$(matches '^(apps/android/|\.github/workflows/ci\.yml$)')"
           # Spec: vectors and the crate that reads them.
           spec="$(matches '^(spec/|crates/core/|Cargo\.(toml|lock)$|\.github/workflows/ci\.yml$)')"
+          # Windows: the Tauri app (its own workspace) and the core it embeds.
+          windows="$(matches '^(apps/windows/|crates/core/|\.github/workflows/ci\.yml$)')"
 
           # No Android project in the repository: nothing to build.
           if [ "$android" = "true" ] && [ ! -f apps/android/gradlew ]; then
@@ -98,8 +103,8 @@ jobs:
             android=false
           fi
 
-          { echo "rust=$rust"; echo "android=$android"; echo "spec=$spec"; } >> "$GITHUB_OUTPUT"
-          echo "rust=$rust android=$android spec=$spec"
+          { echo "rust=$rust"; echo "android=$android"; echo "spec=$spec"; echo "windows=$windows"; } >> "$GITHUB_OUTPUT"
+          echo "rust=$rust android=$android spec=$spec windows=$windows"
 
   rust:
     name: Rust (fmt, clippy, tests)
@@ -176,6 +181,44 @@ jobs:
       - name: Spec vectors
         if: steps.detect.outputs.present == 'true'
         run: cargo test -p tomi-core --test spec_vectors --locked
+
+  # The Windows app (Tauri): front end checked and built (the Rust build embeds it), then the
+  # app's Rust tests. Separate workspace (its own Cargo.lock). No clippy here. Counts double.
+  windows-app:
+    name: Windows (Tauri app, check + tests)
+    needs: changes
+    if: needs.changes.outputs.windows == 'true'
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          workspaces: apps/windows/src-tauri
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/windows/package-lock.json
+      # One step per command: under PowerShell, a command failing in the middle of a block
+      # does not stop the block.
+      - name: Front-end dependencies
+        working-directory: apps/windows
+        run: npm ci
+      - name: Front-end check (svelte-check)
+        working-directory: apps/windows
+        run: npm run check
+      - name: Front-end build
+        working-directory: apps/windows
+        run: npm run build
+      - name: App Rust tests
+        working-directory: apps/windows/src-tauri
+        run: cargo test --locked
 
   android:
     name: Android (assembleDebug, unit tests, lint)

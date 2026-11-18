@@ -234,6 +234,9 @@ export const fr = {
     loading: "Chargement du fichier…",
   },  status: {
     notPaired: "Ce PC n'est pas encore appairé à ton espace Tomi. Tu pourras envoyer et recevoir dès qu'il le sera.",
+    // The demo space is the active space (same sentences as iOS and Android).
+    demo: "Mode démo : données fictives, rien n'est envoyé.",
+    demoLeave: "Quitter la démo",
     revoked: "Ce PC a été retiré de ton espace. Rien ne peut plus y être envoyé ni lu.",
     updateRequired: "Ton espace utilise une version de Tomi plus récente que celle-ci. Mets Tomi à jour pour continuer.",
     blocked: "Ton espace est bloqué pour le moment. Réessaie plus tard.",
@@ -395,6 +398,8 @@ export const fr = {
     resumedDiscarded:
       "L'appairage interrompu n'a pas abouti : l'autre appareil n'avait pas encore ajouté ce PC. Recommence avec un nouveau code.",
     ok: "OK",
+    // The demo space of the core (same sentences as iOS and Android).
+    demoEnter: "Essayer avec des données de démonstration",
 
     // First device
     createTitle: "Créer ton espace",

@@ -185,7 +185,11 @@ pub async fn cleanup_with(
 /// at the next launch. Called when the pairing ends and at every start-up (a PC paired before
 /// this setting existed learns it then). Idempotent; writes the file only when it changes.
 pub fn remember_membership(state: &AppState) {
-    if state.core.status().paired && !state.settings_snapshot().belonged_to_space {
+    // The demo space is no membership: after a crash in the demo, nothing is left to clean.
+    if state.core.status().paired
+        && !state.core.is_demo()
+        && !state.settings_snapshot().belonged_to_space
+    {
         let _ = state.update_settings(|s| s.belonged_to_space = true);
     }
 }

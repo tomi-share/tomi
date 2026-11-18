@@ -213,7 +213,7 @@ Golden rule 3 in `AGENTS.md`; exact list of protected screens: see the iOS notes
 
 | Feature | Core | Relay | CLI | Android | iOS | Windows | Notes / gaps |
 |---|---|---|---|---|---|---|---|
-| Demo mode | ✅ `demo` feature (not on by default), `runtime/demo.rs` | ➖ | ➖ | ❌ removed: `FakeTomiCore` only in `src/test` | ✅ Debug only (`TOMI_DEMO`), Rust core `demo` (23 items) | 🟡 Debug only, `TOMI_DEMO=1`, **separate fake core** (`fake_core.rs`) | Three mechanisms. iOS: `build-core.sh` builds `demo` by default; only `--no-demo` removes it (no safeguard): required for TestFlight. |
+| Demo mode | ✅ `demo` feature (not on by default), `runtime/demo.rs` | ➖ | ➖ | ❌ removed: `FakeTomiCore` only in `src/test` | ✅ Debug only (`TOMI_DEMO`), Rust core `demo` (23 items) | ✅ every build (release included): discreet « Essayer avec des données de démonstration » button under the join screen (`PairingPanel.svelte`), banner « Mode démo : données fictives, rien n'est envoyé. » + « Quitter la démo » (`StatusBanner.svelte`, feed only); `tomi-core` with the `demo` feature, unified core in `real_core.rs`; pairing refused and « Ajouter un appareil » hidden in the demo; leaving = the same way back to the welcome screen as « Se déconnecter » (`finish_erasure`); no embedded files (placeholder images); Debug: the old `TOMI_DEMO=1` fake core (`fake_core.rs`) remains | Three mechanisms. iOS: `build-core.sh` builds `demo` by default; only `--no-demo` removes it (no safeguard): required for TestFlight. Windows: same entry and same sentences as iOS and Android (`fr.ts`); no invitation from the demo; not tried on a PC. |
 
 ---
 
@@ -259,7 +259,7 @@ Charter: `design/tomi/tokens.json` (reference) and `design/tomi/brand-guidelines
 
 | Feature | Core | Relay | CLI | Android | iOS | Windows | Notes / gaps |
 |---|---|---|---|---|---|---|---|
-| GitHub CI (`ci.yml`) | ✅ `rust` (fmt, clippy, tests, demo mode) + `core-windows` + `spec` | ✅ via `rust` | ✅ built by `core-windows` | ✅ `android` job (assembleDebug, tests, lint) | ❌ no job (it would need a macOS runner) | ❌ neither a Tauri build nor `npm run check` nor `cargo test` for `apps/windows` | The Windows workspace is excluded from the root workspace. |
+| GitHub CI (`ci.yml`) | ✅ `rust` (fmt, clippy, tests, demo mode) + `core-windows` + `spec` | ✅ via `rust` | ✅ built by `core-windows` | ✅ `android` job (assembleDebug, tests, lint) | ❌ no job (it would need a macOS runner) | ✅ `windows-app` job (`windows-latest`: `npm ci`, `npm run check`, `npm run build`, `cargo test --locked` in `apps/windows/src-tauri`), no clippy, no bundle | The Windows workspace is excluded from the root workspace. The `windows-app` job runs on `apps/windows/`, `crates/core/` and `ci.yml`; it counts double. |
 | Relay binary / release | ➖ | ✅ `release-relay.yml` (Linux musl + Windows `.exe`, SHA-256, Forge deployment if configured) | ➖ | ➖ | ➖ | ➖ | On `relay-v*`. |
 | Android release (APK) | ➖ | ➖ | ➖ | 🟡 **manual**: `gh release upload android-dev`; debug APK; R8 disabled; no release signing | ➖ | ➖ | Asset name to align (`app-debug.apk` / `tomi-debug.apk`). No workflow produces the APK. |
 | Windows release (installer) | ➖ | ➖ | ➖ | ➖ | ➖ | 🟡 unsigned NSIS (`Tomi_0.1.0_x64-setup.exe`), `windows-preview` release **manual** | SmartScreen may warn. No workflow produces it. |
@@ -303,7 +303,7 @@ Items marked ✅ in the code that have not yet been run on a physical device:
 16. **Android: OFL font licences missing**, R8 / minify disabled, no release signing, Markdown rendering hardening still needed before a public release.
 17. **Android: unconditional background clipboard clearing** (it may overwrite a more recent copy); background purge of the plaintext copy to verify.
 18. **`device_set_mismatch` alert** not exposed by the core (silent failure in all three apps).
-19. **Release and CI**: Android and Windows (APK / installer) are delivered by hand, without a reproducible workflow; no CI for `apps/windows` (`cargo test`, `npm run check`); no artifact signing (relay included).
+19. **Release and CI**: Android and Windows (APK / installer) are delivered by hand, without a reproducible workflow; CI of `apps/windows` limited to `npm run check`, the front-end build and `cargo test` (`windows-app` job, no clippy, no installer); no artifact signing (relay included).
 20. **Windows: no updater** (`createUpdaterArtifacts: false`).
 21. **Windows: texts written by hand** (`fr.ts`) instead of derived from `strings.xml` (drift possible).
 22. **Theme**: no manual Light / Dark setting on Android and iOS (Windows has one).

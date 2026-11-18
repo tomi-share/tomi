@@ -146,6 +146,20 @@
     await Promise.all([pairing.refreshOptions(), feed.refreshStatus()]);
   }
 
+  /** "Essayer avec des données de démonstration": the core enters its demo space (a few seconds). */
+  async function enterDemo() {
+    failure = null;
+    busy = true;
+    try {
+      await api.enterDemo();
+    } catch (e) {
+      failure = asAppError(e);
+    } finally {
+      busy = false;
+    }
+    await Promise.all([pairing.refreshOptions(), feed.refreshStatus()]);
+  }
+
   /** The codes are the same. `true` once the decision is taken. */
   async function confirm(importHistory: boolean): Promise<boolean> {
     try {
@@ -209,12 +223,15 @@
   {:else if options === null}
     <p class="muted">{fr.common.loading}</p>
   {:else if options.paired}
-    <div class="row">
-      <button class="primary" disabled={busy} onclick={invite}>
-        {busy ? fr.pairing.preparing : fr.pairing.addDevice}
-      </button>
-    </div>
-    {#if failure}<p class="error" role="alert">{errorMessage(failure)}</p>{/if}
+    <!-- Inviting a device into the demo space is not offered. -->
+    {#if !feed.demo}
+      <div class="row">
+        <button class="primary" disabled={busy} onclick={invite}>
+          {busy ? fr.pairing.preparing : fr.pairing.addDevice}
+        </button>
+      </div>
+      {#if failure}<p class="error" role="alert">{errorMessage(failure)}</p>{/if}
+    {/if}
   {:else}
     <div class="card">
       {#if options.pending}<p class="muted">{fr.pairing.pending}</p>{/if}
@@ -254,6 +271,9 @@
           <span class="muted small">{fr.pairing.createHint}</span>
           <button disabled={busy} onclick={() => goTo("create")}>{fr.pairing.create}</button>
         </div>
+        {#if feed.canEnterDemo}
+          <button class="ghost" disabled={busy} onclick={enterDemo}>{fr.pairing.demoEnter}</button>
+        {/if}
       {/if}
     </div>
   {/if}

@@ -570,6 +570,11 @@ pub struct AppInfo {
     pub shortcut_registered: bool,
     pub unread: usize,
     pub download_dir: Option<String>,
+    /// The demo space of the real core is the active space ("Quitter la démo" is offered). Not
+    /// `demo`, which is the stand-in core of `TOMI_DEMO=1`.
+    pub demo_entered: bool,
+    /// The pairing screen may offer to enter the demo space.
+    pub can_enter_demo: bool,
 }
 
 #[tauri::command]
@@ -598,8 +603,30 @@ pub async fn app_info(app: AppHandle, state: State<'_, AppState>) -> AppResult<A
         download_dir: actions::download_dir(&app)
             .ok()
             .map(|p| p.to_string_lossy().into_owned()),
+        demo_entered: state.core.is_demo(),
+        can_enter_demo: state.core.can_enter_demo(),
         settings,
     })
+}
+
+/// "Essayer avec des données de démonstration": enters the demo space of the real core (fictitious
+/// data, nothing is sent), then shows its feed.
+#[tauri::command]
+pub async fn enter_demo(app: AppHandle, state: State<'_, AppState>) -> AppResult<()> {
+    state.core.enter_demo().await?;
+    popover::open_history(&app, Some("history"));
+    Ok(())
+}
+
+/// "Quitter la démo": the demo space is dropped with its files, then the same way back as after
+/// "Se déconnecter" (the welcome screen).
+#[tauri::command]
+pub async fn leave_demo(app: AppHandle, state: State<'_, AppState>) -> AppResult<()> {
+    if state.core.leave_demo().await {
+        crate::departure_host::finish_erasure(&app, crate::departure_host::Cleanup::AfterErasure)
+            .await;
+    }
+    Ok(())
 }
 
 #[tauri::command]

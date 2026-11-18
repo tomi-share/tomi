@@ -44,6 +44,10 @@ class Feed {
   focusId = $state<string | null>(null);
   /** Paired or not, blocked or not, store usable or not. `null` until the first answer. */
   status = $state<CoreStatus | null>(null);
+  /** The demo space of the core is the active space. */
+  demo = $state(false);
+  /** The pairing screen may offer to enter the demo space. */
+  canEnterDemo = $state(false);
   /**
    * Items the core has already erased (read once) whose values are still on screen: the
    * card stays until the user masks it again, like the Android feed.
@@ -241,6 +245,8 @@ class Feed {
       const info = await api.appInfo();
       const wasPaired = this.status?.paired === true;
       this.status = info.status;
+      this.demo = info.demoEntered;
+      this.canEnterDemo = info.canEnterDemo;
       if (wasPaired && !info.status.paired) this.#forgetEverything();
       this.preferredMode = info.settings.renderMode;
     } catch {
