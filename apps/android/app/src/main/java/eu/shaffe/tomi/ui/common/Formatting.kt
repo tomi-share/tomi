@@ -1,6 +1,7 @@
 package eu.shaffe.tomi.ui.common
 
 import android.content.Context
+import android.text.format.DateFormat
 import android.text.format.Formatter
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -24,7 +25,14 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
 
-private val FRENCH: Locale = Locale.FRANCE
+/**
+ * A date formatter for the language of the device, from a skeleton ("dMMM": day and short month, in the order and
+ * with the punctuation that language wants).
+ */
+private fun localized(skeleton: String): DateTimeFormatter {
+    val locale = Locale.getDefault()
+    return DateTimeFormatter.ofPattern(DateFormat.getBestDateTimePattern(locale, skeleton), locale)
+}
 
 /** Compact timestamp: time today, "yesterday", otherwise the short date. */
 fun formatTimestamp(context: Context, instant: Instant, now: Instant = Instant.now()): String {
@@ -32,19 +40,19 @@ fun formatTimestamp(context: Context, instant: Instant, now: Instant = Instant.n
     val date = instant.atZone(zone).toLocalDate()
     val today = now.atZone(zone).toLocalDate()
     return when {
-        date == today -> DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(FRENCH).format(instant.atZone(zone))
+        date == today -> DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(Locale.getDefault()).format(instant.atZone(zone))
         date == today.minusDays(1) -> context.getString(R.string.time_yesterday)
-        else -> DateTimeFormatter.ofPattern("d MMM", FRENCH).format(instant.atZone(zone))
+        else -> localized("dMMM").format(instant.atZone(zone))
     }
 }
 
-/** Full date and time for the detail screen, e.g. "mer. 5 nov. 13:47". */
+/** Full date and time for the detail screen, e.g. "Wed, Nov 5, 13:47" (in the language of the device). */
 fun formatDateTime(instant: Instant): String =
-    DateTimeFormatter.ofPattern("EEE d MMM HH:mm", FRENCH).format(instant.atZone(ZoneId.systemDefault()))
+    localized("EEEdMMMHHmm").format(instant.atZone(ZoneId.systemDefault()))
 
-/** Exact send date for the detail screen, with seconds, e.g. "5 novembre 2026 à 13:47:09". */
+/** Exact send date for the detail screen, with seconds, e.g. "November 5, 2026 at 13:47:09". */
 fun formatPreciseDateTime(instant: Instant): String =
-    DateTimeFormatter.ofPattern("d MMMM yyyy 'à' HH:mm:ss", FRENCH).format(instant.atZone(ZoneId.systemDefault()))
+    localized("dMMMMyyyyHHmmss").format(instant.atZone(ZoneId.systemDefault()))
 
 fun formatFileSize(context: Context, bytes: Long): String = Formatter.formatShortFileSize(context, bytes)
 

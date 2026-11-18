@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The languages of the app, offered in the per-app language setting of Android. English (res/values) is the
+     fallback. Add a line here with each new res/values-<lang>/strings.xml (docs/LOCALIZATION.md). -->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="en" />
+    <locale android:name="fr" />
+</locale-config>
