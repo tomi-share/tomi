@@ -58,8 +58,9 @@ drag = "2"
 
 [target.'cfg(windows)'.dependencies]
 # DPAPI (CryptProtectData / CryptUnprotectData) seals the wrapping key of the local database
-# for the current Windows user. Already in the dependency tree through Tauri.
-windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Security_Cryptography"] }
+# for the current Windows user; the display languages of the user for the strings of the Rust side
+# (strings/mod.rs). Already in the dependency tree through Tauri.
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Globalization", "Win32_Security_Cryptography"] }
 clipboard-win = "5"
 mslnk = "0.1"
 winreg = "0.56"

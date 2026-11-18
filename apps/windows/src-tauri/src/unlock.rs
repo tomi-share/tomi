@@ -124,12 +124,12 @@ impl Drop for PromptGuard {
     }
 }
 
-/// Windows Hello for hidden content (`strings::HELLO_REVEAL`), through the gate of the app.
+/// Windows Hello for hidden content (`strings::hello_reveal()`), through the gate of the app.
 pub async fn unlock(app: &AppHandle, owner: Option<isize>) -> AppResult<()> {
     let state = app.state::<AppState>();
     state
         .secret_gate
-        .require(owner, crate::strings::HELLO_REVEAL, || {
+        .require(owner, crate::strings::hello_reveal(), || {
             PromptGuard::open(app)
         })
         .await
@@ -139,7 +139,7 @@ pub async fn unlock(app: &AppHandle, owner: Option<isize>) -> AppResult<()> {
 pub async fn confirm_revoke(app: &AppHandle, owner: Option<isize>) -> AppResult<()> {
     let state = app.state::<AppState>();
     let _prompt = PromptGuard::open(app);
-    strong_auth::require(&state.auth, owner, crate::strings::HELLO_REVOKE).await
+    strong_auth::require(&state.auth, owner, crate::strings::hello_revoke()).await
 }
 
 /// Windows Hello before a new device is added to the space (it receives the space key and, if it
@@ -147,7 +147,7 @@ pub async fn confirm_revoke(app: &AppHandle, owner: Option<isize>) -> AppResult<
 pub async fn confirm_add_device(app: &AppHandle, owner: Option<isize>) -> AppResult<()> {
     let state = app.state::<AppState>();
     let _prompt = PromptGuard::open(app);
-    strong_auth::require(&state.auth, owner, crate::strings::HELLO_ADD_DEVICE).await
+    strong_auth::require(&state.auth, owner, crate::strings::hello_add_device()).await
 }
 
 #[cfg(test)]
