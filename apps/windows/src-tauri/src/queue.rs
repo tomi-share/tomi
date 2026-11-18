@@ -446,6 +446,17 @@ mod tests {
         ) -> Result<std::path::PathBuf, CoreError> {
             self.inner.attachment_path(id, slot).await
         }
+        async fn delete_attachment(
+            &self,
+            id: &str,
+            slot: usize,
+            everywhere: bool,
+        ) -> Result<crate::model::AttachmentRemoval, CoreError> {
+            self.inner.delete_attachment(id, slot, everywhere).await
+        }
+        async fn supports_attachment_removal(&self) -> bool {
+            self.inner.supports_attachment_removal().await
+        }
         async fn transfers(&self) -> Result<Vec<crate::model::Transfer>, CoreError> {
             self.inner.transfers().await
         }

@@ -463,6 +463,23 @@ pub trait TomiCore: Send + Sync {
     /// differ once a file was removed from the item.
     async fn attachment_path(&self, id: &str, slot: usize) -> Result<PathBuf, CoreError>;
 
+    /// Removes ONE attachment of an item (`slot` is `Attachment::slot`, never the position),
+    /// from this PC only or `everywhere` (signed declaration to the relay and the devices). The
+    /// others stay; when nothing else is left in the item (no file, no text, no URL) the whole item
+    /// is deleted with the same scope: `ItemDeleted`. Idempotent: an unknown or already removed
+    /// slot does nothing. Refused (`Rejected`) while the item is still in the outbox, for both
+    /// scopes. No biometry, like deleting an item.
+    async fn delete_attachment(
+        &self,
+        id: &str,
+        slot: usize,
+        everywhere: bool,
+    ) -> Result<crate::model::AttachmentRemoval, CoreError>;
+
+    /// Whether the relay takes the removal "everywhere" (capability heard at the last session).
+    /// `false` until a session has told: the UI then offers "de cet appareil" only.
+    async fn supports_attachment_removal(&self) -> bool;
+
     // ---- history transfer (decision D2: everything, one yes or no) ----
 
     async fn transfers(&self) -> Result<Vec<Transfer>, CoreError>;

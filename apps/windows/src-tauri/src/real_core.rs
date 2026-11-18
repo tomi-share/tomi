@@ -49,9 +49,9 @@ use crate::core_api::{
 use crate::files;
 use crate::inactivity::{inactive_days, INACTIVE_AFTER_DAYS, LAST_SEEN_IS_FROM_RELAY};
 use crate::model::{
-    now_ms, Attachment, Delivery, DeliveryState, Device, DeviceRef, DeviceState, Item, ItemDraft,
-    ReadPolicy, SourceFormat, TextBody, Transfer, TransferDirection, TransferPhase,
-    UnreadableReason,
+    now_ms, Attachment, AttachmentRemoval, Delivery, DeliveryState, Device, DeviceRef, DeviceState,
+    Item, ItemDraft, ReadPolicy, SourceFormat, TextBody, Transfer, TransferDirection,
+    TransferPhase, UnreadableReason,
 };
 use crate::pairing::{default_device_name, EnginePairing, Hooks, PairingHost, Timing};
 use crate::wrapkey;
@@ -661,6 +661,14 @@ impl RealCore {
     }
 
     // ------------------------------------------------------------ decrypted copies
+
+    /// The named decrypted copy of ONE attachment of an item (`{item_id}_{slot}`), once it was removed.
+    fn remove_open_copy(&self, item_id: &str, slot: u32) {
+        if !is_plain_id(item_id) {
+            return;
+        }
+        let _ = std::fs::remove_dir_all(self.open_dir.join(format!("{item_id}_{slot}")));
+    }
 
     fn remove_open_copies(&self, item_id: &str) {
         if !is_plain_id(item_id) {
@@ -1333,6 +1341,40 @@ impl TomiCore for RealCore {
         self.remove_open_copies(id);
         self.flush_outbox();
         Ok(())
+    }
+
+    async fn delete_attachment(
+        &self,
+        id: &str,
+        slot: usize,
+        everywhere: bool,
+    ) -> Result<AttachmentRemoval, CoreError> {
+        // A slot that does not fit the core's index never matches an attachment: nothing to do.
+        let Ok(index) = u32::try_from(slot) else {
+            return Ok(AttachmentRemoval::AttachmentRemoved);
+        };
+        let wanted = id.to_string();
+        let done = self
+            .call(move |e| e.delete_attachment(&wanted, index, everywhere))
+            .await?;
+        match done {
+            runtime::AttachmentRemoval::AttachmentRemoved => {
+                self.remove_open_copy(id, index);
+                self.flush_outbox();
+                Ok(AttachmentRemoval::AttachmentRemoved)
+            }
+            runtime::AttachmentRemoval::ItemDeleted => {
+                self.remove_open_copies(id);
+                self.flush_outbox();
+                Ok(AttachmentRemoval::ItemDeleted)
+            }
+        }
+    }
+
+    async fn supports_attachment_removal(&self) -> bool {
+        self.call(|e| Ok(e.supports_attachment_removal()))
+            .await
+            .unwrap_or(false)
     }
 
     async fn mark_read(&self, id: &str) -> Result<(), CoreError> {

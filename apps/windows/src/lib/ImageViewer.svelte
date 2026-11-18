@@ -1,9 +1,13 @@
 <script lang="ts">
-  import { api, asAppError } from "./api";
+  import { untrack } from "svelte";
+  import { api, asAppError, type ItemView } from "./api";
+  import Dialog from "./Dialog.svelte";
   import { feed } from "./feed.svelte";
   import { errorMessage, format, fr } from "./i18n/fr";
   import Icon from "./Icon.svelte";
-  import { isImage } from "./itemLogic";
+  import { removeAttachment } from "./itemActions";
+  import { canRemoveAttachment, isImage } from "./itemLogic";
+  import Menu, { type MenuEntry } from "./Menu.svelte";
 
   /**
    * The internal image viewer (Android's ImageViewerScreen): full window, zoom with the wheel
@@ -15,13 +19,19 @@
   const MIN = 1;
   const MAX = 8;
 
+  /** An image of the item, by SLOT: its position in the list changes once a file is removed. */
   interface Entry {
-    index: number;
+    slot: number;
     name: string;
   }
 
   const target = $derived(feed.viewer);
   let entries = $state<Entry[]>([]);
+  /** The item as last read: tells whether a file may be removed (not while it is still queued). */
+  let item = $state<ItemView | null>(null);
+  /** Slot of the image whose "partout" removal waits for its confirmation (fixed when chosen). */
+  let confirmSlot = $state<number | null>(null);
+  let removing = false;
   let position = $state(0);
   let src = $state<string | null>(null);
   let name = $state("");
@@ -34,21 +44,63 @@
   let stage: HTMLElement | undefined = $state();
   let drag: { x: number; y: number; tx: number; ty: number } | null = null;
 
-  async function open(itemId: string, attachmentIndex: number) {
+  function imagesOf(view: ItemView): Entry[] {
+    return view.attachments
+      .filter((a) => isImage(a) && a.available)
+      .map((a) => ({ slot: a.slot, name: a.name }));
+  }
+
+  async function open(itemId: string, slot: number) {
     status = "loading";
     try {
       const view = await api.itemView(itemId);
-      entries = view.attachments
-        .map((a, index) => ({ a, index }))
-        .filter(({ a }) => isImage(a) && a.available)
-        .map(({ a, index }) => ({ index, name: a.name }));
+      item = view;
+      entries = imagesOf(view);
       if (entries.length === 0) throw { code: "error.nothing_to_open", params: {} };
-      position = Math.max(0, entries.findIndex((e) => e.index === attachmentIndex));
+      position = Math.max(0, entries.findIndex((e) => e.slot === slot));
       await load(itemId);
     } catch (e) {
       fail(e);
     }
   }
+
+  /**
+   * The item changed (a removal here, or received from another device): the list of images is read
+   * again. The image on screen stays when it is still there; otherwise the next one takes its place
+   * (the last one, when it was the last); no image left or the item gone: the viewer closes.
+   */
+  async function resync(itemId: string) {
+    let view: ItemView;
+    try {
+      view = await api.itemView(itemId);
+    } catch (e) {
+      if (asAppError(e).code === "error.not_found") close();
+      return;
+    }
+    if (feed.viewer?.itemId !== itemId) return;
+    item = view;
+    const list = imagesOf(view);
+    if (list.length === 0) return close();
+    const shown = entries[position]?.slot;
+    const at = list.findIndex((e) => e.slot === shown);
+    const was = position;
+    entries = list;
+    if (at >= 0) {
+      position = at;
+      return;
+    }
+    position = Math.min(was, list.length - 1);
+    await load(itemId);
+  }
+
+  // The feed follows the core's events: an item changed elsewhere reaches the viewer through it.
+  $effect(() => {
+    void feed.items;
+    untrack(() => {
+      const t = target;
+      if (t && entries.length > 0 && !removing) void resync(t.itemId);
+    });
+  });
 
   async function load(itemId: string) {
     status = "loading";
@@ -57,7 +109,7 @@
     const entry = entries[position];
     name = entry.name;
     try {
-      const img = await api.readImage(itemId, entry.index);
+      const img = await api.readImage(itemId, entry.slot);
       src = img.dataUrl;
       status = "ready";
     } catch (e) {
@@ -74,7 +126,7 @@
   $effect(() => {
     const t = target;
     if (!t) return;
-    void open(t.itemId, t.index);
+    void open(t.itemId, t.slot);
   });
 
   async function go(delta: number) {
@@ -124,6 +176,50 @@
 
   function close() {
     feed.viewer = null;
+    confirmSlot = null;
+  }
+
+  // ---- removal of the image on screen (the item stays; the core deletes it when nothing is left)
+
+  const canDelete = $derived(item !== null && canRemoveAttachment(item) && entries.length > 0);
+
+  const deleteEntries = $derived.by((): MenuEntry[] => {
+    const list: MenuEntry[] = [
+      {
+        label: fr.viewer.deleteLocal,
+        icon: "delete",
+        onselect: () => void removeSlot(entries[position]?.slot, false),
+      },
+    ];
+    // "Partout" only when the relay can carry it; a confirmation first.
+    if (feed.removalEverywhere) {
+      list.push({
+        label: fr.viewer.deleteEverywhere,
+        icon: "delete_forever",
+        danger: true,
+        onselect: () => (confirmSlot = entries[position]?.slot ?? null),
+      });
+    }
+    return list;
+  });
+
+  async function removeSlot(slot: number | undefined, everywhere: boolean) {
+    if (slot === undefined || !item || removing) return;
+    const current = item;
+    removing = true;
+    try {
+      const removal = await removeAttachment(current, slot, everywhere, true);
+      if (removal === "itemDeleted") close();
+      else if (removal) await resync(current.id);
+    } finally {
+      removing = false;
+    }
+  }
+
+  function confirmEverywhere() {
+    const slot = confirmSlot;
+    confirmSlot = null;
+    void removeSlot(slot ?? undefined, true);
   }
 
   async function save() {
@@ -204,6 +300,9 @@
     <button class="ghost icon" type="button" title={fr.card.save} aria-label={fr.card.save} onclick={save}>
       <Icon name="download" size={24} />
     </button>
+    {#if canDelete}
+      <Menu entries={deleteEntries} label={fr.viewer.delete} icon="delete" />
+    {/if}
   </header>
 
   <div
@@ -233,6 +332,16 @@
 
   <footer class="hint small">{fr.viewer.hint}</footer>
 </div>
+
+{#if confirmSlot !== null && item}
+  <Dialog
+    title={fr.viewer.deleteTitle}
+    message={item.secret ? fr.viewer.deleteSecretMessage : fr.viewer.deleteMessage}
+    confirmLabel={fr.viewer.deleteEverywhere}
+    onconfirm={confirmEverywhere}
+    oncancel={() => (confirmSlot = null)}
+  />
+{/if}
 
 <style>
   /* The ground of the viewer is dark in both themes (the dark tokens of the charter). */

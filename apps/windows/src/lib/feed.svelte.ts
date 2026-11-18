@@ -56,10 +56,12 @@ class Feed {
   /** The item of the detail screen, if one is open. */
   detailId = $state<string | null>(null);
   detail = $state<ItemView | null>(null);
-  /** The image viewer: one image of an item. */
-  viewer = $state<{ itemId: string; index: number } | null>(null);
-  /** The code screen: one code file of an item. */
-  code = $state<{ itemId: string; index: number } | null>(null);
+  /** The image viewer: one image of an item, by SLOT (never by position in the list). */
+  viewer = $state<{ itemId: string; slot: number } | null>(null);
+  /** The code screen: one code file of an item, by slot. */
+  code = $state<{ itemId: string; slot: number } | null>(null);
+  /** The relay takes "remove a file everywhere" (otherwise only "de cet appareil" is offered). */
+  removalEverywhere = $state(false);
   /** A screen, a viewer or a dialog covers the window: Escape closes that, not the popover. */
   overlays = $state(0);
   /** Dialogs drawn outside the main tree (the departure): the window behind them is inert. */
@@ -173,12 +175,22 @@ class Feed {
     }
   }
 
-  openImage(itemId: string, index: number): void {
-    this.viewer = { itemId, index };
+  openImage(itemId: string, slot: number): void {
+    this.viewer = { itemId, slot };
+    void this.refreshRemovalSupport();
   }
 
-  openCode(itemId: string, index: number): void {
-    this.code = { itemId, index };
+  openCode(itemId: string, slot: number): void {
+    this.code = { itemId, slot };
+  }
+
+  /** Re-reads what the relay can do (a field of the core, not the network). Called when a screen offering the removal opens. */
+  async refreshRemovalSupport(): Promise<void> {
+    try {
+      this.removalEverywhere = await api.attachmentRemovalEverywhere();
+    } catch {
+      this.removalEverywhere = false;
+    }
   }
 
   /**

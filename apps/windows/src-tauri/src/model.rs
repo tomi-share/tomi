@@ -176,13 +176,43 @@ pub struct Item {
     pub archived_at: Option<i64>,
 }
 
+/// What `delete_attachment` did. Sent to the page, which words the confirmation.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum AttachmentRemoval {
+    /// The attachment is gone (or already was: the call is idempotent); the item stays.
+    AttachmentRemoved,
+    /// It was the last thing in the item: the whole item was deleted instead, same scope.
+    ItemDeleted,
+}
+
 impl Item {
+    /// True while every delivery of the item is still queued (it has not left this PC): the core
+    /// refuses to remove an attachment then, so the UI offers no removal for those few seconds.
+    pub fn is_queued(&self) -> bool {
+        !self.delivery.is_empty()
+            && self
+                .delivery
+                .iter()
+                .all(|d| d.state == DeliveryState::Queued)
+    }
+
     /// Slot of the attachment at `position` in the list (what the core is asked for), `None`
     /// when there is no such attachment. Without a removal the slot is the position.
     pub fn attachment_slot(&self, position: usize) -> Option<usize> {
         self.attachments
             .get(position)
             .map(|a| a.slot.map_or(position, |s| s as usize))
+    }
+
+    /// The attachment whose slot is `slot` (what the UI sends: a removal received from another
+    /// device never makes it aim at another file), with its position in the list. `None` when
+    /// it is not (or no longer) in the item.
+    pub fn attachment_by_slot(&self, slot: usize) -> Option<(usize, &Attachment)> {
+        self.attachments
+            .iter()
+            .enumerate()
+            .find(|(position, a)| a.slot.map_or(*position, |s| s as usize) == slot)
     }
 
     /// Whether the UI treats the item as archived (`FeedFiltering.kt`, `isShownAsArchived`).
@@ -395,6 +425,12 @@ mod tests {
         assert_eq!(i.attachment_slot(0), Some(1));
         assert_eq!(i.attachment_slot(1), Some(3));
         assert_eq!(i.attachment_slot(2), None);
+        // By slot: slot 3 is the SECOND file of the list, slot 0 (removed) is nobody.
+        assert_eq!(
+            i.attachment_by_slot(3).map(|(position, _)| position),
+            Some(1)
+        );
+        assert!(i.attachment_by_slot(0).is_none());
         // Without a slot (draft, fake core) the position is the slot.
         i.attachments = vec![file(None), file(None)];
         assert_eq!(i.attachment_slot(1), Some(1));

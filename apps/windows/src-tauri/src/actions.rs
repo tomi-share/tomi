@@ -11,7 +11,7 @@ use crate::clip_clears::PendingClear;
 use crate::detect::{self, ContentKind};
 use crate::error::{AppError, AppResult};
 use crate::files;
-use crate::model::{Item, ReadPolicy};
+use crate::model::{AttachmentRemoval, Item, ReadPolicy};
 use crate::render::{self, RenderMode};
 use crate::state::AppState;
 use crate::view::{self, item_kind};
@@ -71,15 +71,15 @@ pub async fn attachment_paths(app: &AppHandle, item: &Item) -> AppResult<Vec<Pat
 }
 
 /// Local path of ONE file of an item (the others are not fetched), with the same
-/// Mark-of-the-Web rule as [`attachment_paths`]. `position` is its place in `item.attachments`;
-/// the core is asked for its slot.
-pub async fn attachment_path_at(
+/// Mark-of-the-Web rule as [`attachment_paths`]. `slot` is `Attachment::slot` (what the page
+/// sends, never a position: a removal received while a viewer is open must not make it aim at
+/// another file); a file that is no longer in the item is `nothing_to_open`.
+pub async fn attachment_path_of_slot(
     app: &AppHandle,
     item: &Item,
-    position: usize,
+    slot: usize,
 ) -> AppResult<PathBuf> {
-    let slot = item
-        .attachment_slot(position)
+    item.attachment_by_slot(slot)
         .ok_or_else(|| AppError::new("error.nothing_to_open"))?;
     let path = app
         .state::<AppState>()
@@ -257,6 +257,8 @@ pub async fn copy_secret(app: &AppHandle, id: &str, owner: Option<isize>) -> App
 pub struct RevealedFile {
     pub name: String,
     pub size: u64,
+    /// `Attachment::slot` (the position without a removal): what a removal asks the core for.
+    pub slot: usize,
 }
 
 /// What an explicit "Afficher" shows of a hidden item. No `Debug`: it holds the secret.
@@ -283,9 +285,11 @@ impl RevealedSecret {
             attachments: item
                 .attachments
                 .iter()
-                .map(|a| RevealedFile {
+                .enumerate()
+                .map(|(position, a)| RevealedFile {
                     name: a.name.clone(),
                     size: a.size,
+                    slot: a.slot.map_or(position, |s| s as usize),
                 })
                 .collect(),
         }
@@ -540,6 +544,21 @@ pub async fn delete_item(app: &AppHandle, id: &str, scope: DeleteScope) -> AppRe
     }
     refresh_badge(app).await;
     Ok(())
+}
+
+/// Removes ONE attachment of an item (`slot`, never a position), from this PC only or everywhere.
+/// The others stay; the core deletes the whole item, with the same scope, when nothing else is
+/// left in it (`ItemDeleted`). The page words the confirmation from the answer.
+pub async fn delete_attachment(
+    app: &AppHandle,
+    id: &str,
+    slot: usize,
+    everywhere: bool,
+) -> AppResult<AttachmentRemoval> {
+    let state = app.state::<AppState>();
+    let removal = state.core.delete_attachment(id, slot, everywhere).await?;
+    refresh_badge(app).await;
+    Ok(removal)
 }
 
 /// Default action of a toast button / tap. See `notify::tap_action`.
