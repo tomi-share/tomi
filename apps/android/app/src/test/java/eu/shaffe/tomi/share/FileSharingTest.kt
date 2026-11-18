@@ -45,12 +45,29 @@ class FileSharingTest {
     }
 
     @Test
-    fun onlyAnItemMadeOfAttachmentsOffersTheFileShare() {
+    fun anyItemWithFilesOffersTheFileShareEvenWithADescription() {
         assertTrue(FileSharing.canShare(files()))
-        assertFalse(FileSharing.canShare(readableItem("t", source, now, attachments = listOf(png), text = RichText("legende"))))
-        assertFalse(FileSharing.canShare(readableItem("l", source, now, attachments = listOf(png), url = "https://a.example")))
+        assertTrue(FileSharing.canShare(readableItem("t", source, now, attachments = listOf(png), text = RichText("legende"))))
+        assertTrue(FileSharing.canShare(readableItem("l", source, now, attachments = listOf(png), url = "https://a.example")))
         assertFalse(FileSharing.canShare(readableItem("n", source, now, text = RichText("texte"))))
         assertFalse(FileSharing.canShare(TomiItem("u", ItemContent.Unreadable(UnreadableReason.UpdateRequired), source, now)))
+    }
+
+    @Test
+    fun theDescriptionAndLinkTravelAsTheCaptionOfTheFiles() = runTest {
+        val item = readableItem("t", source, now, attachments = listOf(pdf), text = RichText("legende"), url = "https://a.example")
+        val outcome = FileSharing.prepare(item, Gate(AuthOutcome.Failed).authenticate, Core().resolve)
+        outcome as FileShareOutcome.Ready
+        assertEquals("legende\nhttps://a.example", outcome.text)
+        assertEquals(null, (FileSharing.prepare(files(), Gate(AuthOutcome.Failed).authenticate, Core().resolve) as FileShareOutcome.Ready).text)
+    }
+
+    @Test
+    fun aHiddenItemNeverSharesItsTextAlongTheFiles() = runTest {
+        val item = readableItem("t", source, now, attachments = listOf(pdf), text = RichText("mot de passe"), secret = true)
+        val outcome = FileSharing.prepare(item, Gate(AuthOutcome.Success).authenticate, Core().resolve)
+        outcome as FileShareOutcome.Ready
+        assertEquals(null, outcome.text)
     }
 
     @Test

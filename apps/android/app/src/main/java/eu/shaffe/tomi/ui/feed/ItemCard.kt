@@ -121,6 +121,8 @@ class CardActions(
     val onOpenImage: (slot: Int) -> Unit = {},
     /** Shows the code file of this SLOT in Tomi's code screen (biometric gate first for a hidden item). */
     val onOpenCodeFile: (slot: Int) -> Unit = {},
+    /** Opens the file of this SLOT (PDF, archive...) with the system viewer (biometric gate first for a hidden item). */
+    val onOpenFile: (slot: Int) -> Unit = {},
     val onReveal: () -> Unit = {},
     val onHide: () -> Unit = {},
     val onCopy: (RenderMode?) -> Unit = {},
@@ -600,6 +602,7 @@ private fun SecretBody(
                     item.attachments, showThumbnails = false, expanded = expanded,
                     onAltBackground = true, moreAsButton = !showReadMore,
                     onOpenImage = actions.openImageAction(), onOpenCodeFile = actions.openCodeFileAction(),
+                    onOpenFile = actions.openFileAction(),
                     onOpenDetail = actions.openDetailAction(),
                     fileRowActions = actions.fileRowActionsFor(item, expanded),
                 )
@@ -766,6 +769,7 @@ private fun PlainBody(
         emphasizeNames = unread && item.title == null,
         opensExternally = opensAttachment, moreAsButton = !showReadMore,
         onOpenImage = actions.openImageAction(), onOpenCodeFile = actions.openCodeFileAction(),
+        onOpenFile = actions.openFileAction(),
         onOpenDetail = actions.openDetailAction(),
         fileRowActions = actions.fileRowActionsFor(item, expanded),
     )
@@ -789,6 +793,12 @@ private fun CardActions.openDetailAction(): () -> Unit = {
 private fun CardActions.openImageAction(): (Int) -> Unit = { index ->
     onCardOpened()
     onOpenImage(index)
+}
+
+/** Same for any other file row (PDF...): opens it with the system viewer. */
+private fun CardActions.openFileAction(): (Int) -> Unit = { slot ->
+    onCardOpened()
+    onOpenFile(slot)
 }
 
 /** Same for a code file row. */
