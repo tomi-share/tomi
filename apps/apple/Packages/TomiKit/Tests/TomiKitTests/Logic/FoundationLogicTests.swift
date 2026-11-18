@@ -111,9 +111,9 @@ final class ReviewFindingsTests: XCTestCase {
     }
 
     func testPairingLinksAreExact() {
-        XCTAssertNotNil(DeepLinkParser.parse("tomi-share://pair#4821-crayon-renard"))
+        XCTAssertNotNil(DeepLinkParser.parse("tomi-share://pair#4821-crayon-renard", reader: FakeLinkReader()))
         for bad in ["tomi-share://pair:1#c", "tomi-share://pair/#c", "tomi-share://pair?x=1#c", "tomi-share://u@pair#c"] {
-            XCTAssertNil(DeepLinkParser.parse(bad), bad)
+            XCTAssertNil(DeepLinkParser.parse(bad, reader: FakeLinkReader()), bad)
         }
     }
 

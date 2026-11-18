@@ -10,6 +10,8 @@ struct FakeLinkReader: LinkReading {
     private static let alphabet = Set("0123456789abcdefghjkmnpqrstvwxyz")
 
     func readPairLink(_ text: String) -> ParsedPairLink? {
+        // Newer Foundations percent-encode a space instead of refusing it; the core refuses a link with whitespace.
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).contains(where: \.isWhitespace) else { return nil }
         guard let components = URLComponents(string: text.trimmingCharacters(in: .whitespacesAndNewlines)),
               let fragment = components.fragment, !fragment.isEmpty
         else { return nil }
