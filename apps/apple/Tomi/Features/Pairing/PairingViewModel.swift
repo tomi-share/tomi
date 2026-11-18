@@ -219,7 +219,7 @@ final class PairingViewModel {
         error = nil
         do {
             try await core.enterDemo()
-            pendingPayload = nil
+            pendingLink = nil
             return true
         } catch {
             phase = .input
