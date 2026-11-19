@@ -28,6 +28,7 @@ mod popover;
 mod qr;
 mod queue;
 mod real_core;
+mod relay_notices;
 mod render;
 mod secret;
 mod sendto;
@@ -143,6 +144,7 @@ pub fn run() {
             commands::active_jobs,
             commands::take_prefill,
             commands::app_info,
+            commands::take_relay_notices,
             commands::enter_demo,
             commands::leave_demo,
             commands::devices,
@@ -308,6 +310,7 @@ fn setup(app: &mut tauri::App) -> SetupResult {
         pending_prefill: Mutex::new(None),
         pending_pair: Mutex::new(None),
         pending_setup: Mutex::new(None),
+        relay_notices: relay_notices::RelayNotices::default(),
         pinned: AtomicBool::new(false),
         suppress_blur: AtomicUsize::new(0),
         hidden_by_blur_at: Mutex::new(None),

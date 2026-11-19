@@ -155,6 +155,42 @@ pub struct CoreStatus {
     pub unavailable: Option<String>,
 }
 
+// ---------------------------------------------------------------- relay revocations
+
+/// Who removed a device without any member signing it (`spec/api-v1.md` §7.6, §12).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum RelayRevocationVia {
+    /// The relay's administrator.
+    Admin,
+    /// The device left by itself and the relay reports it (`"self"` on the wire of the core).
+    #[serde(rename = "self")]
+    SelfDeparture,
+    /// A cause a newer core reports and this app does not know: a plain, neutral notice.
+    Other,
+}
+
+impl RelayRevocationVia {
+    /// The `via` string of the core (`"admin"`, `"self"`); anything else is [`Self::Other`].
+    pub fn from_core(via: &str) -> Self {
+        match via {
+            "admin" => Self::Admin,
+            "self" => Self::SelfDeparture,
+            _ => Self::Other,
+        }
+    }
+}
+
+/// A device the relay removed on its own authority, to be told to the user once
+/// ([`TomiCore::take_relay_revocations`]). A device name and an id; never any content.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RelayRevocation {
+    pub device_id: String,
+    pub name: String,
+    pub via: RelayRevocationVia,
+}
+
 // ---------------------------------------------------------------- pairing
 
 /// What this PC can do about pairing right now (`spec/pairing-v1.md` §10.1).
@@ -457,6 +493,17 @@ pub trait TomiCore: Send + Sync {
     /// space any more), `Rejected("device_set_mismatch")` / `Rejected("epoch_conflict")` (the
     /// devices or the key changed while the key was renewed: ask the user to retry).
     async fn revoke_device(&self, id: &str) -> Result<(), CoreError>;
+
+    /// The removal of a device is not finished: the key rotation that follows a revocation keeps
+    /// failing with `device_set_mismatch` and is retried every hour (`spec/api-v1.md` §7.6). Until
+    /// it succeeds a removed device may still hold the current space key. A stored flag of the
+    /// core, no network: cheap to read after a sync, never to poll. `false` without a space.
+    fn rotation_stalled(&self) -> bool;
+
+    /// The devices the relay removed on its own authority (administrator, or a departure it
+    /// reports) and the user was not told about yet. Each entry comes back ONCE (the core clears
+    /// the list it returns, persisted until then). Empty without a space.
+    fn take_relay_revocations(&self) -> Result<Vec<RelayRevocation>, CoreError>;
 
     /// Local path of the decrypted bytes of an attachment, named like the file. The core
     /// keeps files encrypted at rest: this decrypts on demand (downloading first if

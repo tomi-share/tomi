@@ -50,7 +50,7 @@ use zeroize::Zeroizing;
 use crate::core_api::{
     clean_device_name, CoreError, CoreEvent, CoreStatus, DepartureKind, DepartureOutcome,
     DepartureView, PairingOptions, PairingView, PendingReason, ProgressFn, RefusalReason,
-    SendOutcome, SendProgress, SpaceState, TomiCore,
+    RelayRevocation, RelayRevocationVia, SendOutcome, SendProgress, SpaceState, TomiCore,
 };
 use crate::files;
 use crate::inactivity::{inactive_days, INACTIVE_AFTER_DAYS, LAST_SEEN_IS_FROM_RELAY};
@@ -1501,6 +1501,29 @@ impl TomiCore for RealCore {
             .map_err(revoke_refusal)
     }
 
+    fn rotation_stalled(&self) -> bool {
+        // A stored flag of the engine (it survives a restart): no network, no decryption.
+        self.current().is_some_and(|e| e.rotation_stalled())
+    }
+
+    fn take_relay_revocations(&self) -> Result<Vec<RelayRevocation>, CoreError> {
+        // No engine, or no space: nothing to tell (the engine's list is only ever filled by a
+        // paired device, and a store that does not open has no list to take).
+        let Some(engine) = self.current() else {
+            return Ok(Vec::new());
+        };
+        Ok(engine
+            .take_relay_revocations()
+            .map_err(map_failure)?
+            .into_iter()
+            .map(|r| RelayRevocation {
+                device_id: r.device_id,
+                name: r.name,
+                via: RelayRevocationVia::from_core(&r.via),
+            })
+            .collect())
+    }
+
     async fn devices(&self) -> Result<Vec<Device>, CoreError> {
         let views = self.call(|e| e.list_devices()).await?;
         let mut devices: Vec<Device> = views
@@ -2788,6 +2811,14 @@ mod tests {
         assert_eq!(wipe_dir(&open), 0);
         assert!(open.is_dir());
         assert_eq!(std::fs::read_dir(&open).unwrap().count(), 0);
+    }
+
+    #[tokio::test]
+    async fn a_fresh_space_has_no_stalled_rotation_and_nothing_to_tell() {
+        let dir = tempfile::tempdir().unwrap();
+        let core = paired(dir.path(), Relay::Offline);
+        assert!(!core.rotation_stalled());
+        assert!(core.take_relay_revocations().unwrap().is_empty());
     }
 
     // ------------------------------------------------------------ the change stream

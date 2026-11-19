@@ -9,6 +9,7 @@ use tokio::sync::broadcast::{error::RecvError, Receiver};
 use crate::core_api::{CoreEvent, TomiCore};
 use crate::model::{Item, TransferPhase};
 use crate::queue::{JobSink, JobState, JobView};
+use crate::relay_notices::{self, RelayNotices};
 use crate::state::AppState;
 use crate::{actions, notify, popover};
 
@@ -160,6 +161,7 @@ async fn space_changed(app: &AppHandle) {
     let _ = app.emit("space-changed", ());
     let state = app.state::<AppState>();
     announce_new_devices(app, state.core.as_ref()).await;
+    tell_relay_revocations(app, state.core.as_ref(), &state.relay_notices);
     if !may_notify(state.core.as_ref()) {
         return;
     }
@@ -180,6 +182,19 @@ async fn space_changed(app: &AppHandle) {
         notify::show(notify::offer_toast(&peer), None, move |_| {
             popover::open_history(&handle, Some("devices"));
         });
+    }
+}
+
+/// Devices the relay removed on its own authority: taken from the core (once) after a change of
+/// the space, never on a timer, and handed to the webview that is on screen as a plain notice.
+/// Nothing in the demo space nor on a PC that has no space; a failed read leaves the core's list
+/// as it was, so the next change tries again.
+fn tell_relay_revocations(app: &AppHandle, core: &dyn TomiCore, notices: &RelayNotices) {
+    if !may_notify(core) || core.is_demo() {
+        return;
+    }
+    if relay_notices::collect(core, notices).unwrap_or(false) {
+        let _ = app.emit("relay-revocations", ());
     }
 }
 

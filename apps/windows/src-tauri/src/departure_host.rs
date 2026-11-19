@@ -383,6 +383,7 @@ mod tests {
             paths,
             clip_clears: Arc::new(ClipboardClears::default()),
             seen_offers: Mutex::new(HashSet::from(["offer-1".to_string()])),
+            relay_notices: crate::relay_notices::RelayNotices::default(),
             pending_prefill: Mutex::new(Some(PrefillPayload::default())),
             pending_pair: Mutex::new(Some(crate::state::PendingPair {
                 code: SecretText::new("4821-crayon-renard"),

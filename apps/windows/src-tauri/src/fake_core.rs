@@ -10,7 +10,7 @@
 //! core. Demo content only: never put anything real in it.
 
 use std::path::PathBuf;
-use std::sync::atomic::AtomicI64;
+use std::sync::atomic::{AtomicBool, AtomicI64};
 #[cfg(test)]
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -22,7 +22,7 @@ use tokio::sync::broadcast;
 use crate::core_api::{
     clean_device_name, CoreError, CoreEvent, CoreStatus, DepartureOutcome, DepartureView,
     PairingOptions, PairingPeerView, PairingSession, PairingStage, PairingView, ProgressFn,
-    SendOutcome, SendProgress, TomiCore,
+    RelayRevocation, SendOutcome, SendProgress, TomiCore,
 };
 use crate::files;
 use crate::inactivity::{inactive_days, INACTIVE_AFTER_DAYS};
@@ -73,6 +73,10 @@ pub struct FakeCore {
     dep: Mutex<departure::Sim>,
     /// Moves the clock of the core (tests: the 15-minute window, the 10-minute verdict).
     skew_ms: AtomicI64,
+    /// The key rotation after a revocation is stalled (`rotation_stalled`).
+    rotation_stalled: AtomicBool,
+    /// Relay revocations not told yet (`take_relay_revocations` empties it).
+    relay_revocations: Mutex<Vec<RelayRevocation>>,
     /// Test hook: the next attempt waits here (see `hold_next_attempt`).
     #[cfg(test)]
     held: Mutex<Option<Arc<departure::Hold>>>,
@@ -93,9 +97,29 @@ impl FakeCore {
             invitation: Mutex::new(DemoInvitation::default()),
             dep: Mutex::new(departure::Sim::default()),
             skew_ms: AtomicI64::new(0),
+            rotation_stalled: AtomicBool::new(false),
+            relay_revocations: Mutex::new(Vec::new()),
             #[cfg(test)]
             held: Mutex::new(None),
         }
+    }
+
+    /// Test hook: the rotation after a revocation stalls (or recovers), and the windows hear it.
+    #[cfg(test)]
+    pub fn set_rotation_stalled(&self, stalled: bool) {
+        self.rotation_stalled
+            .store(stalled, std::sync::atomic::Ordering::SeqCst);
+        self.emit(CoreEvent::Changed);
+    }
+
+    /// Test hook: the relay removed a device on its own authority; the windows hear it.
+    #[cfg(test)]
+    pub fn relay_revokes(&self, revocation: RelayRevocation) {
+        self.relay_revocations
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .push(revocation);
+        self.emit(CoreEvent::Changed);
     }
 
     #[cfg(test)]
@@ -518,6 +542,20 @@ impl TomiCore for FakeCore {
     async fn unarchive(&self, id: &str) -> Result<(), CoreError> {
         self.set_archived(id, false);
         Ok(())
+    }
+
+    fn rotation_stalled(&self) -> bool {
+        self.rotation_stalled
+            .load(std::sync::atomic::Ordering::SeqCst)
+    }
+
+    fn take_relay_revocations(&self) -> Result<Vec<RelayRevocation>, CoreError> {
+        Ok(std::mem::take(
+            &mut *self
+                .relay_revocations
+                .lock()
+                .unwrap_or_else(|p| p.into_inner()),
+        ))
     }
 
     async fn devices(&self) -> Result<Vec<Device>, CoreError> {

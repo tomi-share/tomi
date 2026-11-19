@@ -430,6 +430,14 @@ mod tests {
         async fn unarchive(&self, id: &str) -> Result<(), CoreError> {
             self.inner.unarchive(id).await
         }
+        fn rotation_stalled(&self) -> bool {
+            self.inner.rotation_stalled()
+        }
+        fn take_relay_revocations(
+            &self,
+        ) -> Result<Vec<crate::core_api::RelayRevocation>, CoreError> {
+            self.inner.take_relay_revocations()
+        }
         async fn devices(&self) -> Result<Vec<crate::model::Device>, CoreError> {
             self.inner.devices().await
         }

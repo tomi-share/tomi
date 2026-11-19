@@ -8,7 +8,7 @@ use tauri::{AppHandle, Manager, State};
 use zeroize::Zeroizing;
 
 use crate::actions::{self, blocking, DeleteScope, RevealedSecret, SaveResult};
-use crate::core_api::{CoreStatus, PairingOptions, PairingView, SpaceState};
+use crate::core_api::{CoreStatus, PairingOptions, PairingView, RelayRevocation, SpaceState};
 use crate::departure::{Cancelled, DepartureSnapshot};
 use crate::detect::{self, ContentKind};
 use crate::draft::{self, DraftInput};
@@ -594,6 +594,10 @@ pub struct AppInfo {
     pub demo_entered: bool,
     /// The pairing screen may offer to enter the demo space.
     pub can_enter_demo: bool,
+    /// The key rotation after a revocation keeps failing (`device_set_mismatch`) and is retried
+    /// every hour: a removed device may still hold the current key. A stored flag, read with the
+    /// status after a sync or a change, never polled.
+    pub rotation_stalled: bool,
 }
 
 #[tauri::command]
@@ -624,8 +628,17 @@ pub async fn app_info(app: AppHandle, state: State<'_, AppState>) -> AppResult<A
             .map(|p| p.to_string_lossy().into_owned()),
         demo_entered: state.core.is_demo(),
         can_enter_demo: state.core.can_enter_demo(),
+        rotation_stalled: state.core.rotation_stalled(),
         settings,
     })
+}
+
+/// The devices the relay removed on its own authority that the user was not told about yet,
+/// once: a second call returns nothing, so only one window shows each notice. The webview calls
+/// it only while it is visible.
+#[tauri::command]
+pub fn take_relay_notices(state: State<'_, AppState>) -> Vec<RelayRevocation> {
+    state.relay_notices.take()
 }
 
 /// "Essayer avec des données de démonstration": enters the demo space of the real core (fictitious

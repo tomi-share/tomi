@@ -18,6 +18,7 @@ use crate::model::Attachment;
 use crate::paths::PathRegistry;
 use crate::placement::Area;
 use crate::queue::SendQueue;
+use crate::relay_notices::RelayNotices;
 use crate::secret::SecretText;
 use crate::settings::Settings;
 use crate::strong_auth::StrongAuth;
@@ -79,6 +80,9 @@ pub struct AppState {
     pub clip_clears: Arc<ClipboardClears>,
     /// History offers already announced by a toast (one toast per offer).
     pub seen_offers: Mutex<HashSet<String>>,
+    /// Devices the relay removed alone, taken from the core and not shown yet (once, to the
+    /// window that is on screen).
+    pub relay_notices: RelayNotices,
     pub pending_prefill: Mutex<Option<PrefillPayload>>,
     /// The pairing code of a `tomi-share://pair#` or `https://<relay>/l/pair#` link, waiting for the
     /// pairing screen to pick it up (once). A secret, in memory only; nothing starts until the
