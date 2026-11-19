@@ -1678,7 +1678,9 @@ without going through the code of `tomi-core`, then checks the public API on the
   checks `stale_key_epoch` in the transaction that assigns the `seq` (`api-v1.md`
   §4.8). Finally, old keys are discarded `max_ttl_secs + 1 day` after the rotation
   (§8.3). A window remains: an item injected **before** the client applies the
-  rotation, with a `seq` lower than that of the rotation.
+  rotation, with a `seq` lower than that of the rotation. The client does not rely on a `seq`
+  that the relay may choose: an event whose `seq` is not above the cursor is never applied (`api-v1.md` §7.3), and an
+  `item` event first seen after a log rewind (`cursor_ahead`) under a replaced epoch is suspect.
 - **History transfer**: a transfer deliberately copies the whole feed, secrets
   and files included, to the recipient (decision D2). Its confidentiality relies on the
   recipient's `x_pk`, taken from the sender's trust store. The ciphertext

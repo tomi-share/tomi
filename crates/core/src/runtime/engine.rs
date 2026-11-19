@@ -1480,10 +1480,16 @@ impl Engine {
     fn apply_event(&self, ev: &Event) -> Result<()> {
         let mut erased = Vec::new();
         self.with_crypto(|c, db, a| {
-            self.apply_in_tx(c, db, a, ev, &mut erased)?;
-            if ev.seq > db.cursor()? {
-                db.set_cursor(ev.seq)?;
+            // An honest relay serves strictly increasing `seq` numbers, all above the cursor
+            // (`api-v1.md` §2.7, §7.3). An event at or below it is a replay or an injection:
+            // the epoch ordering rule (`format-v1.md` §12) compares the `seq` of an item with
+            // that of the rotation, so it must never be applied with a `seq` the relay picked
+            // out of order.
+            if ev.seq <= db.cursor()? {
+                return self.diag(db, "event_seq_not_increasing", &format!("seq {}", ev.seq));
             }
+            self.apply_in_tx(c, db, a, ev, &mut erased)?;
+            db.set_cursor(ev.seq)?;
             Ok(())
         })?;
         // Only once the transaction has committed: were it to fail, the rows would stay and
@@ -1652,7 +1658,13 @@ impl Engine {
             } => {
                 let parsed = KeyRotation::from_bytes(rotation).and_then(|r| {
                     if r.new_epoch <= c.trust.key_epoch() {
-                        // Already applied (a rotation this device made itself).
+                        // Already applied (a rotation this device made itself, or a full
+                        // resync): the position in the log is now known for sure.
+                        if c.ring
+                            .tighten_supersession(r.new_epoch.saturating_sub(1), ev.seq)
+                        {
+                            Self::persist_crypto(c, db)?;
+                        }
                         return Ok(None);
                     }
                     c.trust.apply_rotation(&r, &a.keys).map(Some)
@@ -2032,8 +2044,13 @@ impl Engine {
                             break;
                         }
                         if let Some(key) = outcome.new_space_key {
-                            c.ring
-                                .add_rotation_key(key, r.seq, u64::try_from(now).unwrap_or(0))?;
+                            // Nothing the log serves from now on can sit below the head: a
+                            // `seq` above it (a relay's lie) must not widen the window.
+                            c.ring.add_rotation_key(
+                                key,
+                                r.seq.min(space.head_seq),
+                                u64::try_from(now).unwrap_or(0),
+                            )?;
                             self.retry_key_pending(c, db, a)?;
                         }
                     }
@@ -2064,8 +2081,24 @@ impl Engine {
                     db.set_device_state(&row.device_id, DeviceState::RevokedByRelay)?;
                 }
             }
-            Self::persist_crypto(c, db)?;
-            db.set_cursor(space.head_seq)
+            // The cursor never goes back, except when the relay's log itself went back (a
+            // restore from an older backup, `cursor_ahead`): there is no other way to read what
+            // it will publish next. The `seq` numbers can no longer be compared with the
+            // rotations then, so every superseded epoch becomes final: an item sealed under
+            // one of them that is first seen from now on is suspect, whatever its `seq`
+            // (a relay that rewinds its log gains nothing against the epoch ordering rule).
+            let cursor = db.cursor()?;
+            if space.head_seq < cursor {
+                c.ring.freeze_supersessions();
+                self.diag(
+                    db,
+                    "relay_log_went_back",
+                    &format!("cursor {cursor}, head {}", space.head_seq),
+                )?;
+            }
+            db.set_cursor(space.head_seq)?;
+            // Also persists the ring (frozen supersessions included).
+            Self::persist_crypto(c, db)
         })?;
         if let Ok(mut f) = lock(&self.flags) {
             f.resync_notice = true;

@@ -1896,6 +1896,130 @@ fn old_epoch_item_in_transit_is_still_read_after_a_rotation() {
     assert_eq!(plain_of(&w.e(1).get_item(&id).unwrap().unwrap()), "avant");
 }
 
+/// An item event sealed under the epoch-1 key of device 0 (which a revoked device still holds),
+/// as a hostile relay colluding with that device would forge it.
+fn forged_old_epoch_item(w: &World, seq: u64) -> (String, Event) {
+    let key = w
+        .e(0)
+        .read_crypto(|c, _| Ok(c.ring.key(1).cloned().expect("epoch 1 key is kept")))
+        .unwrap();
+    let id = crate::new_item_id().unwrap();
+    let item = Item {
+        id: id.clone(),
+        source_device: w.nodes[2].id.clone(),
+        created_at_ms: T0,
+        expires_at_ms: None,
+        read_policy: ReadPolicy::UntilExpiry,
+        secret: false,
+        title: Some("Mot de passe change".into()),
+        text: None,
+        url: Some("https://evil.example/login".into()),
+        attachments: vec![],
+        raw_payload: None,
+    };
+    let envelope = crate::envelope::seal_item(&item, &key).unwrap();
+    let event = Event {
+        seq,
+        at_ms: T0,
+        data: EventData::Item {
+            item_id: id.clone(),
+            sender_device_id: w.nodes[2].id.clone(),
+            created_at_ms: T0,
+            expires_at_ms: T0 + 86_400_000,
+            key_epoch: 1,
+            envelope,
+            blobs: vec![],
+            ring: false,
+        },
+    };
+    (id, event)
+}
+
+#[test]
+fn hostile_relay_cannot_slip_an_old_epoch_item_under_a_low_seq() {
+    let w = World::new(3, 3);
+    for i in 0..3 {
+        w.e(i).sync().unwrap();
+    }
+    w.e(0).revoke_device(&w.nodes[2].id).unwrap();
+    let rotation_seq = w.relay.head();
+    w.e(1).sync().unwrap();
+    assert_eq!(w.e(1).store.read(|db| db.cursor()).unwrap(), rotation_seq);
+
+    // The relay now serves an item sealed under the replaced key, numbered below the rotation
+    // (before the fix the epoch rule only looked at that number), and a few legitimate ones.
+    let (forged, event) = forged_old_epoch_item(&w, rotation_seq - 1);
+    w.relay.inject_events(vec![event]);
+    let honest = send(&w, 0, text("vrai"));
+    w.e(1).sync().unwrap();
+    assert_eq!(
+        plain_of(&w.e(1).get_item(&honest).unwrap().unwrap()),
+        "vrai"
+    );
+    assert!(
+        w.e(1).get_item(&forged).unwrap().is_none(),
+        "an event at or below the cursor is never applied"
+    );
+
+    // Same with a number above the cursor: the epoch rule itself applies.
+    let (forged2, event2) = forged_old_epoch_item(&w, w.relay.head() + 1);
+    w.relay.inject_events(vec![event2]);
+    send(&w, 0, text("encore"));
+    w.e(1).sync().unwrap();
+    let v = w.e(1).get_item(&forged2).unwrap().unwrap();
+    assert!(matches!(
+        v.content,
+        ItemContentView::Unreadable {
+            reason: UnreadableReason::SuspectEpoch
+        }
+    ));
+}
+
+#[test]
+fn a_replayed_event_is_ignored_and_never_moves_the_cursor_back() {
+    let w = World::new(2, 2);
+    w.e(1).sync().unwrap();
+    let id = send(&w, 0, text("une fois"));
+    w.e(1).sync().unwrap();
+    let cursor = w.e(1).store.read(|db| db.cursor()).unwrap();
+    let replay = w.relay.with(|s| s.events.clone());
+    w.relay.inject_events(replay);
+    w.e(1).sync().unwrap();
+    // The device's own ack event may have moved the log on, never back.
+    let after = w.e(1).store.read(|db| db.cursor()).unwrap();
+    assert!(after >= cursor);
+    assert_eq!(after, w.relay.head());
+    assert_eq!(w.e(1).list_items().unwrap().len(), 1);
+    assert!(w.e(1).get_item(&id).unwrap().is_some());
+}
+
+#[test]
+fn a_rewound_relay_log_freezes_the_old_epochs() {
+    let w = World::new(3, 3);
+    for i in 0..3 {
+        w.e(i).sync().unwrap();
+    }
+    w.e(0).revoke_device(&w.nodes[2].id).unwrap();
+    w.e(1).sync().unwrap();
+    // The relay claims its log is far shorter than the cursor (restore from a backup, or a lie):
+    // the cursor follows it (the only way to hear what comes next)...
+    let rewound = w.relay.head() - 2;
+    w.relay.rewind_head(rewound);
+    // ...and an item of the replaced epoch numbered right after the new head is suspect
+    // whatever its number compares to the rotation's.
+    let (forged, event) = forged_old_epoch_item(&w, rewound + 1);
+    w.relay.inject_events(vec![event]);
+    let r = w.e(1).sync().unwrap();
+    assert!(r.full_resync);
+    let v = w.e(1).get_item(&forged).unwrap().unwrap();
+    assert!(matches!(
+        v.content,
+        ItemContentView::Unreadable {
+            reason: UnreadableReason::SuspectEpoch
+        }
+    ));
+}
+
 // ---------------------------------------------------------------------------
 // Housekeeping
 // ---------------------------------------------------------------------------

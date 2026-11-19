@@ -2014,8 +2014,9 @@ function sync():                           // only one execution at a time
         on cursor_expired or cursor_ahead: full_resync(); continue
         on session_expired: ensure_session(); continue
       for ev in p.events:
+        if ev.seq <= cursor: log "event_seq_not_increasing"; continue   // replay or injection (§7.3, epoch ordering rule)
         local transaction { apply(ev) ; cursor = ev.seq }
-      local transaction { cursor = p.next_after }
+      local transaction { cursor = max(cursor, p.next_after) }
       if not p.has_more: exit
     drain_outbox()
     send pending acknowledgements (§7.3)
@@ -2132,6 +2133,17 @@ assigns the `seq` (§4.8): no item of epoch `e` can therefore have a `seq` great
 does not open it, and displays it as "illisible (suspect)" (UI label). This rule uses only the rotations already
 applied; the `seq` of a rotation remains known after its key is erased.
 
+*The `seq` the client compares is never taken on trust (normative, `crates/core`).* A relay that is not honest can
+choose the `seq` of an event, so the rule only holds if the cursor is monotonic: the client MUST NOT apply an event
+whose `seq` is lower than or equal to its cursor (it logs `event_seq_not_increasing` and skips it), so that every event
+it applies after a rotation has a `seq` above that of the rotation. `full_resync` (§7.5) never moves the cursor back
+either, with one exception: when the relay reports a head below the cursor (`cursor_ahead`, a restore from a backup;
+the only way to hear what the relay publishes next), the client moves the cursor to that head and **freezes** every
+superseded epoch (the recorded `seq` of each rotation becomes 0): from then on an item of a replaced epoch that the
+client sees for the first time is suspect whatever its `seq`. In a full resync the `seq` recorded for a rotation is
+capped at `head_seq`, and when the rotation event itself is met in the log the recorded `seq` is lowered to that of the
+event (a `seq` returned by `POST /v1/rotations` is not proof of the position of the event).
+
 Acknowledgements (`ack`, `read`) are sent after the current page, in series, and replayed until they succeed
 (they are idempotent). `read` is sent when the user opens, copies or closes the item (D16).
 
@@ -2152,7 +2164,8 @@ full_resync():
   d = GET /v1/devices        → accept_device_cert for each unknown certificate (refused if it does not chain
                                to a trusted member); a device absent from the relay's list is marked
                                "revoked by the relay"
-  cursor = s.head_seq
+  cursor = s.head_seq      // never lower than the current cursor, except after `cursor_ahead` (relay restored): the
+                           // cursor then follows the head and every superseded epoch is frozen (§7.3)
   display once: "Des éléments plus anciens n'ont pas pu être récupérés" (UI label)
 ```
 

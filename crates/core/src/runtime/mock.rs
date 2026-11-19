@@ -141,6 +141,9 @@ pub struct State {
     wakers: Vec<(String, Sender<Result<Wake, u16>>)>,
     /// Close codes for the next doorbell connections, in order ([`MockRelay::close_next_doorbell`]).
     next_wake_closes: VecDeque<u16>,
+    /// Events a hostile relay serves ahead of the next page of `events`, whatever their `seq`
+    /// (see [`MockRelay::inject_events`]).
+    injected_events: Vec<Event>,
     counter: u64,
     /// `false` until `POST /v1/space` (a relay that was just installed).
     pub initialized: bool,
@@ -296,6 +299,7 @@ impl MockRelay {
             stall_uploads: false,
             wakers: Vec::new(),
             next_wake_closes: VecDeque::new(),
+            injected_events: Vec::new(),
             counter: 0,
             initialized: true,
             install_token: None,
@@ -598,6 +602,12 @@ impl MockRelay {
             s.floor = floor;
             s.events.retain(|e| e.seq > floor);
         });
+    }
+
+    /// A hostile relay: the next `events` answer starts with `events`, with whatever `seq` they
+    /// carry (lower than the cursor, out of order...), before the real ones.
+    pub fn inject_events(&self, events: Vec<Event>) {
+        self.with(|s| s.injected_events.extend(events));
     }
 
     /// Simulates a restore from an older backup: the head goes back to `seq`.
@@ -1047,7 +1057,8 @@ impl RelayTransport for MockTransport {
             let all: Vec<Event> = s.events.iter().filter(|e| e.seq > after).cloned().collect();
             let limit = limit.clamp(1, 500) as usize;
             let has_more = all.len() > limit;
-            let events: Vec<Event> = all.into_iter().take(limit).collect();
+            let mut events: Vec<Event> = std::mem::take(&mut s.injected_events);
+            events.extend(all.into_iter().take(limit));
             let next_after = if has_more {
                 events.last().map_or(after, |e| e.seq)
             } else {

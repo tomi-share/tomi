@@ -199,6 +199,37 @@ impl SpaceKeyRing {
         Ok(())
     }
 
+    /// Lowers the recorded `rotation_seq` of the rotation `epoch -> epoch+1` to `seq`, when the
+    /// log position of that rotation turns out to be lower than what was recorded (the `seq`
+    /// a relay answered to `POST /v1/rotations` is not proof of the position of the event in
+    /// the log; the event itself, met in order, is). Never raises it. Returns whether
+    /// anything changed.
+    pub fn tighten_supersession(&mut self, epoch: u32, seq: u64) -> bool {
+        match self.superseded.get_mut(&epoch) {
+            Some(s) if seq < s.rotation_seq => {
+                s.rotation_seq = seq;
+                true
+            }
+            _ => false,
+        }
+    }
+
+    /// Makes every superseded epoch final: from now on **any** item sealed under one of them
+    /// that is first seen is [`UnreadableReason::SuspectEpoch`], whatever its `seq`. Used when
+    /// the relay's `seq` numbering can no longer be trusted to order events against the
+    /// rotations (the log went backwards: `cursor_ahead`, spec api §7.5). Returns whether
+    /// anything changed.
+    pub fn freeze_supersessions(&mut self) -> bool {
+        let mut changed = false;
+        for s in self.superseded.values_mut() {
+            if s.rotation_seq != 0 {
+                s.rotation_seq = 0;
+                changed = true;
+            }
+        }
+        changed
+    }
+
     /// Key to open an `item` event of `key_epoch` at `item_seq`, or why not (spec §12,
     /// epoch order rule). A `key_epoch` in the reserved range (above
     /// [`crate::SPACE_KEY_EPOCH_MAX`], spec §5.8.2) is never a space key of this ring and
@@ -408,5 +439,26 @@ mod tests {
         let restored = SpaceKeyRing::from_records(&ring.to_records()).unwrap();
         assert_eq!(restored.to_records(), ring.to_records());
         assert!(!format!("{:?}", ring.to_records()).contains(&format!("{:?}", k1.to_bytes())));
+    }
+
+    #[test]
+    fn frozen_supersessions_make_every_old_epoch_item_suspect() {
+        let k1 = SpaceKey::generate(1).unwrap();
+        let k2 = SpaceKey::generate(2).unwrap();
+        let it = item();
+        let env1 = seal_item(&it, &k1).unwrap();
+        let mut ring = SpaceKeyRing::new(k1);
+        ring.add_rotation_key(k2, 100, DAY).unwrap();
+        assert!(ring.open_received(&env1, &it.id, 99).is_readable());
+        assert!(ring.freeze_supersessions());
+        assert!(!ring.freeze_supersessions(), "idempotent");
+        for seq in [1, 99, 100, 101] {
+            assert_eq!(
+                ring.open_received(&env1, &it.id, seq),
+                ReceivedItem::Unreadable(UnreadableReason::SuspectEpoch)
+            );
+        }
+        let restored = SpaceKeyRing::from_records(&ring.to_records()).unwrap();
+        assert_eq!(restored.to_records(), ring.to_records());
     }
 }
