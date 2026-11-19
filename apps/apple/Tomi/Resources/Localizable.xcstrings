@@ -2305,6 +2305,17 @@
         }
       }
     },
+    "file_download" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Télécharger"
+          }
+        }
+      }
+    },
     "file_row_actions" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -5480,6 +5491,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fichier supprimé de cet appareil"
+          }
+        }
+      }
+    },
+    "snackbar_file_download_failed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible d’enregistrer le fichier. Réessaie."
+          }
+        }
+      }
+    },
+    "snackbar_file_downloaded" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fichier enregistré dans Téléchargements/Tomi"
           }
         }
       }
