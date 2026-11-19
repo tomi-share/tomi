@@ -157,7 +157,8 @@ public final class RustTomiCoreAdapter: TomiKit.TomiCore {
         state.spaceState = snapshot.spaceState
         state.updateURL = snapshot.updateURL
         state.localDevice = snapshot.localDevice
-        if let devices = snapshot.devices { state.devices = devices }
+        // Only a change is published: the notification of a new device follows the list.
+        if let devices = snapshot.devices, devices != state.devices { state.devices = devices }
         // Only a change is published: every screen that reads the feed is drawn again when it is written. Comparing is
         // cheap here, an unchanged item being the very storage of the one on screen.
         if let items = snapshot.items, items != state.items { state.items = items }

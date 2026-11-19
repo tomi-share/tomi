@@ -116,6 +116,31 @@ public struct IncomingNotifierState: Sendable {
     }
 }
 
+/// Tells when another device joined the space while the app is not on screen ("Nouvel appareil"): a device that was
+/// not in the list at the previous reading. A device that joins is always one the user added on purpose, so this is the
+/// alert for the day it is not. Like `IncomingNotifierState`, the first reading is the reference and notifies nothing.
+public struct NewDeviceNotifierState: Sendable {
+    private var known: Set<String>?
+
+    public init() {}
+
+    /// The devices to announce, in the order of `devices`. `importing`: this device has just joined (`PairingGrace`), the
+    /// whole list is new to it, not news. A list without this device is not read yet (the core has not listed the
+    /// devices): not taken as a reference.
+    public mutating func update(devices: [Device], appVisible: Bool, importing: Bool = false) -> [Device] {
+        guard devices.contains(where: \.isThisDevice) else { return [] }
+        let previous = known
+        known = Set(devices.map(\.id))
+        guard let previous, !importing, !appVisible else { return [] }
+        return devices.filter { !$0.isThisDevice && !previous.contains($0.id) }
+    }
+
+    /// The device left its space: nothing is tracked any more.
+    public mutating func reset() {
+        known = nil
+    }
+}
+
 /// The history a device imports right after it joined a space (the user said yes at pairing) arrives as a burst of
 /// items that are not news (Android `PairingGrace`). Tells, for each change of the feed, whether the device is still
 /// within `grace` of the moment it became paired while the app was running; those items are not notified. A device

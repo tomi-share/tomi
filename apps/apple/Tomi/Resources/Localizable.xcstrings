@@ -3031,6 +3031,28 @@
         }
       }
     },
+    "ios_notif_device_added_body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ fait maintenant partie de ton espace. Ce n’était pas toi ? Retire-le depuis Appareils."
+          }
+        }
+      }
+    },
+    "ios_notif_device_added_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouvel appareil ajouté"
+          }
+        }
+      }
+    },
     "ios_onboarding_headline" : {
       "extractionState" : "manual",
       "localizations" : {

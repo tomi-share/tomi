@@ -16,6 +16,8 @@ final class IncomingNotifications {
     static let actionCopy = "copy"
     static let actionView = "view"
     static let itemIdKey = "itemId"
+    /// `userInfo` key of the "Nouvel appareil" notification: its tap opens the devices screen.
+    static let opensDevicesKey = "opensDevices"
 
     private let center = UNUserNotificationCenter.current()
 
@@ -56,6 +58,20 @@ final class IncomingNotifications {
         center.add(request)
     }
 
+    /// "Nouvel appareil": another device joined the space (nothing of any content, only the name the user gave it). A tap
+    /// opens the list of devices.
+    func showDeviceAdded(_ device: Device) {
+        let notification = UNMutableNotificationContent()
+        notification.title = L10n.text("ios_notif_device_added_title")
+        notification.body = L10n.text("ios_notif_device_added_body", String(device.name.prefix(IncomingNotificationContent.maxBody)))
+        notification.categoryIdentifier = Self.categoryPlain
+        notification.threadIdentifier = "devices"
+        notification.userInfo = [Self.opensDevicesKey: true]
+        notification.sound = .default
+        notification.interruptionLevel = .active
+        center.add(UNNotificationRequest(identifier: "device-added-\(device.id)", content: notification, trigger: nil))
+    }
+
     func cancel(_ itemIds: [String]) {
         guard !itemIds.isEmpty else { return }
         center.removeDeliveredNotifications(withIdentifiers: itemIds)
@@ -91,6 +107,8 @@ final class IncomingNotifications {
 struct NotificationResponse: Equatable {
     let itemId: String
     let action: String?
+    /// The "Nouvel appareil" notification (no item): opens the devices screen.
+    var opensDevices = false
 }
 
 /// The delegate of the notification center: set at launch (a tap may start the app), it hands the response to the app
@@ -111,12 +129,20 @@ final class NotificationRouter: NSObject, UNUserNotificationCenterDelegate, @unc
     func userNotificationCenter(
         _ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse
     ) async {
-        guard let itemId = response.notification.request.content.userInfo[IncomingNotifications.itemIdKey] as? String else { return }
-        let action: String? = switch response.actionIdentifier {
-        case UNNotificationDefaultActionIdentifier, UNNotificationDismissActionIdentifier: nil
-        default: response.actionIdentifier
+        let userInfo = response.notification.request.content.userInfo
+        let routed: NotificationResponse
+        if userInfo[IncomingNotifications.opensDevicesKey] as? Bool == true {
+            // A dismissal is not a tap.
+            guard response.actionIdentifier == UNNotificationDefaultActionIdentifier else { return }
+            routed = NotificationResponse(itemId: "", action: nil, opensDevices: true)
+        } else {
+            guard let itemId = userInfo[IncomingNotifications.itemIdKey] as? String else { return }
+            let action: String? = switch response.actionIdentifier {
+            case UNNotificationDefaultActionIdentifier, UNNotificationDismissActionIdentifier: nil
+            default: response.actionIdentifier
+            }
+            routed = NotificationResponse(itemId: itemId, action: action)
         }
-        let routed = NotificationResponse(itemId: itemId, action: action)
         await MainActor.run {
             if let handler { handler(routed) } else { pending = routed }
         }

@@ -23,6 +23,35 @@ final class NotificationLogicTests: XCTestCase {
         XCTAssertEqual(NotificationTapAction.forItem(item(text: RichText(plain: "pw"), secret: true)), .authenticateAndCopy)
     }
 
+    private func device(_ id: String, mine: Bool = false) -> Device {
+        Device(id: id, name: "Appareil \(id)", platform: .ios, lastActivity: nil, isThisDevice: mine)
+    }
+
+    func testAnotherDeviceJoiningIsAnnouncedOnlyWhenTheAppIsNotOnScreen() {
+        var state = NewDeviceNotifierState()
+        let first = [device("me", mine: true), device("pc")]
+        XCTAssertTrue(state.update(devices: first, appVisible: false).isEmpty, "the first reading is the reference")
+        XCTAssertTrue(state.update(devices: first, appVisible: false).isEmpty)
+        let second = first + [device("tablet")]
+        XCTAssertEqual(state.update(devices: second, appVisible: false).map(\.id), ["tablet"])
+        XCTAssertTrue(state.update(devices: second, appVisible: false).isEmpty, "once")
+        let third = second + [device("phone")]
+        XCTAssertTrue(state.update(devices: third, appVisible: true).isEmpty, "the screen shows it")
+        XCTAssertTrue(state.update(devices: third, appVisible: false).isEmpty, "and it is not announced afterwards")
+    }
+
+    func testTheDevicesOfAJoinOrAnUnreadListAreNotNews() {
+        var state = NewDeviceNotifierState()
+        XCTAssertTrue(state.update(devices: [], appVisible: false).isEmpty)
+        XCTAssertTrue(state.update(devices: [device("pc")], appVisible: false).isEmpty, "this device is not in the list yet")
+        XCTAssertTrue(state.update(devices: [device("me", mine: true), device("pc")], appVisible: false).isEmpty, "reference")
+        var joined = NewDeviceNotifierState()
+        XCTAssertTrue(joined.update(devices: [device("me", mine: true)], appVisible: false).isEmpty)
+        XCTAssertTrue(joined.update(devices: [device("me", mine: true), device("pc")], appVisible: false, importing: true).isEmpty)
+        joined.reset()
+        XCTAssertTrue(joined.update(devices: [device("me", mine: true), device("pc"), device("tablet")], appVisible: false).isEmpty)
+    }
+
     /// A link item whose URL is not http(s) (a paired device can send anything) opens the card, never another app.
     func testNotificationTapOnALinkOpensOnlyHttpUrls() {
         for url in ["http://a.example/x", "HTTPS://a.example"] {

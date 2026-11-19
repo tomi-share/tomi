@@ -37,6 +37,7 @@ final class AppContainer {
     /// Notifications of received items, and what they already show.
     @ObservationIgnored let notifications = IncomingNotifications()
     @ObservationIgnored private var notifierState = IncomingNotifierState()
+    @ObservationIgnored private var newDeviceState = NewDeviceNotifierState()
     @ObservationIgnored private var pairingGrace = PairingGrace()
     /// A screen to open in the feed's stack (a notification, a link, a shortcut), taken by the feed when it shows.
     var pendingRoute: Route?
@@ -186,6 +187,8 @@ final class AppContainer {
             // Paired too: the first reading after the pairing is the reference, never the first item that arrives.
             _ = core.state.items
             _ = core.state.isPaired
+            // The devices too: another one joining is announced (`itemsChanged`).
+            _ = core.state.devices
         } onChange: { [weak self] in
             Task { @MainActor [weak self] in
                 guard let self, self.core === core, self.watchedCore == ObjectIdentifier(core) else { return }
@@ -211,12 +214,21 @@ final class AppContainer {
         )
         notifications.cancel(update.cancel)
         update.show.forEach(notifications.show)
+        // Another device joined the space (never in the demo, whose devices are made up).
+        if !core.isDemo {
+            newDeviceState.update(devices: core.state.devices, appVisible: scenePhase != .background, importing: importing)
+                .forEach(notifications.showDeviceAdded)
+        }
     }
 
     /// A tap on a notification or one of its buttons (Android `NotificationActionActivity`).
     func handleNotification(_ response: NotificationResponse) {
         guard isReadyToRoute else {
             pendingNotification = response
+            return
+        }
+        if response.opensDevices {
+            if core?.state.isPaired == true { pendingRoute = .devices }
             return
         }
         guard let feed, let item = feed.item(id: response.itemId) else {
@@ -462,6 +474,7 @@ final class AppContainer {
         pairingFlow = true
         cleanUpAfterLeaving()
         notifierState.reset()
+        newDeviceState.reset()
         // Nothing of the departure (an open dialog, a refusal, a series) nor of a draft outlives the space.
         if let core {
             retrier?.stop()
