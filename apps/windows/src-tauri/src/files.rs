@@ -294,6 +294,88 @@ const EXECUTABLE_EXTENSIONS: &[&str] = &[
     "img",
     "vhd",
     "vhdx",
+    // Remote Desktop / Citrix connection files: opening one connects to the sender's server with
+    // drive and clipboard redirection (a real phishing technique).
+    "rdp",
+    "rdg",
+    "ica",
+    // Interpreters that run a script directly when one is installed.
+    "py",
+    "pyw",
+    "pyc",
+    "pyo",
+    "pyz",
+    "pyzw",
+    "pl",
+    "vb",
+    "vbp",
+    "csh",
+    "ksh",
+    "ps2",
+    "ps2xml",
+    "ps1xml",
+    "psc2",
+    "psd1",
+    "psdm1",
+    "msh",
+    "msh1",
+    "msh2",
+    "mshxml",
+    "msh1xml",
+    "msh2xml",
+    // Themes and connectors that reach out to a remote path (NTLM hash leak) or load code.
+    "theme",
+    "themepack",
+    "deskthemepack",
+    "searchconnector-ms",
+    "website",
+    "webpnp",
+    "xbap",
+    "xnk",
+    "vsto",
+    "vsix",
+    "vsmacros",
+    "vsw",
+    // Help and archive formats that run content, and web archives that open in a script-capable
+    // browser context.
+    "hlp",
+    "cab",
+    "jnlp",
+    "mht",
+    "mhtml",
+    "msu",
+    "printerexport",
+    "ops",
+    "osd",
+    "shs",
+    "shb",
+    "bgi",
+    // Certificates and Office / Access macro carriers from the "dangerous file types" list of
+    // the Windows Attachment Manager.
+    "cer",
+    "crt",
+    "der",
+    "ade",
+    "adp",
+    "mad",
+    "maf",
+    "mag",
+    "mam",
+    "maq",
+    "mar",
+    "mas",
+    "mat",
+    "mau",
+    "mav",
+    "maw",
+    "mcf",
+    "mda",
+    "mdb",
+    "mde",
+    "mdt",
+    "mdw",
+    "mdz",
+    "pst",
 ];
 
 /// True for files that execute code when opened. Case-insensitive, last extension only.
@@ -397,6 +479,32 @@ mod tests {
             "a.msix",
             "a.appx",
             "a.appinstaller",
+            // Audit W4.
+            "a.rdp",
+            "a.RDP",
+            "a.py",
+            "a.pyw",
+            "a.pyz",
+            "a.theme",
+            "a.themepack",
+            "a.deskthemepack",
+            "a.searchConnector-ms",
+            "a.website",
+            "a.xbap",
+            "a.hlp",
+            "a.jnlp",
+            "a.ps1xml",
+            "a.psd1",
+            "a.mht",
+            "a.MHTML",
+            "a.vb",
+            "a.cab",
+            "a.msu",
+            "a.cer",
+            "a.mde",
+            "a.ica",
+            "a.rdg",
+            "a.vsto",
         ] {
             assert!(is_executable_name(n), "{n}");
         }
@@ -411,6 +519,15 @@ mod tests {
             "a.isos",
         ] {
             assert!(!is_executable_name(n), "{n}");
+        }
+    }
+
+    #[test]
+    fn the_executable_list_is_lower_case_and_has_no_duplicate() {
+        let mut seen = std::collections::HashSet::new();
+        for ext in EXECUTABLE_EXTENSIONS {
+            assert_eq!(*ext, ext.to_ascii_lowercase(), "{ext}");
+            assert!(seen.insert(*ext), "{ext} is listed twice");
         }
     }
 
