@@ -232,7 +232,7 @@ or sharing it needs local authentication. The following are **accepted and docum
    notifications or an unprotected clipboard. System sharing of a secret needs biometrics first, and the share sheet excludes
    copy, save and print actions where the platform allows it. The exception is the **iOS share extension**: it cannot open the
    core, so what you share to Tomi waits **unencrypted by Tomi** in the app group's inbox, secrets included, until the app is
-   next opened and sends it. The inbox is excluded from backups (iCloud, Finder) and a share that nothing sent within 24 hours
+   next opened and sends it. The inbox is excluded from backups (iCloud, Finder) and a share that nothing sent within 7 days
    is dropped (you are told once); the drop runs when the app, or a background task, next looks at the inbox. Until then the
    copy sits under whatever file protection the system gives that directory, with no Tomi key.
 4. **Local deletion is stronger than before, and still not erasure.** The local database runs with `secure_delete` on for the
@@ -337,7 +337,7 @@ means the code does it and a test covers the decision; it does not mean it was t
   "erase anyway"; the authentication window closed when the app goes to the background; the clear-text attachment cache purge
   backed by a WorkManager job; an alert when a device joins; autofill, accessibility and overlay hardening (not verified on a
   device); a deep link no longer discards a draft; the demo mode refused on a provisioned device.
-- **iOS:** the share inbox is excluded from backups and shares older than 24 hours are dropped; a fresh Face ID / Touch ID /
+- **iOS:** the share inbox is excluded from backups and shares older than 7 days are dropped; a fresh Face ID / Touch ID /
   passcode check before a device is added; an alert when a device joins; a notification's link is opened only if it is http(s);
   a content rule list blocks network loads in the HTML web view; the `Tomi Dev` scheme archives with `Release`; the demo mode
   is refused on a provisioned device.

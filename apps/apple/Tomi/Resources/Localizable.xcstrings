@@ -3279,7 +3279,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Un partage resté plus de 24 h sans pouvoir être envoyé a été supprimé."
+            "value" : "Un partage resté plus de 7 jours sans pouvoir être envoyé a été supprimé."
           }
         }
       }

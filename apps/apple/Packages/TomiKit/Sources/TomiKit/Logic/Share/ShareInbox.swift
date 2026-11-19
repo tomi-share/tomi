@@ -63,8 +63,8 @@ public struct ShareInbox: Sendable {
     /// Leftovers of an extension stopped while copying, or of an app stopped while sending, are dropped after this.
     public static let staleAfter: TimeInterval = 24 * 3600
     /// A share that nothing sent in this time is dropped (`dropExpired`): the inbox is plaintext at rest (class A, out of
-    /// backups), so it must not keep content for days when the app is not opened.
-    public static let maxAge: TimeInterval = 24 * 3600
+    /// backups), so it must not keep content for long when the app is not opened. 7 days: a weekend away must not lose a share.
+    public static let maxAge: TimeInterval = 7 * 24 * 3600
 
     public let root: URL
 
