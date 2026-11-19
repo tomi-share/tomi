@@ -40,7 +40,7 @@ form_urlencoded = "1"
 async-trait = "0.1"
 
 # Server-side SQLite (WAL). Same version as tomi-core's optional runtime: one libsqlite3 at most.
-rusqlite = { version = "0.41.1", features = ["bundled"] }
+rusqlite = { version = "0.43.0", features = ["bundled"] }
 
 sha2 = "0.11"
 base64 = "0.23"
