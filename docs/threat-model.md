@@ -81,8 +81,8 @@ device is visible to whoever runs the relay.
 - **Invent an unsigned revocation** ("by the administrator", "voluntary departure"), by emitting an explicit `device_revoked`
   event. Honest devices follow it with a signed rotation, which makes the removal permanent, so a malicious relay can make
   them drop a legitimate device, which then has to be paired again. This costs you availability, not confidentiality. The
-  core now records each such revocation so that the app can tell you (`take_relay_revocations`); **the apps do not display
-  that notice yet**. A device that is merely missing from the relay's device list during a full resync is no longer treated
+  core now records each such revocation so that the app can tell you (`take_relay_revocations`), and Android, iOS and Windows
+  show it as a one-time notice (iOS code is not compiled yet; nothing was tried on a device). A device that is merely missing from the relay's device list during a full resync is no longer treated
   as revoked and never triggers a rotation.
 - **Rename devices** (names are not signed).
 - Together with a **revoked device** that still has the old key: inject items sealed with the old epoch key. Mitigation: the
@@ -160,8 +160,10 @@ becomes a member again; a reinstalled device gets a new identity.
 
 **A rotation that does not complete.** If the automatic rotation keeps failing because the relay's device set and the client's
 disagree (`device_set_mismatch`), the core retries after an hour and sets a persisted `rotation_stalled` flag (cleared when a
-rotation succeeds or another member's is applied). Until then the revoked device may still hold the current space key. **The
-apps do not show a banner for this flag yet**, so today the failure is visible only through the core's API.
+rotation succeeds or another member's is applied). Until then the revoked device may still hold the current space key. All three apps show
+a calm banner while the flag is set (not tried on a device; the iOS code is not compiled yet). If the relay's device list
+differs from the client's because a device left or was removed while another one was offline for more than 45 days and nobody
+rotated in between, the retry keeps failing and the banner stays up: revoke that device by hand from the devices screen.
 
 **Key retention.** After applying a rotation `e → e+1`, the remaining devices keep the old key `e` for `max_ttl + 1 day`
 (31 days with the default 30-day maximum) so they can still read items that were in transit under it, then erase it. Items
@@ -364,8 +366,10 @@ Open at the time of writing. [`FEATURES.md`](FEATURES.md) (section "Open gaps") 
   times, exact encrypted file sizes (to within 16 bytes per chunk), the number of files, envelope sizes, delivery and
   read-receipt times, deletion times, and the fact and time of pin or archive changes. There is no padding and no dummy
   traffic.
-- **Two notices are not shown yet.** The apps do not display the `rotation_stalled` alert or the "removed by the relay"
-  notice, although the core provides both.
+- **The two notices are best-effort.** The `rotation_stalled` banner and the "removed by the relay" notice are shown by the
+  three apps, but the core hands a revocation notice over only once and the apps keep it in memory: if the process dies
+  before it is displayed, the notice is lost. Notices are built from unsigned relay events, so a hostile relay can fake one
+  (it can already block a device), and the "new device added" alerts do not check that the device is verified.
 - **iOS:** revocation needs Face ID or Touch ID (the passcode is not accepted, unlike Android); the share inbox holds clear
   text until the app next runs; HTML sanitization is hand-written.
 - **Android:** the app exposes a share target that any app can call; it sends immediately and offers a 3-second undo.
@@ -390,7 +394,7 @@ Not commitments. In rough order of value for cost:
 3. **iOS "protection renforcée"** (stronger protection): an optional mode with a stricter data-protection class, trading
    background receipt for keys that are unavailable while the phone is locked. Not designed in the repository yet.
 4. **Hardware-bound keys** where the platform offers them (StrongBox, Secure Enclave, TPM), together with sealed secrets.
-5. **Showing the notices the core already produces** (`rotation_stalled`, relay-announced revocations), and a **safety
+5. **Making the notices reliable** (acknowledge only after display, announce verified devices only), and a **safety
    number** for the member list, comparable between devices, to detect a rogue member.
 6. **Periodic automatic key rotation** (for example monthly), giving a bounded "forward secrecy lite": a space key stolen later
    would not open relay backups older than about two months. This is not per-message forward secrecy, which Tomi does not
