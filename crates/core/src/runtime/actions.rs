@@ -797,6 +797,7 @@ impl Engine {
             let _ = self.transport.delete_blob(&b.blob_id);
             let _ = std::fs::remove_file(self.store.file_path(&b.path));
         }
+        self.store.truncate_wal_if_due(true);
         Ok(())
     }
 
@@ -832,6 +833,7 @@ impl Engine {
         for p in staged {
             let _ = std::fs::remove_file(self.store.file_path(&p));
         }
+        self.store.truncate_wal_if_due(true);
         self.notify();
         Ok(())
     }

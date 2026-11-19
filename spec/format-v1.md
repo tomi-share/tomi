@@ -692,6 +692,14 @@ expires, when the application goes to the background, and at startup. A file is 
 it is fully authenticated (§6.5). Reference layout in `tomi-core`:
 `files/{item_id}_{idx}.enc` (encrypted), `files/cache/{item_id}_{idx}` (plaintext, temporary).
 
+**Deleted records do not linger (reference: `tomi-core`).** A record that is deleted or consumed (an
+item erased everywhere, an "after first read" secret, an expired item) is sealed under `LSK`, which lasts as long as
+the installation: leaving it in a free page of the database or in the write-ahead log would keep it readable by
+anyone who also gets the OS wrapping key. The local database therefore runs with `PRAGMA secure_delete = ON` for the
+whole life of the connection (not only during a wipe, `api-v1.md` §7.9.6), and the write-ahead log is truncated
+(`wal_checkpoint(TRUNCATE)`) right after a deletion and at least every 5 minutes while the device syncs. This does not
+reach the flash blocks the file system may keep (as for any erasure, §7.9.6).
+
 **Plaintext metadata accepted in the local database.** Without the OS envelope key,
 the database reveals no secret (device keys, `LSK`, space keys, `HK`, `FK'` are
 sealed) and no content (title, text, URL, file names and contents are under `LSK` or

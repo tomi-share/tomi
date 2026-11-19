@@ -29,6 +29,7 @@
 
 use std::path::{Path, PathBuf};
 use std::sync::{Mutex, MutexGuard};
+use std::time::{Duration, Instant};
 
 use rusqlite::{params, Connection, OptionalExtension};
 use zeroize::Zeroizing;
@@ -717,6 +718,8 @@ pub struct Store {
     conn: Mutex<Connection>,
     files_dir: PathBuf,
     wrap: Zeroizing<[u8; KEY_LEN]>,
+    /// When the write-ahead log was last truncated ([`Store::truncate_wal_if_due`]).
+    last_wal_truncate: Mutex<Option<Instant>>,
 }
 
 impl std::fmt::Debug for Store {
@@ -763,6 +766,10 @@ impl Store {
         conn.pragma_update(None, "foreign_keys", true)?;
         conn.pragma_update(None, "journal_mode", "WAL")?;
         conn.pragma_update(None, "synchronous", "FULL")?;
+        // For the whole life of the connection: a deleted or consumed record (an "after first
+        // read" secret, an expired item) must not stay readable in a free page until something
+        // happens to overwrite it. Cheap here: the records are small and sealed.
+        conn.pragma_update(None, "secure_delete", true)?;
         let version: i64 = conn.pragma_query_value(None, "user_version", |r| r.get(0))?;
         match version {
             0 => {
@@ -798,6 +805,7 @@ impl Store {
             conn: Mutex::new(conn),
             files_dir: files_dir.to_owned(),
             wrap,
+            last_wal_truncate: Mutex::new(None),
         })
     }
 
@@ -857,13 +865,10 @@ impl Store {
     /// `Ok(true)`: everything was erased.
     pub(crate) fn wipe_everything(&self, guard: WipeGuard) -> Result<bool> {
         let mut conn = self.lock()?;
+        // `secure_delete` stays on for the whole life of the connection (`from_connection`);
+        // set again here so that this erasure never depends on it.
         conn.pragma_update(None, "secure_delete", true)?;
-        let erased = Self::wipe_tables(&mut conn, guard);
-        // Whatever happened, the pragma was only for this erasure.
-        let reset = conn.pragma_update(None, "secure_delete", false);
-        let erased = erased?;
-        reset?;
-        Ok(erased)
+        Self::wipe_tables(&mut conn, guard)
     }
 
     fn wipe_tables(conn: &mut Connection, guard: WipeGuard) -> Result<bool> {
@@ -923,6 +928,42 @@ impl Store {
         Self::checkpoint(&guard)?;
         guard.execute_batch("VACUUM")?;
         Self::checkpoint(&guard)
+    }
+
+    /// Truncates the write-ahead log, where the freed records of an earlier transaction would
+    /// otherwise stay readable until the next checkpoint recycles it. Best effort and cheap:
+    /// at most once every 5 minutes, unless `force` (something was just deleted); a checkpoint
+    /// that cannot complete (a reader is busy) is simply tried again later.
+    pub(crate) fn truncate_wal_if_due(&self, force: bool) {
+        const EVERY: Duration = Duration::from_secs(300);
+        let due = {
+            let mut last = self
+                .last_wal_truncate
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            let due = force || last.is_none_or(|t| t.elapsed() >= EVERY);
+            if due {
+                *last = Some(Instant::now());
+            }
+            due
+        };
+        if !due {
+            return;
+        }
+        if let Ok(guard) = self.lock() {
+            let _ = guard.query_row("PRAGMA wal_checkpoint(TRUNCATE)", [], |r| {
+                r.get::<_, i64>(0)
+            });
+        }
+    }
+
+    /// Whether `secure_delete` is on for the connection (tests).
+    #[cfg(test)]
+    pub(crate) fn secure_delete_on(&self) -> bool {
+        self.lock().is_ok_and(|g| {
+            g.pragma_query_value(None, "secure_delete", |r| r.get::<_, i64>(0))
+                .is_ok_and(|v| v == 1)
+        })
     }
 
     fn checkpoint(conn: &Connection) -> Result<()> {
@@ -2290,6 +2331,27 @@ mod tests {
             }
             assert!(dbg.contains("has_key: true"), "{dbg}");
         }
+    }
+
+    #[test]
+    fn secure_delete_stays_on_and_the_wal_is_truncated() {
+        let (dir, s) = store();
+        assert!(s.secure_delete_on(), "on from the start");
+        s.tx(|d| {
+            for i in 0..200 {
+                d.meta_set(&format!("k{i}"), &[0x5A; 512])?;
+            }
+            Ok(())
+        })
+        .unwrap();
+        let wal = dir.path().join("tomi.db-wal");
+        assert!(std::fs::metadata(&wal).map_or(0, |m| m.len()) > 0);
+        s.tx(|d| d.meta_set("k0", b"x")).unwrap();
+        s.truncate_wal_if_due(true);
+        assert_eq!(std::fs::metadata(&wal).map_or(0, |m| m.len()), 0);
+        // A wipe leaves it on for the rest of the connection's life.
+        s.wipe_everything(WipeGuard::Unconditional).unwrap();
+        assert!(s.secure_delete_on());
     }
 
     fn store() -> (tempfile::TempDir, Store) {

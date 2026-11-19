@@ -2134,6 +2134,7 @@ impl Engine {
     pub fn maintenance(&self) -> Result<()> {
         let now = self.clock.now_ms();
         let max_ttl = self.limits().max_ttl_secs;
+        let mut expired_any = false;
         let erased = self.with_crypto(|c, db, _a| {
             let mut erased = Vec::new();
             for row in db.items()? {
@@ -2146,6 +2147,7 @@ impl Engine {
                     None,
                 ) == crate::LocalRetention::EraseExpired
                 {
+                    expired_any = true;
                     erased.extend(db.delete_item(&row.item_id)?);
                     erased.extend(Self::drop_item_ops(db, &row.item_id)?);
                     db.put_tombstone(&row.item_id, now, false, now)?;
@@ -2171,6 +2173,8 @@ impl Engine {
         for p in erased {
             let _ = std::fs::remove_file(self.store.file_path(&p));
         }
+        // What was just erased must not linger in the write-ahead log.
+        self.store.truncate_wal_if_due(expired_any);
         Ok(())
     }
 }
