@@ -1693,6 +1693,16 @@ impl RustTomiCore {
         self.doorbell_stop.stop();
     }
 
+    /// `true` while the removal of a device is **not finished**: the automatic rotation that
+    /// must follow a revocation failed with `device_set_mismatch` (the relay lists a member this
+    /// device does not know yet) and is retried every hour. The revoked device may still hold
+    /// the current space key meanwhile: show a persistent warning. Persisted; clears itself
+    /// when a rotation succeeds or another member's is applied. Poll it after a `sync` or on
+    /// a change notification.
+    pub fn rotation_stalled(&self) -> bool {
+        self.engine().rotation_stalled()
+    }
+
     /// `true` once after a full resync ("older items could not be recovered").
     pub fn take_resync_notice(&self) -> bool {
         self.engine().take_resync_notice()

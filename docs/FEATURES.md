@@ -250,7 +250,7 @@ Charter: `design/tomi/tokens.json` (reference) and `design/tomi/brand-guidelines
 | Web panel: space details | ➖ | ✅ `api/spaces` (+ `present`, `last_activity_at`, `items`, `blobs`, `events`, `head_seq`, `retention_floor_seq`, `rotation_required`), `api/devices` (+ `registered_at`) | ➖ | ➖ | ➖ | ➖ | Additive; the same fields appear in `admin spaces --json` / `admin devices --json`. Counts, sizes, dates: never content or full identifiers. |
 | Web panel: administration journal | ➖ | ✅ `api/journal` (in memory, 100 lines, lost on restart) | ➖ | ➖ | ➖ | ➖ | Fixed words + dates + account (+ bytes for quota); no address, token, code, or space. Repeats folded into one line. |
 | Web panel: copyable diagnostics | ➖ | ✅ built in the page | ➖ | ➖ | ➖ | ➖ | Versions, accounts, sizes, states, limits, browser; no space identifier, device name, fingerprint, or token. |
-| `device_set_mismatch` alert | 🟡 rotation retried after 1 h; the failure is **silent** (TODO `actions.rs`) | ✅ returns `409 device_set_mismatch` | ➖ | ❌ | ❌ | ❌ | `spec/api-v1.md` §7.6 requires the alert; not exposed by the FFI. |
+| `device_set_mismatch` alert | ✅ rotation retried after 1 h; persisted flag `rotation_stalled()` (cleared by the next rotation) | ✅ returns `409 device_set_mismatch` | ➖ | ❌ banner not wired yet | ❌ banner not wired yet | ❌ banner not wired yet | `spec/api-v1.md` §7.6; FFI `rotation_stalled()`. |
 | Unreadable items / unknown format | ✅ `UnreadableReason`, `UpdateRequired` | ➖ | ➖ | ✅ | ✅ | ✅ | |
 | Logging without content | ➖ | ✅ `logging.rs` | ➖ | ✅ | ✅ | ✅ | Never a secret in logs (golden rule 3). |
 | Frozen vectors `spec/vectors/v1/`, `pairing-v1/` | ✅ checked by the tests | ➖ | ➖ | ➖ | ➖ | ➖ | NEVER change. |

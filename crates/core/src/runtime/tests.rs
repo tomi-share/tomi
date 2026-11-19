@@ -5128,13 +5128,24 @@ fn a_device_set_mismatch_waits_an_hour_and_then_tries_again() {
     let now = w.clock.now_ms();
     assert_eq!(rotation_flags(w.e(0)), (true, Some(now + 60 * MIN)));
     assert_eq!(w.e(0).flags.lock().unwrap().rotation_failures, 0);
+    // The failure is not silent: a persisted flag the apps show as a banner.
+    assert!(w.e(0).rotation_stalled());
+    assert!(
+        w.nodes[0]
+            .reopen(&w.relay, w.clock.clone())
+            .rotation_stalled(),
+        "it survives a restart"
+    );
+    assert!(!w.e(1).rotation_stalled(), "only the device that failed");
     // Not before the hour.
     w.clock.advance(59 * MIN);
     w.e(0).sync().unwrap();
     assert_eq!(w.relay.count("post_rotation"), 2);
+    assert!(w.e(0).rotation_stalled(), "still stalled until it succeeds");
     w.clock.advance(2 * MIN);
     w.e(0).sync().unwrap();
     assert_eq!(epoch(&w), 2);
+    assert!(!w.e(0).rotation_stalled(), "cleared by the rotation");
 }
 
 #[test]

@@ -1072,6 +1072,7 @@ impl Engine {
             f.rotation_due_at_ms = None;
             f.rotation_failures = 0;
         }
+        self.set_rotation_stalled(false);
     }
 
     /// The automatic rotation (`api-v1.md` §7.6), when it is due: called at the end of every
@@ -1099,12 +1100,10 @@ impl Engine {
             Err(CoreError::Relay { code, .. }) if code == "device_set_mismatch" => {
                 // A member the trust store does not know: never sealed for (§7.6). Try again in
                 // an hour.
-                // TODO(lot A): the spec (§7.6) asks for an *alert* here, and the app cannot see
-                // one yet: only `notify()` fires. Expose it with the Android lot: a persistent
-                // `device_set_mismatch` flag in `Flags` (set here, cleared by a successful
-                // rotation in `rotation_settled`), a field of `SpaceStatus` / `SyncReport` and
-                // its FFI mirror in `ffi.rs` (`FfiSyncReport` / `SpaceStateKind`), then the
-                // banner in `apps/android`. Until then the failure is silent.
+                // The alert of §7.6: a persisted flag (`rotation_stalled`, cleared by the next
+                // rotation that succeeds or that another member applies) the apps show as a
+                // banner, since until then the revoked device may still hold the space key.
+                self.set_rotation_stalled(true);
                 if let Ok(mut f) = lock(&self.flags) {
                     f.rotation_due_at_ms = Some(now.saturating_add(3_600_000));
                 }
@@ -1194,6 +1193,7 @@ impl Engine {
                         }
                         Self::persist_crypto(c, db)
                     })?;
+                    self.set_rotation_stalled(false);
                     self.notify();
                     return Ok(true);
                 }

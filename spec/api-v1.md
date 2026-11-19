@@ -2212,7 +2212,10 @@ the application having to call `maybe_rotate`:
   REVOKED, NOT_FOUND, BLOCKED_UPDATE_REQUIRED or not paired;
 - success, or `GET /v1/space` no longer requesting it (another member did it): `rotation_required = false`, deadline
   erased. Transient failure (network, `429`, `5xx`, repeated `epoch_conflict`): new deadline
-  `now + uniform(0, min(15 min, 30 s × 2^failures))`. Persistent `device_set_mismatch`: alert, new deadline in 1 h;
+  `now + uniform(0, min(15 min, 30 s × 2^failures))`. Persistent `device_set_mismatch`: alert, new deadline in 1 h; the alert is a persisted flag
+  (`rotation_stalled`, exposed by the FFI as `rotation_stalled()`; it survives a restart and clears when a rotation
+  succeeds or another member's rotation is applied) that the apps show as a persistent banner: until it clears, the
+  revoked device may still hold the current space key;
 - residual window: as long as no member is connected (apps closed), the rotation waits for the next startup of one of
   them. Items sent in this window are sealed under a key that the departed device knew; it erased that key if it left
   via « Se déconnecter » (UI label), and the relay refuses all its requests. A client MUST seal the new key only for

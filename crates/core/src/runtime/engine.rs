@@ -383,6 +383,10 @@ const KEYS_SECRET: &str = "device_keys";
 const LSK_SECRET: &str = "local_key";
 const SESSION_RENEW_MARGIN_MS: i64 = 300_000;
 
+/// `meta` key: present while an automatic rotation after a revocation keeps failing with
+/// `device_set_mismatch` (the relay lists a member this device's trust store does not know).
+pub(crate) const ROTATION_STALLED_KEY: &str = "rotation_stalled";
+
 /// `meta` key of the capabilities announced by the relay (JSON list of strings).
 pub(crate) const FEATURES_KEY: &str = "relay_features";
 
@@ -1709,6 +1713,8 @@ impl Engine {
                                 .map(|mut f| f.blocked = Some(Blocked::Revoked))
                                 .ok();
                         } else if let Some(key) = outcome.new_space_key {
+                            // A rotation now exists: whatever kept ours from completing is over.
+                            db.meta_delete(ROTATION_STALLED_KEY)?;
                             c.ring.add_rotation_key(
                                 key,
                                 ev.seq,
@@ -2145,6 +2151,36 @@ impl Engine {
             f.resync_notice = true;
         }
         Ok(())
+    }
+
+    /// Whether the removal of a device is **not finished**: the automatic rotation that must
+    /// follow a revocation (`api-v1.md` §7.6) failed with `device_set_mismatch` (the relay lists a
+    /// member that this device's trust store does not know yet), and is tried again every hour.
+    /// Until it succeeds, the revoked device may still hold the current space key: the app shows a
+    /// persistent warning. Stored (it survives a restart); cleared by any rotation that succeeds or
+    /// that another member applied.
+    pub fn rotation_stalled(&self) -> bool {
+        self.store
+            .read(|db| db.meta_get(ROTATION_STALLED_KEY))
+            .ok()
+            .flatten()
+            .is_some()
+    }
+
+    /// Sets or clears the persisted `rotation_stalled` flag. Returns whether it changed.
+    pub(crate) fn set_rotation_stalled(&self, stalled: bool) -> bool {
+        let was = self.rotation_stalled();
+        if was == stalled {
+            return false;
+        }
+        let _ = self.store.tx(|db| {
+            if stalled {
+                db.meta_set(ROTATION_STALLED_KEY, b"1")
+            } else {
+                db.meta_delete(ROTATION_STALLED_KEY)
+            }
+        });
+        true
     }
 
     /// Whether the "older items could not be recovered" notice is pending; clears it.
