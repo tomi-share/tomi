@@ -58,5 +58,12 @@ class DeepLinkPrefillTest {
         assertEquals("T", result.title)
         assertEquals("texte", result.text)
         assertFalse(result.appended)
+        // The caller must not reset the draft (secret switch, attachments) when nothing was appended.
+        assertTrue(result.keepsDraft)
+    }
+
+    @Test
+    fun anEmptyDraftIsNotKept() {
+        assertFalse(DeepLinkPrefill.apply("", "", hasAttachments = false, link = link()).keepsDraft)
     }
 }

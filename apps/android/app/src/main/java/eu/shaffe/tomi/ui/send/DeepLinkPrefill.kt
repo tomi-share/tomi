@@ -9,7 +9,7 @@ import eu.shaffe.tomi.share.SharePayloadParser
  * (the title only when there is none yet) and the user is told. Nothing is ever sent from here.
  */
 internal object DeepLinkPrefill {
-    data class Result(val title: String, val text: String, val appended: Boolean)
+    data class Result(val title: String, val text: String, val appended: Boolean, val keepsDraft: Boolean = false)
 
     fun apply(currentTitle: String, currentText: String, hasAttachments: Boolean, link: DeepLink.Send): Result {
         val incoming = listOfNotNull(link.url, link.text).joinToString("\n")
@@ -22,6 +22,6 @@ internal object DeepLinkPrefill {
             currentText.isBlank() -> incoming
             else -> (currentText.trimEnd('\n') + "\n" + incoming).take(SharePayloadParser.MAX_TEXT)
         }
-        return Result(title, text, appended = incoming.isNotEmpty() || (currentTitle.isBlank() && title.isNotEmpty()))
+        return Result(title, text, appended = incoming.isNotEmpty() || (currentTitle.isBlank() && title.isNotEmpty()), keepsDraft = true)
     }
 }

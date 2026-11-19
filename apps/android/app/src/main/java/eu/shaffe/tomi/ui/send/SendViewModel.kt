@@ -90,11 +90,14 @@ class SendViewModel(private val container: AppContainer) : ViewModel() {
      */
     fun prefill(link: DeepLink.Send) {
         val merged = DeepLinkPrefill.apply(title, text, attachments.isNotEmpty(), link)
-        if (merged.appended) {
-            title = merged.title
-            text = merged.text
-            pastedHtml = null
-            notice = R.string.notice_link_appended_to_draft
+        if (merged.keepsDraft) {
+            // A draft in progress is never reset: not even when the link adds nothing (secret switch, attachments and expiry stay).
+            if (merged.appended) {
+                title = merged.title
+                text = merged.text
+                pastedHtml = null
+                notice = R.string.notice_link_appended_to_draft
+            }
             return
         }
         submission = null
