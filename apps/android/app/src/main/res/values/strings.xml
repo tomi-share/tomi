@@ -244,6 +244,7 @@
     <string name="hint_secret_sensitive">L’application d’origine a marqué ce contenu comme sensible : il est envoyé masqué.</string>
     <string name="hint_secret_heuristic">Ce contenu ressemble à un mot de passe ou à une clé : il est masqué. Tu peux le modifier.</string>
     <string name="notice_paste_empty">Le presse-papiers ne contient pas de texte.</string>
+    <string name="notice_link_appended_to_draft">Un lien d’une autre application a été ajouté à ton brouillon. Vérifie-le avant d’envoyer.</string>
     <string name="notice_params_dropped">Certains paramètres du lien ont été ignorés (trop longs ou invalides).</string>
     <string name="notice_too_late">Trop tard : l’élément est déjà parti.</string>
     <string name="notice_undo_failed">Impossible d’annuler l’envoi. L’élément est peut-être déjà parti.</string>
@@ -340,6 +341,7 @@
     <string name="pair_scan_preview_description">Aperçu de la caméra pour scanner le QR code de l’autre appareil</string>
     <string name="pair_link_received">Lien d’invitation reçu</string>
     <string name="pair_link_received_relay">Relais&#160;: %1$s</string>
+    <string name="pair_link_received_warning">Ce lien vient d’une autre application ou d’une page web. Rejoins uniquement un espace que tu viens de créer toi-même, avec un relais que tu reconnais.</string>
     <string name="pair_link_received_hint">Rien n’est fait automatiquement. Appuie sur «&#160;Rejoindre&#160;» pour continuer.</string>
     <string name="pair_join">Rejoindre</string>
     <string name="pair_scan_hint">La caméra ne sert qu’à ce scan.</string>

@@ -84,13 +84,24 @@ class SendViewModel(private val container: AppContainer) : ViewModel() {
         val expiry: ExpiryChoice,
     )
 
-    /** `tomi-share://send` pre-fill: only fills the fields, never sends. */
+    /**
+     * `tomi-share://send` pre-fill: only fills the fields, never sends. A draft in progress is kept: the link is appended to it
+     * ([DeepLinkPrefill]), and the draft stays as it is (secret switch, attachments, expiry included).
+     */
     fun prefill(link: DeepLink.Send) {
+        val merged = DeepLinkPrefill.apply(title, text, attachments.isNotEmpty(), link)
+        if (merged.appended) {
+            title = merged.title
+            text = merged.text
+            pastedHtml = null
+            notice = R.string.notice_link_appended_to_draft
+            return
+        }
         submission = null
         undoCopy.clear()
-        title = link.title.orEmpty()
+        title = merged.title
         attachments = emptyList()
-        text = listOfNotNull(link.url, link.text).joinToString("\n")
+        text = merged.text
         pastedHtml = null
         resetSecret()
         notice = if (link.droppedParameters) R.string.notice_params_dropped else null

@@ -426,12 +426,20 @@ private fun PendingLinkCard(viewModel: PairingViewModel, working: Boolean) {
         ) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(R.string.pair_link_received), style = MaterialTheme.typography.titleMedium)
-                viewModel.pendingRelay?.let {
+                // Whoever showed the link chose the relay: it is shown first and large, so that a relay the user does not know
+                // (a link from a web page, another app) is noticed before anything is sent to it. A link without a relay uses
+                // the device's own one, which is shown the same way.
+                (viewModel.pendingRelay ?: viewModel.configuredRelay)?.let {
                     Text(
                         stringResource(R.string.pair_link_received_relay, RelayAddress.authority(it)),
-                        style = MaterialTheme.typography.bodyLarge.copy(fontFamily = TomiFonts.mono, fontFeatureSettings = TomiFonts.MONO_EXACT_FEATURES),
+                        style = MaterialTheme.typography.titleMedium.copy(fontFamily = TomiFonts.mono, fontFeatureSettings = TomiFonts.MONO_EXACT_FEATURES),
                     )
                 }
+                Text(
+                    stringResource(R.string.pair_link_received_warning),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
+                )
                 Text(stringResource(R.string.pair_link_received_hint), style = MaterialTheme.typography.bodyMedium)
                 Button(onClick = viewModel::joinWithPendingPayload, enabled = !working, shape = TomiTheme.shapes.button) {
                     Text(stringResource(R.string.pair_join))
