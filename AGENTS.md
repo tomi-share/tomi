@@ -73,6 +73,13 @@ Identifiers: application id `eu.shaffe.tomi`, URL scheme `tomi-share://`.
 - **Android**: `cd apps/android && ./gradlew assembleDebug testDebugUnitTest lint` (look for `BUILD SUCCESSFUL`).
 - **Windows**: in `apps/windows/src-tauri`: `cargo check` and `cargo test`; in `apps/windows`: `npm run check`.
 - **iOS**: Swift packages under `apps/apple/Packages`; the app project is generated with XcodeGen from `apps/apple/project.yml`.
+- **Apple generated files** (`Localizable.xcstrings`, `TomiTokens.swift`) are derived, and CI ("Apple (generated files up to date)")
+  fails when they are stale. So **any change to `apps/android/app/src/main/res/values/strings.xml`,
+  `apps/apple/tools/strings-apple.json` or `design/tomi/tokens.json` must ship in the same commit as the regenerated files**,
+  even for an Android-only change. Regenerate with `just apple-project` (or `python3 -I apps/apple/tools/strings-from-android.py`
+  and `tokens-to-swift.py` from `apps/apple`). With no working Python (e.g. the Windows Store stub), edit the catalog by hand
+  exactly as the script would (keys sorted, `"extractionState" : "manual"`, `fr` unit `translated`; write `%1$@` in `ios_` keys,
+  never `%1$s`), then check that `git diff` shows only that entry. Run this check before every push that touches those sources.
 - CI builds and release publishing: see `docs/DEV.md` and `.github/workflows/`.
 
 ## Git hygiene
