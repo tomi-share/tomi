@@ -11,7 +11,7 @@ version; there is no global version number. Client/relay compatibility is carrie
 | Relay | `relay-vX.Y.Z` | Linux binaries | push of the tag (`release-relay.yml`) | **in place** |
 | Relay (moving pointer) | `relay-latest` | same assets as the latest relay release | rewritten by the workflow; do not edit by hand | **in place** |
 | Android, development | `android-dev` | rolling pre-release, release-signed APK `tomi-android-release.apk` (only when the release key is configured, see "Android release signing") | manual run of `build-apps.yml` | **in place** |
-| Windows, development | `windows-dev` | rolling pre-release, `tomi-windows-setup.exe` (unsigned) | manual run of `build-apps.yml` | **in place** |
+| Windows, development | `windows-dev` | rolling pre-release, `tomi-windows-setup.exe` (unsigned) with `.sha256` and a build provenance attestation | manual run of `build-apps.yml` | **in place** |
 | Android, stable | `android-vX.Y.Z` | APK signed with the release key | push of the tag | planned (see below) |
 | Windows, stable | `windows-vX.Y.Z` | signed installer | push of the tag | planned (see below) |
 | CLI | `cli-vX.Y.Z` | binaries | push of the tag | planned |
@@ -115,11 +115,97 @@ The Gradle build reads `TOMI_RELEASE_KEYSTORE`, `TOMI_RELEASE_KEYSTORE_PASSWORD`
 repository). Without `TOMI_RELEASE_KEYSTORE`, `assembleRelease` produces an unsigned APK. `-PtomiApplicationId=...` (forks, see
 [FORKING.md](FORKING.md)) works with all of this; a fork uses its own keystore, secrets and fingerprint.
 
+## Integrity of published artifacts
+
+Every artifact that `build-apps.yml` publishes (the Android APK, the Windows installer) comes with two things, and the relay
+release assets (`release-relay.yml`) carry a checksum as well:
+
+- a **SHA-256 checksum file**, `<asset>.sha256`, in `sha256sum` format. The publish job checks each file against its checksum
+  again before uploading, so a corruption between the build job and the release is caught.
+- a **build provenance attestation** (`actions/attest-build-provenance`, Sigstore, signed by GitHub): it states that this exact
+  file (by digest) was produced by that workflow of this repository at that commit. It is created for public repositories only
+  (attestations of private repositories need a paid GitHub plan); the step is skipped, with the build otherwise unchanged,
+  while the repository is private. The Android APK is attested only when it is publishable (signed release build).
+
+Limits to know about:
+
+- A checksum next to a download protects against corruption, **not against a tampered release**: whoever can replace the file
+  can replace its `.sha256` too. The attestation and, for Android, the signing certificate are the checks that count.
+- Attestation says *where the file was built from*, not that the source is free of bugs or that nobody with write access
+  changed the workflow. It is evidence for a user, not a substitute for reviewing the repository.
+- The rolling `android-dev` and `windows-dev` pre-releases are **replaced by every run** (`gh release upload --clobber`). That is
+  deliberate and limited to those two tags (the relay workflow does the same for its `relay-latest` pointer): a rolling channel
+  is meant to be overwritten, the workflow refuses to touch a
+  release that is not a pre-release, removes stale assets, and states in the release notes which commit and which workflow
+  run produced the current files; each replacement has its own checksum and its own attestation. **Stable releases never use
+  `--clobber`**: they are created once from a `*-vX.Y.Z` tag, a published tag is never reused (rule 1), and a fix is a new version.
+  When the stable workflows exist, also enable GitHub's *immutable releases* setting so that published assets cannot be
+  altered after the fact.
+- In the Android job the signing secrets are in the environment of the Gradle step that builds and signs the APK, and that step
+  also compiles the Rust dependencies. A compromised build-time dependency could therefore read them. What reduces this:
+  dependency versions pinned by lockfiles and audited in CI (`security.yml`), actions pinned by commit SHA, and keeping the
+  secrets in a protected Environment (see "Android release signing"). If a leak is suspected, treat the key as burned:
+  generate a new one and say so in the release notes.
+
+## Verifying a download
+
+Windows installer (replace the repository if you use a fork):
+
+```sh
+# 1. checksum (against corruption; the .sha256 file is downloaded from the same release)
+sha256sum --check tomi-windows-setup.exe.sha256
+#    PowerShell: (Get-FileHash .\tomi-windows-setup.exe -Algorithm SHA256).Hash.ToLower()  -> compare with the file content
+
+# 2. build provenance (needs the GitHub CLI, gh >= 2.49; the repository must be public)
+gh attestation verify tomi-windows-setup.exe --repo tomi-share/tomi
+#    stricter: also require that the signer is this workflow
+gh attestation verify tomi-windows-setup.exe --repo tomi-share/tomi \
+  --signer-workflow tomi-share/tomi/.github/workflows/build-apps.yml
+```
+
+A successful `gh attestation verify` prints the workflow, the commit and the run that built the file; any failure means you
+should not install it. The Windows installer is **not code-signed yet**, so SmartScreen will warn: verifying the attestation
+is the way to know what you are about to run (see the plan below).
+
+Android APK:
+
+```sh
+sha256sum --check tomi-android-release.apk.sha256
+gh attestation verify tomi-android-release.apk --repo tomi-share/tomi
+# the signing certificate (Android build-tools) must be the project's one:
+apksigner verify --print-certs tomi-android-release.apk      # compare "certificate SHA-256 digest" with the fingerprint below
+```
+
+Release certificate SHA-256 fingerprint: **not published yet** (the release key has not been created, see "Not done yet").
+It will be added here and in the release notes of the first signed build. Android refuses to update an app signed with another
+key, so a build signed with a different certificate is not an update of this one.
+
+Relay binaries: `sha256sum --check tomi-relay-<target>.sha256` as above.
+
+## Windows code signing: plan
+
+Not done, and not configured in this repository: nothing in the workflows pretends otherwise. SmartScreen currently warns for
+the installer, which is why verification (above) is documented. The plan, in order:
+
+1. **SignPath Foundation** (<https://signpath.org/>), which offers code signing for free to open-source projects. The usual
+   conditions, to confirm on their site when applying: an OSI-approved license (Tomi is Apache-2.0), a public repository,
+   releases built by a CI pipeline that SignPath can trace back to the source, and multi-factor authentication for the people
+   who approve signing. In practice the Windows job would upload the unsigned installer as an artifact, a SignPath signing
+   request would be submitted from the workflow (they provide a GitHub Action for this), and the signed file would then be
+   what gets checksummed, attested and published. The certificate would name SignPath Foundation as publisher. Application,
+   project configuration and the signing policy are owner tasks: they need an account and cannot be done from the repository.
+2. If that does not work out, a commercial alternative such as Microsoft's Azure Trusted Signing (check current availability
+   and eligibility), or an EV/OV certificate.
+3. Later: the Tauri updater with a minisign public key embedded in `tauri.conf.json` and the private key kept in CI secrets only,
+   so that installed copies update through a verified channel.
+
+Even with a certificate, SmartScreen reputation builds up with downloads; a signed installer can still show a warning at first.
+
 ## Not done yet
 
 - [ ] Create the Android release keystore and configure the `ANDROID_RELEASE_*` secrets (see "Android release signing").
       The workflow is ready for it; until it is done, CI publishes no APK at all (it builds an unsigned one as an artifact).
-- [ ] Code signing for the Windows installer (SmartScreen currently warns), before creating `windows-v*` tags.
+- [ ] Code signing for the Windows installer (SmartScreen currently warns), before creating `windows-v*` tags. Plan: "Windows code signing: plan".
 - [ ] Workflows for `android-v*` and `windows-v*` tags: build, check that the tag matches the version file, publish a
       non-prerelease with generated notes.
 - [ ] `cli-v*` workflow and binaries, if the CLI is to be distributed.

@@ -97,7 +97,7 @@ Tag naming, stable releases and changelog rules: see [RELEASES.md](RELEASES.md).
   workflow still builds, but produces a clearly named UNSIGNED or DEBUG-ONLY APK as a workflow artifact, never a release asset.
   Setup, keystore creation and verification: [RELEASES.md](RELEASES.md). `./gradlew assemblePreview` (release code, debug key) stays
   a local tool for judging speed; it is never distributed.
-- The Windows installer is not signed (a SmartScreen warning is expected).
+- The Windows installer is not code-signed (a SmartScreen warning is expected). Every published artifact has a `.sha256` and a build provenance attestation (`gh attestation verify`); see [RELEASES.md](RELEASES.md#verifying-a-download) and the code signing plan.
 - Relay address for CI builds: the repository variable TOMI_RELAY_URL (see Environment).
 - Optional secret FORGE_DEPLOY_URL: URL of a deploy hook called after a relay release is published (see infra/forge/); the step does nothing when the secret is absent.
 - Android: `libtomi_core.so` is built with `--features demo` (entering the demo from "Join your space"), in two places that must stay in agreement: the Gradle task `buildTomiCoreLibs` (`app/build.gradle.kts`) and the `cargo ndk` pre-step of `ci.yml` (same in the `just android-ndk-libs` recipe).

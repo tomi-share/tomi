@@ -73,6 +73,10 @@ jobs:
     if: inputs.android
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    permissions:
+      contents: read
+      id-token: write       # attest-build-provenance: Sigstore signing identity of this workflow run
+      attestations: write   # attest-build-provenance: stores the attestation
     outputs:
       # "true" only for a signed `release` APK. Anything else is a workflow artifact and is never published.
       publishable: ${{ steps.apk.outputs.publishable }}
@@ -126,7 +130,8 @@ jobs:
           (umask 077; printf '%s' "$KEYSTORE_B64" | base64 -d > "$ks")
           # Fingerprint of the certificate in the keystore (public information), read without putting the password on the command line.
           # (English output forced: the label "SHA256:" is parsed.)
-          fp="$(keytool -J-Duser.language=en -J-Duser.country=US -list -v -keystore "$ks" -alias "$KEY_ALIAS" -storepass:env KEYSTORE_PASSWORD | sed -n '/SHA256:/{s/^ *SHA256: *//p;q}' | tr -d ': ' | tr 'A-F' 'a-f')"
+          listing="$(keytool -J-Duser.language=en -J-Duser.country=US -list -v -keystore "$ks" -alias "$KEY_ALIAS" -storepass:env KEYSTORE_PASSWORD 2>/dev/null || true)"
+          fp="$(grep -m1 'SHA256:' <<<"$listing" | sed 's/.*SHA256: *//' | tr -d ': \r' | tr 'A-F' 'a-f' || true)"
           if ! printf '%s' "$fp" | grep -Eq '^[0-9a-f]{64}$'; then
             echo "::error title=Android::Could not read the certificate of alias '${KEY_ALIAS}' in the release keystore (wrong password, alias or file?)."
             exit 1
@@ -200,10 +205,24 @@ jobs:
           APK: out/${{ steps.apk.outputs.name }}
           EXPECTED_CERT: ${{ vars.ANDROID_RELEASE_CERT_SHA256 || steps.key.outputs.cert_sha256 }}
         run: bash .github/scripts/verify-android-apk.sh "$APK" "$EXPECTED_CERT"
+      # SHA-256 in `sha256sum` format (lowercase hash, two spaces, file name) so that `sha256sum --check` works.
+      - name: Checksum
+        env:
+          NAME: ${{ steps.apk.outputs.name }}
+        run: |
+          set -euo pipefail
+          (cd out && sha256sum "$NAME" > "$NAME.sha256" && cat "$NAME.sha256")
+      # Build provenance (Sigstore, signed by GitHub): `gh attestation verify` proves which workflow, repository and commit
+      # produced the file. Public repositories only: attestations of private repositories need a paid plan.
+      - name: Attest build provenance
+        if: steps.apk.outputs.publishable == 'true' && !github.event.repository.private
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: out/${{ steps.apk.outputs.name }}
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: android-apk
-          path: out/*.apk
+          path: out/*
           retention-days: 14
           if-no-files-found: error
 
@@ -212,6 +231,10 @@ jobs:
     if: inputs.windows
     runs-on: windows-latest
     timeout-minutes: 45
+    permissions:
+      contents: read
+      id-token: write       # attest-build-provenance: Sigstore signing identity of this workflow run
+      attestations: write   # attest-build-provenance: stores the attestation
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
@@ -254,10 +277,25 @@ jobs:
           mkdir -p out
           cp "$exe" out/tomi-windows-setup.exe
           ls -l out
+      # SHA-256 in `sha256sum` format (lowercase hash, two spaces, file name), as for the relay binaries.
+      - name: Checksum
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $hash = (Get-FileHash out/tomi-windows-setup.exe -Algorithm SHA256).Hash.ToLower()
+          "$hash  tomi-windows-setup.exe" | Out-File -Encoding ascii -NoNewline out/tomi-windows-setup.exe.sha256
+          Get-Content out/tomi-windows-setup.exe.sha256
+      # Build provenance (Sigstore, signed by GitHub): `gh attestation verify` proves which workflow, repository and commit
+      # produced the installer. Public repositories only: attestations of private repositories need a paid plan.
+      - name: Attest build provenance
+        if: ${{ !github.event.repository.private }}
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: out/tomi-windows-setup.exe
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: windows-installer
-          path: out/tomi-windows-setup.exe
+          path: out/*
           retention-days: 14
           if-no-files-found: error
 
@@ -295,31 +333,69 @@ jobs:
         run: |
           set -euo pipefail
           ls -R dl
-          # Rolling development pre-releases; created on first use (see docs/RELEASES.md).
-          ensure_release() {
-            gh release view "$1" >/dev/null 2>&1 || gh release create "$1" \
-              --prerelease --target "$SHA" --title "$2" \
-              --notes "Rolling development build. Not a stable release (see docs/RELEASES.md)."
+
+          # The files must still match the checksums computed by the build jobs (integrity of the artifact hand-over).
+          verify_checksum() {
+            (cd "$(dirname "$1")" && sha256sum --check "$(basename "$1").sha256")
           }
+
+          # Rolling development pre-releases; created on first use (see docs/RELEASES.md). Refuses to touch a release that is
+          # not a pre-release, so that this workflow can never overwrite the assets of a stable release.
+          ensure_release() {
+            if gh release view "$1" >/dev/null 2>&1; then
+              if [ "$(gh release view "$1" --json isPrerelease --jq .isPrerelease)" != "true" ]; then
+                echo "::error title=Release::$1 is not a pre-release: refusing to replace its assets."
+                exit 1
+              fi
+            else
+              gh release create "$1" --prerelease --target "$SHA" --title "$2" \
+                --notes "Rolling development build. Not a stable release (see docs/RELEASES.md)."
+            fi
+          }
+
+          # Replaces the assets of the rolling release `$1` with the files after the title `$2`, removes the other assets, and
+          # states in the notes which commit and run produced them and how to verify them. `--clobber` is deliberate and limited
+          # to these rolling `*-dev` pre-releases, which are replaced by design; every replacement comes with a new checksum
+          # and a new build-provenance attestation, and the notes name the commit. Stable releases (`*-vX.Y.Z` tags) must never
+          # use --clobber: they are created once, and a fix is a new version (docs/RELEASES.md, rule 1).
+          publish_rolling() {
+            local tag="$1" title="$2" main keep=" " f asset
+            shift 2
+            main="$(basename "$1")"
+            ensure_release "$tag" "$title"
+            gh release upload "$tag" "$@" --clobber
+            for f in "$@"; do keep="${keep}$(basename "$f") "; done
+            gh release view "$tag" --json assets --jq '.assets[].name' | while read -r asset; do
+              case "$keep" in
+                *" ${asset} "*) ;;
+                *) echo "Removing stale asset: ${asset}"; gh release delete-asset "$tag" "$asset" --yes ;;
+              esac
+            done
+            gh release edit "$tag" --notes "Rolling development build: its assets are REPLACED by every run of the workflow, so this is not a stable release (see docs/RELEASES.md).
+
+          Built from commit ${SHA} by ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
+
+          Verify a download (details in docs/RELEASES.md, \"Verifying a download\"):
+
+              sha256sum --check ${main}.sha256
+              gh attestation verify ${main} --repo ${GITHUB_REPOSITORY}"
+          }
+
           if [ "$ANDROID_RESULT" = "success" ] && [ "$ANDROID_PUBLISHABLE" = "true" ]; then
             apk="$(find dl -name tomi-android-release.apk | head -n 1)"
             test -n "$apk"
+            verify_checksum "$apk"
             # Second, independent run of the check, on the file that is about to be uploaded (not on the build job's copy).
             bash .github/scripts/verify-android-apk.sh "$apk" "$EXPECTED_CERT"
-            ensure_release android-dev "Android development build"
-            gh release upload android-dev "$apk" --clobber
-            # The rolling release must not keep the debug / preview APKs that earlier versions of this workflow published.
-            gh release view android-dev --json assets --jq '.assets[].name' | while read -r asset; do
-              case "$asset" in
-                tomi-android-release.apk) ;;
-                *) echo "Removing stale asset: $asset"; gh release delete-asset android-dev "$asset" --yes ;;
-              esac
-            done
+            publish_rolling android-dev "Android development build" "$apk" "$apk.sha256"
           elif [ "$ANDROID_RESULT" = "success" ]; then
             echo "::notice title=Android::The APK is not a signed release build: not published."
           fi
+
           if [ "$WINDOWS_RESULT" = "success" ]; then
-            ensure_release windows-dev "Windows development build"
-            gh release upload windows-dev "$(find dl -name tomi-windows-setup.exe | head -n 1)" --clobber
+            exe="$(find dl -name tomi-windows-setup.exe | head -n 1)"
+            test -n "$exe"
+            verify_checksum "$exe"
+            publish_rolling windows-dev "Windows development build" "$exe" "$exe.sha256"
           fi
           echo "Published from ${SHA}."
