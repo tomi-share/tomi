@@ -1,5 +1,6 @@
 [versions]
-agp = "8.13.2"
+agp = "9.5.1"
+# Version of the Compose compiler plugin, which also sets the Kotlin Gradle plugin used to build (AGP 9 has built-in Kotlin: no separate kotlin-android plugin).
 kotlin = "2.3.21"
 composeBom = "2026.01.01"
 # The floating toolbar (Material 3 Expressive) is not in material3 1.4.0 stable; 1.5.0-alpha18 is the last 1.5 alpha that builds with AGP 8.13 / compileSdk 36 (later ones need AGP 9.1 and compileSdk 37).
@@ -61,5 +62,4 @@ junit = { module = "junit:junit", version.ref = "junit" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
