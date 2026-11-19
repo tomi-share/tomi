@@ -98,15 +98,27 @@ fun InviteScreen(viewModel: InviteViewModel, onBack: () -> Unit) {
             )
         },
     ) { padding ->
-        Box(Modifier.screenContentPadding(padding).fillMaxSize()) {
-            when (state) {
-                InviteUiState.Starting -> StartingContent(onCancel = ::leave)
-                is InviteUiState.ShowCode -> ShowCodeContent(state, onCancel = ::leave)
-                is InviteUiState.Verify -> InviteVerifyContent(state, onAdd = viewModel::add, onRefuse = viewModel::refuse)
-                is InviteUiState.Adding -> AddingContent(state.peer, onCancel = ::leave)
-                is InviteUiState.AuthRequired -> AuthRequiredContent(state, onRetry = viewModel::restart, onClose = ::leave)
-                is InviteUiState.Done -> DoneContent(state, onFinished = onBack)
-                is InviteUiState.Failed -> FailedContent(state, onRetry = viewModel::restart, onClose = onBack)
+        Column(Modifier.screenContentPadding(padding).fillMaxSize()) {
+            // The demo space invites a make-believe device with a fixed verification code: say so, whatever the state.
+            if (viewModel.isDemo) {
+                Text(
+                    stringResource(R.string.demo_banner),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.error,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                )
+            }
+            Box(Modifier.weight(1f).fillMaxWidth()) {
+                when (state) {
+                    InviteUiState.Starting -> StartingContent(onCancel = ::leave)
+                    is InviteUiState.ShowCode -> ShowCodeContent(state, onCancel = ::leave)
+                    is InviteUiState.Verify -> InviteVerifyContent(state, onAdd = viewModel::add, onRefuse = viewModel::refuse)
+                    is InviteUiState.Adding -> AddingContent(state.peer, onCancel = ::leave)
+                    is InviteUiState.AuthRequired -> AuthRequiredContent(state, onRetry = viewModel::restart, onClose = ::leave)
+                    is InviteUiState.Done -> DoneContent(state, onFinished = onBack)
+                    is InviteUiState.Failed -> FailedContent(state, onRetry = viewModel::restart, onClose = onBack)
+                }
             }
         }
     }

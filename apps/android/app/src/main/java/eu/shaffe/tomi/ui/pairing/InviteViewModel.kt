@@ -88,6 +88,9 @@ class InviteViewModel(private val container: AppContainer) : ViewModel() {
     @Volatile
     var authenticator: Authenticator? = null
 
+    /** The core runs its demo space: the screen says so (the verification code is then a fixed, fictitious one). */
+    val isDemo: Boolean get() = container.core.isDemo.value
+
     private val flow = InviteFlow(
         container.core,
         SystemClock::elapsedRealtime,

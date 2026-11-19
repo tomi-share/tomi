@@ -160,4 +160,27 @@ class RealTomiCoreDemoTest {
         assertFalse("the core was not asked", native.calls.contains("enterDemo"))
         assertFalse(core.isDemo.value)
     }
+
+    @Test
+    fun aDeviceThatBelongsToARealSpaceNeverEntersTheDemo() = runBlocking {
+        val native = NativeFake().apply {
+            demoSupported = true
+            paired = true
+            opensTheDemo()
+        }
+        val core = core(native)
+        assertTrue(core.isPaired.value)
+        assertFalse(core.isDemo.value)
+
+        try {
+            core.enterDemo()
+            fail("a provisioned device must be refused")
+        } catch (_: TomiCoreException) {
+            // Expected.
+        }
+
+        assertFalse("the core was not even asked", native.calls.contains("enterDemo"))
+        assertFalse(core.isDemo.value)
+        assertTrue("the real space is untouched", core.isPaired.value)
+    }
 }

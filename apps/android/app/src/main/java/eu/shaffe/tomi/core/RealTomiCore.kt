@@ -645,6 +645,9 @@ class RealTomiCore(
     /** The core opens the demo space (seconds, about 45 MB written): it runs to its end even if the caller goes away. */
     override suspend fun enterDemo() {
         val config = demoConfig ?: throw TomiCoreException("core: no demo")
+        // A device that belongs to a real space never enters the demo (the core refuses too, but only after the pairing below was
+        // abandoned): the demo has a fixed verification code and fictitious data, it must never replace or mix with a provisioned device.
+        if (pairedState.value && !demoState.value) throw TomiCoreException("core: this device already belongs to a space")
         // One pairing at a time: the core refuses the demo while one is pending.
         abandonJoin()
         try {
