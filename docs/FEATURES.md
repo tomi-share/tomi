@@ -251,6 +251,7 @@ Charter: `design/tomi/tokens.json` (reference) and `design/tomi/brand-guidelines
 | Web panel: administration journal | ➖ | ✅ `api/journal` (in memory, 100 lines, lost on restart) | ➖ | ➖ | ➖ | ➖ | Fixed words + dates + account (+ bytes for quota); no address, token, code, or space. Repeats folded into one line. |
 | Web panel: copyable diagnostics | ➖ | ✅ built in the page | ➖ | ➖ | ➖ | ➖ | Versions, accounts, sizes, states, limits, browser; no space identifier, device name, fingerprint, or token. |
 | `device_set_mismatch` alert | ✅ rotation retried after 1 h; persisted flag `rotation_stalled()` (cleared by the next rotation) | ✅ returns `409 device_set_mismatch` | ➖ | ❌ banner not wired yet | ❌ banner not wired yet | ❌ banner not wired yet | `spec/api-v1.md` §7.6; FFI `rotation_stalled()`. |
+| Notice: device removed by the relay alone | ✅ `take_relay_revocations()` (once, persisted) | ✅ unsigned `device_revoked` (`admin`, `self`) | ➖ | ❌ notice not wired yet | ❌ notice not wired yet | ❌ notice not wired yet | A device missing from `GET /v1/devices` in a resync no longer counts as revoked. `spec/api-v1.md` §7.6, §12. |
 | Unreadable items / unknown format | ✅ `UnreadableReason`, `UpdateRequired` | ➖ | ➖ | ✅ | ✅ | ✅ | |
 | Logging without content | ➖ | ✅ `logging.rs` | ➖ | ✅ | ✅ | ✅ | Never a secret in logs (golden rule 3). |
 | Frozen vectors `spec/vectors/v1/`, `pairing-v1/` | ✅ checked by the tests | ➖ | ➖ | ➖ | ➖ | ➖ | NEVER change. |

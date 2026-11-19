@@ -2169,8 +2169,10 @@ full_resync():
                                then space_keys.add_rotation_key(key, rotation.seq, now), then retry the
                                KeyPending pending_states before the next rotation (§7.3)
   d = GET /v1/devices        → accept_device_cert for each unknown certificate (refused if it does not chain
-                               to a trusted member); a device absent from the relay's list is marked
-                               "revoked by the relay"
+                               to a trusted member); a device absent from the relay's list is NOT marked
+                               "revoked by the relay" (only the relay's word: it would make the honest devices sign a
+                               permanent revocation, §7.6; a `device_revoked` event of the log does, a signed rotation
+                               of a member does it for real); it is only logged
   cursor = s.head_seq      // never lower than the current cursor, except after `cursor_ahead` (relay restored): the
                            // cursor then follows the head and every superseded epoch is frozen (§7.3)
   display once: "Des éléments plus anciens n'ont pas pu être récupérés" (UI label)
@@ -2205,6 +2207,8 @@ the application having to call `maybe_rotate`:
 - the deadline is drawn (`now + uniform(0, 30 s)`) as soon as `rotation_required` becomes true: on application of a
   `device_revoked` of **another** device (`via` ≠ `"rotation"`), or on opening a session whose
   `space.rotation_required` is true. A deadline already drawn is not postponed;
+  a device that is only **missing** from `GET /v1/devices` (§7.5) never starts a rotation and is never added to the
+  devices revoked by the rotation: only an explicit `device_revoked` event of the log is;
 - `maybe_rotate` is launched when the deadline has passed: at the end of each `sync()` (including those triggered by
   the doorbell) and, while the doorbell is open, at the latest 5 s after the deadline (the doorbell loop wakes up at
   least every 5 s);
@@ -3616,7 +3620,11 @@ its devices.
 - A device absent for more than 45 days (`cursor_expired`) loses the compacted `item_state` events, like the tombstones;
   a history transfer from another member gives it the pins back.
 - The relay can rename a device (the name is unsigned) and invent an unsigned revocation ("by the administrator" or
-  "voluntary departure"). Neither gives access to the content.
+  "voluntary departure"). Neither gives access to the content. The honest devices follow an unsigned
+  revocation with a signed rotation, which makes it permanent (a revoked key never becomes a member again, `format-v1.md`
+  §8.4), without asking the user: so the core reports each such revocation to the apps (`take_relay_revocations`, FFI
+  `take_relay_revocations()`: device, name, `via`), once, persisted until taken, for a plain non-blocking notice
+  ("X was removed by the relay's administrator"). The victim of a made-up revocation must be paired again.
 - `rl_global_claim` can be exhausted by an attacker to hinder pairing for a minute; with several spaces, it hinders
   everyone's pairing, and a random `claim` makes another's pairing fail (§8.5).
 - A device's signing key is unique on the relay: the `device_exists` refusal reveals to whoever knows a key that it is

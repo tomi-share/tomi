@@ -1771,6 +1771,9 @@ impl Engine {
                     return Ok(());
                 }
                 db.set_device_state(device_id, DeviceState::RevokedByRelay)?;
+                // The relay alone removed this device: the user is told (never a tap to give,
+                // `take_relay_revocations`), whatever the honest rotation that follows.
+                record_relay_revocation(db, device_id, via)?;
                 if let Ok(mut f) = lock(&self.flags) {
                     f.rotation_required = true;
                     // The automatic rotation (§7.6): drawn once, never pushed back.
@@ -2123,10 +2126,18 @@ impl Engine {
                 self.upsert_device(db, d, state)?;
             }
             store_relay_activity(db, &devices)?;
-            for row in db.devices()? {
-                if row.state == DeviceState::Verified && !known.contains(&row.device_id) {
-                    db.set_device_state(&row.device_id, DeviceState::RevokedByRelay)?;
-                }
+            // A verified device that is missing from the relay's list is NOT marked as revoked by
+            // the relay: that mark makes the honest devices sign a rotation that revokes the
+            // device for good (`format-v1.md` §8.4), and the absence from a list is only the
+            // relay's word, which it can make up at will. Only an explicit `device_revoked`
+            // event does (`apply_in_tx`), and a signed rotation of a member does it for real.
+            let missing = db
+                .devices()?
+                .iter()
+                .filter(|r| r.state == DeviceState::Verified && !known.contains(&r.device_id))
+                .count();
+            if missing > 0 {
+                self.diag(db, "devices_missing_from_list", &missing.to_string())?;
             }
             // The cursor never goes back, except when the relay's log itself went back (a
             // restore from an older backup, `cursor_ahead`): there is no other way to read what
@@ -2181,6 +2192,40 @@ impl Engine {
             }
         });
         true
+    }
+
+    /// The devices the relay removed on its own authority (an unsigned `device_revoked` of the
+    /// log: `admin`, or a departure it reports), not yet shown; clears the list. The honest
+    /// devices then sign the rotation that makes the removal real (`api-v1.md` §7.6) without
+    /// asking anyone, so the app should tell the user plainly: "X was removed by the relay's
+    /// administrator". Persisted until taken, so a restart loses nothing.
+    pub fn take_relay_revocations(&self) -> Result<Vec<RelayRevocation>> {
+        self.store.tx(|db| {
+            let text = db
+                .meta_get_string(RELAY_REVOCATIONS_KEY)?
+                .unwrap_or_default();
+            if text.is_empty() {
+                return Ok(Vec::new());
+            }
+            db.meta_delete(RELAY_REVOCATIONS_KEY)?;
+            let mut out = Vec::new();
+            for line in text.lines() {
+                let Some((id, via)) = line.split_once(':') else {
+                    continue;
+                };
+                let name = db
+                    .device(id)?
+                    .map(|d| d.name)
+                    .filter(|n| !n.is_empty())
+                    .unwrap_or_else(|| id.to_owned());
+                out.push(RelayRevocation {
+                    device_id: id.to_owned(),
+                    name,
+                    via: via.to_owned(),
+                });
+            }
+            Ok(out)
+        })
     }
 
     /// Whether the "older items could not be recovered" notice is pending; clears it.
@@ -2242,6 +2287,35 @@ impl Engine {
         self.store.truncate_wal_if_due(expired_any);
         Ok(())
     }
+}
+
+/// `meta` key: devices the relay removed on its own authority (`device_revoked` with `via` other
+/// than `rotation`), one `device_id:via` per line, until the app has shown them.
+pub(crate) const RELAY_REVOCATIONS_KEY: &str = "relay_revocations";
+
+/// A device the relay removed on its own authority (an administrator, or a departure the relay
+/// reports): the log says so, but no member signed it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RelayRevocation {
+    pub device_id: String,
+    /// Name of the device as this device knows it (its id when unknown).
+    pub name: String,
+    /// `admin` (the relay's administrator) or `self` (the device left on its own, as far as the
+    /// relay says).
+    pub via: String,
+}
+
+fn record_relay_revocation(db: &Db<'_>, device_id: &str, via: &str) -> Result<()> {
+    let mut text = db
+        .meta_get_string(RELAY_REVOCATIONS_KEY)?
+        .unwrap_or_default();
+    let line = format!("{device_id}:{via}");
+    if !text.lines().any(|l| l == line) {
+        text.push_str(&line);
+        text.push('\n');
+        db.meta_set(RELAY_REVOCATIONS_KEY, text.as_bytes())?;
+    }
+    Ok(())
 }
 
 /// Stores the activity (`last_seen_at`) the relay reports for the devices already known.

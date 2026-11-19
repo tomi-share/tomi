@@ -147,6 +147,8 @@ pub struct State {
     /// Events a hostile relay serves ahead of the next page of `events`, whatever their `seq`
     /// (see [`MockRelay::inject_events`]).
     injected_events: Vec<Event>,
+    /// Devices a hostile relay leaves out of `GET /v1/devices` (no event, no rotation).
+    pub hidden_devices: BTreeSet<String>,
     counter: u64,
     /// `false` until `POST /v1/space` (a relay that was just installed).
     pub initialized: bool,
@@ -304,6 +306,7 @@ impl MockRelay {
             wakers: Vec::new(),
             next_wake_closes: VecDeque::new(),
             injected_events: Vec::new(),
+            hidden_devices: BTreeSet::new(),
             counter: 0,
             initialized: true,
             install_token: None,
@@ -956,7 +959,7 @@ impl RelayTransport for MockTransport {
         self.authed("devices", |s, _| {
             Ok(s.devices
                 .values()
-                .filter(|d| !d.revoked)
+                .filter(|d| !d.revoked && !s.hidden_devices.contains(&d.record.device_id))
                 .map(|d| d.record.clone())
                 .collect())
         })

@@ -44,7 +44,9 @@ pub use actions::{
     AttachmentView, DeliveryState, DeliveryView, DeviceView, DispatchOutcome, DraftAttachment,
     DraftText, ItemContentView, ItemView, OutgoingDraft, SpaceStatus,
 };
-pub use engine::{Blocked, Clock, Engine, EngineConfig, Provision, SyncReport, SystemClock};
+pub use engine::{
+    Blocked, Clock, Engine, EngineConfig, Provision, RelayRevocation, SyncReport, SystemClock,
+};
 pub use leave::{DepartureKind, DepartureOutcome, DepartureView, PendingReason, RefusalReason};
 pub use pairing::{
     AwaitedHistory, InviteOutcome, InvitePhase, InviteSession, JoinOutcome, JoinPhase, JoinPrompt,

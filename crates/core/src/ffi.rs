@@ -425,6 +425,17 @@ pub struct FfiDevice {
     pub is_this_device: bool,
 }
 
+/// A device the relay removed on its own authority (`take_relay_revocations`).
+#[derive(Debug, Clone, PartialEq, Eq, uniffi::Record)]
+pub struct FfiRelayRevocation {
+    pub device_id: String,
+    /// The device's name, or its id when unknown.
+    pub name: String,
+    /// `admin` (the relay's administrator) or `self` (the device left on its own, as far as the
+    /// relay says).
+    pub via: String,
+}
+
 #[derive(Clone, PartialEq, Eq, uniffi::Record)]
 pub struct FfiDraftAttachment {
     /// File staged by the app; read before `enqueue` returns.
@@ -1701,6 +1712,25 @@ impl RustTomiCore {
     /// a change notification.
     pub fn rotation_stalled(&self) -> bool {
         self.engine().rotation_stalled()
+    }
+
+    /// Devices the **relay alone** removed (`device_revoked` without a signed rotation: its
+    /// administrator, `tomi-relay admin revoke`, or a departure it reports), not yet shown;
+    /// each is returned once. The honest devices follow with a rotation that makes the
+    /// removal permanent (a removed key never becomes a member again), without asking: show a
+    /// plain, non-blocking notice such as "X was removed by the relay's administrator" (`via`
+    /// = `admin`) so the user can react if that was not expected. Persisted until taken.
+    pub fn take_relay_revocations(&self) -> FfiResult<Vec<FfiRelayRevocation>> {
+        Ok(self
+            .engine()
+            .take_relay_revocations()?
+            .into_iter()
+            .map(|r| FfiRelayRevocation {
+                device_id: r.device_id,
+                name: r.name,
+                via: r.via,
+            })
+            .collect())
     }
 
     /// `true` once after a full resync ("older items could not be recovered").

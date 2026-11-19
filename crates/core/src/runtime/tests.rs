@@ -4513,6 +4513,68 @@ fn after_a_departure() -> World {
 }
 
 #[test]
+fn a_relay_only_revocation_is_reported_once_and_still_rotates() {
+    let w = after_a_departure();
+    w.e(0).sync().unwrap();
+    let notices = w.e(0).take_relay_revocations().unwrap();
+    assert_eq!(
+        notices,
+        vec![RelayRevocation {
+            device_id: w.nodes[2].id.clone(),
+            name: "Appareil 2".into(),
+            via: "self".into(),
+        }]
+    );
+    assert!(w.e(0).take_relay_revocations().unwrap().is_empty(), "once");
+    // Persisted until taken: a restart in between loses nothing.
+    let w = after_a_departure();
+    w.e(1).sync().unwrap();
+    let again = w.nodes[1].reopen(&w.relay, w.clock.clone());
+    assert_eq!(again.take_relay_revocations().unwrap().len(), 1);
+    // The automatic rotation is unchanged: no tap, no confirmation.
+    w.e(0).sync().unwrap();
+    w.clock.advance(31_000);
+    w.e(0).sync().unwrap();
+    assert_eq!(epoch(&w), 2);
+}
+
+#[test]
+fn a_device_missing_from_the_relay_list_is_not_revoked_by_a_resync() {
+    let w = World::new(3, 3);
+    for i in 0..3 {
+        w.e(i).sync().unwrap();
+    }
+    // The relay hides device 2 from the list of devices, with no revocation event and no
+    // rotation, and forces a full resync by compacting its log.
+    w.relay.with(|s| {
+        s.hidden_devices.insert(w.nodes[2].id.clone());
+    });
+    send(&w, 1, text("un"));
+    send(&w, 1, text("deux"));
+    w.relay.compact_to(w.relay.head());
+    let r = w.e(0).sync().unwrap();
+    assert!(r.full_resync);
+    let hidden = w
+        .e(0)
+        .list_devices()
+        .unwrap()
+        .into_iter()
+        .find(|d| d.id == w.nodes[2].id)
+        .unwrap();
+    assert_eq!(
+        hidden.state,
+        DeviceState::Verified,
+        "the relay's word alone"
+    );
+    assert!(w.e(0).take_relay_revocations().unwrap().is_empty());
+    // No rotation is ever signed because of it.
+    w.clock.advance(3_600_000);
+    w.e(0).sync().unwrap();
+    assert_eq!(w.relay.count("post_rotation"), 0);
+    assert_eq!(rotation_flags(w.e(0)), (false, None));
+}
+
+#[test]
 fn the_remaining_member_rotates_by_itself_after_a_departure() {
     let w = after_a_departure();
     let report = w.e(0).sync().unwrap();
