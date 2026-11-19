@@ -101,6 +101,16 @@ pub fn offer_toast(peer: &str) -> ToastContent {
     }
 }
 
+/// Another device joined the space. Only its name (chosen by that device, cut short): never any
+/// content.
+pub fn new_device_toast(name: &str) -> ToastContent {
+    ToastContent {
+        title: strings::toast_title_new_device().to_string(),
+        body: strings::toast_body_new_device(&short(name, 40)),
+        buttons: vec![(strings::TOAST_OPEN, "open")],
+    }
+}
+
 /// Burst of several items: one grouped toast, no previews at all.
 pub fn group_toast(count: usize) -> ToastContent {
     ToastContent {
@@ -430,6 +440,18 @@ mod tests {
         assert_eq!(t.title, "Historique proposé");
         assert!(t.body.contains("PC-Bureau"));
         assert_eq!(t.buttons, vec![("Ouvrir", "open")]);
+    }
+
+    #[test]
+    fn the_new_device_toast_names_the_device_and_nothing_else() {
+        let t = new_device_toast("Pixel 9");
+        assert_eq!(t.title, "Nouvel appareil ajouté");
+        assert!(t.body.starts_with("Pixel 9 a rejoint"));
+        assert_eq!(t.buttons, vec![("Ouvrir", "open")]);
+        // A very long (or multi-line) name stays short.
+        let t = new_device_toast(&format!("a\n{}", "x".repeat(200)));
+        assert!(!t.body.contains('\n'));
+        assert!(t.body.chars().count() < 120);
     }
 
     #[test]

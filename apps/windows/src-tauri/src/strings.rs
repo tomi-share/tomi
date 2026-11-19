@@ -56,6 +56,14 @@ pub fn toast_body_unreadable_other() -> &'static str {
 pub fn toast_title_offer() -> &'static str {
     "Historique proposé"
 }
+/// Another device just joined the space: a security notice, so the user can react if it is not
+/// theirs (the Devices tab revokes it).
+pub fn toast_title_new_device() -> &'static str {
+    "Nouvel appareil ajouté"
+}
+pub fn toast_body_new_device(device: &str) -> String {
+    format!("{device} a rejoint ton espace Tomi. Ce n'est pas toi ? Révoque-le.")
+}
 pub fn toast_from(device: &str) -> String {
     format!("de {device}")
 }

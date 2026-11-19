@@ -87,6 +87,7 @@ fn is_news(item: &Item) -> bool {
 }
 
 pub async fn run(app: AppHandle, mut rx: Receiver<CoreEvent>) {
+    remember_devices(&app).await;
     loop {
         let mut batch: Vec<Item> = Vec::new();
         match rx.recv().await {
@@ -158,6 +159,7 @@ fn departure_changed(app: &AppHandle) {
 async fn space_changed(app: &AppHandle) {
     let _ = app.emit("space-changed", ());
     let state = app.state::<AppState>();
+    announce_new_devices(app, state.core.as_ref()).await;
     if !may_notify(state.core.as_ref()) {
         return;
     }
@@ -178,6 +180,65 @@ async fn space_changed(app: &AppHandle) {
         notify::show(notify::offer_toast(&peer), None, move |_| {
             popover::open_history(&handle, Some("devices"));
         });
+    }
+}
+
+/// The devices of the space as last seen, to tell a newcomer from a device that was already
+/// there. `None` until a first look: that first look only records (a PC that has just joined
+/// finds the whole space "new"). Lost with the process: a device that joined while Tomi was
+/// closed is not announced.
+static KNOWN_DEVICES: std::sync::Mutex<Option<std::collections::HashSet<String>>> =
+    std::sync::Mutex::new(None);
+
+/// Names of the other devices that are not in `known`, which is then brought up to date. The
+/// first call (`known` is `None`) only records.
+fn arrivals(
+    known: &mut Option<std::collections::HashSet<String>>,
+    devices: &[crate::model::Device],
+) -> Vec<String> {
+    let ids = devices.iter().map(|d| d.id.clone()).collect();
+    let fresh = match known.as_ref() {
+        None => Vec::new(),
+        Some(seen) => devices
+            .iter()
+            .filter(|d| !d.this_device && !seen.contains(&d.id))
+            .map(|d| d.name.clone())
+            .collect(),
+    };
+    *known = Some(ids);
+    fresh
+}
+
+/// Another device joined the space: a toast with its name (no content), so that a device the
+/// user did not add shows up at once. Nothing in the demo space nor on a PC that has no space.
+async fn announce_new_devices(app: &AppHandle, core: &dyn TomiCore) {
+    if !may_notify(core) || core.is_demo() {
+        *KNOWN_DEVICES.lock().unwrap_or_else(|p| p.into_inner()) = None;
+        return;
+    }
+    let Ok(devices) = core.devices().await else {
+        return;
+    };
+    let fresh = arrivals(
+        &mut KNOWN_DEVICES.lock().unwrap_or_else(|p| p.into_inner()),
+        &devices,
+    );
+    for name in fresh {
+        let handle = app.clone();
+        notify::show(notify::new_device_toast(&name), None, move |_| {
+            popover::open_history(&handle, Some("devices"));
+        });
+    }
+}
+
+/// Records the devices of the space at start-up, without announcing anything.
+async fn remember_devices(app: &AppHandle) {
+    let core = app.state::<AppState>().core.clone();
+    if may_notify(core.as_ref()) && !core.is_demo() {
+        if let Ok(devices) = core.devices().await {
+            *KNOWN_DEVICES.lock().unwrap_or_else(|p| p.into_inner()) =
+                Some(devices.into_iter().map(|d| d.id).collect());
+        }
     }
 }
 
@@ -252,6 +313,45 @@ fn toast(app: &AppHandle, batch: Vec<Item>) {
 mod tests {
     use super::*;
     use crate::fake_core::{FakeCore, Reply, Step};
+    use crate::model::{Device, DeviceState};
+
+    fn device(id: &str, name: &str, this: bool) -> Device {
+        Device {
+            id: id.into(),
+            name: name.into(),
+            platform: "android".into(),
+            last_seen: None,
+            this_device: this,
+            state: DeviceState::Verified,
+            inactive_days: None,
+        }
+    }
+
+    #[test]
+    fn a_newcomer_is_announced_once_and_the_first_look_only_records() {
+        let mut known = None;
+        let space = vec![device("a", "PC", true), device("b", "Pixel", false)];
+        assert!(arrivals(&mut known, &space).is_empty(), "first look");
+        assert!(arrivals(&mut known, &space).is_empty(), "nothing new");
+
+        let mut grown = space.clone();
+        grown.push(device("c", "iPhone", false));
+        assert_eq!(arrivals(&mut known, &grown), vec!["iPhone".to_string()]);
+        assert!(arrivals(&mut known, &grown).is_empty(), "only once");
+
+        // A revoked device leaves the list; it is not an arrival when it goes, nor is this PC.
+        assert!(arrivals(&mut known, &space).is_empty());
+        let mut again = space.clone();
+        again.push(device("c", "iPhone", false));
+        assert_eq!(arrivals(&mut known, &again), vec!["iPhone".to_string()]);
+    }
+
+    #[test]
+    fn this_pc_is_never_an_arrival() {
+        let mut known = Some(std::collections::HashSet::new());
+        let space = vec![device("a", "PC", true)];
+        assert!(arrivals(&mut known, &space).is_empty());
+    }
 
     #[tokio::test]
     async fn nothing_is_announced_once_the_device_is_erased() {
