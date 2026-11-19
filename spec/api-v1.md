@@ -2173,7 +2173,15 @@ full_resync():
                                to a trusted member); a device absent from the relay's list is NOT marked
                                "revoked by the relay" (only the relay's word: it would make the honest devices sign a
                                permanent revocation, §7.6; a `device_revoked` event of the log does, a signed rotation
-                               of a member does it for real); it is only logged
+                               of a member does it for real); it is only logged.
+                               Exception: if `s.rotation_required` is true (the relay itself says a rotation is owed,
+                               the same condition as the automatic rotation of §7.6), each such device is treated like
+                               an unsigned `device_revoked` with `via: "admin"` (marked "revoked by the relay", left
+                               out of the rotation, reported to the user, §7.6): the relay requires the recipients to
+                               be exactly the members it keeps, so keeping that device would make the rotation fail
+                               with `device_set_mismatch` forever. Only if the list is plausible: an empty list, or
+                               one that does not contain this device itself, is a relay failure and removes nobody.
+                               No key is erased (that needs a verified signed rotation, format-v1.md §8.3 step 6)
   cursor = s.head_seq      // never lower than the current cursor, except after `cursor_ahead` (relay restored): the
                            // cursor then follows the head and every superseded epoch is frozen (§7.3)
   display once: "Des éléments plus anciens n'ont pas pu être récupérés" (UI label)
@@ -2208,8 +2216,9 @@ the application having to call `maybe_rotate`:
 - the deadline is drawn (`now + uniform(0, 30 s)`) as soon as `rotation_required` becomes true: on application of a
   `device_revoked` of **another** device (`via` ≠ `"rotation"`), or on opening a session whose
   `space.rotation_required` is true. A deadline already drawn is not postponed;
-  a device that is only **missing** from `GET /v1/devices` (§7.5) never starts a rotation and is never added to the
-  devices revoked by the rotation: only an explicit `device_revoked` event of the log is;
+  a device that is only **missing** from `GET /v1/devices` (§7.5) never starts a rotation by itself and is never added to
+  the devices revoked by the rotation: only an explicit `device_revoked` event of the log is, or, during a full resync,
+  a missing device while the relay says a rotation is owed (§7.5), so that the rotation can complete;
 - `maybe_rotate` is launched when the deadline has passed: at the end of each `sync()` (including those triggered by
   the doorbell) and, while the doorbell is open, at the latest 5 s after the deadline (the doorbell loop wakes up at
   least every 5 s);

@@ -611,6 +611,17 @@ impl MockRelay {
         });
     }
 
+    /// The administrator removed `device_id` while nobody was looking: the relay no longer lists
+    /// it and owes a rotation, but no `device_revoked` event was written (or it was compacted).
+    pub fn drop_device_silently(&self, device_id: &str) {
+        self.with(|s| {
+            if let Some(d) = s.devices.get_mut(device_id) {
+                d.revoked = true;
+            }
+            s.rotation_required = true;
+        });
+    }
+
     /// A hostile relay: the next `events` answer starts with `events`, with whatever `seq` they
     /// carry (lower than the cursor, out of order...), before the real ones.
     pub fn inject_events(&self, events: Vec<Event>) {

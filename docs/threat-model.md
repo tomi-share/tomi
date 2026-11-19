@@ -85,7 +85,7 @@ device is visible to whoever runs the relay.
   show it as a one-time notice (iOS code is not compiled yet; nothing was tried on a device). The core records a notice only for a device
 it already knows and has verified, accepts only the `via` values `admin` and `self`, shows a name stripped of control characters and
 limited to 64 characters, and keeps at most 32 pending notices. A device that is merely missing from the relay's device list during a full resync is no longer treated
-  as revoked and never triggers a rotation.
+  as revoked and never triggers a rotation by itself. The one exception: when the relay also says that a rotation is owed, a verified device it no longer lists is handled like an unsigned revocation (reported, left out of the rotation), so that the rotation can complete instead of failing for good. An empty list, or one that omits this device itself, removes nobody. This gives the relay no power it did not have, and no key is erased.
 - **Rename devices** (names are not signed).
 - Together with a **revoked device** that still has the old key: inject items sealed with the old epoch key. Mitigation: the
   clients write only with the latest epoch, refuse and flag as "unreadable (suspect)" an old-epoch item whose log position
@@ -163,9 +163,7 @@ becomes a member again; a reinstalled device gets a new identity.
 **A rotation that does not complete.** If the automatic rotation keeps failing because the relay's device set and the client's
 disagree (`device_set_mismatch`), the core retries after an hour and sets a persisted `rotation_stalled` flag (cleared when a
 rotation succeeds or another member's is applied). Until then the revoked device may still hold the current space key. All three apps show
-a calm banner while the flag is set (not tried on a device; the iOS code is not compiled yet). If the relay's device list
-differs from the client's because a device left or was removed while another one was offline for more than 45 days and nobody
-rotated in between, the retry keeps failing and the banner stays up: revoke that device by hand from the devices screen.
+a calm banner while the flag is set (not tried on a device; the iOS code is not compiled yet). A device that left or was removed while another one was offline for more than 45 days (nobody rotated in between) no longer causes this: the full resync that follows the absence sees the relay owing a rotation and the device missing from its list, so it handles that device as removed by the relay and the rotation completes.
 
 **Key retention.** After applying a rotation `e → e+1`, the remaining devices keep the old key `e` for `max_ttl + 1 day`
 (31 days with the default 30-day maximum) so they can still read items that were in transit under it, then erase it. Items
@@ -332,8 +330,8 @@ means the code does it and a test covers the decision; it does not mean it was t
     as suspect (`format-v1.md` §9.4, age rule).
   - A device erases its space keys on a verified signed rotation that revokes it (`format-v1.md` §8.3 step 6).
   - The core persists a `rotation_stalled` flag when the automatic rotation keeps failing, and records revocations that only
-    the relay announced (`rotation_stalled()`, `take_relay_revocations()`). Only an explicit `device_revoked` event, not a
-    device missing from a resync list, starts a rotation.
+    the relay announced (`rotation_stalled()`, `take_relay_revocations()`). Only an explicit `device_revoked` event, or a device
+    missing from a resync list while the relay says a rotation is owed, starts a rotation.
 - **Relay:** every `X-Forwarded-For` line is read and a malformed entry is distrusted (`api-v1.md` §8.5).
 - **Android:** a fresh authentication before adding a device; the screen lock (PIN) accepted for revocation, space deletion and
   "erase anyway"; the authentication window closed when the app goes to the background; the clear-text attachment cache purge

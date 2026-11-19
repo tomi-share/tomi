@@ -4685,6 +4685,144 @@ fn a_device_missing_from_the_relay_list_is_not_revoked_by_a_resync() {
     assert_eq!(rotation_flags(w.e(0)), (false, None));
 }
 
+/// Device `who` is gone from the relay (removed by its administrator) while device 0 was away for
+/// longer than the log is kept: no `device_revoked` event is left, the relay owes a rotation, and
+/// device 0 meets a full resync.
+fn removed_while_away(w: &World, who: usize) {
+    for i in 0..w.nodes.len() {
+        w.e(i).sync().unwrap();
+    }
+    send(w, 1, text("un"));
+    send(w, 1, text("deux"));
+    let id = w.nodes[who].id.clone();
+    w.relay.drop_device_silently(&id);
+    w.relay.compact_to(w.relay.head());
+}
+
+#[test]
+fn a_device_the_relay_dropped_while_away_does_not_stall_the_rotation() {
+    let w = World::new(3, 3);
+    removed_while_away(&w, 2);
+    let r = w.e(0).sync().unwrap();
+    assert!(r.full_resync);
+    // Reported like any removal the relay made alone, and left out of the rotation.
+    let notices = w.e(0).take_relay_revocations().unwrap();
+    assert_eq!(notices.len(), 1);
+    assert_eq!(notices[0].device_id, w.nodes[2].id);
+    assert_eq!(notices[0].via, "admin");
+    let state = |w: &World| {
+        w.e(0)
+            .list_devices()
+            .unwrap()
+            .into_iter()
+            .find(|d| d.id == w.nodes[2].id)
+            .unwrap()
+            .state
+    };
+    assert_eq!(state(&w), DeviceState::RevokedByRelay);
+    assert!(rotation_flags(w.e(0)).0, "a rotation is owed");
+
+    w.clock.advance(31_000);
+    w.e(0).sync().unwrap();
+
+    assert_eq!(epoch(&w), 2, "the rotation went through");
+    assert_eq!(w.relay.count("post_rotation"), 1, "at the first try");
+    assert!(!w.e(0).rotation_stalled());
+    assert_eq!(rotation_flags(w.e(0)), (false, None));
+    assert_eq!(state(&w), DeviceState::Revoked, "now for good");
+    // The other member follows the rotation as any other.
+    w.e(1).sync().unwrap();
+    let id = send(&w, 0, text("apres"));
+    w.e(1).sync().unwrap();
+    assert_eq!(plain_of(&w.e(1).get_item(&id).unwrap().unwrap()), "apres");
+    // Nothing local was erased.
+    assert!(!w.e(0).read_crypto(|c, _| Ok(c.ring.is_erased())).unwrap());
+    assert_eq!(w.e(0).blocked(), None);
+}
+
+#[test]
+fn a_resync_with_an_honest_device_list_removes_nobody() {
+    let w = World::new(3, 3);
+    for i in 0..3 {
+        w.e(i).sync().unwrap();
+    }
+    send(&w, 1, text("un"));
+    send(&w, 1, text("deux"));
+    // A rotation is owed (someone else's departure is still unannounced), but the list is whole.
+    w.relay.with(|s| s.rotation_required = true);
+    w.relay.compact_to(w.relay.head());
+    assert!(w.e(0).sync().unwrap().full_resync);
+    assert!(w.e(0).take_relay_revocations().unwrap().is_empty());
+    for d in w.e(0).list_devices().unwrap() {
+        assert_eq!(d.state, DeviceState::Verified, "{}", d.id);
+    }
+}
+
+#[test]
+fn a_missing_device_is_kept_when_the_relay_does_not_owe_a_rotation() {
+    let w = World::new(3, 3);
+    removed_while_away(&w, 2);
+    w.relay.with(|s| s.rotation_required = false);
+    assert!(w.e(0).sync().unwrap().full_resync);
+    assert!(w.e(0).take_relay_revocations().unwrap().is_empty());
+    let d = w
+        .e(0)
+        .list_devices()
+        .unwrap()
+        .into_iter()
+        .find(|d| d.id == w.nodes[2].id)
+        .unwrap();
+    assert_eq!(d.state, DeviceState::Verified);
+}
+
+#[test]
+fn an_empty_or_failed_device_list_removes_nobody() {
+    // An empty list while a rotation is owed.
+    let w = World::new(3, 3);
+    for i in 0..3 {
+        w.e(i).sync().unwrap();
+    }
+    send(&w, 1, text("un"));
+    send(&w, 1, text("deux"));
+    w.relay.with(|s| {
+        s.rotation_required = true;
+        for n in &w.nodes {
+            s.hidden_devices.insert(n.id.clone());
+        }
+    });
+    w.relay.compact_to(w.relay.head());
+    assert!(w.e(0).sync().unwrap().full_resync);
+    assert!(w.e(0).take_relay_revocations().unwrap().is_empty());
+    for d in w.e(0).list_devices().unwrap() {
+        assert_eq!(d.state, DeviceState::Verified, "{}", d.id);
+    }
+
+    // A list that leaves out this very device is not believed either.
+    let w = World::new(3, 3);
+    for i in 0..3 {
+        w.e(i).sync().unwrap();
+    }
+    send(&w, 1, text("un"));
+    send(&w, 1, text("deux"));
+    w.relay.with(|s| {
+        s.rotation_required = true;
+        s.hidden_devices.insert(w.nodes[0].id.clone());
+        s.hidden_devices.insert(w.nodes[2].id.clone());
+    });
+    w.relay.compact_to(w.relay.head());
+    assert!(w.e(0).sync().unwrap().full_resync);
+    assert!(w.e(0).take_relay_revocations().unwrap().is_empty());
+
+    // A failed answer: the resync fails whole, nothing changes.
+    let w = World::new(3, 3);
+    removed_while_away(&w, 2);
+    w.relay.fail_next("devices", problem(500, "internal"));
+    assert!(w.e(0).full_resync().is_err());
+    assert!(w.e(0).take_relay_revocations().unwrap().is_empty());
+    for d in w.e(0).list_devices().unwrap() {
+        assert_eq!(d.state, DeviceState::Verified, "{}", d.id);
+    }
+}
 #[test]
 fn the_remaining_member_rotates_by_itself_after_a_departure() {
     let w = after_a_departure();

@@ -2152,13 +2152,41 @@ impl Engine {
             // device for good (`format-v1.md` §8.4), and the absence from a list is only the
             // relay's word, which it can make up at will. Only an explicit `device_revoked`
             // event does (`apply_in_tx`), and a signed rotation of a member does it for real.
-            let missing = db
+            let missing: Vec<String> = db
                 .devices()?
                 .iter()
                 .filter(|r| r.state == DeviceState::Verified && !known.contains(&r.device_id))
-                .count();
-            if missing > 0 {
-                self.diag(db, "devices_missing_from_list", &missing.to_string())?;
+                .map(|r| r.device_id.clone())
+                .collect();
+            if !missing.is_empty() {
+                self.diag(db, "devices_missing_from_list", &missing.len().to_string())?;
+            }
+            // Exception, only when the relay itself says a rotation is owed (the condition of
+            // the automatic rotation, `api-v1.md` §7.6): the rotation must list exactly the
+            // members the relay keeps, so a device it no longer lists can never be sealed for,
+            // and keeping it as a member would make the rotation fail with `device_set_mismatch`
+            // for good (it happens when the device left or was removed while this one was away
+            // for longer than the log is kept, and nobody rotated meanwhile). Such a device is
+            // then treated like an unsigned `device_revoked`: marked as removed by the relay
+            // (excluded from the rotation, reported to the user). That gives the relay nothing
+            // it did not have (it can refuse service to any device); no key is erased. The list
+            // must look sane: an empty one, or one that does not even contain this device, is
+            // a failure of the relay, not "everyone was removed".
+            if space.rotation_required && !known.is_empty() && known.contains(&a.device_id) {
+                let mut removed = false;
+                for id in missing.iter().filter(|id| **id != a.device_id) {
+                    db.set_device_state(id, DeviceState::RevokedByRelay)?;
+                    record_relay_revocation(db, id, "admin")?;
+                    removed = true;
+                }
+                if removed {
+                    self.diag(db, "devices_missing_removed", "rotation owed")?;
+                    if let Ok(mut f) = lock(&self.flags) {
+                        f.rotation_required = true;
+                        f.rotation_due_at_ms
+                            .get_or_insert_with(|| now.saturating_add(jitter_i64(30_000)));
+                    }
+                }
             }
             // The cursor never goes back, except when the relay's log itself went back (a
             // restore from an older backup, `cursor_ahead`): there is no other way to read what
