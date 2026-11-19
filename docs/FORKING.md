@@ -27,7 +27,10 @@ cd apps/android
 
 Set the property in `gradle.properties` (or in the CI invocation) to make it permanent. The file provider authority
 (`<applicationId>.attachments`) follows it. Also change `app_name` in `strings.xml`, the launcher icon, and sign with your
-own keystore (no signing key is stored in this repository).
+own keystore (no signing key is stored in this repository). The CI workflow `build-apps.yml` signs with a release key taken from
+repository secrets and publishes nothing without it: a fork that has not configured its own `ANDROID_RELEASE_*` secrets still
+builds, but gets an unsigned, clearly named APK as a workflow artifact. Setup:
+[RELEASES.md](RELEASES.md#android-release-signing).
 
 The `tomi-share://` URL scheme in `AndroidManifest.xml` is shared by every build that declares it: if your fork must be
 installable next to the official app, change it too (and `DeepLinkParser`).

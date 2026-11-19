@@ -85,14 +85,18 @@ build or has not been reviewed.
 ## Release builds in CI (Android, Windows)
 
 Workflow `.github/workflows/build-apps.yml`, **manual trigger only** (Actions tab, or
-`gh workflow run build-apps.yml -f android_variant=preview`). It builds the APK (`debug` or `preview`)
+`gh workflow run build-apps.yml -f android_variant=release`). It builds the Android APK (`release`, the default, or `debug`)
 and the Windows NSIS installer, then uploads them to the pre-releases `android-dev` and
 `windows-dev` (created on first use; `publish=false`: artifacts only). macOS/iOS builds are not run in CI, because macOS runners are more expensive.
 Tag naming, stable releases and changelog rules: see [RELEASES.md](RELEASES.md).
 
 - Quota: private repositories on the free plan get a limited monthly CI minute allowance, and Windows runners consume minutes at twice the normal rate.
-- Optional secret `ANDROID_DEBUG_KEYSTORE_B64` (`~/.android/debug.keystore`, base64-encoded): without it,
-  the APK is signed with an ephemeral debug key and cannot be installed over an existing build on the device.
+- Android: only a non-debuggable `release` APK signed with the release key (secrets `ANDROID_RELEASE_KEYSTORE_B64`,
+  `ANDROID_RELEASE_KEYSTORE_PASSWORD`, `ANDROID_RELEASE_KEY_ALIAS`, `ANDROID_RELEASE_KEY_PASSWORD`) is ever published, and a check
+  (`.github/scripts/verify-android-apk.sh`) fails the run on a debuggable or debug-signed APK. Without the secrets (forks) the
+  workflow still builds, but produces a clearly named UNSIGNED or DEBUG-ONLY APK as a workflow artifact, never a release asset.
+  Setup, keystore creation and verification: [RELEASES.md](RELEASES.md). `./gradlew assemblePreview` (release code, debug key) stays
+  a local tool for judging speed; it is never distributed.
 - The Windows installer is not signed (a SmartScreen warning is expected).
 - Relay address for CI builds: the repository variable TOMI_RELAY_URL (see Environment).
 - Optional secret FORGE_DEPLOY_URL: URL of a deploy hook called after a relay release is published (see infra/forge/); the step does nothing when the secret is absent.

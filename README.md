@@ -49,7 +49,7 @@ can read. The details are in [`PROJECT.md`](PROJECT.md) and in the [specificatio
 
 | Platform | How to get it | Notes |
 |---|---|---|
-| Android | Latest [`android-dev`](https://github.com/tomi-share/tomi/releases/tag/android-dev) pre-release (`.apk`) | Development build, not yet signed for release |
+| Android | Latest [`android-dev`](https://github.com/tomi-share/tomi/releases/tag/android-dev) pre-release (`.apk`) | Development build, signed with the release key once the maintainer has configured it ([how it is checked](docs/RELEASES.md#android-release-signing)); never a debug build |
 | Windows | Latest [`windows-dev`](https://github.com/tomi-share/tomi/releases/tag/windows-dev) pre-release (`.exe` installer) | Development build, unsigned (SmartScreen will warn) |
 | iOS | Build from source (`apps/apple`) | TestFlight / App Store distribution is planned |
 | Relay | [`relay-latest`](https://github.com/tomi-share/tomi/releases/tag/relay-latest) (Linux and Windows binaries) | Deployment guide in [`infra/`](infra/README.md) |

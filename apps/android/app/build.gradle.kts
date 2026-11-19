@@ -19,6 +19,11 @@ val repoRootDir = layout.projectDirectory.dir("../../..")
 // minSdk 33 (recent phones included) is 64-bit ARM. Add "x86_64" to run on an emulator: everything is rebuilt for it, nothing else to change.
 val nativeAbis = listOf("arm64-v8a")
 
+// Value of a release-signing setting: Gradle property first (for example in ~/.gradle/gradle.properties on a maintainer's machine),
+// then environment variable (CI). Blank counts as absent.
+fun releaseSigningValue(name: String): String? =
+    providers.gradleProperty(name).orElse(providers.environmentVariable(name)).orNull?.trim()?.takeIf { it.isNotEmpty() }
+
 // Rust core profile: "release" (default: what ships, fast crypto) or "debug" (faster to compile, much slower at run time).
 // Switch with `-PtomiCoreProfile=debug`.
 val tomiCoreRelease = providers.gradleProperty("tomiCoreProfile").orElse("release").map { it != "debug" }
@@ -78,17 +83,45 @@ android {
         }
     }
 
+    // Release signing. The key is NEVER in the repository: CI (and a maintainer building a release by hand) supplies it through
+    // environment variables or Gradle properties of the same names (docs/RELEASES.md explains how to create the keystore):
+    //   TOMI_RELEASE_KEYSTORE            path of the keystore file
+    //   TOMI_RELEASE_KEYSTORE_PASSWORD   store password
+    //   TOMI_RELEASE_KEY_ALIAS           key alias
+    //   TOMI_RELEASE_KEY_PASSWORD        key password (same as the store password for a PKCS12 keystore)
+    // Without TOMI_RELEASE_KEYSTORE the `release` build is left UNSIGNED (`app-release-unsigned.apk`): it builds, it does not install,
+    // and it can never be mistaken for an official build. It is never silently signed with the debug key.
+    signingConfigs {
+        val releaseKeystorePath = releaseSigningValue("TOMI_RELEASE_KEYSTORE")
+        if (releaseKeystorePath != null) {
+            create("release") {
+                val keystore = project.file(releaseKeystorePath)
+                require(keystore.isFile) { "TOMI_RELEASE_KEYSTORE does not point to a file: $keystore" }
+                storeFile = keystore
+                storePassword = requireNotNull(releaseSigningValue("TOMI_RELEASE_KEYSTORE_PASSWORD")) { "TOMI_RELEASE_KEYSTORE_PASSWORD is not set" }
+                keyAlias = requireNotNull(releaseSigningValue("TOMI_RELEASE_KEY_ALIAS")) { "TOMI_RELEASE_KEY_ALIAS is not set" }
+                keyPassword = requireNotNull(releaseSigningValue("TOMI_RELEASE_KEY_PASSWORD")) { "TOMI_RELEASE_KEY_PASSWORD is not set" }
+            }
+        }
+    }
+
     buildTypes {
         release {
+            // The only variant that is published (see .github/workflows/build-apps.yml). Never debuggable.
+            isDebuggable = false
             isMinifyEnabled = false
             // Not read while minification is off. JNA and the UniFFI bindings need keep rules the day it is turned on.
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            // Signed only when a release key is supplied (see above); unsigned otherwise.
+            signingConfigs.findByName("release")?.let { signingConfig = it }
         }
         // The build to judge SPEED on (`assemblePreview`): the release code, signed with the debug key so that it installs over
         // the debug build on a developer's phone. A debug build is debuggable: ART does not optimise it and it carries no baseline
-        // profile, so Compose runs several times slower there than in what ships. Not for distribution (debug key).
+        // profile, so Compose runs several times slower there than in what ships. DEVELOPER ONLY, never distributed: it carries the
+        // debug key, and CI does not build it.
         create("preview") {
             initWith(getByName("release"))
+            isDebuggable = false
             signingConfig = signingConfigs.getByName("debug")
             matchingFallbacks += "release"
         }
