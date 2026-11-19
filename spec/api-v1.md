@@ -2100,6 +2100,7 @@ apply(ev):
   "device_updated" : update the name
   "device_revoked" : via "rotation" → nothing more (already applied by the rotation event);
                      via "self" or "admin" → mark the device as "revoked by the relay" (no more seal for it),
+                     (an unknown device, or any other `via`: ignore - the event is unsigned, nothing it names is stored),
                      if it is me → state REVOKED, otherwise schedule maybe_rotate(delay = uniform(0, 30 s))
   unknown type     : ignore
 
@@ -3624,7 +3625,7 @@ its devices.
   revocation with a signed rotation, which makes it permanent (a revoked key never becomes a member again, `format-v1.md`
   §8.4), without asking the user: so the core reports each such revocation to the apps (`take_relay_revocations`, FFI
   `take_relay_revocations()`: device, name, `via`), once, persisted until taken, for a plain non-blocking notice
-  ("X was removed by the relay's administrator"). The victim of a made-up revocation must be paired again.
+  ("X was removed by the relay's administrator"). The core records a notice only for a device it already knows and had verified, accepts only `via` `"admin"` and `"self"` (anything else is ignored, never stored), hands the name over without control characters and truncated to 64 characters, and keeps at most 32 pending notices (the oldest is dropped). The victim of a made-up revocation must be paired again.
 - `rl_global_claim` can be exhausted by an attacker to hinder pairing for a minute; with several spaces, it hinders
   everyone's pairing, and a random `claim` makes another's pairing fail (§8.5).
 - A device's signing key is unique on the relay: the `device_exists` refusal reveals to whoever knows a key that it is

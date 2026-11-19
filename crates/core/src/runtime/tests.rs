@@ -4538,6 +4538,117 @@ fn a_relay_only_revocation_is_reported_once_and_still_rotates() {
     assert_eq!(epoch(&w), 2);
 }
 
+/// An unsigned `device_revoked` (the relay's word) as a hostile relay would write it.
+fn relay_revoked(w: &World, nth: u64, device_id: &str, via: &str) -> Event {
+    Event {
+        seq: w.relay.head() + nth,
+        at_ms: T0,
+        data: EventData::DeviceRevoked {
+            device_id: device_id.into(),
+            via: via.into(),
+        },
+    }
+}
+
+#[test]
+fn a_relay_revocation_of_an_unknown_device_or_with_a_made_up_via_is_ignored() {
+    let w = World::new(3, 3);
+    for i in 0..3 {
+        w.e(i).sync().unwrap();
+    }
+    let known = w.nodes[2].id.clone();
+    for (n, (id, via)) in [
+        ("0123456789abcdef-not-a-device", "admin"),
+        ("fake\nline:admin", "self"),
+        (known.as_str(), "admin\nother:self"),
+        (known.as_str(), "x"),
+        (known.as_str(), ""),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        w.e(0)
+            .apply_event(&relay_revoked(&w, 1 + n as u64, id, via))
+            .unwrap();
+    }
+    assert!(w.e(0).take_relay_revocations().unwrap().is_empty());
+    let state = w
+        .e(0)
+        .list_devices()
+        .unwrap()
+        .into_iter()
+        .find(|d| d.id == known)
+        .unwrap()
+        .state;
+    assert_eq!(state, DeviceState::Verified, "nothing it named changed");
+    assert_eq!(rotation_flags(w.e(0)), (false, None), "no rotation owed");
+    let stored = w
+        .e(0)
+        .store
+        .read(|db| db.meta_get_string(engine::RELAY_REVOCATIONS_KEY))
+        .unwrap();
+    assert!(stored.is_none_or(|s| s.is_empty()), "nothing stored");
+}
+
+#[test]
+fn a_relay_revocation_notice_never_carries_a_control_character() {
+    let w = World::new(2, 2);
+    w.e(0).sync().unwrap();
+    let id = w.nodes[1].id.clone();
+    // The name is the relay's too (unsigned `device_updated`): hostile.
+    let name = format!("Evil\n{id}:admin\r\u{7}{}", "x".repeat(500));
+    w.e(0)
+        .apply_event(&Event {
+            seq: w.relay.head() + 1,
+            at_ms: T0,
+            data: EventData::DeviceUpdated {
+                device_id: id.clone(),
+                name,
+            },
+        })
+        .unwrap();
+    w.e(0)
+        .apply_event(&relay_revoked(&w, 2, &id, "admin"))
+        .unwrap();
+    // A repeated event adds nothing.
+    w.e(0)
+        .apply_event(&relay_revoked(&w, 3, &id, "self"))
+        .unwrap();
+    let notices = w.e(0).take_relay_revocations().unwrap();
+    assert_eq!(notices.len(), 1);
+    let n = &notices[0];
+    assert_eq!(
+        (n.device_id.as_str(), n.via.as_str()),
+        (id.as_str(), "admin")
+    );
+    assert!(!n.name.chars().any(char::is_control), "{:?}", n.name);
+    assert!(n.name.chars().count() <= 64);
+    assert!(n.name.starts_with("Evil"));
+}
+
+#[test]
+fn the_pending_relay_revocations_are_bounded_and_the_oldest_goes_first() {
+    let w = World::new(1, 1);
+    w.e(0)
+        .store
+        .tx(|db| {
+            for i in 0..100 {
+                engine::record_relay_revocation(db, &format!("device-{i}"), "admin")?;
+            }
+            Ok(())
+        })
+        .unwrap();
+    let stored = w
+        .e(0)
+        .store
+        .read(|db| db.meta_get_string(engine::RELAY_REVOCATIONS_KEY))
+        .unwrap()
+        .unwrap();
+    let lines: Vec<&str> = stored.lines().collect();
+    assert_eq!(lines.len(), 32);
+    assert_eq!(lines.first(), Some(&"device-68:admin"));
+    assert_eq!(lines.last(), Some(&"device-99:admin"));
+}
 #[test]
 fn a_device_missing_from_the_relay_list_is_not_revoked_by_a_resync() {
     let w = World::new(3, 3);

@@ -82,7 +82,9 @@ device is visible to whoever runs the relay.
   event. Honest devices follow it with a signed rotation, which makes the removal permanent, so a malicious relay can make
   them drop a legitimate device, which then has to be paired again. This costs you availability, not confidentiality. The
   core now records each such revocation so that the app can tell you (`take_relay_revocations`), and Android, iOS and Windows
-  show it as a one-time notice (iOS code is not compiled yet; nothing was tried on a device). A device that is merely missing from the relay's device list during a full resync is no longer treated
+  show it as a one-time notice (iOS code is not compiled yet; nothing was tried on a device). The core records a notice only for a device
+it already knows and has verified, accepts only the `via` values `admin` and `self`, shows a name stripped of control characters and
+limited to 64 characters, and keeps at most 32 pending notices. A device that is merely missing from the relay's device list during a full resync is no longer treated
   as revoked and never triggers a rotation.
 - **Rename devices** (names are not signed).
 - Together with a **revoked device** that still has the old key: inject items sealed with the old epoch key. Mitigation: the
@@ -369,7 +371,7 @@ Open at the time of writing. [`FEATURES.md`](FEATURES.md) (section "Open gaps") 
 - **The two notices are best-effort.** The `rotation_stalled` banner and the "removed by the relay" notice are shown by the
   three apps, but the core hands a revocation notice over only once and the apps keep it in memory: if the process dies
   before it is displayed, the notice is lost. Notices are built from unsigned relay events, so a hostile relay can fake one
-  (it can already block a device), and the "new device added" alerts do not check that the device is verified.
+  (it can already block a device; the core ignores an unknown device or an unknown cause, so it cannot invent a notice about a device you never had), and the "new device added" alerts do not check that the device is verified.
 - **iOS:** revocation needs Face ID or Touch ID (the passcode is not accepted, unlike Android); the share inbox holds clear
   text until the app next runs; HTML sanitization is hand-written.
 - **Android:** the app exposes a share target that any app can call; it sends immediately and offers a 3-second undo.

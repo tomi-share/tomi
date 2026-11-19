@@ -1770,10 +1770,31 @@ impl Engine {
                         .ok();
                     return Ok(());
                 }
+                // The event is unsigned and its fields are the relay's, so nothing it names is
+                // stored as it came (`api-v1.md` §7.6). Only the two values the relay API
+                // defines are acted on, and only on a device this one already knows and has not
+                // revoked yet; anything else changes nothing.
+                if !RELAY_REVOCATION_VIAS.contains(&via.as_str()) {
+                    self.diag(db, "device_revoked_ignored", "unknown via")?;
+                    return Ok(());
+                }
+                let Some(row) = db.device(device_id)? else {
+                    self.diag(db, "device_revoked_ignored", "unknown device")?;
+                    return Ok(());
+                };
+                if matches!(
+                    row.state,
+                    DeviceState::Revoked | DeviceState::RevokedByRelay
+                ) {
+                    return Ok(());
+                }
                 db.set_device_state(device_id, DeviceState::RevokedByRelay)?;
                 // The relay alone removed this device: the user is told (never a tap to give,
-                // `take_relay_revocations`), whatever the honest rotation that follows.
-                record_relay_revocation(db, device_id, via)?;
+                // `take_relay_revocations`), whatever the honest rotation that follows. A
+                // device that was never verified was never a member: nothing to tell.
+                if row.state == DeviceState::Verified {
+                    record_relay_revocation(db, device_id, via)?;
+                }
                 if let Ok(mut f) = lock(&self.flags) {
                     f.rotation_required = true;
                     // The automatic rotation (§7.6): drawn once, never pushed back.
@@ -2210,18 +2231,21 @@ impl Engine {
             db.meta_delete(RELAY_REVOCATIONS_KEY)?;
             let mut out = Vec::new();
             for line in text.lines() {
-                let Some((id, via)) = line.split_once(':') else {
+                // Stored lines are re-checked: only a known device and one of the two `via`
+                // values ever reach the apps.
+                let Some((id, via)) = line.rsplit_once(':') else {
                     continue;
                 };
-                let name = db
-                    .device(id)?
-                    .map(|d| d.name)
-                    .filter(|n| !n.is_empty())
-                    .unwrap_or_else(|| id.to_owned());
+                let Some(via) = RELAY_REVOCATION_VIAS.iter().find(|v| **v == via) else {
+                    continue;
+                };
+                let Some(row) = db.device(id)? else {
+                    continue;
+                };
                 out.push(RelayRevocation {
                     device_id: id.to_owned(),
-                    name,
-                    via: via.to_owned(),
+                    name: display_name(&row.name, id),
+                    via: (*via).to_owned(),
                 });
             }
             Ok(out)
@@ -2305,17 +2329,52 @@ pub struct RelayRevocation {
     pub via: String,
 }
 
-fn record_relay_revocation(db: &Db<'_>, device_id: &str, via: &str) -> Result<()> {
-    let mut text = db
+/// The `via` values of an unsigned `device_revoked` that start a relay revocation (`rotation` is
+/// the signed one, already applied by the rotation itself).
+const RELAY_REVOCATION_VIAS: [&str; 2] = ["admin", "self"];
+
+/// At most this many notices wait for the app; the oldest are dropped.
+const RELAY_REVOCATIONS_MAX: usize = 32;
+
+/// Longest device name (in characters) handed to the apps in a notice.
+const NOTICE_NAME_MAX_CHARS: usize = 64;
+
+/// A device name made safe to show in a notice: control characters (new lines included) become
+/// spaces, the length is bounded, and an empty name falls back to the id.
+fn display_name(name: &str, id: &str) -> String {
+    let cleaned: String = name
+        .chars()
+        .map(|c| if c.is_control() { ' ' } else { c })
+        .collect();
+    let out: String = cleaned.trim().chars().take(NOTICE_NAME_MAX_CHARS).collect();
+    if out.is_empty() {
+        id.chars().take(NOTICE_NAME_MAX_CHARS).collect()
+    } else {
+        out
+    }
+}
+
+/// Remembers that the relay removed the (known, validated) device `device_id` on its own
+/// authority, until the app has shown it. One entry per device, bounded: the oldest is dropped.
+pub(crate) fn record_relay_revocation(db: &Db<'_>, device_id: &str, via: &str) -> Result<()> {
+    debug_assert!(RELAY_REVOCATION_VIAS.contains(&via));
+    let text = db
         .meta_get_string(RELAY_REVOCATIONS_KEY)?
         .unwrap_or_default();
-    let line = format!("{device_id}:{via}");
-    if !text.lines().any(|l| l == line) {
-        text.push_str(&line);
-        text.push('\n');
-        db.meta_set(RELAY_REVOCATIONS_KEY, text.as_bytes())?;
+    let mut lines: Vec<&str> = text.lines().filter(|l| !l.is_empty()).collect();
+    let prefix = format!("{device_id}:");
+    if lines.iter().any(|l| l.starts_with(&prefix)) {
+        return Ok(());
     }
-    Ok(())
+    let line = format!("{device_id}:{via}");
+    lines.push(&line);
+    let skip = lines.len().saturating_sub(RELAY_REVOCATIONS_MAX);
+    let mut out = String::new();
+    for l in &lines[skip..] {
+        out.push_str(l);
+        out.push('\n');
+    }
+    db.meta_set(RELAY_REVOCATIONS_KEY, out.as_bytes())
 }
 
 /// Stores the activity (`last_seen_at`) the relay reports for the devices already known.
