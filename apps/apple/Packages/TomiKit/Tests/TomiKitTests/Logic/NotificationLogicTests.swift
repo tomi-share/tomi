@@ -23,6 +23,16 @@ final class NotificationLogicTests: XCTestCase {
         XCTAssertEqual(NotificationTapAction.forItem(item(text: RichText(plain: "pw"), secret: true)), .authenticateAndCopy)
     }
 
+    /// A link item whose URL is not http(s) (a paired device can send anything) opens the card, never another app.
+    func testNotificationTapOnALinkOpensOnlyHttpUrls() {
+        for url in ["http://a.example/x", "HTTPS://a.example"] {
+            XCTAssertEqual(NotificationTapAction.forItem(item(url: url)), .openLink, url)
+        }
+        for url in ["shortcuts://run-shortcut?name=x", "facetime://+33123456789", "javascript:alert(1)", "tomi-share://open", "https://", "not a url"] {
+            XCTAssertEqual(NotificationTapAction.forItem(item(url: url)), .openCard, url)
+        }
+    }
+
     /// Added for Swift: "\r\n" is one Character that is not "\n"; it still counts as a line break.
     func testShortTextLimitsAndCrLfLineBreak() {
         XCTAssertEqual(NotificationTapAction.forItem(item(text: RichText(plain: String(repeating: "x", count: 140)))), .copyText)

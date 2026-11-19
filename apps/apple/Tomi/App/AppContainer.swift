@@ -231,8 +231,13 @@ final class AppContainer {
         default:
             switch NotificationTapAction.forItem(item) {
             case .openLink:
+                // Checked again here (`forItem` already did): nothing but http(s) is ever handed to the system.
+                guard let url = item.url, LinkExtractor.isValidHTTPURL(url), let target = URL(string: url) else {
+                    pendingRoute = .item(item.id)
+                    break
+                }
                 feed.onCardOpened(item)
-                if let url = item.url.flatMap(URL.init(string:)) { UIApplication.shared.open(url) }
+                UIApplication.shared.open(target)
             case .copyText, .authenticateAndCopy:
                 // A hidden item asks for biometrics first (`FeedViewModel.copy`).
                 feed.copy(item)

@@ -25,7 +25,8 @@ public enum NotificationTapAction: Sendable, Hashable, CaseIterable {
         case .image: return .previewImage
         // A code file is read in Tomi's own code screen, not handed to another app: open the card.
         case .file: return item.attachments.contains(where: CodeFiles.isCodeFile) ? .openCard : .openFile
-        case .link: return .openLink
+        // Only http(s), like the tap on the card: another scheme (shortcuts:, facetime:...) from a paired device is not launched.
+        case .link: return item.url.map(LinkExtractor.isValidHTTPURL) == true ? .openLink : .openCard
         case .richText, .unreadable: return .openCard
         case .text:
             let plain = item.text?.plain ?? ""
