@@ -142,6 +142,14 @@ pub async fn confirm_revoke(app: &AppHandle, owner: Option<isize>) -> AppResult<
     strong_auth::require(&state.auth, owner, crate::strings::HELLO_REVOKE).await
 }
 
+/// Windows Hello before a new device is added to the space (it receives the space key and, if it
+/// asks, the whole history): always asked, never remembered, like a revocation.
+pub async fn confirm_add_device(app: &AppHandle, owner: Option<isize>) -> AppResult<()> {
+    let state = app.state::<AppState>();
+    let _prompt = PromptGuard::open(app);
+    strong_auth::require(&state.auth, owner, crate::strings::HELLO_ADD_DEVICE).await
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

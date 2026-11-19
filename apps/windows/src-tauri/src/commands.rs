@@ -938,9 +938,19 @@ pub async fn pairing_read_input(text: String) -> AppResult<crate::pairing::Input
 }
 
 /// The user compared the verification codes and agrees. `import_history` answers the history
-/// question of the new device (the inviter ignores it).
+/// question of the new device (the inviter ignores it). The inviter hands the space key to the new
+/// device, so a fresh Windows Hello check (Rust side, never remembered) comes first, like a
+/// revocation. A PC that is joining a space is not asked: it gives nothing away.
 #[tauri::command]
-pub async fn pairing_confirm(state: State<'_, AppState>, import_history: bool) -> AppResult<()> {
+pub async fn pairing_confirm(
+    app: AppHandle,
+    window: tauri::WebviewWindow,
+    state: State<'_, AppState>,
+    import_history: bool,
+) -> AppResult<()> {
+    if matches!(state.core.pairing_view(), PairingView::Invite(_)) {
+        unlock::confirm_add_device(&app, owner_of(&window)).await?;
+    }
     Ok(state.core.pairing_confirm(import_history)?)
 }
 

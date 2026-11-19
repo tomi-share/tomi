@@ -87,6 +87,8 @@ pub const HELLO_REVOKE: &str =
     "Révoquer un appareil de ton espace Tomi. Les clés de l'espace sont renouvelées : une vérification Windows Hello est nécessaire.";
 pub const HELLO_REVEAL: &str =
     "Afficher, copier ou ouvrir un contenu masqué. Une vérification Windows Hello est nécessaire (valable 2 minutes).";
+pub const HELLO_ADD_DEVICE: &str =
+    "Ajouter un appareil à ton espace Tomi. Il recevra la clé de l'espace : une vérification Windows Hello est nécessaire.";
 
 pub const ACCOUNT_DELETE_SPACE: &str =
     "Supprimer ton espace Tomi. Action irréversible : saisis le mot de passe de ton compte Windows pour confirmer.";
@@ -96,6 +98,8 @@ pub const ACCOUNT_REVOKE: &str =
     "Révoquer un appareil de ton espace Tomi. Les clés de l'espace sont renouvelées : saisis le mot de passe de ton compte Windows pour confirmer.";
 pub const ACCOUNT_REVEAL: &str =
     "Afficher, copier ou ouvrir un contenu masqué : saisis le mot de passe de ton compte Windows (valable 2 minutes).";
+pub const ACCOUNT_ADD_DEVICE: &str =
+    "Ajouter un appareil à ton espace Tomi. Il recevra la clé de l'espace : saisis le mot de passe de ton compte Windows pour confirmer.";
 pub const ACCOUNT_GENERIC: &str = "Saisis le mot de passe de ton compte Windows pour confirmer.";
 
 /// The sentence of the account-password prompt that goes with a Hello sentence.
@@ -105,6 +109,7 @@ pub fn account_prompt(hello: &str) -> &'static str {
         HELLO_ERASE => ACCOUNT_ERASE,
         HELLO_REVOKE => ACCOUNT_REVOKE,
         HELLO_REVEAL => ACCOUNT_REVEAL,
+        HELLO_ADD_DEVICE => ACCOUNT_ADD_DEVICE,
         _ => ACCOUNT_GENERIC,
     }
 }
@@ -120,6 +125,7 @@ mod tests {
             (HELLO_ERASE, ACCOUNT_ERASE),
             (HELLO_REVOKE, ACCOUNT_REVOKE),
             (HELLO_REVEAL, ACCOUNT_REVEAL),
+            (HELLO_ADD_DEVICE, ACCOUNT_ADD_DEVICE),
         ] {
             assert_eq!(account_prompt(hello), account);
             assert!(!hello.contains("mot de passe"));
