@@ -112,8 +112,13 @@ pub struct RealCore {
     open_dir: PathBuf,
     tx: broadcast::Sender<CoreEvent>,
     changed: Arc<Notify>,
-    /// The feed as the UI last saw it (`None` until the first pass, and again after an erasure).
-    snapshot: Mutex<Option<HashMap<String, Item>>>,
+    /// The feed as the UI last saw it (`None` until the first pass, and again after an erasure):
+    /// a keyed fingerprint of every item, not the item. The pass only needs to tell a new, a
+    /// changed and a gone item apart, so no decrypted content (hidden items included) is kept
+    /// between two passes.
+    snapshot: Mutex<Option<HashMap<String, u64>>>,
+    /// Keys the fingerprints of `snapshot`: random for this run.
+    fingerprints: std::collections::hash_map::RandomState,
     /// Stops the change stream bridge and the housekeeping, for good (the app quits). Never set
     /// by an erasure: a later pairing needs both. The doorbell has its own stop, per loop.
     stop: Arc<AtomicBool>,
@@ -421,6 +426,7 @@ impl RealCore {
             tx,
             changed,
             snapshot: Mutex::new(None),
+            fingerprints: std::collections::hash_map::RandomState::new(),
             stop,
             started: AtomicBool::new(false),
             doorbell,
@@ -636,14 +642,17 @@ impl RealCore {
 
     /// What changed between the last feed the UI saw and `items`.
     fn diff(&self, items: Vec<Item>) -> Vec<CoreEvent> {
-        let now: HashMap<String, Item> = items.into_iter().map(|i| (i.id.clone(), i)).collect();
+        let now: HashMap<String, u64> = items
+            .iter()
+            .map(|i| (i.id.clone(), self.fingerprint(i)))
+            .collect();
         let mut snapshot = lock(&self.snapshot);
         let mut events = Vec::new();
         if let Some(before) = snapshot.as_ref() {
-            for (id, item) in &now {
-                match before.get(id) {
-                    None => events.push(CoreEvent::ItemAdded(item.clone())),
-                    Some(old) if old != item => events.push(CoreEvent::ItemUpdated(item.clone())),
+            for item in items {
+                match before.get(&item.id) {
+                    None => events.push(CoreEvent::ItemAdded(item)),
+                    Some(old) if *old != now[&item.id] => events.push(CoreEvent::ItemUpdated(item)),
                     Some(_) => {}
                 }
             }
@@ -653,6 +662,15 @@ impl RealCore {
         }
         *snapshot = Some(now);
         events
+    }
+
+    /// A keyed 64-bit fingerprint of everything an item carries: two reads of the same item give
+    /// the same number, any change gives another one (up to a collision, 2^-64). The serialised
+    /// copy it is computed from is wiped as soon as it is hashed.
+    fn fingerprint(&self, item: &Item) -> u64 {
+        use std::hash::BuildHasher;
+        let bytes = zeroize::Zeroizing::new(serde_json::to_vec(item).unwrap_or_default());
+        self.fingerprints.hash_one(bytes.as_slice())
     }
 
     /// Erases what has passed its expiration from the disk, and synchronises now and then
@@ -2624,6 +2642,40 @@ mod tests {
         assert!(files_holding(dir.path(), b"CONTENU-LIEN-9c1a").is_empty());
     }
 
+    #[tokio::test]
+    async fn the_feed_snapshot_keeps_no_content_yet_tells_new_changed_and_gone_apart() {
+        let dir = tempfile::tempdir().unwrap();
+        let core = core_over(dir.path(), Relay::Offline, true);
+        let mut secret = to_item(view(
+            readable(Some("t"), Some("SECRET-EN-MEMOIRE"), true),
+            ItemOrigin::Received,
+        ));
+        // The first pass records without announcing.
+        assert!(core.diff(vec![secret.clone()]).is_empty());
+        // The snapshot holds numbers, not items.
+        assert_eq!(lock(&core.snapshot).as_ref().unwrap().len(), 1);
+        // Same feed: nothing.
+        assert!(core.diff(vec![secret.clone()]).is_empty());
+        // A change (here, read) is announced as an update.
+        secret.read = true;
+        let events = core.diff(vec![secret.clone()]);
+        assert!(matches!(events.as_slice(), [CoreEvent::ItemUpdated(i)] if i.id == secret.id));
+        // A change of the content only is seen as well.
+        let mut edited = secret.clone();
+        edited.text.as_mut().unwrap().plain = "AUTRE".into();
+        assert!(matches!(
+            core.diff(vec![edited.clone()]).as_slice(),
+            [CoreEvent::ItemUpdated(_)]
+        ));
+        // A new item, then a gone one.
+        let mut other = secret.clone();
+        other.id = "22222222-2222-4222-8222-222222222222".into();
+        let events = core.diff(vec![edited, other.clone()]);
+        assert!(matches!(events.as_slice(), [CoreEvent::ItemAdded(i)] if i.id == other.id));
+        let events = core.diff(vec![other]);
+        assert!(matches!(events.as_slice(), [CoreEvent::ItemRemoved(id)] if *id == secret.id));
+    }
+
     #[test]
     fn a_copy_is_made_only_when_the_link_cannot_be() {
         let dir = tempfile::tempdir().unwrap();
@@ -3387,7 +3439,7 @@ mod tests {
             readable(Some("t"), Some("SECRET-EN-MEMOIRE"), true),
             ItemOrigin::Received,
         ));
-        *lock(&core.snapshot) = Some(HashMap::from([(item.id.clone(), item)]));
+        *lock(&core.snapshot) = Some(HashMap::from([(item.id.clone(), core.fingerprint(&item))]));
         std::fs::create_dir_all(dir.join(OPEN_DIR).join("a_0")).unwrap();
         std::fs::write(dir.join(OPEN_DIR).join("a_0").join("f.txt"), b"x").unwrap();
         core.doorbell.spawn(core.engine.as_ref().unwrap());
