@@ -13,6 +13,8 @@ import eu.shaffe.tomi.core.AttachmentRemoval
 import eu.shaffe.tomi.core.findBySlot
 import eu.shaffe.tomi.core.slotOf
 import eu.shaffe.tomi.security.AuthOutcome
+import eu.shaffe.tomi.share.FileDownloadResult
+import eu.shaffe.tomi.share.FileDownloads
 import eu.shaffe.tomi.share.FileShareOutcome
 import eu.shaffe.tomi.share.FileSharing
 import eu.shaffe.tomi.share.ImageActionResult
@@ -78,6 +80,12 @@ sealed interface FeedEvent {
 
     /** A file could not be handed to the system viewer: not downloaded yet, or no app on the phone opens that type. */
     data object FileUnavailable : FeedEvent
+
+    /** One file was saved to `Downloads/Tomi` ("Télécharger" of a file row). */
+    data object FileDownloaded : FeedEvent
+
+    /** The file was found but could not be written to `Downloads/Tomi`. */
+    data object FileDownloadFailed : FeedEvent
 
     /**
      * ONE attachment of an item was removed (the item stays): an [image] or another file, from this device only or [everywhere].
@@ -318,6 +326,45 @@ class FeedViewModel(private val container: AppContainer) : ViewModel() {
                 FileShareOutcome.NothingToShare -> eventChannel.send(FeedEvent.NothingToShare)
                 FileShareOutcome.BiometricUnavailable -> eventChannel.send(FeedEvent.BiometricUnavailable)
                 FileShareOutcome.NotAuthenticated -> Unit
+            }
+        }
+    }
+
+    /**
+     * "Partager" of ONE file of [item] (the "⋮" of a file row, by its [slot]): the file alone goes to [launch] (share sheet), without the
+     * description of the item. Same gate as [shareFiles] for a hidden item; the file is decrypted on demand, handed over and dropped.
+     * A file that is not available on this device is reported as [FeedEvent.FileUnavailable].
+     */
+    fun shareFile(item: TomiItem, slot: Int, authenticate: suspend () -> AuthOutcome, launch: (files: List<SharedFile>) -> Boolean) {
+        viewModelScope.launch {
+            when (val outcome = FileSharing.prepareFile(item, slot, authenticate) { id, s -> attachmentUriOrNull(id, s) }) {
+                is FileShareOutcome.Ready -> {
+                    val opened = launch(outcome.files)
+                    if (opened && (!item.read || item.readPolicy == ReadPolicy.AfterFirstRead)) markReadQuietly(item.id)
+                }
+                FileShareOutcome.NothingToShare -> eventChannel.send(FeedEvent.FileUnavailable)
+                FileShareOutcome.BiometricUnavailable -> eventChannel.send(FeedEvent.BiometricUnavailable)
+                FileShareOutcome.NotAuthenticated -> Unit
+            }
+        }
+    }
+
+    /**
+     * "Télécharger" of ONE file of [item] (by its [slot]) to `Downloads/Tomi`: [write] copies the file behind the URI and returns true on
+     * success. Never for a hidden item ([FileDownloads]: no permanent clear copy; the menu does not offer it and nothing is decrypted if it
+     * is called anyway). A file not downloaded on this device yet is [FeedEvent.FileUnavailable], a write error [FeedEvent.FileDownloadFailed].
+     */
+    fun downloadFile(item: TomiItem, slot: Int, write: suspend (uri: String, attachment: Attachment) -> Boolean) {
+        if (!FileDownloads.canDownload(item)) return
+        viewModelScope.launch {
+            when (FileDownloads.download(item, slot, { id, s -> attachmentUriOrNull(id, s) }, write)) {
+                FileDownloadResult.Done -> {
+                    eventChannel.send(FeedEvent.FileDownloaded)
+                    if (!item.read) markReadQuietly(item.id)
+                }
+                FileDownloadResult.Unavailable -> eventChannel.send(FeedEvent.FileUnavailable)
+                FileDownloadResult.Failed -> eventChannel.send(FeedEvent.FileDownloadFailed)
+                FileDownloadResult.Forbidden -> Unit
             }
         }
     }

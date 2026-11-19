@@ -91,6 +91,7 @@ import eu.shaffe.tomi.core.UnreadableReason
 import eu.shaffe.tomi.core.isOutgoing
 import eu.shaffe.tomi.core.kind
 import eu.shaffe.tomi.core.slotOf
+import eu.shaffe.tomi.share.FileDownloads
 import eu.shaffe.tomi.share.FileSharing
 import eu.shaffe.tomi.share.ItemSharing
 import eu.shaffe.tomi.ui.common.deliveryLabel
@@ -136,6 +137,10 @@ class CardActions(
     val onDeleteEverywhere: () -> Unit = {},
     /** Removes ONE attachment (by its slot) from the item: this device only, or everywhere. The detail's file rows call it. */
     val onDeleteAttachment: (slot: Int, everywhere: Boolean) -> Unit = { _, _ -> },
+    /** "Partager" of ONE file (by its slot), from the "⋮" of its row: the file alone, without the description (gate first for a hidden item). */
+    val onShareFile: (slot: Int) -> Unit = {},
+    /** "Télécharger" of ONE file (by its slot) to `Downloads/Tomi`, from the "⋮" of its row. Never for a hidden item. */
+    val onDownloadFile: (slot: Int) -> Unit = {},
     /** The relay supports "remove this file everywhere" (otherwise the rows only offer "from this device"). */
     val attachmentRemovalEverywhere: Boolean = false,
     val onRenderMode: (RenderMode) -> Unit = {},
@@ -775,10 +780,17 @@ private fun PlainBody(
     )
 }
 
-/** "Supprimer ce fichier" on the rows of the DETAIL of an item with several files; none on a card of the feed. */
+/** The "⋮" menu (Partager, Télécharger, Supprimer) on the rows of the DETAIL of an item with several files; none on a card of the feed. */
 private fun CardActions.fileRowActionsFor(item: TomiItem, expanded: Boolean): FileRowActions? =
     if (expanded && AttachmentRemovals.canRemoveFromBatch(item)) {
-        FileRowActions(everywhere = attachmentRemovalEverywhere, secret = item.secret, onDelete = onDeleteAttachment)
+        FileRowActions(
+            everywhere = attachmentRemovalEverywhere,
+            secret = item.secret,
+            canDownload = FileDownloads.canDownload(item),
+            onShare = onShareFile,
+            onDownload = onDownloadFile,
+            onDelete = onDeleteAttachment,
+        )
     } else {
         null
     }

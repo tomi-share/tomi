@@ -29,11 +29,14 @@ import androidx.compose.material.icons.outlined.AttachFile
 import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material.icons.outlined.DeleteOutline
+import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -179,6 +182,8 @@ internal fun AttachmentList(
                     RowWithMenu(
                         fileRowActions = fileRowActions,
                         topAligned = isFrame,
+                        onShare = { fileRowActions?.onShare?.invoke(slot) },
+                        onDownload = { fileRowActions?.onDownload?.invoke(slot) },
                         onDeleteLocal = { fileRowActions?.onDelete?.invoke(slot, false) },
                         onDeleteEverywhere = { confirmEverywhereSlot = slot },
                     ) {
@@ -241,21 +246,27 @@ internal fun AttachmentList(
 }
 
 /**
- * What the detail gives the list of files to remove one of them ([AttachmentRemovals.canRemoveFromBatch]). [everywhere]: the relay
+ * What the detail gives the list of files to act on one of them ([AttachmentRemovals.canRemoveFromBatch]). [everywhere]: the relay
  * supports "remove everywhere" (otherwise only "from this device" is offered). [secret]: the item is a revealed hidden one (the
- * confirmation then says a device that displayed the file may have kept a copy).
+ * confirmation then says a device that displayed the file may have kept a copy). [canDownload]: "Télécharger" is offered (never for a
+ * hidden item: no permanent clear copy outside the app). [onShare] / [onDownload] get the SLOT of the file.
  */
 internal class FileRowActions(
     val everywhere: Boolean,
     val secret: Boolean,
+    val canDownload: Boolean,
+    val onShare: (slot: Int) -> Unit,
+    val onDownload: (slot: Int) -> Unit,
     val onDelete: (slot: Int, everywhere: Boolean) -> Unit,
 )
 
-/** A row with, on its right, the menu "Supprimer ce fichier" when [fileRowActions] is given; the row alone otherwise. */
+/** A row with, on its right, the menu "Partager / Télécharger / Supprimer" when [fileRowActions] is given; the row alone otherwise. */
 @Composable
 private fun RowWithMenu(
     fileRowActions: FileRowActions?,
     topAligned: Boolean,
+    onShare: () -> Unit,
+    onDownload: () -> Unit,
     onDeleteLocal: () -> Unit,
     onDeleteEverywhere: () -> Unit,
     row: @Composable () -> Unit,
@@ -269,13 +280,30 @@ private fun RowWithMenu(
         verticalAlignment = if (topAligned) Alignment.Top else Alignment.CenterVertically,
     ) {
         Box(Modifier.weight(1f)) { row() }
-        FileRowMenu(AttachmentRemovals.scopes(fileRowActions.everywhere), onDeleteLocal, onDeleteEverywhere)
+        FileRowMenu(
+            scopes = AttachmentRemovals.scopes(fileRowActions.everywhere),
+            canDownload = fileRowActions.canDownload,
+            onShare = onShare,
+            onDownload = onDownload,
+            onDeleteLocal = onDeleteLocal,
+            onDeleteEverywhere = onDeleteEverywhere,
+        )
     }
 }
 
-/** "⋮" of a file row: "Supprimer le fichier de cet appareil" and, when the relay supports it, "Supprimer le fichier partout". */
+/**
+ * "⋮" of a file row: "Partager" and "Télécharger" (the latter absent for a hidden item), a divider, then the destructive entries in the
+ * error colour: "Supprimer le fichier de cet appareil" and, when the relay supports it, "Supprimer le fichier partout".
+ */
 @Composable
-private fun FileRowMenu(scopes: List<RemovalScope>, onDeleteLocal: () -> Unit, onDeleteEverywhere: () -> Unit) {
+private fun FileRowMenu(
+    scopes: List<RemovalScope>,
+    canDownload: Boolean,
+    onShare: () -> Unit,
+    onDownload: () -> Unit,
+    onDeleteLocal: () -> Unit,
+    onDeleteEverywhere: () -> Unit,
+) {
     var open by remember { mutableStateOf(false) }
     Box {
         IconButton(onClick = { open = true }) {
@@ -287,10 +315,35 @@ private fun FileRowMenu(scopes: List<RemovalScope>, onDeleteLocal: () -> Unit, o
             shape = TomiTheme.shapes.menu,
             containerColor = MaterialTheme.colorScheme.surface,
         ) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.action_share)) },
+                leadingIcon = { Icon(Icons.Outlined.Share, contentDescription = null) },
+                onClick = {
+                    open = false
+                    onShare()
+                },
+            )
+            // A hidden item cannot be saved out of Tomi (golden rule 3): no entry, no workaround.
+            if (canDownload) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.file_download)) },
+                    leadingIcon = { Icon(Icons.Outlined.Download, contentDescription = null) },
+                    onClick = {
+                        open = false
+                        onDownload()
+                    },
+                )
+            }
+            // Same convention as the menu of the feed: a divider, then the destructive entries in the error colour.
+            HorizontalDivider()
             if (RemovalScope.ThisDevice in scopes) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.file_delete_local)) },
                     leadingIcon = { Icon(Icons.Outlined.DeleteOutline, contentDescription = null) },
+                    colors = MenuDefaults.itemColors(
+                        textColor = MaterialTheme.colorScheme.error,
+                        leadingIconColor = MaterialTheme.colorScheme.error,
+                    ),
                     onClick = {
                         open = false
                         onDeleteLocal()

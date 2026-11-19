@@ -121,6 +121,7 @@ import eu.shaffe.tomi.ui.common.launchFileShare
 import eu.shaffe.tomi.ui.common.launchSystemShare
 import eu.shaffe.tomi.ui.common.openAttachmentUri
 import eu.shaffe.tomi.ui.common.openHttpLink
+import eu.shaffe.tomi.ui.common.saveToDownloads
 import eu.shaffe.tomi.ui.common.rememberAuthenticator
 import eu.shaffe.tomi.ui.render.PreviewKind
 import eu.shaffe.tomi.ui.render.RenderModes
@@ -844,6 +845,16 @@ fun rememberCardActions(
             onToggleArchive = { viewModel.applyArchiveAction(item) },
             onDeleteLocal = { viewModel.deleteLocal(item.id) },
             onDeleteEverywhere = { viewModel.deleteEverywhere(item.id) },
+            onShareFile = { slot ->
+                // One file of the "⋮" menu of its row: the file alone, no caption (gate first for a hidden item).
+                viewModel.shareFile(item, slot, authenticateForShare) { files ->
+                    val opened = launchFileShare(context, files, chooserTitle)
+                    if (!opened) android.widget.Toast.makeText(context, noApp, android.widget.Toast.LENGTH_SHORT).show()
+                    opened
+                }
+            },
+            // Never for a hidden item (the menu does not offer it, the view model refuses it): no authentication to ask here.
+            onDownloadFile = { slot -> viewModel.downloadFile(item, slot) { uri, attachment -> saveToDownloads(context, uri, attachment) } },
             onDeleteAttachment = { slot, everywhere -> viewModel.deleteAttachment(item, slot, everywhere) },
             attachmentRemovalEverywhere = removalEverywhere,
             onRenderMode = viewModel::setRenderMode,
@@ -906,6 +917,8 @@ fun FeedEventsEffect(viewModel: FeedViewModel, snackbar: SnackbarHostState) {
                     FeedEvent.ImageSaved -> R.string.snackbar_image_saved
                     FeedEvent.ImageUnavailable -> R.string.snackbar_image_unavailable
                     FeedEvent.FileUnavailable -> R.string.snackbar_file_unavailable
+                    FeedEvent.FileDownloaded -> R.string.snackbar_file_downloaded
+                    FeedEvent.FileDownloadFailed -> R.string.snackbar_file_download_failed
                     FeedEvent.ImageActionFailed -> R.string.snackbar_image_failed
                     is FeedEvent.AttachmentDeleted -> when {
                         event.image && event.everywhere -> R.string.snackbar_image_deleted_everywhere
@@ -921,6 +934,7 @@ fun FeedEventsEffect(viewModel: FeedViewModel, snackbar: SnackbarHostState) {
                     if (snackbar.showFeedback(message, undoLabel, FeedbackTone.Done) == SnackbarResult.ActionPerformed) viewModel.undoArchive(event)
                 } else {
                     val done = event == FeedEvent.CopiedSecret || event == FeedEvent.ImageSaved ||
+                        event == FeedEvent.FileDownloaded ||
                         event == FeedEvent.DeletedLocal || event == FeedEvent.DeletedEverywhere || event is FeedEvent.AttachmentDeleted
                     snackbar.showFeedback(message, tone = if (done) FeedbackTone.Done else FeedbackTone.Neutral)
                 }
