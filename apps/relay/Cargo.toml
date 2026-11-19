@@ -63,7 +63,7 @@ ring = "0.17"
 [dev-dependencies]
 tempfile = "3"
 tower = { version = "0.5", features = ["util"] }
-tokio-tungstenite = "0.29"
+tokio-tungstenite = "0.30"
 # Signatures that tomi-core refuses to produce on purpose (a challenge answer without its label).
 ed25519-dalek = "3"
 # A120 probes the `log` -> `tracing` bridge: the third-party crates that could leak a secret
