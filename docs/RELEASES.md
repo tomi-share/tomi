@@ -186,17 +186,17 @@ Limits to know about:
 
 ## Verifying a download
 
-Windows installer (replace the repository if you use a fork):
+Windows installer (replace the repository if you use a fork, and X.Y.Z with the version of the release):
 
 ```sh
 # 1. checksum (against corruption; the .sha256 file is downloaded from the same release)
-sha256sum --check tomi-windows-setup.exe.sha256
-#    PowerShell: (Get-FileHash .\tomi-windows-setup.exe -Algorithm SHA256).Hash.ToLower()  -> compare with the file content
+sha256sum --check tomi-windows-X.Y.Z-setup.exe.sha256
+#    PowerShell: (Get-FileHash .\tomi-windows-X.Y.Z-setup.exe -Algorithm SHA256).Hash.ToLower()  -> compare with the file content
 
 # 2. build provenance (needs the GitHub CLI, gh >= 2.49; the repository must be public)
-gh attestation verify tomi-windows-setup.exe --repo tomi-share/tomi
+gh attestation verify tomi-windows-X.Y.Z-setup.exe --repo tomi-share/tomi
 #    stricter: also require that the signer is this workflow
-gh attestation verify tomi-windows-setup.exe --repo tomi-share/tomi \
+gh attestation verify tomi-windows-X.Y.Z-setup.exe --repo tomi-share/tomi \
   --signer-workflow tomi-share/tomi/.github/workflows/build-apps.yml
 ```
 
@@ -207,15 +207,21 @@ is the way to know what you are about to run (see "Windows code signing" below).
 Android APK:
 
 ```sh
-sha256sum --check tomi-android-release.apk.sha256
-gh attestation verify tomi-android-release.apk --repo tomi-share/tomi
+sha256sum --check tomi-android-X.Y.Z.apk.sha256
+gh attestation verify tomi-android-X.Y.Z.apk --repo tomi-share/tomi
 # the signing certificate (Android build-tools) must be the project's one:
-apksigner verify --print-certs tomi-android-release.apk      # compare "certificate SHA-256 digest" with the fingerprint below
+apksigner verify --print-certs tomi-android-X.Y.Z.apk      # compare "certificate SHA-256 digest" with the fingerprint below
 ```
 
-Release certificate SHA-256 fingerprint: **not published yet** (the release key has not been created, see "Not done yet").
-It will be added here, and the notes of every stable Android release carry it. Android refuses to update an app signed with another
-key, so a build signed with a different certificate is not an update of this one.
+Release certificate SHA-256 fingerprint (the same key signs every Android release, from `android-v0.1.0` on):
+
+```
+968d4b1fb3536f34b411f553242bb38162fd64f9fa5aeeb88b080ad2b46ed577
+```
+
+In the colon-separated form that `keytool` prints: `96:8D:4B:1F:B3:53:6F:34:B4:11:F5:53:24:2B:B3:81:62:FD:64:F9:FA:5A:EE:B8:8B:08:0A:D2:B4:6E:D5:77`.
+The notes of every stable Android release carry it as well. Android refuses to update an app signed with another key, so a build
+signed with a different certificate is not an update of this one: if the fingerprint of a download differs, do not install it.
 
 Relay binaries: `sha256sum --check tomi-relay-<target>.sha256` as above.
 
@@ -294,8 +300,8 @@ eligibility) or an EV/OV certificate, wired into the same job. Later: the Tauri 
 ## Not done yet
 
 - [x] The Android release keystore exists and the `ANDROID_RELEASE_*` secrets and `ANDROID_RELEASE_CERT_SHA256` are configured
-      (see "Android release signing"). Still to do: publish the certificate fingerprint in "Verifying a download" with the first
-      release, and keep the keystore and its password backed up.
+      (see "Android release signing"). The certificate fingerprint is published in "Verifying a download" and in the notes of
+      `android-v0.1.0`. Keep the keystore and its password backed up: they cannot be recovered from GitHub.
 - [ ] Code signing for the Windows installer (SmartScreen currently warns): the pipeline is ready and off by default; the SignPath
       Foundation application and its configuration are owner tasks ("Windows code signing"). Until then a `windows-v*` release
       needs the repository variable `ALLOW_UNSIGNED_WINDOWS_RELEASE=true`, a conscious decision.
