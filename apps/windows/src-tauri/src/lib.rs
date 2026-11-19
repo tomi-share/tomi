@@ -31,6 +31,7 @@ mod real_core;
 mod render;
 mod secret;
 mod sendto;
+mod session_watch;
 mod settings;
 mod shortcut;
 mod state;
@@ -314,6 +315,16 @@ fn setup(app: &mut tauri::App) -> SetupResult {
     });
 
     tray::build(&handle)?;
+
+    // The Windows Hello window of hidden content does not survive a lock, a disconnect or a sleep.
+    {
+        let h = handle.clone();
+        session_watch::start(move || {
+            if let Some(state) = h.try_state::<AppState>() {
+                state.secret_gate.close();
+            }
+        });
+    }
 
     // Popover: hide on focus loss (unless pinned).
     if let Some(w) = app.get_webview_window(popover::POPOVER) {

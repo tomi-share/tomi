@@ -151,7 +151,7 @@ Golden rule 3 in `AGENTS.md`; exact list of protected screens: see the iOS notes
 | Feature | Core | Relay | CLI | Android | iOS | Windows | Notes / gaps |
 |---|---|---|---|---|---|---|---|
 | Title of a secret item encrypted, kept out of the feed and search | ✅ title inside the secret (`item.rs`) | ➖ opaque | ➖ | ✅ | ✅ | ✅ | |
-| Show / copy / open a secret item behind local authentication | ➖ | ➖ | ➖ | ✅ `BiometricGate` (`BIOMETRIC_STRONG` or screen lock) | ✅ `LAContext` Face ID / Touch ID / passcode (`BiometricGate`) | ✅ Windows Hello (`unlock.rs`); account password fallback (`account_auth.rs`) | Windows: the fallback is weaker than Hello (no biometric factor), documented in the README. |
+| Show / copy / open a secret item behind local authentication | ➖ | ➖ | ➖ | ✅ `BiometricGate` (`BIOMETRIC_STRONG` or screen lock) | ✅ `LAContext` Face ID / Touch ID / passcode (`BiometricGate`) | ✅ Windows Hello (`unlock.rs`); account password fallback (`account_auth.rs`) | Windows: the fallback is weaker than Hello (no biometric factor), documented in the README. The 2-minute window is closed on session lock, disconnect, logoff and sleep (`session_watch.rs`: hidden window + `WTSRegisterSessionNotification` + `WM_POWERBROADCAST`). |
 | 2-minute authentication window | ➖ | ➖ | ➖ | ✅ `AuthWindow`, closed on screen off **and when the app goes to the background** (`TomiApplication`) | ✅ `AuthWindow`, closed on lock and in the background | 🟡 `WINDOW` = 120 s, **not closed** on session lock or sleep | Documented limit: Tauri does not expose these events (`apps/windows/README.md`). |
 | Destructive actions require strong authentication, never remembered | ➖ | ➖ | ➖ | ✅ `fresh`: strong biometrics or the screen lock (PIN), never remembered, passive face unlock needs a confirmation tap | ✅ biometrics only, no passcode fallback | ✅ Hello (password fallback) | Revocation, space deletion, "Effacer quand même" (Erase anyway). |
 | Autofill and accessibility kept away from secrets | ➖ | ➖ | ➖ | 🚧 while a window is secured (revealed or composed secret, viewers, pairing codes): autofill excluded for the whole window and, on Android 14+, `accessibilityDataSensitive` (only accessibility tools such as TalkBack read it) (`SecureWindow.kt`); not verified on a device (Compose nodes inheriting the flag) | ➖ | ➖ | Android 13 (minSdk) only gets the autofill exclusion. |
@@ -300,8 +300,8 @@ Items marked ✅ in the code that have not yet been run on a physical device:
 6. **Windows: no "Hors ligne · en attente" (offline · pending) chip / banner** (Android has it; iOS 🚧).
 7. **Inactive-device hint**: Android and Windows have it, enabled (flag `LAST_SEEN_IS_FROM_RELAY = true`), but not yet tried against a real relay; iOS does not have it yet. To port to iOS.
 8. **Windows: no "Réinitialiser" (Reset) for a database without a key** (Android and iOS have it, with confirmation).
-9. **Windows: the 2-minute Hello window is not closed on session lock / sleep** (window subclassing in `unsafe`, refused so far).
-10. **Windows: plaintext copy kept for 1 minute** after last use (golden rule 3: background or startup), and the decrypted feed kept in memory (`RealCore.snapshot`).
+9. ~~Windows: the 2-minute Hello window is not closed on session lock / sleep~~ — done (`session_watch.rs`).
+10. **Windows: plaintext copy kept for 1 minute** after last use (golden rule 3: background or startup). The feed snapshot of the bridge (`RealCore.snapshot`) now holds only a keyed fingerprint per item, but the core still decrypts the whole feed at each pass and the DPAPI-unsealed key stays in memory: a real fix needs the "sealed secrets" design in the core.
 11. **iOS: code screen without syntax colours** (Android: tree-sitter, 14 languages + PHP; Windows: ~12 languages); align the language lists.
 12. **iOS: no universal links** (`applinks:` absent): depends on the signing team and an AASA route to add to the relay.
 13. **iOS: no widget / send control** (Android: tile); whether it is useful is still to be decided.
@@ -336,5 +336,5 @@ Items marked ✅ in the code that have not yet been run on a physical device:
 | Windows: no camera QR scanning | PCs usually have no useful camera; the code is typed or the link is pasted. |
 | Windows: no share extension and no swipe-to-archive | No Windows equivalent of the share sheet; the ⋮ menu replaces the swipe (by design). |
 | Windows: `https://…/l/…` links not handled | Windows does not launch the app from an https link; it is pasted into the field. |
-| Windows: an ongoing Hello prompt is not cancelled on session lock | Tauri does not expose `WTS_SESSION_LOCK` or `WM_POWERBROADCAST` (see A.9 if `unsafe` is accepted). |
+| Windows: an ongoing Hello prompt is not cancelled on session lock | The window of a verification is closed on lock and sleep (`SecretGate::close`), and a prompt that was on screen then does not open it; the prompt itself is Windows' and stays until dismissed. |
 | Core: metadata (ids, dates, flags, sizes, device names) stays in plaintext in SQLite | Accepted trade-off, listed in `runtime/store.rs`; no content and no title. |
