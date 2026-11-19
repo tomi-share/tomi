@@ -1,6 +1,7 @@
 package eu.shaffe.tomi.share
 
 import eu.shaffe.tomi.core.TomiItem
+import eu.shaffe.tomi.core.findBySlot
 import eu.shaffe.tomi.core.slotOf
 import eu.shaffe.tomi.security.AuthOutcome
 
@@ -46,18 +47,41 @@ object FileSharing {
         resolveUri: suspend (itemId: String, slot: Int) -> String?,
     ): FileShareOutcome {
         if (!canShare(item)) return FileShareOutcome.NothingToShare
-        if (item.secret) {
-            when (authenticate()) {
-                AuthOutcome.Success -> Unit
-                AuthOutcome.Unavailable -> return FileShareOutcome.BiometricUnavailable
-                AuthOutcome.Cancelled, AuthOutcome.Failed -> return FileShareOutcome.NotAuthenticated
-            }
-        }
+        gate(item, authenticate)?.let { return it }
         val files = item.attachments.mapIndexedNotNull { index, attachment ->
             // The slot, not the position: they differ once an attachment was removed from the item.
             resolveUri(item.id, item.attachments.slotOf(index))?.let { SharedFile(it, attachment.mime) }
         }
         return if (files.isEmpty()) FileShareOutcome.NothingToShare else FileShareOutcome.Ready(files, caption(item))
+    }
+
+    /**
+     * "Partager" of ONE file of [item] (the "⋮" menu of a file row), by its [slot]. Same gate as [prepare] for a hidden item, and the
+     * file is decrypted on demand only after it. The description and the link of the item are NOT handed along: the user shares this
+     * file, not the item ([FileShareOutcome.Ready.text] is null). [FileShareOutcome.NothingToShare] when the slot is unknown or the
+     * file is not available on this device.
+     */
+    suspend fun prepareFile(
+        item: TomiItem,
+        slot: Int,
+        authenticate: suspend () -> AuthOutcome,
+        resolveUri: suspend (itemId: String, slot: Int) -> String?,
+    ): FileShareOutcome {
+        if (!canShare(item)) return FileShareOutcome.NothingToShare
+        val attachment = item.attachments.findBySlot(slot) ?: return FileShareOutcome.NothingToShare
+        gate(item, authenticate)?.let { return it }
+        val uri = resolveUri(item.id, slot) ?: return FileShareOutcome.NothingToShare
+        return FileShareOutcome.Ready(listOf(SharedFile(uri, attachment.mime)))
+    }
+
+    /** The biometric gate of a hidden item (same window as "Afficher"): null when the files may be decrypted, else the refusal. */
+    private suspend fun gate(item: TomiItem, authenticate: suspend () -> AuthOutcome): FileShareOutcome? {
+        if (!item.secret) return null
+        return when (authenticate()) {
+            AuthOutcome.Success -> null
+            AuthOutcome.Unavailable -> FileShareOutcome.BiometricUnavailable
+            AuthOutcome.Cancelled, AuthOutcome.Failed -> FileShareOutcome.NotAuthenticated
+        }
     }
 
     /** The text and the link of the item as a caption of the shared files; never for a hidden item. */
