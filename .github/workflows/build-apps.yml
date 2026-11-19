@@ -23,6 +23,9 @@ name: Build apps
 #                                   publish job refuses any APK signed by another certificate.
 #   TOMI_RELAY_URL                  default relay compiled into the apps (public, not a secret)
 
+# Also callable (`workflow_call`) by release-apps.yml, which builds exactly the same files for a stable tag and publishes them
+# itself: `publish` is then false, so the rolling pre-release step below never runs for a stable release. The called jobs
+# need the `id-token` and `attestations` permissions that the caller grants them.
 on:
   workflow_dispatch:
     inputs:
@@ -43,6 +46,27 @@ on:
         description: "Publish to the GitHub releases (otherwise artifacts only)"
         type: boolean
         default: true
+  workflow_call:
+    inputs:
+      android:
+        type: boolean
+        default: true
+      android_variant:
+        type: string
+        default: release
+      windows:
+        type: boolean
+        default: true
+      publish:
+        type: boolean
+        default: false
+    outputs:
+      android_publishable:
+        description: "true for a signed release APK (the only kind that may be published)"
+        value: ${{ jobs.android.outputs.publishable }}
+      android_cert_sha256:
+        description: "SHA-256 fingerprint of the certificate that signed the APK (public information)"
+        value: ${{ jobs.android.outputs.cert_sha256 }}
 
 permissions:
   contents: read
