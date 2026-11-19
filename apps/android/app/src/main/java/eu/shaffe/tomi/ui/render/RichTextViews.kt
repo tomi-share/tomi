@@ -50,11 +50,9 @@ import androidx.core.net.toUri
 import com.swmansion.enriched.markdown.codehighlight.compose.codeHighlight
 import com.swmansion.enriched.markdown.CodeBlockLayout
 import com.swmansion.enriched.markdown.EnrichedMarkdown
-import com.swmansion.enriched.markdown.MarkdownOptions
 import com.swmansion.enriched.markdown.compose.MarkdownStyle
 import com.swmansion.enriched.markdown.compose.material3.materialMarkdownStyle
 import com.swmansion.enriched.markdown.parser.MarkdownASTNode
-import com.swmansion.enriched.markdown.parser.Md4cFlags
 import com.swmansion.enriched.markdown.parser.Parser
 import com.swmansion.enriched.markdown.plugin.InternalPluginApi
 import com.swmansion.enriched.markdown.plugin.MarkdownPlugin
@@ -87,7 +85,7 @@ private fun openExternalLink(context: Context, uri: Uri) {
 
 /** The library's markdown parser, for [MarkdownGuard]. Any failure (native library missing included) is "cannot parse". */
 internal fun parseWithLibrary(markdown: String): MarkdownASTNode? = try {
-    Parser.shared.parseMarkdown(markdown, Md4cFlags.Default)
+    Parser.shared.parseMarkdown(markdown, MarkdownEngineConfig.parserFlags)
 } catch (e: Throwable) {
     Log.w("MarkdownGuard", "markdown parser unavailable: shown as plain text", e)
     null
@@ -279,7 +277,7 @@ private fun TomiMarkdownText(
                 setEnableTaskListItemToggle(true)
                 setSpoilerOverlay(SpoilerOverlay.Particles())
                 setAllowTrailingMargin(allowTrailingMargin)
-                setOptions(MarkdownOptions.Default)
+                setOptions(MarkdownEngineConfig.options)
                 setCodeBlockLayout(CodeBlockLayout.Wrapping)
                 // The content goes in here too, like the library's own wrapper: `update` only runs once the view is attached to
                 // the window, i.e. after the first measure, so rendering started there would begin a frame later and leave the
