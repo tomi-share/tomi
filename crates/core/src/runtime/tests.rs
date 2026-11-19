@@ -6388,6 +6388,53 @@ fn last_seen(e: &Engine, device_id: &str) -> Option<i64> {
 
 const ACTIVITY_REFRESH_MS: i64 = 5 * 60_000;
 
+fn name_and_platform(e: &Engine, device_id: &str) -> (String, String) {
+    let d = e
+        .list_devices()
+        .unwrap()
+        .into_iter()
+        .find(|d| d.id == device_id)
+        .unwrap();
+    (d.name, d.platform)
+}
+
+#[test]
+fn a_member_the_pairing_did_not_name_gets_the_name_the_relay_lists() {
+    // The relay serves a device the events since its arrival only: it never sees the
+    // `device_added` of the members that were there before it.
+    let w = World::new(3, 3);
+    let (a, b) = (w.nodes[0].id.clone(), w.nodes[1].id.clone());
+    w.e(2).sync().unwrap();
+    assert_eq!(
+        name_and_platform(w.e(2), &a),
+        ("Appareil 0".to_owned(), "android".to_owned())
+    );
+    assert_eq!(
+        name_and_platform(w.e(2), &b),
+        ("Appareil 1".to_owned(), "android".to_owned())
+    );
+}
+
+#[test]
+fn the_relay_list_never_renames_a_member_that_has_a_name() {
+    let w = World::new(2, 2);
+    let id = w.nodes[1].id.clone();
+    w.e(0).sync().unwrap();
+    w.e(0)
+        .apply_event(&Event {
+            seq: w.relay.head() + 1,
+            at_ms: T0,
+            data: EventData::DeviceUpdated {
+                device_id: id.clone(),
+                name: "Tablette".into(),
+            },
+        })
+        .unwrap();
+    w.clock.advance(ACTIVITY_REFRESH_MS);
+    w.e(0).refresh_devices().unwrap();
+    assert_eq!(name_and_platform(w.e(0), &id).0, "Tablette");
+}
+
 #[test]
 fn the_time_of_pairing_is_not_an_activity() {
     let w = World::new(2, 2);

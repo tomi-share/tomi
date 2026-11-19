@@ -2105,6 +2105,16 @@ impl Db<'_> {
         Ok(())
     }
 
+    /// Sets the name and the platform of a device (`refresh_devices`: the member of a space that
+    /// the pairing did not name).
+    pub fn set_device_identity(&self, device_id: &str, name: &str, platform: &str) -> Result<()> {
+        self.conn.execute(
+            "UPDATE devices SET name = ?2, platform = ?3 WHERE device_id = ?1",
+            params![device_id, name, platform],
+        )?;
+        Ok(())
+    }
+
     // --- transfers ----------------------------------------------------------
 
     pub fn put_transfer(&self, t: &TransferRow) -> Result<()> {

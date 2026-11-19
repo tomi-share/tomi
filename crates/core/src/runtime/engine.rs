@@ -612,11 +612,11 @@ impl Engine {
                 let id = m.device_id()?;
                 let known = extras.known_members.iter().find(|k| k.ed25519 == m.ed25519);
                 let (name, platform) = if id == device_id {
-                    (p.device_name.clone(), "unknown".to_owned())
+                    (p.device_name.clone(), UNKNOWN_PLATFORM.to_owned())
                 } else if let Some(k) = known {
                     (k.name.clone(), k.platform.clone())
                 } else {
-                    ("Appareil".to_owned(), "unknown".to_owned())
+                    (UNNAMED_DEVICE.to_owned(), UNKNOWN_PLATFORM.to_owned())
                 };
                 db.put_device(&DeviceRow {
                     device_id: id,
@@ -1225,9 +1225,11 @@ impl Engine {
 
     /// Reads the activity of the devices (`last_seen_at` of `GET /v1/devices`) again, and
     /// stores it, whatever the schedule. Only the activity of the devices already known is
-    /// written: members, keys, states and names come from the log and from the trust store,
-    /// never from this list (a device the log has not announced yet is left to its
-    /// `device_added`). A relay that does not report the activity (no `active` in the record)
+    /// written: members, keys and states come from the log and from the trust store, never
+    /// from this list (a device the log has not announced yet is left to its `device_added`).
+    /// The one thing taken from it besides the activity is the name and platform of a member
+    /// that the pairing could not name (a new device never receives the `device_added` of the
+    /// members that were there before it). A relay that does not report the activity (no `active` in the record)
     /// changes nothing. Meant for the apps that open the list of devices and want it fresh;
     /// [`sync`](Self::sync) and the doorbell loop do it by themselves every few minutes.
     pub fn refresh_devices(&self) -> Result<()> {
@@ -2357,6 +2359,10 @@ pub struct RelayRevocation {
     pub via: String,
 }
 
+/// Name and platform stored for a member the device has not been told about yet.
+const UNNAMED_DEVICE: &str = "Appareil";
+const UNKNOWN_PLATFORM: &str = "unknown";
+
 /// The `via` values of an unsigned `device_revoked` that start a relay revocation (`rotation` is
 /// the signed one, already applied by the rotation itself).
 const RELAY_REVOCATION_VIAS: [&str; 2] = ["admin", "self"];
@@ -2405,7 +2411,8 @@ pub(crate) fn record_relay_revocation(db: &Db<'_>, device_id: &str, via: &str) -
     db.meta_set(RELAY_REVOCATIONS_KEY, out.as_bytes())
 }
 
-/// Stores the activity (`last_seen_at`) the relay reports for the devices already known.
+/// Stores the activity (`last_seen_at`) the relay reports for the devices already known, and
+/// the name and platform of the members still stored under the placeholder (see below).
 /// `true` when a value changed. A record without `active` comes from a relay that does not
 /// report the activity: it says nothing (not even "never connected"), nothing is written.
 /// With `active`, an absent `last_seen_at` is the truth ("never connected") and replaces any
@@ -2415,10 +2422,30 @@ fn store_relay_activity(
     devices: &[crate::runtime::transport::DeviceRecord],
 ) -> Result<bool> {
     let mut changed = false;
-    for d in devices.iter().filter(|d| d.active.is_some()) {
+    for d in devices {
         let Some(row) = db.device(&d.device_id)? else {
             continue;
         };
+        // A member the pairing did not name (every one but the inviter: the relay only serves
+        // a new device the events since its arrival, so it never sees their `device_added`)
+        // is stored under the placeholder of `provision_with`. Its name and platform are the
+        // relay's word, like those of a `device_added` or a `device_updated`; they replace the
+        // placeholder, and nothing else: a name already known is left to `device_updated`.
+        if row.name == UNNAMED_DEVICE && row.platform == UNKNOWN_PLATFORM {
+            let name = display_name(&d.name, "");
+            if !name.is_empty() && name != UNNAMED_DEVICE {
+                let platform = if d.platform.is_empty() {
+                    UNKNOWN_PLATFORM
+                } else {
+                    d.platform.as_str()
+                };
+                db.set_device_identity(&d.device_id, &name, platform)?;
+                changed = true;
+            }
+        }
+        if d.active.is_none() {
+            continue;
+        }
         if row.last_seen_at_ms != d.last_seen_at_ms {
             db.set_device_last_seen(&d.device_id, d.last_seen_at_ms)?;
             changed = true;
