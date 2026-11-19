@@ -10,7 +10,8 @@ name: Release apps
 #      go up from the previous release, versionCode included for Android); the tagged commit is on `main`; the repository is
 #      public (the build provenance attestations that the release notes tell users to verify exist only for public ones);
 #      for Windows, the repository variable ALLOW_UNSIGNED_WINDOWS_RELEASE is "true" (the installer is not code-signed yet,
-#      see "Windows code signing: plan" in docs/RELEASES.md: this is a conscious decision, not a default).
+#      see "Windows code signing" in docs/RELEASES.md: this is a conscious decision, not a default; it is not needed once the
+#      installer is signed through SignPath, which the repository variable SIGNPATH_ORGANIZATION_ID switches on).
 #   2. `build`: the very same jobs as build-apps.yml (signed + verified APK, installer, checksums, attestations), called as a
 #      reusable workflow. Nothing is published by it.
 #   3. `publish`: re-checks the files, names them with the version, writes the notes (.github/scripts/release-notes.sh),
@@ -90,13 +91,15 @@ jobs:
         run: |
           echo "::error title=Release::This repository is private: build provenance attestations cannot be created, and the release notes tell users to verify them. Make the repository public first (docs/RELEASES.md)."
           exit 1
+      # Signing through SignPath is on when SIGNPATH_ORGANIZATION_ID is set (see build-apps.yml): the installer is then signed and
+      # this decision is not needed.
       - name: Windows installer signing decision
-        if: github.event_name == 'push' && steps.tag.outputs.windows == 'true'
+        if: github.event_name == 'push' && steps.tag.outputs.windows == 'true' && vars.SIGNPATH_ORGANIZATION_ID == ''
         env:
           ALLOW: ${{ vars.ALLOW_UNSIGNED_WINDOWS_RELEASE }}
         run: |
           if [ "$ALLOW" != "true" ]; then
-            echo "::error title=Windows::The installer is not code-signed yet (SmartScreen will warn). Publishing it as a stable release must be a conscious decision: set the repository variable ALLOW_UNSIGNED_WINDOWS_RELEASE to true, or sign the installer first (docs/RELEASES.md, 'Windows code signing: plan')."
+            echo "::error title=Windows::The installer is not code-signed yet (SmartScreen will warn). Publishing it as a stable release must be a conscious decision: set the repository variable ALLOW_UNSIGNED_WINDOWS_RELEASE to true, or set up code signing first (docs/RELEASES.md, 'Windows code signing')."
             exit 1
           fi
 
@@ -108,6 +111,7 @@ jobs:
     # and the build jobs themselves only ask for `contents: read`, so they keep that.
     permissions:
       contents: write
+      actions: read         # the sign-windows job (SignPath) reads this run's details
       id-token: write       # attest-build-provenance (the called jobs sign with the identity of this run)
       attestations: write
     uses: ./.github/workflows/build-apps.yml
@@ -146,6 +150,8 @@ jobs:
           WINDOWS: ${{ needs.prepare.outputs.windows }}
           PUBLISHABLE: ${{ needs.build.outputs.android_publishable }}
           CERT: ${{ vars.ANDROID_RELEASE_CERT_SHA256 || needs.build.outputs.android_cert_sha256 }}
+          # true when SignPath signed the Windows installer (the release notes then say so and name the certificate holder).
+          WINDOWS_SIGNED: ${{ vars.SIGNPATH_ORGANIZATION_ID != '' }}
           SHA: ${{ github.sha }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
@@ -183,7 +189,7 @@ jobs:
           fi
           ls -l assets
 
-          RELEASE_SHA="$SHA" RELEASE_RUN_URL="$RUN_URL" ANDROID_CERT_SHA256="$CERT" bash .github/scripts/release-notes.sh "$TAG" > notes.md
+          RELEASE_SHA="$SHA" RELEASE_RUN_URL="$RUN_URL" ANDROID_CERT_SHA256="$CERT" WINDOWS_SIGNED="$WINDOWS_SIGNED" bash .github/scripts/release-notes.sh "$TAG" > notes.md
           title="$(head -n 1 notes.md | sed 's/^# //')"
 
           # Draft first: published assets cannot be added or changed once "immutable releases" is on. `--latest=false`: the

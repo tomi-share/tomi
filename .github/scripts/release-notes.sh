@@ -91,7 +91,15 @@ case "$product" in
     echo "gh attestation verify ${exe} --repo ${repo}"
     echo '```'
     echo
-    echo "The installer is not code-signed yet: Windows SmartScreen may warn. Verifying the attestation tells you which workflow and commit built the file."
+    echo "## Code signing policy"
+    echo
+    if [ "${WINDOWS_SIGNED:-false}" = "true" ]; then
+      echo "Free code signing provided by [SignPath.io](https://about.signpath.io), certificate by [SignPath Foundation](https://signpath.org)."
+      echo
+      echo "The installer is code-signed; Windows shows SignPath Foundation as the publisher. Who may sign, how a request is approved and what the program does with your data: [code signing policy](https://github.com/${repo}/blob/${tag}/docs/CODE_SIGNING_POLICY.md). Even so, SmartScreen may warn at first: reputation builds up with downloads."
+    else
+      echo "The installer is not code-signed yet: Windows SmartScreen may warn. Verifying the attestation tells you which workflow and commit built the file. The project's plan is in the [code signing policy](https://github.com/${repo}/blob/${tag}/docs/CODE_SIGNING_POLICY.md)."
+    fi
     ;;
 esac
 echo

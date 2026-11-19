@@ -22,6 +22,14 @@ name: Build apps
 #   ANDROID_RELEASE_CERT_SHA256     SHA-256 fingerprint of the release certificate (public). When set, the
 #                                   publish job refuses any APK signed by another certificate.
 #   TOMI_RELAY_URL                  default relay compiled into the apps (public, not a secret)
+#
+# Windows code signing with the SignPath Foundation (docs/RELEASES.md, "Windows code signing"; docs/CODE_SIGNING_POLICY.md).
+# Off until the project is accepted and these are set; then the Windows installer is signed through SignPath before it is
+# checksummed, attested and published:
+#   SIGNPATH_API_TOKEN              secret: API token of the SignPath CI user (submitter permission on the signing policy)
+#   SIGNPATH_ORGANIZATION_ID        variable: the SignPath organization ID. Its presence is the switch that turns signing on.
+#   SIGNPATH_PROJECT_SLUG           variable: the SignPath project
+#   SIGNPATH_SIGNING_POLICY_SLUG    variable: the signing policy (release-signing, each request approved by hand)
 
 # Also callable (`workflow_call`) by release-apps.yml, which builds exactly the same files for a stable tag and publishes them
 # itself: `publish` is then false, so the rolling pre-release step below never runs for a stable release. The called jobs
@@ -259,6 +267,10 @@ jobs:
       contents: read
       id-token: write       # attest-build-provenance: Sigstore signing identity of this workflow run
       attestations: write   # attest-build-provenance: stores the attestation
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      # Only when SignPath is configured: the artifact that the sign-windows job submits for signing.
+      unsigned_artifact_id: ${{ steps.unsigned.outputs.artifact-id }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -278,6 +290,11 @@ jobs:
       - name: Front-end dependencies
         working-directory: apps/windows
         run: npm ci
+      # The version of the installer, as written in tauri.conf.json: SignPath enforces it (see docs/RELEASES.md, "Windows code signing").
+      - name: Version
+        id: version
+        shell: bash
+        run: echo "version=$(node -p "require('./apps/windows/src-tauri/tauri.conf.json').version")" >> "$GITHUB_OUTPUT"
       # `beforeBuildCommand` (npm run build) builds the front end; Tauri downloads NSIS.
       - name: tauri build
         working-directory: apps/windows
@@ -301,8 +318,30 @@ jobs:
           mkdir -p out
           cp "$exe" out/tomi-windows-setup.exe
           ls -l out
+      # Code signing is configured by the repository variable SIGNPATH_ORGANIZATION_ID (docs/RELEASES.md, "Windows code signing").
+      # Without it, nothing below changes: the installer is checksummed, attested and uploaded unsigned, as before. With it, the
+      # unsigned installer goes to SignPath (job sign-windows) and the checksum, the attestation and the `windows-installer`
+      # artifact are made there, on the SIGNED file. A file name that differs from the final one, because upload-artifact with
+      # `archive: false` names the artifact after the file and refuses a name already used in the run.
+      - name: Stage the unsigned installer
+        if: ${{ vars.SIGNPATH_ORGANIZATION_ID != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p unsigned
+          cp out/tomi-windows-setup.exe unsigned/tomi-windows-setup-unsigned.exe
+      - name: Upload the unsigned installer for signing
+        id: unsigned
+        if: ${{ vars.SIGNPATH_ORGANIZATION_ID != '' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          path: unsigned/tomi-windows-setup-unsigned.exe
+          archive: false
+          retention-days: 14
+          if-no-files-found: error
       # SHA-256 in `sha256sum` format (lowercase hash, two spaces, file name), as for the relay binaries.
       - name: Checksum
+        if: ${{ vars.SIGNPATH_ORGANIZATION_ID == '' }}
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
@@ -311,6 +350,79 @@ jobs:
           Get-Content out/tomi-windows-setup.exe.sha256
       # Build provenance (Sigstore, signed by GitHub): `gh attestation verify` proves which workflow, repository and commit
       # produced the installer. Public repositories only: attestations of private repositories need a paid plan.
+      - name: Attest build provenance
+        if: ${{ vars.SIGNPATH_ORGANIZATION_ID == '' && !github.event.repository.private }}
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: out/tomi-windows-setup.exe
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ vars.SIGNPATH_ORGANIZATION_ID == '' }}
+        with:
+          name: windows-installer
+          path: out/*
+          retention-days: 14
+          if-no-files-found: error
+
+  # Only when SignPath is configured. The unsigned installer built above is submitted to SignPath, which verifies its origin
+  # (this repository, this commit, this workflow run, GitHub-hosted runners) and holds the request until an approver approves it
+  # by hand. The signed file is then checked, checksummed, attested and uploaded as `windows-installer`, the artifact that the
+  # publish step (or release-apps.yml) takes. The job is on a Windows runner only to be able to check the Authenticode signature.
+  sign-windows:
+    name: Windows (sign with SignPath)
+    needs: windows
+    if: ${{ inputs.windows && vars.SIGNPATH_ORGANIZATION_ID != '' }}
+    runs-on: windows-latest
+    # A human approves each request: leave time for that (the SignPath action waits for it below).
+    timeout-minutes: 180
+    permissions:
+      contents: read
+      actions: read         # SignPath reads this run's details (needed on a private repository without the SignPath GitHub App)
+      id-token: write       # attest-build-provenance
+      attestations: write
+    steps:
+      # actions pinned by commit SHA like all the others (SignPath v3).
+      - name: Sign with SignPath
+        uses: signpath/github-action-submit-signing-request@4a84eb4ad763290f059275786f2deed97c2c672b # v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+          github-artifact-id: ${{ needs.windows.outputs.unsigned_artifact_id }}
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 7200
+          output-artifact-directory: signed
+          skip-decompress: true
+          parameters: |
+            version: "${{ needs.windows.outputs.version }}"
+      - name: Name the signed installer
+        shell: bash
+        run: |
+          set -euo pipefail
+          files="$(find signed -type f -name '*.exe')"
+          if [ "$(printf '%s\n' "$files" | grep -c .)" -ne 1 ]; then
+            echo "::error title=Windows::Expected exactly one signed .exe from SignPath, found:"; printf '%s\n' "$files"
+            exit 1
+          fi
+          mkdir -p out
+          cp "$files" out/tomi-windows-setup.exe
+          ls -l out
+      # Fails closed: a file that is not validly signed is never published.
+      - name: Verify the signature
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $sig = Get-AuthenticodeSignature out/tomi-windows-setup.exe
+          $sig | Format-List Status, StatusMessage
+          $sig.SignerCertificate | Format-List Subject, Issuer, NotAfter
+          if ($sig.Status -ne 'Valid') { throw "The installer is not validly signed (status: $($sig.Status))." }
+      - name: Checksum
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $hash = (Get-FileHash out/tomi-windows-setup.exe -Algorithm SHA256).Hash.ToLower()
+          "$hash  tomi-windows-setup.exe" | Out-File -Encoding ascii -NoNewline out/tomi-windows-setup.exe.sha256
+          Get-Content out/tomi-windows-setup.exe.sha256
       - name: Attest build provenance
         if: ${{ !github.event.repository.private }}
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
@@ -325,9 +437,9 @@ jobs:
 
   publish:
     name: Publish to releases
-    needs: [android, windows]
-    # Skipped jobs (unchecked input) do not block; a failure does. Android counts only when its APK is publishable
-    # (signed `release` build); an unsigned or debug APK stays a workflow artifact.
+    needs: [android, windows, sign-windows]
+    # Skipped jobs (unchecked input, or signing not configured) do not block; a failure does, signing included. Android counts
+    # only when its APK is publishable (signed `release` build); an unsigned or debug APK stays a workflow artifact.
     if: >-
       always() && inputs.publish
       && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
