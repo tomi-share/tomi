@@ -632,6 +632,13 @@ pub async fn app_info(app: AppHandle, state: State<'_, AppState>) -> AppResult<A
 /// data, nothing is sent), then shows its feed.
 #[tauri::command]
 pub async fn enter_demo(app: AppHandle, state: State<'_, AppState>) -> AppResult<()> {
+    // Only a PC that belongs to no space, with no pairing on screen, may enter the demo (the
+    // button is hidden otherwise, and the core refuses a provisioned device too): checked here
+    // as well, so that the webview cannot ask for it. The demo has a fixed verification code
+    // (482913): a real PC must never be put in it.
+    if !state.core.is_demo() && !state.core.can_enter_demo() {
+        return Err(AppError::new("error.pairing_already_paired"));
+    }
     state.core.enter_demo().await?;
     popover::open_history(&app, Some("history"));
     Ok(())
