@@ -3,12 +3,15 @@ package eu.shaffe.tomi.ui.common
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
+import android.os.Build
+import android.view.View
 import android.view.Window
 import android.view.WindowManager
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.fragment.app.FragmentActivity
+import java.util.WeakHashMap
 
 fun Context.findActivity(): Activity? {
     var ctx: Context? = this
@@ -57,14 +60,51 @@ class ReferenceCounter<K : Any>(
     fun count(key: K): Int = counts[key] ?: 0
 }
 
-/** One counter for the whole app, keyed by window: FLAG_SECURE is set by the first user and cleared by the last. */
+/**
+ * What FLAG_SECURE does not stop: a third-party autofill service receiving the value of a secret field in a save request, and an
+ * accessibility service reading a revealed secret. While a window shows or composes a secret:
+ * - autofill is switched off for the whole window (`IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS`, the Compose root included);
+ * - on Android 14+ the window is flagged accessibility-data-sensitive: only services that declare `isAccessibilityTool` (TalkBack,
+ *   switch access) still read it. On Android 13 (minSdk) only the autofill part exists.
+ *
+ * Not verified on a device: that Compose's virtual nodes inherit the flag from the decor view.
+ */
+private object SensitiveWindowProtection {
+    private val previousAutofill = WeakHashMap<Window, Int>()
+
+    fun apply(window: Window) {
+        val decor = window.decorView
+        previousAutofill[window] = decor.importantForAutofill
+        decor.importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            decor.setAccessibilityDataSensitive(View.ACCESSIBILITY_DATA_SENSITIVE_YES)
+        }
+    }
+
+    fun restore(window: Window) {
+        val decor = window.decorView
+        decor.importantForAutofill = previousAutofill.remove(window) ?: View.IMPORTANT_FOR_AUTOFILL_AUTO
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            decor.setAccessibilityDataSensitive(View.ACCESSIBILITY_DATA_SENSITIVE_AUTO)
+        }
+    }
+}
+
+/** One counter for the whole app, keyed by window: FLAG_SECURE (and the protection above) is set by the first user and cleared by the last. */
 private val secureWindows = ReferenceCounter<Window>(
-    onFirst = { it.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE) },
-    onLast = { it.clearFlags(WindowManager.LayoutParams.FLAG_SECURE) },
+    onFirst = {
+        it.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
+        SensitiveWindowProtection.apply(it)
+    },
+    onLast = {
+        it.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        SensitiveWindowProtection.restore(it)
+    },
 )
 
 /**
- * Keeps FLAG_SECURE on the window while [enabled]: no screenshots, no screen recording, blank in the recents.
+ * Keeps FLAG_SECURE on the window while [enabled]: no screenshots, no screen recording, blank in the recents; also no autofill and,
+ * on Android 14+, no accessibility service other than an accessibility tool ([SensitiveWindowProtection]).
  * Used whenever a secret is displayed in clear. Reference-counted per window, so two screens needing the flag
  * at once do not remove it from each other when one of them goes away.
  */
