@@ -2,8 +2,9 @@
 
 What Tomi protects against, and what it does **not**. This page is written for people who want to decide whether to trust
 Tomi with their data, and for reviewers. It is based on the specification (`spec/`), the code and `AGENTS.md`, and it was
-checked against the code as of 2026-11-19. When this page and the code disagree, that is a bug in one of them: please
-report it (see [`SECURITY.md`](../SECURITY.md)).
+checked against the code as of 2026-11-19, after the security-audit fixes were merged (they are listed under "Fixed since
+the review" below). Where a protection has only been unit-tested and not tried on a device, the text says so. When this page
+and the code disagree, that is a bug in one of them: please report it (see [`SECURITY.md`](../SECURITY.md)).
 
 Tomi is end-to-end encrypted sharing between the devices of **one person** (text, links, files, secrets). A **blind**
 relay stores and forwards opaque, signed envelopes. There is one *space* per person, one symmetric **space key** shared by
@@ -21,12 +22,12 @@ limits), [`spec/api-v1.md`](../spec/api-v1.md) (§1.2 what the relay knows, §1.
 | Relay compromised or malicious (its operator, a hacked server, a stolen backup) | Content: **yes**. Metadata: **no**. Availability: **no** | It cannot read or forge content. It sees who talks when and how much, and it can delay, drop or replay. |
 | Google (FCM) | Yes | Receives an empty wake-up with constant content. It learns the time and the device. |
 | Lost phone or PC, **locked** | Mostly the OS's job | Tomi relies on the platform's lock and key storage. Revoke the device from another one. |
-| Lost phone or PC, **unlocked** (or someone with a few minutes at it) | **Partly** | Non-secret items are readable. Hidden secrets are behind a local authentication that is a gate in the app, not a cryptographic barrier. |
-| Device you revoked | The **future** only | It cannot reach the relay or read items sent after the rotation. It keeps what it already had. |
+| Lost phone or PC, **unlocked** (or someone with a few minutes at it) | **Partly** | Non-secret items are readable. Hidden secrets are behind a local authentication that is a gate in the app, not a cryptographic barrier. Revoking, adding a device and deleting the space need a fresh authentication. |
+| Device you revoked | The **future** only | It cannot reach the relay or read items sent after the rotation. It keeps the content it already opened; it erases its space keys when it sees the signed rotation. |
 | Malware running as you on a device | **No** | Out of scope. It can read what the app can read. |
 | Someone who steals a copy of the space key (or a device with it) later | **No retroactively** | There is no forward secrecy: old copies of items at that epoch are readable. |
 | A malicious item (HTML, Markdown, link, file) | Yes, by sandboxing | Rendering has no script and no network access. Nothing executes without a user action. |
-| Tampered download of the app | Partly | Checksums and build provenance exist; Windows installers are not code-signed yet. See [`RELEASES.md`](RELEASES.md). |
+| Tampered download of the app | Partly | Checksums and build provenance exist for the Windows installer and the Android APK; the installer is not code-signed, and the Android release key is not configured yet. See [`RELEASES.md`](RELEASES.md). |
 
 ## What is in the design
 
@@ -68,20 +69,30 @@ device is visible to whoever runs the relay.
 ### What it can do (availability and ordering are out of scope)
 
 - **Refuse service, delay, drop** items, events, tombstones or rotations. The format detects alteration, not omission. A relay
-  that withholds a rotation keeps a revoked device effective for emitters that are not up to date.
+  that withholds a rotation keeps a revoked device effective for emitters that are not up to date. A relay cannot make a
+  client loop forever on a page that never advances: a page with `has_more` that moves the cursor by nothing ends the sync
+  (it asks again next time), and an event that cannot be parsed is skipped rather than blocking the cursor.
 - **Replay.** Writes are idempotent and applying an event twice changes nothing, so replay cannot alter or duplicate an item.
-  Two limits: a client remembers a deletion (a tombstone) for **45 days**, and after that a relay that kept the encrypted
-  envelope could serve it again, and an item you deleted or that was set to disappear after reading could reappear on a device;
-  and the relay chooses the order in which it presents events.
-- **Invent an unsigned revocation** ("by the administrator", "voluntary departure"). Clients accept relay-reported revocations
-  and rotate the key automatically, so a malicious relay can make honest devices *permanently* drop a legitimate device,
-  which then has to be paired again. This costs you availability, not confidentiality.
+  A client remembers a deletion (a tombstone) for `max_ttl + 60 days` (**90 days** by default). An item that reaches a device
+  with an authenticated creation date older than that is shown as "unreadable (suspect)", kept raw, never retried and never
+  consumed, so an item you deleted or that was set to disappear after reading is not brought back by a relay that kept the
+  envelope. Limits: the check measures age from the moment the device first receives the item, and the relay still chooses
+  the order in which it presents events.
+- **Invent an unsigned revocation** ("by the administrator", "voluntary departure"), by emitting an explicit `device_revoked`
+  event. Honest devices follow it with a signed rotation, which makes the removal permanent, so a malicious relay can make
+  them drop a legitimate device, which then has to be paired again. This costs you availability, not confidentiality. The
+  core now records each such revocation so that the app can tell you (`take_relay_revocations`); **the apps do not display
+  that notice yet**. A device that is merely missing from the relay's device list during a full resync is no longer treated
+  as revoked and never triggers a rotation.
 - **Rename devices** (names are not signed).
 - Together with a **revoked device** that still has the old key: inject items sealed with the old epoch key. Mitigation: the
   clients write only with the latest epoch, refuse and flag as "unreadable (suspect)" an old-epoch item whose log position
-  is after the rotation they applied, and discard old keys after the retention period below. That rule uses the position
-  that the relay itself assigns, so a window remains for as long as old keys are kept (up to 31 days by default): a
-  hardening of this check is known work (see "Known gaps").
+  is after the rotation they applied, and discard old keys after the retention period below. The position the relay assigns
+  is no longer taken on trust: a client never applies an event whose position is not above its cursor, and after the relay
+  reports a log older than the cursor (a restore from backup) it moves the cursor to that head and treats every item of a
+  replaced epoch it sees for the first time as suspect. A window remains (`format-v1.md` §12): an item injected **before**
+  the client applies the rotation, with a position lower than the rotation's, is accepted, for as long as old keys are kept
+  (up to 31 days by default).
 
 ### Who is the relay?
 
@@ -97,23 +108,33 @@ That key is deliberately usable **without the user being present**, because the 
 background. Consequences: on iOS and Android, a phone that has been unlocked once since boot ("after first unlock") is
 exposed to forensic extraction in a way a cold-boot phone is not; on Windows, DPAPI binds the key to the user's logon.
 Tomi's remedy is to **revoke the device** from another one (or with `tomi-relay admin revoke` on the relay host), which cuts
-its relay sessions at once and rotates the space key. Revoking from Android and iOS requires strong biometrics (Face ID or
-Touch ID on iOS; Class 3 biometrics on Android), and on Windows Windows Hello or the account password. A phone that has no
-such biometrics cannot confirm the action on Android; use another device or the relay's admin command.
+its relay sessions at once and rotates the space key. Revoking asks for a fresh authentication, never remembered, every time:
+on Android strong biometrics **or the screen lock** (a PIN is enough, so a phone with only a PIN can still revoke; a passive
+face unlock needs a confirmation tap), on iOS Face ID or Touch ID only (not the passcode, so an iPhone without enrolled
+biometrics cannot revoke from the phone; aligning iOS on the passcode is an open decision), and on Windows Windows Hello or
+the account password. Otherwise use another device or the relay's admin command.
 
 **Unlocked, or in someone's hands for a few minutes.** Whoever can use the unlocked app can read every non-secret item, send
-as you, and reach the Devices screen. Hidden secrets stay masked until you authenticate with biometrics (Windows Hello on
-Windows). Sharing a secret through the system, and copying it, need that authentication. The authentication window lasts
-two minutes. It is closed when the screen turns off on Android, in the background on iOS, and it is **not** closed on lock or
-sleep on Windows. There is no app lock yet, and the Recents (app switcher) thumbnail can show the non-secret feed.
+as you, and reach the Devices screen. Hidden secrets stay masked until you authenticate with biometrics or the screen lock
+(Windows Hello on Windows). Sharing a secret through the system, and copying it, need that authentication. The authentication
+window lasts two minutes. It is closed when the screen turns off **and when the app goes to the background** on Android, on
+lock and in the background on iOS, and on session lock, disconnect, logoff and sleep on Windows (`session_watch.rs`; the
+Windows decision logic is unit-tested, the window was not tried on a PC). There is no app lock yet, and the Recents (app
+switcher) thumbnail can show the non-secret feed.
 
 A thief with an unlocked device can also try to revoke your *other* devices before you revoke theirs; the first valid rotation
-wins. Revocation requires the strong authentication above, which is the barrier. The recourse for you is `tomi-relay admin`
-on the relay, and pairing again.
+wins. Revocation requires the fresh authentication above, which is the barrier, and it is a weaker one than the biometrics
+alone on Android and Windows, since the screen lock or the account password also opens it. The recourse for you is
+`tomi-relay admin` on the relay, and pairing again.
 
 Adding a device is the other sensitive action on a borrowed unlocked device: the history transfer copies **everything**,
-secrets and files included. Whether and how each platform asks for authentication before pairing is tracked in
-[`FEATURES.md`](FEATURES.md); treat it as a known gap until that file says otherwise.
+secrets and files included. All three clients now ask for a fresh authentication before it: on Android before the invitation
+is opened and again before the final "codes identical" tap (strong biometrics or screen lock); on iOS Face ID, Touch ID or the
+passcode before the invitation code is made (a device with no screen lock at all cannot add a device); on Windows Windows Hello
+when the inviting PC confirms the codes. A device that joins is also announced on the others: a local notification on Android
+and iOS (only while the app runs on iOS) and a toast on Windows (not for a device that joined while Tomi was closed; the list
+is not persisted). These are detection controls: if you did not add the device, revoke it. None of this was tried on a PC, and
+the Android and iOS parts are not verified on a device beyond unit tests ([`FEATURES.md`](FEATURES.md)).
 
 ## Revoked devices
 
@@ -124,14 +145,23 @@ WebSockets immediately. Other devices verify the signature and the recipients be
 
 What the revoked device **keeps**:
 
-- Every space key it already had, up to the epoch of the rotation, and everything it already stored. As things stand in the
-  code, a device that learns that it was revoked marks itself as blocked, but it does not erase its keys or its local data
-  (the specification says it must erase the keys; this is a known gap). Treat a revoked device as one that has read
-  everything up to the rotation.
-- Any old encrypted copy of items it obtained (for example from a relay backup) at those epochs.
+- Everything it already stored. When an honest client sees a **verified signed rotation** that lists it as revoked, it marks
+  itself blocked and erases its space keys (every epoch). It does **not** erase the content it had already opened, which is
+  re-sealed under a local key independent of the space key (`format-v1.md` §8.3 step 6: wiping local data is a separate
+  gesture, since any unlocked member can revoke the others). A revocation that only the relay announces (`403 revoked`, an
+  unsigned `device_revoked`) blocks the device but erases nothing, because it proves nothing. The erasure is also performed by
+  the revoked device's own code: a device that was modified, or that never reconnects, keeps its keys. Treat a revoked device
+  as one that has read everything up to the rotation.
+- Any space key it copied out, and any old encrypted copy of items it obtained (for example from a relay backup) at those
+  epochs.
 
 What it **loses**: access to the relay, and the ability to read anything sealed with a later epoch. A revoked key never
 becomes a member again; a reinstalled device gets a new identity.
+
+**A rotation that does not complete.** If the automatic rotation keeps failing because the relay's device set and the client's
+disagree (`device_set_mismatch`), the core retries after an hour and sets a persisted `rotation_stalled` flag (cleared when a
+rotation succeeds or another member's is applied). Until then the revoked device may still hold the current space key. **The
+apps do not show a banner for this flag yet**, so today the failure is visible only through the core's API.
 
 **Key retention.** After applying a rotation `e → e+1`, the remaining devices keep the old key `e` for `max_ttl + 1 day`
 (31 days with the default 30-day maximum) so they can still read items that were in transit under it, then erase it. Items
@@ -156,17 +186,25 @@ old key. There is **no periodic rotation**: the key changes only when a device i
 Out of scope, and the design says so (`format-v1.md` §12): "member device compromised and active". Malware that runs as you,
 or an attacker who has root or can inject code into the app, can read what the app can read. Specifically:
 
-- Secrets are decrypted in the app's memory (the feed state holds the decrypted items on Android and Windows) and are only
-  hidden in the interface until you authenticate. A hook on the authentication call, or a memory dump, yields them.
+- Secrets are decrypted in the app's memory (the feed state holds the decrypted items on Android; on Windows the bridge
+  between the core and the interface keeps only a keyed fingerprint per item between two passes since the audit, but the core
+  still decrypts the whole feed at each pass and the unsealed database key stays in memory) and are only hidden in the
+  interface until you authenticate. A hook on the authentication call, or a memory dump, yields them. A real fix needs the
+  sealed-secrets design below.
 - On Windows the database key is sealed with DPAPI for your user account. Any process of the same user can unseal it, so the
   "entropy" label in the source is not a secret. Windows Hello only gates the interface.
 - Windows toasts and Android notifications for non-secret items carry a preview. Notification listeners, the notification
   history and wearables can see it. Secret and unreadable items get a generic notification with no content.
 
 Tomi does take measures that help against casual or partial access: the clipboard is marked sensitive and cleared after
-30 seconds if it still holds the value; secret screens use `FLAG_SECURE` on Android, content protection on Windows and a
-capture shield on iOS; no automatic clipboard reads; secrets never in logs, URLs or push messages (push messages have
-constant content).
+30 seconds if it still holds the value (on Windows, a secret left on the clipboard by a crash is emptied at the next start,
+only if the clipboard still carries Tomi's secret marker; its content is never read); secret screens use `FLAG_SECURE` on
+Android, content protection on Windows (`WDA_EXCLUDEFROMCAPTURE`, read in the source of the windowing library, not tried with
+a capture tool) and a capture shield on iOS (to verify on an iPhone); no automatic clipboard reads; secrets never in logs,
+URLs or push messages (push messages have constant content). On Android, autofill is excluded from windows that show a
+secret and, on Android 14 and later, the window is marked so that only accessibility tools such as TalkBack can read it, and
+overlay windows are hidden on the pairing, invitation and creation screens; these Android measures are not verified on a
+device.
 
 ## Hidden secrets: the trade-offs, stated plainly
 
@@ -179,18 +217,27 @@ or sharing it needs local authentication. The following are **accepted and docum
    or at the next start:
    - **Android:** the purge runs **60 seconds after the app goes to the background** (a short grace so that "Open with…" and
      sharing can finish), and the core purges the cache again when it opens at the next start. If the system kills the process
-     during those 60 seconds, the clear copy stays until the next start, which can be much later. The cache directory is not
-     exported; files are handed to other apps only through grants given after an explicit Open or Share.
+     during those 60 seconds, a WorkManager job scheduled at two minutes (`PlaintextPurgeWorker`, cancelled when the app comes
+     back) restarts the process and purges anyway; this guarantee is not verified on a device, and until it runs the clear
+     copy stays. The cache directory is not exported; files are handed to other apps only through grants given after an
+     explicit Open or Share.
    - **Windows:** purged **one minute** after no Tomi window is in use, when the item is removed, on exit, and at the next
      start after a crash. The opened file is a read-only hard link to the cache entry (one clear copy, not two).
    - **iOS:** purged when the app goes to the background and at the next start; a temporary link is used for viewing.
 2. **Secrets in memory.** A decrypted secret is a normal string in the app's memory while it is shown, and, as above, in the
    decrypted feed state on some platforms. Strings cannot be reliably zeroized in Kotlin, Swift or JavaScript.
-3. **No other clear copy.** Not in SQLite, in the write-ahead log or in other files; not in logs, notifications or an
-   unprotected clipboard. System sharing of a secret needs biometrics first, and the share sheet excludes copy, save and print
-   actions where the platform allows it.
-4. **Local deletion is not erasure.** Deleted or consumed items may remain in free pages of the local database until they are
-   overwritten. The database is sealed, but the key is on the same device.
+3. **No other clear copy, with one exception on iOS.** Not in SQLite, in the write-ahead log or in other files; not in logs,
+   notifications or an unprotected clipboard. System sharing of a secret needs biometrics first, and the share sheet excludes
+   copy, save and print actions where the platform allows it. The exception is the **iOS share extension**: it cannot open the
+   core, so what you share to Tomi waits **unencrypted by Tomi** in the app group's inbox, secrets included, until the app is
+   next opened and sends it. The inbox is excluded from backups (iCloud, Finder) and a share that nothing sent within 24 hours
+   is dropped (you are told once); the drop runs when the app, or a background task, next looks at the inbox. Until then the
+   copy sits under whatever file protection the system gives that directory, with no Tomi key.
+4. **Local deletion is stronger than before, and still not erasure.** The local database runs with `secure_delete` on for the
+   life of the connection, and the write-ahead log is truncated (best effort: a checkpoint blocked by a reader is retried later) right after a deletion and
+   periodically during maintenance, so a deleted or consumed record does not stay readable in a free page or in the log. This does not reach
+   copies the file system or flash storage may keep, or a backup of the database file. The database is sealed, but its key is
+   on the same device.
 5. **The relay does not know which items are secret**, and does not know the "after reading" policy either.
 
 ## Biometrics: a gate in the app, not a key
@@ -243,64 +290,118 @@ transferred to another device are not reached. The default is **no expiry**, sec
 
 A compromised paired device is the only way to deliver hostile content to you, since a relay cannot forge items. Received
 HTML and Markdown are sanitized and rendered without JavaScript and without network access, so there is no tracking pixel.
-Links open only as http, https, mailto or tel, on a user gesture. Files from other devices are not run on open (on Windows,
-executable types are revealed in Explorer rather than launched, and files carry the Mark-of-the-Web). A decryption error never
-deletes an item: it is shown as unreadable.
+On iOS the HTML web view also carries a content rule list that blocks http(s), ws(s) and ftp loads (the sanitizer itself is
+hand-written; the page's JavaScript is disabled and a CSP applies). Links open only as http, https, mailto or tel, on a user
+gesture; tapping a notification for a link on iOS opens it only if it is http(s). A `tomi-share://send` link from outside never
+replaces a draft on Android (the link is appended and you are told), and a pairing link on Android shows the relay it names in large type.
+Files from other devices are not run on open (on Windows, a deny list of executable and script-carrying types, extended after the
+audit, is revealed in Explorer rather than launched, and files carry the Mark-of-the-Web; a deny list can still miss a type). A
+decryption error never deletes an item: it is shown as unreadable.
 
 ## Distribution and updates
 
-- **Android:** CI publishes only non-debuggable APKs signed with a dedicated release key, and fails if an APK is debuggable or
-  debug-signed. Checksums and build provenance are published. The release key and its fingerprint are not configured yet:
-  until then no APK is published by CI.
+- **Android:** CI publishes only non-debuggable `release` APKs signed with a dedicated release key, checks that again in the
+  publish job (`verify-android-apk.sh` fails on a debuggable, unsigned or debug-signed APK, or one signed with another
+  certificate than the pinned one), and publishes a checksum and a build provenance attestation with it. Without the signing
+  secrets the build is a labelled, unsigned or debug-only workflow artifact and is never published. The release key and its
+  fingerprint are not configured yet: until then no APK is published by CI.
 - **Windows:** the installer has a checksum and a build provenance attestation, but is **not code-signed** (SmartScreen warns).
   There is no auto-update.
+- **Relay binaries:** a checksum only; no attestation.
 - **iOS:** built from source; TestFlight or App Store distribution is planned.
 - How to verify a download: [`RELEASES.md`](RELEASES.md#verifying-a-download). Dependencies are pinned by lockfiles and
   audited in CI. Anyone can fork and distribute their own build; forks must use their own identifiers and keys
   ([`FORKING.md`](FORKING.md)).
 
-## Known gaps
+## Fixed since the review
 
-Found by a security review of the specification, the core, the relay and the three clients, and not fixed at the time of
-writing. Check [`CHANGELOG.md`](../CHANGELOG.md) and [`FEATURES.md`](FEATURES.md) for the current state; some may already be
-fixed when you read this.
+A security review of the specification, the core, the relay and the three clients found the points below, which are now
+fixed in the merged code (see also [`CHANGELOG.md`](../CHANGELOG.md) and the rows of [`FEATURES.md`](FEATURES.md)). Fixed
+means the code does it and a test covers the decision; it does not mean it was tried on every device.
 
-- **Core:** the epoch-ordering rule relies on the position number the relay assigns (above). A failure of the automatic
-  rotation after a relay-reported revocation is not shown to the user. A revoked device does not erase its space keys. Tombstones
-  are pruned after 45 days (resurrection by a malicious relay). The local database does not use secure deletion during normal
-  operation. The relay's login signature is not bound to the relay's address (needs a TLS man-in-the-middle). Device names and
-  exact file sizes are visible metadata.
-- **Android:** adding a device did not require local authentication when reviewed; revocation, space deletion and "erase anyway"
-  need Class 3 biometrics, so users without them cannot do them on the phone; the authentication window survives going to the
-  background; the plaintext cache purge can be skipped if the process dies in the 60-second grace; no app lock; the app exposes
-  a share target any app can call, which sends after three seconds.
-- **iOS:** the database class and the Keychain item are readable after first unlock; shares made through the share extension
-  wait **in clear** in the app group container, which is not excluded from backups, until the app is next opened; tapping a
-  notification for a link does not check the URL scheme; HTML sanitization is hand-written (contained by CSP and disabled JS).
-- **Windows:** the Hello window is not closed on lock or sleep; the list of file types never launched on open is incomplete;
-  a copied secret stays on the clipboard if the app crashes before the 30-second wipe.
-- **All:** no optional app lock, and no notification when a new device is added to your space.
+- **Core:**
+  - The epoch-ordering rule no longer trusts a relay-chosen position: the cursor is monotonic, and a log rewind freezes
+    superseded epochs (`api-v1.md` §7.3, §7.5).
+  - A sync page that makes no progress ends the loop, and a malformed event no longer blocks the cursor (`api-v1.md` §7.2).
+  - SQLite `secure_delete` stays on and the write-ahead log is truncated after deletions (`format-v1.md` §7.2).
+  - Tombstones are kept `max_ttl + 60 days` (90 days by default) and an item older than that when it first arrives is refused
+    as suspect (`format-v1.md` §9.4, age rule).
+  - A device erases its space keys on a verified signed rotation that revokes it (`format-v1.md` §8.3 step 6).
+  - The core persists a `rotation_stalled` flag when the automatic rotation keeps failing, and records revocations that only
+    the relay announced (`rotation_stalled()`, `take_relay_revocations()`). Only an explicit `device_revoked` event, not a
+    device missing from a resync list, starts a rotation.
+- **Relay:** every `X-Forwarded-For` line is read and a malformed entry is distrusted (`api-v1.md` §8.5).
+- **Android:** a fresh authentication before adding a device; the screen lock (PIN) accepted for revocation, space deletion and
+  "erase anyway"; the authentication window closed when the app goes to the background; the clear-text attachment cache purge
+  backed by a WorkManager job; an alert when a device joins; autofill, accessibility and overlay hardening (not verified on a
+  device); a deep link no longer discards a draft; the demo mode refused on a provisioned device.
+- **iOS:** the share inbox is excluded from backups and shares older than 24 hours are dropped; a fresh Face ID / Touch ID /
+  passcode check before a device is added; an alert when a device joins; a notification's link is opened only if it is http(s);
+  a content rule list blocks network loads in the HTML web view; the `Tomi Dev` scheme archives with `Release`; the demo mode
+  is refused on a provisioned device.
+- **Windows:** the Hello window is closed on session lock, disconnect, logoff and sleep; a fresh Hello when the inviting PC
+  confirms a new device; a secret left on the clipboard by a crash is emptied at the next start; the list of file types never
+  launched is much longer; the bridge no longer keeps decrypted items between passes; a toast when a device joins; the demo
+  space is refused by the command itself. None of the Windows items was tried on a PC.
+- **Release:** CI publishes only signed non-debuggable Android release APKs, with checksums and build provenance for the apps
+  it builds.
+
+## What is still NOT protected
+
+Open at the time of writing. [`FEATURES.md`](FEATURES.md) (section "Open gaps") has the current state.
+
+- **Hidden secrets are a gate, not a key.** Biometrics and Windows Hello are checked by the app; no key is bound to them (see
+  "Biometrics: a gate in the app, not a key"). Extracting the database key, hooking the app or same-user malware yields the
+  secrets.
+- **No optional app lock** with a timeout, and the Recents thumbnail can show the non-secret feed.
+- **No per-message forward secrecy.** The space key of an epoch opens every item of that epoch, including relay backups and
+  history-transfer blobs. The key changes only when a device is revoked.
+- **No hardware-bound keys.** The database key is wrapped by the OS key store but is usable without the user, and is not a
+  Secure Enclave, StrongBox or TPM key bound to user presence.
+- **iOS data protection is the "after first unlock" class** for the database and the Keychain item, because the app must work
+  in the background.
+- **Metadata is visible to the relay:** device names (in clear, unsigned), platforms, public keys, activity and presence
+  times, exact encrypted file sizes (to within 16 bytes per chunk), the number of files, envelope sizes, delivery and
+  read-receipt times, deletion times, and the fact and time of pin or archive changes. There is no padding and no dummy
+  traffic.
+- **Two notices are not shown yet.** The apps do not display the `rotation_stalled` alert or the "removed by the relay"
+  notice, although the core provides both.
+- **iOS:** revocation needs Face ID or Touch ID (the passcode is not accepted, unlike Android); the share inbox holds clear
+  text until the app next runs; HTML sanitization is hand-written.
+- **Android:** the app exposes a share target that any app can call; it sends immediately and offers a 3-second undo.
+- **Windows:** the Hello fallback to the account password is weaker than Hello; the clear-text attachment cache is kept one
+  minute after last use; the file types never launched on open are a deny list; the new-device toast misses a device that
+  joined while Tomi was closed.
+- **Transport:** the relay's login signature is not bound to the relay's address (exploiting that needs a TLS
+  man-in-the-middle).
+- **No recovery** if every device is lost.
 
 ## Planned or under consideration
 
 Not commitments. In rough order of value for cost:
 
-1. **Sealed secrets.** Each device holds a key pair for hidden secrets; incoming secrets are re-sealed to its public key (which
-   needs no authentication, so receiving in the background keeps working) and opening one needs a private key that requires
-   user presence: a Secure Enclave key with user presence on iOS, a Keystore key with a user-authentication timeout on
-   Android, a Windows Hello–bound key on Windows. This turns the biometric gate into a real cryptographic barrier against bulk
-   extraction. It is a core and specification change.
-2. **Fixing the known gaps** above, starting with the epoch-ordering check, erasing keys on a verified revocation,
-   authentication before adding a device, and the backup exclusion of the iOS share inbox.
-3. **Optional app lock** with a timeout, and hiding the app in the recents list.
-4. **Notify on a new device**, and a **safety number** for the member list, comparable between devices, to detect a rogue member.
-5. **Periodic automatic key rotation** (for example monthly), giving a bounded "forward secrecy lite": a space key stolen later
-   would not open relay backups older than about two months.
-6. **An optional printable recovery key** for the "all devices lost" case (`format-v1.md` §13).
-7. **Windows code signing** (SignPath Foundation or an alternative), and a verified update channel
-   ([`RELEASES.md`](RELEASES.md)).
-8. Longer term, multi-person sharing as one space per person plus groups
-   ([`multi-person-evolution.md`](multi-person-evolution.md)): a different threat model, to be written when it exists.
+1. **Sealed secrets** (device-key-bound secret storage). Each device holds a key pair for hidden secrets; incoming secrets are
+   re-sealed to its public key (which needs no authentication, so receiving in the background keeps working) and opening one
+   needs a private key that requires user presence: a Secure Enclave key with user presence on iOS, a Keystore key with a
+   user-authentication timeout on Android, a Windows Hello–bound key on Windows. Biometrics or Hello would then gate the key
+   rather than the interface, a real cryptographic barrier against bulk extraction. It is a core and specification change,
+   and the only real fix for the decrypted feed the Windows core still builds at each pass.
+2. **Optional app lock** with a timeout, and hiding the app in the recents list.
+3. **iOS "protection renforcée"** (stronger protection): an optional mode with a stricter data-protection class, trading
+   background receipt for keys that are unavailable while the phone is locked. Not designed in the repository yet.
+4. **Hardware-bound keys** where the platform offers them (StrongBox, Secure Enclave, TPM), together with sealed secrets.
+5. **Showing the notices the core already produces** (`rotation_stalled`, relay-announced revocations), and a **safety
+   number** for the member list, comparable between devices, to detect a rogue member.
+6. **Periodic automatic key rotation** (for example monthly), giving a bounded "forward secrecy lite": a space key stolen later
+   would not open relay backups older than about two months. This is not per-message forward secrecy, which Tomi does not
+   provide.
+7. **An optional printable recovery key** for the "all devices lost" case (`format-v1.md` §13).
+8. **Windows code signing** (SignPath Foundation or an alternative), a verified update channel ([`RELEASES.md`](RELEASES.md)),
+   the Android release key, and an attestation for the relay binaries.
+9. **Less metadata for the relay** (for example signed or hidden device names, padding of file sizes). This changes the
+   protocol and the operator's ability to choose which device to revoke.
+10. Longer term, multi-person sharing as one space per person plus groups
+    ([`multi-person-evolution.md`](multi-person-evolution.md)): a different threat model, to be written when it exists.
 
 ## Out of scope
 

@@ -20,6 +20,14 @@ version and the frozen vectors in `spec/vectors/`, not by application versions.
 ### Changed
 - iOS: long texts get bounded previews; String Catalog and generated design tokens cleaned up.
 
+### Security
+- Core: the epoch-ordering rule no longer relies on relay-chosen positions; a sync page without progress ends the loop; SQLite `secure_delete` and WAL truncation; tombstones kept 90 days and items older than that refused as suspect; space keys erased on a verified signed self-revocation; persisted `rotation_stalled` flag and relay-revocation notices (not displayed by the apps yet).
+- Relay: every `X-Forwarded-For` line is read.
+- Android: fresh authentication before adding a device; the screen lock accepted for destructive actions; authentication window closed in the background; guaranteed purge of the decrypted attachment cache; alert when a device joins.
+- iOS: share inbox excluded from backups and dropped after 24 h; fresh authentication before adding a device; alert when a device joins; network loads blocked in the HTML web view.
+- Windows: authentication window closed on session lock and sleep; fresh Hello before adding a device; a secret left on the clipboard by a crash is emptied at start; longer list of file types never launched; toast when a device joins.
+- CI: only non-debuggable, signed Android release APKs are published; checksums and build provenance for published apps.
+
 ### Fixed
 - Android: a Markdown view whose rendering never lands is recreated.
 - Core: `expect()` is allowed in the demo mock helper so that `clippy --features demo` passes.

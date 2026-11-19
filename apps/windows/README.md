@@ -52,10 +52,10 @@ they appear on screen in this document (for example « Se déconnecter », "Log 
   `consume_revealed` once the value is really displayed (window in the foreground), and Rust only accepts the call
   while the Hello window is open; if the window lost focus, nothing is consumed. The generic `mark_read` command
   refuses these items.
-  **Known limit**: the 2-minute Hello window is not closed when the Windows session is locked (Win+L) or when the
-  machine sleeps: Tauri does not expose these events (`WTS_SESSION_LOCK`, `WM_POWERBROADCAST`), and catching them
-  would require subclassing the window in `unsafe` code. The window therefore stays open until its end (2 minutes
-  after the verification), even if the session was locked in the meantime.
+  The 2-minute Hello window is closed when the Windows session is locked (Win+L), disconnected or logged off, and when
+  the machine goes to sleep (`src/session_watch.rs`: a hidden top-level window on its own thread receives
+  `WM_WTSSESSION_CHANGE` and `WM_POWERBROADCAST`). Only the decision logic is unit-tested; not tried on a PC. A Hello
+  prompt already on screen is Windows' own and stays until dismissed, but it no longer opens the window after the lock.
 - **Expiration**: « Jamais » (never) by default, hidden items included. Choices: Jamais, Après lecture (hidden items
   without files only), 1 h, 1 j, 7 j, 30 j. A choice that is not offered for this kind of content falls back to
   « Jamais », except « Après lecture » to which a file is added (hidden item): the choice is kept, the send is
@@ -174,7 +174,7 @@ device.
   soon as the engine exists (false only if the database cannot be opened).
 - **After an `Erased`** (proof from the relay or « Effacer quand même »): the doorbell is stopped by a flag **specific to each
   loop** (`Doorbell`, shared by `start_doorbell` and the pairing hook; the next one starts with a new flag), the decrypted
-  feed kept in memory (`RealCore.snapshot`) is emptied, and the decrypted copies in `open/` are erased. **No
+  feed fingerprints kept in memory (`RealCore.snapshot`) are emptied, and the decrypted copies in `open/` are erased. **No
   `RealCore::stop`**: it would stop the change bridge and the clean-up, which a following pairing needs. The rest
   (clipboard, toasts, `staging/`, home screen) is `departure_host::finish_erasure`.
 - **« Annuler » before the marker is written.** The engine writes the marker in its first transaction but only tells the
