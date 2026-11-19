@@ -278,11 +278,11 @@
     <string name="biometric_title_copy_secret">Copier le contenu masqué</string>
     <string name="biometric_subtitle_from_notification">Le contenu sera copié puis effacé du presse-papiers après 30 s.</string>
     <string name="biometric_title_revoke">Révoquer l’appareil</string>
-    <string name="biometric_subtitle_revoke">Action sensible : une empreinte ou un visage enregistré est nécessaire.</string>
+    <string name="biometric_subtitle_revoke">Action sensible : confirme avec ton empreinte, ton visage ou le code de verrouillage du téléphone.</string>
     <string name="biometric_title_erase">Effacer ce téléphone</string>
-    <string name="biometric_subtitle_erase">Action irréversible : une empreinte ou un visage enregistré est nécessaire.</string>
+    <string name="biometric_subtitle_erase">Action irréversible : confirme avec ton empreinte, ton visage ou le code de verrouillage du téléphone.</string>
     <string name="biometric_title_delete_space">Supprimer ton espace</string>
-    <string name="biometric_subtitle_delete_space">Action irréversible : une empreinte ou un visage enregistré est nécessaire.</string>
+    <string name="biometric_subtitle_delete_space">Action irréversible : confirme avec ton empreinte, ton visage ou le code de verrouillage du téléphone.</string>
     <string name="toast_biometric_unavailable">Configure un verrouillage d’écran ou une biométrie pour afficher, copier ou partager les contenus masqués.</string>
     <string name="toast_item_not_found">Élément introuvable</string>
 
@@ -416,11 +416,11 @@
     <string name="devices_rename">Renommer</string>
     <string name="devices_revoke">Révoquer</string>
     <string name="devices_revoke_title">Révoquer « %1$s » ?</string>
-    <string name="devices_revoke_message">Cet appareil sera retiré de l’espace et la clé de l’espace sera renouvelée. Il ne pourra plus lire les nouveaux éléments. Une biométrie forte te sera demandée.</string>
+    <string name="devices_revoke_message">Cet appareil sera retiré de l’espace et la clé de l’espace sera renouvelée. Il ne pourra plus lire les nouveaux éléments. Ton empreinte, ton visage ou ton code de verrouillage te sera demandé.</string>
     <string name="devices_rename_failed">Impossible de renommer l’appareil. Vérifie ta connexion et réessaie.</string>
     <string name="devices_revoke_failed">Impossible de révoquer l’appareil. Vérifie ta connexion et réessaie.</string>
     <string name="devices_revoking">Révocation en cours : la clé de l’espace est renouvelée, ça peut prendre quelques secondes.</string>
-    <string name="devices_revoke_unavailable">Aucune biométrie forte n’est configurée sur ce téléphone : révocation impossible.</string>
+    <string name="devices_revoke_unavailable">Aucun verrouillage d’écran n’est configuré sur ce téléphone : révocation impossible. Configure un code, une empreinte ou un visage dans les réglages.</string>
     <!-- Another device that has not shown up for a long time. Tomi only knows that, not that the app is uninstalled. -->
     <string name="devices_inactive_hint">Inactif depuis %1$s. Tu ne l’utilises plus ? Retire-le.</string>
     <plurals name="devices_inactive_duration">
@@ -445,7 +445,7 @@
     <string name="delete_space_error_relay_too_old">Ton serveur Tomi est trop ancien pour supprimer l’espace. Mets-le à jour, puis réessaie. Rien n’a été effacé.</string>
     <string name="delete_space_error_update">Mets Tomi à jour pour pouvoir supprimer ton espace. Rien n’a été effacé.</string>
     <string name="delete_space_error_unexpected">Ton serveur Tomi a refusé la suppression de l’espace. Rien n’a été effacé.</string>
-    <string name="delete_space_unavailable_biometric">Pour supprimer ton espace, enregistre une empreinte ou un visage dans les réglages du téléphone. Rien n’a été effacé.</string>
+    <string name="delete_space_unavailable_biometric">Pour supprimer ton espace, configure un verrouillage d’écran (code, empreinte ou visage) dans les réglages du téléphone. Rien n’a été effacé.</string>
 
     <!-- A pending departure: banner at the top of the feed -->
     <string name="departure_pending_leave_title">Déconnexion en attente</string>
@@ -480,7 +480,7 @@
     <string name="erase_waiting">Une demande vers ton serveur est encore en cours. Tomi attend sa fin avant d’effacer. Rien n’a été effacé.</string>
     <string name="erase_not_allowed">Tomi doit d’abord vérifier auprès de ton serveur. Réessaie dans un instant.</string>
     <string name="erase_expired">La réponse de ton serveur n’est plus valable&#160;: elle date de trop longtemps, ou ton serveur a répondu autrement entre-temps. Rien n’a été effacé. Réessaie dans un instant.</string>
-    <string name="erase_unavailable_biometric">Pour effacer sans confirmation du serveur, enregistre une empreinte ou un visage dans les réglages du téléphone. Désinstaller Tomi efface aussi tout ce qu’il contient.</string>
+    <string name="erase_unavailable_biometric">Pour effacer sans confirmation du serveur, configure un verrouillage d’écran (code, empreinte ou visage) dans les réglages du téléphone. Désinstaller Tomi efface aussi tout ce qu’il contient.</string>
     <string name="platform_android">Android</string>
     <string name="platform_windows">Windows</string>
     <string name="platform_other">Autre</string>

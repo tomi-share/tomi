@@ -52,31 +52,31 @@ class Authenticator(private val activity: FragmentActivity) {
         cancelLabel = activity.getString(R.string.action_cancel),
     )
 
-    /** Destructive action (revoke a device): strong biometrics only, always asked. */
+    /** Destructive action (revoke a device): strong biometrics or the screen lock, never remembered, always asked. */
     suspend fun forRevocation(): AuthOutcome = gate.authenticate(
         activity = activity,
         title = activity.getString(R.string.biometric_title_revoke),
         subtitle = activity.getString(R.string.biometric_subtitle_revoke),
         cancelLabel = activity.getString(R.string.action_cancel),
-        strongOnly = true,
+        fresh = true,
     )
 
-    /** "Supprimer l'espace" (the only device): same scope as [forRevocation], strong biometrics only, always asked. */
+    /** "Supprimer l'espace" (the only device): same gate as [forRevocation] (fresh, never remembered). */
     suspend fun forSpaceDeletion(): AuthOutcome = gate.authenticate(
         activity = activity,
         title = activity.getString(R.string.biometric_title_delete_space),
         subtitle = activity.getString(R.string.biometric_subtitle_delete_space),
         cancelLabel = activity.getString(R.string.action_cancel),
-        strongOnly = true,
+        fresh = true,
     )
 
-    /** "Effacer quand même" (erase without a proof of the relay): same scope as [forRevocation], strong biometrics only, always asked. */
+    /** "Effacer quand même" (erase without a proof of the relay): same gate as [forRevocation] (fresh, never remembered). */
     suspend fun forErasure(): AuthOutcome = gate.authenticate(
         activity = activity,
         title = activity.getString(R.string.biometric_title_erase),
         subtitle = activity.getString(R.string.biometric_subtitle_erase),
         cancelLabel = activity.getString(R.string.action_cancel),
-        strongOnly = true,
+        fresh = true,
     )
 }
 

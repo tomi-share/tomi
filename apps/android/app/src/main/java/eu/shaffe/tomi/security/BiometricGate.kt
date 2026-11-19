@@ -19,9 +19,26 @@ enum class AuthOutcome {
 }
 
 /**
+ * What a check accepts and whether it may be remembered. Pure, so that it can be tested without Android.
+ *
+ * Both modes accept strong biometrics OR the screen lock (PIN, pattern, password): a phone with only a PIN must still be able to
+ * revoke a stolen device. They differ only in memory: a [fresh] check (revoke, delete the space, erase, add a device) ignores
+ * the 2-minute window and never opens it, so it always prompts.
+ */
+internal object AuthPolicy {
+    const val AUTHENTICATORS = BIOMETRIC_STRONG or DEVICE_CREDENTIAL
+
+    /** The remembered window answers the check only for a normal (non-fresh) one. */
+    fun answeredByWindow(fresh: Boolean, windowOpen: Boolean): Boolean = !fresh && windowOpen
+
+    /** A success opens the 2-minute window only for a normal check: a sensitive success must not unlock the secrets. */
+    fun opensWindow(fresh: Boolean): Boolean = !fresh
+}
+
+/**
  * Wraps BiometricPrompt. Normal checks (reveal / copy a secret) accept biometrics or the screen lock and are
- * remembered for two minutes. Destructive checks (revoke a device) use [strongOnly]: strong biometrics only,
- * never remembered, always prompted.
+ * remembered for two minutes. Sensitive checks (revoke a device, delete the space, erase, add a device) use [fresh]:
+ * same authenticators, never remembered, always prompted.
  */
 class BiometricGate(private val window: AuthWindow) {
 
@@ -34,11 +51,11 @@ class BiometricGate(private val window: AuthWindow) {
         title: String,
         subtitle: String?,
         cancelLabel: String,
-        strongOnly: Boolean = false,
+        fresh: Boolean = false,
     ): AuthOutcome {
-        if (!strongOnly && window.isValid()) return AuthOutcome.Success
+        if (AuthPolicy.answeredByWindow(fresh, window.isValid())) return AuthOutcome.Success
 
-        val authenticators = if (strongOnly) BIOMETRIC_STRONG else BIOMETRIC_STRONG or DEVICE_CREDENTIAL
+        val authenticators = AuthPolicy.AUTHENTICATORS
         if (BiometricManager.from(activity).canAuthenticate(authenticators) != BiometricManager.BIOMETRIC_SUCCESS) {
             return AuthOutcome.Unavailable
         }
@@ -49,7 +66,7 @@ class BiometricGate(private val window: AuthWindow) {
         return suspendCancellableCoroutine { continuation ->
             val callback = object : BiometricPrompt.AuthenticationCallback() {
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                    if (!strongOnly) window.markAuthenticated()
+                    if (AuthPolicy.opensWindow(fresh)) window.markAuthenticated()
                     if (continuation.isActive) continuation.resume(AuthOutcome.Success)
                 }
 
@@ -65,8 +82,9 @@ class BiometricGate(private val window: AuthWindow) {
                 .setTitle(title)
                 .apply { if (subtitle != null) setSubtitle(subtitle) }
                 .setAllowedAuthenticators(authenticators)
-                .apply { if (strongOnly) setNegativeButtonText(cancelLabel) }
-                .setConfirmationRequired(false)
+                // No negative button: it is forbidden together with DEVICE_CREDENTIAL (the system provides "cancel").
+                // A passive face unlock must not authorize a sensitive action just by pointing the phone at the owner.
+                .setConfirmationRequired(fresh)
                 .build()
             prompt.authenticate(info)
             continuation.invokeOnCancellation { prompt.cancelAuthentication() }
