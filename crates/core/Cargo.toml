@@ -37,7 +37,7 @@ hex = "0.4"
 # --- runtime (feature `runtime`): local SQLite store, sync engine, transfers ---
 # `bundled` compiles SQLite from source: no system library (works for Windows MSVC and for
 # Android through the NDK; the Android system SQLite is not linkable from native code).
-rusqlite = { version = "0.41.1", features = ["bundled"], optional = true }
+rusqlite = { version = "0.43.0", features = ["bundled"], optional = true }
 # --- real transport (feature `http`): blocking HTTPS client + WebSocket doorbell ---
 # rustls with the `ring` provider and bundled webpki roots: no OpenSSL, no JNI verifier.
 ureq = { version = "3.5.1", default-features = false, features = ["rustls", "gzip"], optional = true }
