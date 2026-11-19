@@ -95,9 +95,9 @@ pub use history::{
 };
 pub use item::{Attachment, Item, ItemText, RawPayload, ReadPolicy, SourceFormat, Thumbnail};
 pub use keyring::{
-    relay_expires_at_ms, space_key_retention_ms, KeyRingRecord, ReceivedItem, SpaceKeyRing,
-    Supersession, UnreadableReason, DEFAULT_MAX_TTL_SECS, RELAY_EXPIRY_MARGIN_MS,
-    SPACE_KEY_GRACE_MS,
+    item_max_age_ms, relay_expires_at_ms, space_key_retention_ms, tombstone_retention_ms,
+    KeyRingRecord, ReceivedItem, SpaceKeyRing, Supersession, UnreadableReason,
+    DEFAULT_MAX_TTL_SECS, RELAY_EXPIRY_MARGIN_MS, SPACE_KEY_GRACE_MS,
 };
 pub use local::{LocalKey, LOCAL_RECORD_OVERHEAD, LOCAL_RECORD_VERSION};
 pub use pin::{

@@ -1965,7 +1965,7 @@ cursor     : seq                             // 0 at start; the relay brings it 
 devices    : verified local list (certificates, revocations)
 items      : readable items re-sealed under lsk (format-v1.md §7.2); raw envelope kept
              only for unreadable items (UNREADABLE_UPDATE_REQUIRED, UNDECRYPTABLE, UNREADABLE_SUSPECT_EPOCH, KEY_PENDING)
-tombstoned : set of item_id deleted everywhere (kept 45 days)
+tombstoned : set of item_id deleted everywhere (kept max_ttl_secs + 60 days = 90 days, format-v1.md §9.4 age rule)
 pins       : PinBook: item_id -> (pinned, at_ms), independent of items (format-v1.md §8.8.3)
 archives   : ArchiveBook: item_id -> (archived, at_ms), independent of items and pins (format-v1.md §8.9.3)
 pending_states : raw state envelopes kept (KeyPending, UpdateRequired), retried like items

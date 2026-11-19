@@ -2082,6 +2082,57 @@ fn expired_items_are_erased_even_when_pinned() {
 }
 
 #[test]
+fn a_deleted_item_served_again_after_its_tombstone_is_pruned_is_refused_as_too_old() {
+    const DAY: i64 = 86_400_000;
+    let w = World::new(2, 2);
+    let id = send(&w, 0, text("supprime"));
+    w.e(1).sync().unwrap();
+    w.e(1).delete_local(&id).unwrap();
+    assert!(w.e(1).get_item(&id).unwrap().is_none());
+
+    // 80 days later the tombstone is still there: a replay is ignored outright.
+    w.clock.advance(80 * DAY);
+    w.e(1).sync().unwrap();
+    assert!(w.e(1).store.read(|db| db.is_tombstoned(&id)).unwrap());
+
+    // Past the retention it is gone, and so would be the protection without the age check.
+    w.clock.advance(20 * DAY);
+    w.e(1).sync().unwrap();
+    assert!(!w.e(1).store.read(|db| db.is_tombstoned(&id)).unwrap());
+
+    // The hostile relay serves the old envelope again under a new seq.
+    let (seq, mut replay) = w.relay.with(|s| {
+        let ev = s
+            .events
+            .iter()
+            .find(|e| matches!(&e.data, EventData::Item { item_id, .. } if *item_id == id))
+            .cloned()
+            .expect("the item event is still in the relay log");
+        (s.head + 1, ev)
+    });
+    replay.seq = seq;
+    // The relay's own counter moves on with it (a real relay numbers new events after it).
+    w.relay.with(|s| s.head = seq);
+    w.relay.inject_events(vec![replay]);
+    w.e(1).sync().unwrap();
+    let v = w.e(1).get_item(&id).unwrap().expect("kept, never deleted");
+    assert!(
+        matches!(
+            v.content,
+            ItemContentView::Unreadable {
+                reason: UnreadableReason::SuspectEpoch
+            }
+        ),
+        "{v:?}"
+    );
+
+    // A fresh item is unaffected.
+    let fresh = send(&w, 0, text("neuf"));
+    w.e(1).sync().unwrap();
+    assert_eq!(plain_of(&w.e(1).get_item(&fresh).unwrap().unwrap()), "neuf");
+}
+
+#[test]
 fn pinned_item_stays_after_the_relay_purge() {
     let w = World::new(2, 2);
     let id = send(&w, 0, text("garde"));

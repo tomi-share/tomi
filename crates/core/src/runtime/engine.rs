@@ -11,7 +11,7 @@
 use std::cell::RefCell;
 use std::collections::HashSet;
 use std::panic::{catch_unwind, AssertUnwindSafe};
-use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError, TryLockError};
 
 use crate::archive::ArchiveBook;
@@ -312,6 +312,9 @@ pub struct Engine {
     pub(crate) doorbell_gate: Mutex<()>,
     /// Loops of [`Engine::run_doorbell`] that wait for `doorbell_gate` (observed by the tests).
     pub(crate) doorbell_waiting: AtomicU32,
+    /// `max_ttl_secs` of the relay's limits, readable while `inner` is locked (the opening of an
+    /// item runs inside `with_crypto`, which holds it): kept in step with `Inner::limits`.
+    max_ttl_secs: AtomicU64,
     /// The relay gate (`runtime::relay`): the pairings and creations holding the relay. While
     /// there is one, the relay does not change. Every decision about the relay (start of a
     /// session, `set_relay`, the end of a session, the settling) is taken **with this lock held**,
@@ -373,10 +376,12 @@ impl Drop for Serial<'_> {
 /// `meta` key: the decoder version (`Engine::decoder_version`) at the last replay of the
 /// unreadable items and kept item states.
 pub(crate) const REPLAYED_VERSION_KEY: &str = "replayed_decoder_version";
+/// How long a removal of an attachment whose item is not here is remembered (`format-v1.md`
+/// §8.10): the registry of removals is separate from the tombstones.
+const ATTACHMENT_REMOVAL_RETENTION_MS: i64 = 45 * 86_400_000;
 const KEYS_SECRET: &str = "device_keys";
 const LSK_SECRET: &str = "local_key";
 const SESSION_RENEW_MARGIN_MS: i64 = 300_000;
-const TOMBSTONE_RETENTION_MS: i64 = 45 * 86_400_000;
 
 /// `meta` key of the capabilities announced by the relay (JSON list of strings).
 pub(crate) const FEATURES_KEY: &str = "relay_features";
@@ -438,6 +443,7 @@ impl Engine {
             rotating: AtomicBool::new(false),
             doorbell_gate: Mutex::new(()),
             doorbell_waiting: AtomicU32::new(0),
+            max_ttl_secs: AtomicU64::new(crate::DEFAULT_MAX_TTL_SECS),
             relay_gate: Mutex::new(RelayState::default()),
             relay_default,
         };
@@ -555,6 +561,8 @@ impl Engine {
             let mut inner = lock(&self.inner)?;
             inner.active = Some(Arc::new(active));
             inner.crypto = Some(crypto);
+            self.max_ttl_secs
+                .store(limits.max_ttl_secs, Ordering::SeqCst);
             inner.limits = limits;
             drop(inner);
             lock(&self.flags)?.blocked = blocked;
@@ -793,6 +801,8 @@ impl Engine {
         inner.active = None;
         inner.crypto = None;
         inner.session = None;
+        self.max_ttl_secs
+            .store(Limits::default().max_ttl_secs, Ordering::SeqCst);
         inner.limits = Limits::default();
         inner.server_offset_ms = 0;
         if let Ok(mut f) = lock(&self.flags) {
@@ -1016,6 +1026,8 @@ impl Engine {
             expires_at_ms: grant.expires_at_ms,
         });
         inner.server_offset_ms = grant.space.server_time_ms - self.clock.now_ms();
+        self.max_ttl_secs
+            .store(grant.space.limits.max_ttl_secs, Ordering::SeqCst);
         inner.limits = grant.space.limits.clone();
         if let Ok(mut f) = lock(&self.flags) {
             f.rotation_required = grant.space.rotation_required;
@@ -1847,12 +1859,23 @@ impl Engine {
         a: &Active,
         row: &mut ItemRow,
     ) -> Result<Option<Item>> {
-        let _ = db;
         let Some(envelope) = row.raw_envelope.clone() else {
             return Ok(None);
         };
         match c.ring.open_received(&envelope, &row.item_id, row.seq) {
             ReceivedItem::Readable(opened) => {
+                // Age, by the authenticated `created_at`, at the time the item reached this
+                // device: an honest relay cannot hold an item longer than `max_ttl`, so a much
+                // older one is a deleted or consumed item served again after its tombstone was
+                // pruned. Kept raw, never shown, never retried.
+                let oldest = row.received_at_ms.saturating_sub(crate::item_max_age_ms(
+                    self.max_ttl_secs.load(Ordering::SeqCst),
+                ));
+                if opened.item.created_at_ms < oldest {
+                    row.status = ItemStatus::Unreadable(UnreadableReason::SuspectEpoch);
+                    self.diag(db, "item_too_old", &row.item_id)?;
+                    return Ok(None);
+                }
                 fill_readable(row, &opened.item, a)?;
                 Ok(Some(opened.item))
             }
@@ -2157,8 +2180,8 @@ impl Engine {
                     db.delete_archive(&row.item_id)?;
                 }
             }
-            db.prune_tombstones(now - TOMBSTONE_RETENTION_MS)?;
-            db.prune_attachment_removals(now - TOMBSTONE_RETENTION_MS)?;
+            db.prune_tombstones(now - crate::tombstone_retention_ms(max_ttl))?;
+            db.prune_attachment_removals(now - ATTACHMENT_REMOVAL_RETENTION_MS)?;
             let needed = db.raw_envelope_epochs()?;
             let dropped = c.ring.discard_expired(
                 u64::try_from(now).unwrap_or(0),

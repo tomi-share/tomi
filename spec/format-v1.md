@@ -1590,8 +1590,17 @@ an error.
 | readable | — | opened successfully; re-sealed under `LSK` (§7.2) | — |
 | `UNREADABLE_UPDATE_REQUIRED` | `UpdateRequired` (`update_required`) | `unsupported_format` | after an app update |
 | `KEY_PENDING` | `KeyPending` (`key_pending`) | epoch higher than the device's current key, including a reserved value (§5.8.2) | after the next rotation is applied |
-| `UNREADABLE_SUSPECT_EPOCH` | `SuspectEpoch` (`suspect_epoch`) | epoch `e` already replaced by a rotation `e → e+1` whose `seq` is **lower** than that of the item (epoch ordering rule, §12) | never |
+| `UNREADABLE_SUSPECT_EPOCH` | `SuspectEpoch` (`suspect_epoch`) | epoch `e` already replaced by a rotation `e → e+1` whose `seq` is **lower** than that of the item (epoch ordering rule, §12), **or** authenticated `created_at` older than `max_ttl_secs` + 60 days at the time the item first reaches the device (age rule, below) | never |
 | `UNDECRYPTABLE` | `Undecryptable` (`undecryptable`) | any other error (AEAD, AAD, JSON, id) or epoch key already erased (§8.3) | never automatically |
+
+**Age rule.** An honest relay purges an undelivered item at `max_ttl_secs`, and an item may have waited in its
+sender's outbox for a while: no item reaches a device with an authenticated `created_at` (the one of the payload,
+not the relay's) more than `max_ttl_secs` + 60 days (90 days by default) before the moment it is first received. A
+later one is a deleted or consumed item that a malicious relay serves again after the local tombstone was pruned. The
+device keeps it raw and shows it as `SuspectEpoch` (same state, same UI as the epoch ordering rule), never retries it,
+and never consumes it. The age is measured from the time the device first received the row, so a retry after an update
+or a rotation does not judge an old row by today's date. Local tombstones are kept for
+the same `max_ttl_secs` + 60 days, so that either the tombstone or the age rule always covers an item.
 
 The order of checks is: header (format), epoch ordering rule, presence of the
 key, opening. An unreadable item is never exported in a history transfer

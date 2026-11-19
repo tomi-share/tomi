@@ -41,6 +41,27 @@ pub fn relay_expires_at_ms(
     }
 }
 
+/// Margin added to the relay retention to bound the age of any item a relay may honestly
+/// deliver (60 days): room for an item that waited in the sender's outbox, and for clock skew.
+pub const ITEM_AGE_MARGIN_MS: i64 = 60 * 86_400_000;
+
+/// Oldest `created_at` an item can have when it first reaches a device, relative to that moment:
+/// `max_ttl + 60 days` (90 days by default). An honest relay purges an undelivered item at
+/// `max_ttl`, so an older one (by its authenticated `created_at`) can only be a replay of something
+/// deleted or consumed long ago, served again once the local tombstone is gone: it is refused
+/// ([`UnreadableReason::SuspectEpoch`], the one "suspect" state). Tombstones are kept for the same length of time
+/// ([`tombstone_retention_ms`]), so that one of the two always covers an item.
+pub fn item_max_age_ms(max_ttl_secs: u64) -> i64 {
+    i64::try_from(max_ttl_secs.saturating_mul(1000))
+        .unwrap_or(i64::MAX)
+        .saturating_add(ITEM_AGE_MARGIN_MS)
+}
+
+/// How long a local item tombstone is kept: [`item_max_age_ms`].
+pub fn tombstone_retention_ms(max_ttl_secs: u64) -> i64 {
+    item_max_age_ms(max_ttl_secs)
+}
+
 /// How long an old space key is kept after the rotation that replaced it:
 /// `max_ttl + 1 day` (31 days by default). Past that, no honest relay still holds an
 /// item of that epoch.
@@ -60,7 +81,8 @@ pub enum UnreadableReason {
     /// rotation is applied.
     KeyPending,
     /// Sealed with an epoch already replaced by a rotation whose
-    /// `seq` is lower than the item's (spec §12): an honest relay cannot produce it.
+    /// `seq` is lower than the item's (spec §12), or older (authenticated `created_at`) than a
+    /// relay can honestly hold it ([`item_max_age_ms`]): an honest relay cannot produce either.
     /// Never retried.
     SuspectEpoch,
     /// Authentication or decoding failed, or the epoch key was discarded.
