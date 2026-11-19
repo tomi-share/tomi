@@ -2018,6 +2018,7 @@ function sync():                           // only one execution at a time
         local transaction { apply(ev) ; cursor = ev.seq }
       local transaction { cursor = max(cursor, p.next_after) }
       if not p.has_more: exit
+      if cursor did not advance during this page: log "events_no_progress"; exit   // a relay that says has_more forever
     drain_outbox()
     send pending acknowledgements (§7.3)
   while dirty
@@ -2132,6 +2133,12 @@ assigns the `seq` (§4.8): no item of epoch `e` can therefore have a `seq` great
 `e → e+1`. Such an item comes from a revoked device in collusion with a compromised relay; the client keeps it,
 does not open it, and displays it as "illisible (suspect)" (UI label). This rule uses only the rotations already
 applied; the `seq` of a rotation remains known after its key is erased.
+
+*Availability.* A page whose `has_more` is true but that makes the cursor advance by nothing ends the loop (the next
+sync asks again; `events_no_progress` is logged): a buggy or hostile relay cannot make a client ask for the same page
+forever. An event of a page that cannot be parsed (a known `type` with missing or ill-typed fields) is not an error of
+the page: it is applied as an event of unknown type (logged `event_malformed`), so that the cursor advances past it;
+an event without a readable `seq` is dropped and `next_after` moves the cursor over it.
 
 *The `seq` the client compares is never taken on trust (normative, `crates/core`).* A relay that is not honest can
 choose the `seq` of an event, so the rule only holds if the cursor is monotonic: the client MUST NOT apply an event

@@ -564,6 +564,34 @@ fn blob_status(v: &Value) -> TResult<BlobStatus> {
 
 /// Typed event from its JSON form (`api-v1.md` §4.10). An unknown `type` becomes
 /// [`EventData::Unknown`]; a known type with a malformed `data` is a protocol error.
+/// [`event_from_json`] for a page of the log: an event that does not parse (a relay bug, or a
+/// hostile one) must not fail the whole page and stop the sync at that cursor for good. It
+/// becomes an [`EventData::Unknown`] named `malformed:<type>` so that the engine logs it and the
+/// cursor advances. Without a readable `seq` there is nothing to advance to: the event is
+/// dropped (the page's `next_after` moves the cursor past it).
+fn lenient_event(v: &Value) -> Option<Event> {
+    match event_from_json(v) {
+        Ok(e) => Some(e),
+        Err(_) => {
+            let seq = get_u64(v, "seq").ok()?;
+            let kind: String = v
+                .get("type")
+                .and_then(Value::as_str)
+                .unwrap_or("?")
+                .chars()
+                .take(40)
+                .collect();
+            Some(Event {
+                seq,
+                at_ms: get_ts(v, "at").unwrap_or(0),
+                data: EventData::Unknown {
+                    kind: format!("{MALFORMED_EVENT_PREFIX}{kind}"),
+                },
+            })
+        }
+    }
+}
+
 pub(crate) fn event_from_json(v: &Value) -> TResult<Event> {
     let seq = get_u64(v, "seq")?;
     let at_ms = get_ts(v, "at")?;
@@ -843,8 +871,8 @@ impl RelayTransport for HttpTransport {
             .and_then(Value::as_array)
             .into_iter()
             .flatten()
-            .map(event_from_json)
-            .collect::<TResult<Vec<_>>>()?;
+            .filter_map(lenient_event)
+            .collect::<Vec<_>>();
         Ok(EventPage {
             events,
             head_seq: get_u64(&v, "head_seq")?,
@@ -1496,6 +1524,31 @@ mod tests {
         let e = t.hello().unwrap_err();
         assert!(e.is_offline(), "{e:?}");
         assert_eq!(h.join().unwrap().len(), 1, "a single request, to the relay");
+    }
+
+    #[test]
+    fn a_malformed_event_becomes_unknown_and_keeps_its_seq() {
+        // `item` without its mandatory fields: the page must still carry it, as Unknown.
+        let bad: Value =
+            serde_json::from_str(r#"{"seq":7,"type":"item","at":"x","data":{"item_id":1}}"#)
+                .unwrap();
+        let e = lenient_event(&bad).unwrap();
+        assert_eq!(e.seq, 7);
+        assert!(
+            matches!(&e.data, EventData::Unknown { kind } if kind == "malformed:item"),
+            "{e:?}"
+        );
+        // Without a seq there is nothing to advance to.
+        let no_seq: Value = serde_json::from_str(r#"{"type":"item","data":{}}"#).unwrap();
+        assert!(lenient_event(&no_seq).is_none());
+        // A well-formed event is untouched.
+        let ok: Value = serde_json::from_str(
+            r#"{"seq":2,"type":"from_the_future","at":"2026-11-04T09:05:01.000Z","data":{}}"#,
+        )
+        .unwrap();
+        assert!(
+            matches!(lenient_event(&ok).unwrap().data, EventData::Unknown { kind } if kind == "from_the_future")
+        );
     }
 
     #[test]

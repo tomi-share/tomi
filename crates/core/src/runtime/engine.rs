@@ -1178,14 +1178,21 @@ impl Engine {
             let items_after = self.store.read(|db| db.item_count())?;
             report.new_items += items_after.saturating_sub(items_before);
             // The relay may skip compacted seqs: move to next_after.
-            self.store.tx(|db| {
+            let progressed = self.store.tx(|db| {
                 if page.next_after > db.cursor()? {
                     db.set_cursor(page.next_after)?;
                 }
-                Ok(())
+                Ok(db.cursor()? > after)
             })?;
             self.notify();
             if !page.has_more {
+                break;
+            }
+            if !progressed {
+                // `has_more` without any progress of the cursor would ask for the same page
+                // forever (a buggy or hostile relay): stop here, the next sync tries again.
+                self.store
+                    .tx(|db| self.diag(db, "events_no_progress", &format!("after {after}")))?;
                 break;
             }
         }
@@ -1801,6 +1808,11 @@ impl Engine {
                     }
                 }
                 Ok(())
+            }
+            EventData::Unknown { kind }
+                if kind.starts_with(super::transport::MALFORMED_EVENT_PREFIX) =>
+            {
+                self.diag(db, "event_malformed", kind)
             }
             EventData::Unknown { .. } => Ok(()),
         }

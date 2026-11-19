@@ -363,6 +363,10 @@ pub enum EventData {
     },
 }
 
+/// Prefix of the `kind` of an [`EventData::Unknown`] that stands for an event of the log that
+/// could not be parsed (the engine logs it and moves on).
+pub const MALFORMED_EVENT_PREFIX: &str = "malformed:";
+
 /// Page of `GET /v1/events`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EventPage {

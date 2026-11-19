@@ -138,6 +138,9 @@ pub struct State {
     pub features: Vec<String>,
     /// `put_blob_part` answers without moving the offset (a buggy relay).
     pub stall_uploads: bool,
+    /// `events` answers `has_more` with an empty page and the same `next_after` (a buggy or
+    /// hostile relay that makes a client loop).
+    pub stall_events: bool,
     wakers: Vec<(String, Sender<Result<Wake, u16>>)>,
     /// Close codes for the next doorbell connections, in order ([`MockRelay::close_next_doorbell`]).
     next_wake_closes: VecDeque<u16>,
@@ -297,6 +300,7 @@ impl MockRelay {
             min_client_format: 1,
             limits: Limits::default(),
             stall_uploads: false,
+            stall_events: false,
             wakers: Vec::new(),
             next_wake_closes: VecDeque::new(),
             injected_events: Vec::new(),
@@ -1053,6 +1057,14 @@ impl RelayTransport for MockTransport {
             }
             if after < s.floor {
                 return api(410, "cursor_expired");
+            }
+            if s.stall_events {
+                return Ok(EventPage {
+                    events: Vec::new(),
+                    head_seq: s.head,
+                    has_more: true,
+                    next_after: after,
+                });
             }
             let all: Vec<Event> = s.events.iter().filter(|e| e.seq > after).cloned().collect();
             let limit = limit.clamp(1, 500) as usize;

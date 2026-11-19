@@ -1664,6 +1664,42 @@ fn cursor_ahead_after_a_relay_restore_resets_the_cursor() {
 }
 
 #[test]
+fn a_relay_that_says_has_more_without_progress_does_not_make_sync_loop() {
+    let w = World::new(2, 2);
+    send(&w, 0, text("1"));
+    w.relay.with(|s| s.stall_events = true);
+    // Returns (the test would hang otherwise); nothing is lost, the cursor does not reach the head.
+    let r = w.e(1).sync().unwrap();
+    assert!(r.cursor < w.relay.head());
+    assert_eq!(w.e(1).list_items().unwrap().len(), 0);
+    // Once the relay behaves again the next sync recovers everything.
+    w.relay.with(|s| s.stall_events = false);
+    let r = w.e(1).sync().unwrap();
+    assert!(r.cursor >= w.relay.head() - 1);
+    assert_eq!(w.e(1).list_items().unwrap().len(), 1);
+}
+
+#[test]
+fn a_malformed_event_is_logged_and_the_cursor_advances_past_it() {
+    let w = World::new(2, 2);
+    w.relay.with(|s| {
+        s.push(
+            EventData::Unknown {
+                kind: format!("{MALFORMED_EVENT_PREFIX}item"),
+            },
+            None,
+        )
+    });
+    let id = send(&w, 0, text("apres"));
+    let r = w.e(1).sync().unwrap();
+    assert!(
+        r.cursor >= w.relay.head() - 1,
+        "past the malformed event and the item"
+    );
+    assert!(w.e(1).get_item(&id).unwrap().is_some());
+}
+
+#[test]
 fn unknown_event_types_are_skipped_and_the_cursor_advances() {
     let w = World::new(2, 2);
     w.relay.with(|s| {
