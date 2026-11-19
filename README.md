@@ -43,7 +43,7 @@ No account, no cloud drive, no "send to myself" chat to dig through. Just your d
    envelope and decrypts it locally.
 
 The relay verifies signatures and routes envelopes, nothing more. Even if it is compromised, it holds nothing it
-can read. The details are in [`PROJECT.md`](PROJECT.md) and in the [specification](spec/).
+can read. The details are in [`PROJECT.md`](PROJECT.md) and in the [specification](spec/). What Tomi protects against, and what it does not (a compromised relay still sees metadata, there is no forward secrecy, biometrics are a gate in the app), is stated plainly in the [threat model](docs/threat-model.md).
 
 ## Try it
 
@@ -111,6 +111,7 @@ tomi/
 - [`docs/FEATURES.md`](docs/FEATURES.md): feature matrix across platforms.
 - [`design/tomi/brand-guidelines.md`](design/tomi/brand-guidelines.md): brand guidelines and assets.
 - [`CONTRIBUTING.md`](CONTRIBUTING.md): how to contribute. Please follow the [Code of Conduct](CODE_OF_CONDUCT.md).
+- [`docs/threat-model.md`](docs/threat-model.md): what Tomi protects against and what it does not.
 - [`SECURITY.md`](SECURITY.md): how to report a vulnerability (privately, not in a public issue).
 - [`CHANGELOG.md`](CHANGELOG.md) and [`docs/RELEASES.md`](docs/RELEASES.md): what changed, and how releases are cut.
 - [`docs/FORKING.md`](docs/FORKING.md): building and distributing your own version.

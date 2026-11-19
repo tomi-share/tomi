@@ -37,6 +37,10 @@ The `*-dev` pre-releases are development builds and are not supported.
 
 ## Scope
 
+What Tomi does and does not protect against is written down in the [threat model](docs/threat-model.md): please read it
+before reporting, since a report about a documented limit (no forward secrecy, relay metadata, biometrics being a gate in the
+app, a revoked device keeping what it already had) is not a vulnerability unless it shows the documentation to be wrong.
+
 In scope: anything that breaks the properties described in [`AGENTS.md`](AGENTS.md) (golden rules), [`PROJECT.md`](PROJECT.md)
 and [`spec/`](spec/), for example:
 
@@ -54,7 +58,8 @@ Out of scope:
   platforms, activity dates, sizes, receipts);
 - a device that is already compromised, rooted or unlocked in the attacker's hands;
 - the documented trade-off that attachments of a secret are decrypted into `files/cache/` until the app goes to the
-  background or restarts (see `AGENTS.md`, golden rule 3);
+  background (after a 60-second grace on Android, one minute on Windows) or restarts (see `AGENTS.md`, golden rule 3 and the
+  [threat model](docs/threat-model.md));
 - a misconfigured self-hosted relay (open ports, no TLS, weak host hardening) and volumetric denial of service;
 - social engineering, and findings that need physical access plus the device PIN;
 - reports from automated scanners without a demonstrated impact.
