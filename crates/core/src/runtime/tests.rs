@@ -1932,6 +1932,64 @@ fn old_epoch_item_in_transit_is_still_read_after_a_rotation() {
     assert_eq!(plain_of(&w.e(1).get_item(&id).unwrap().unwrap()), "avant");
 }
 
+#[test]
+fn a_verified_signed_revocation_erases_the_space_keys_and_keeps_the_local_content() {
+    let w = World::new(3, 3);
+    for i in 0..3 {
+        w.e(i).sync().unwrap();
+    }
+    let before = send(&w, 0, text("avant la revocation"));
+    w.e(2).sync().unwrap();
+    assert_eq!(
+        plain_of(&w.e(2).get_item(&before).unwrap().unwrap()),
+        "avant la revocation"
+    );
+    w.e(0).revoke_device(&w.nodes[2].id).unwrap();
+    // The signed rotation reaches the revoked device (it still had its session when the page
+    // was served): the proof is the rotation itself, not the relay's word.
+    let rotation = w.relay.with(|s| {
+        s.events
+            .iter()
+            .find(|e| matches!(e.data, EventData::Rotation { .. }))
+            .cloned()
+            .expect("the rotation is in the log")
+    });
+    w.e(2).apply_event(&rotation).unwrap();
+    assert_eq!(w.e(2).blocked(), Some(Blocked::Revoked));
+    assert!(
+        w.e(2).read_crypto(|c, _| Ok(c.ring.is_erased())).unwrap(),
+        "every space key is gone"
+    );
+    // The local content is not touched.
+    assert_eq!(
+        plain_of(&w.e(2).get_item(&before).unwrap().unwrap()),
+        "avant la revocation"
+    );
+    // And it stays so after a restart.
+    let again = w.nodes[2].reopen(&w.relay, w.clock.clone());
+    assert_eq!(again.blocked(), Some(Blocked::Revoked));
+    assert!(again.read_crypto(|c, _| Ok(c.ring.is_erased())).unwrap());
+    assert_eq!(
+        plain_of(&again.get_item(&before).unwrap().unwrap()),
+        "avant la revocation"
+    );
+    // A revocation that only the relay announces (no signed proof) erases nothing.
+    let w2 = World::new(2, 2);
+    w2.e(1).sync().unwrap();
+    w2.e(1)
+        .apply_event(&Event {
+            seq: w2.relay.head() + 1,
+            at_ms: T0,
+            data: EventData::DeviceRevoked {
+                device_id: w2.nodes[1].id.clone(),
+                via: "admin".into(),
+            },
+        })
+        .unwrap();
+    assert_eq!(w2.e(1).blocked(), Some(Blocked::Revoked));
+    assert!(!w2.e(1).read_crypto(|c, _| Ok(c.ring.is_erased())).unwrap());
+}
+
 /// An item event sealed under the epoch-1 key of device 0 (which a revoked device still holds),
 /// as a hostile relay colluding with that device would forge it.
 fn forged_old_epoch_item(w: &World, seq: u64) -> (String, Event) {

@@ -1496,7 +1496,7 @@ impl Engine {
     // Event application (api-v1 §7.3)
     // -----------------------------------------------------------------------
 
-    fn apply_event(&self, ev: &Event) -> Result<()> {
+    pub(crate) fn apply_event(&self, ev: &Event) -> Result<()> {
         let mut erased = Vec::new();
         self.with_crypto(|c, db, a| {
             // An honest relay serves strictly increasing `seq` numbers, all above the cursor
@@ -1700,6 +1700,10 @@ impl Engine {
                             db.set_device_state(&id, DeviceState::Revoked)?;
                         }
                         if outcome.self_revoked {
+                            // A verified signed rotation lists this device as revoked: proof a
+                            // relay cannot forge. The space keys are erased (`format-v1.md`
+                            // §8.3 step 6); the local content, re-sealed under `LSK`, stays.
+                            c.ring.erase_keys();
                             db.meta_set("blocked", b"revoked")?;
                             lock(&self.flags)
                                 .map(|mut f| f.blocked = Some(Blocked::Revoked))
@@ -2072,6 +2076,8 @@ impl Engine {
                 match applied {
                     Ok(outcome) => {
                         if outcome.self_revoked {
+                            // Verified signed proof of the revocation: erase the space keys.
+                            c.ring.erase_keys();
                             db.meta_set("blocked", b"revoked")?;
                             lock(&self.flags)
                                 .map(|mut f| f.blocked = Some(Blocked::Revoked))

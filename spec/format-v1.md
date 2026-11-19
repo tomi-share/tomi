@@ -839,7 +839,12 @@ store is not modified):
 5. The issuer is not in `revoked`; no recipient is in `revoked`
    → otherwise `malformed_statement`.
 6. If M is in `revoked`: M has left the space; it MUST erase its space keys
-   and inform the user.
+   and inform the user. This applies to a rotation verified by steps 1-5, which a relay cannot forge. It erases
+   the **space keys** only (every epoch, `SpaceKeyRing::erase_keys`; the persisted ring then holds no key), not the content
+   already opened and re-sealed under `LSK` (§7.2), which stays readable on the device: wiping the local data is a
+   separate gesture (`api-v1.md` §7.9) and is not forced by a revocation, since any unlocked member can revoke the
+   others (§12). A revocation that only the relay announces (`403 revoked`, an unsigned `device_revoked`) blocks the
+   device but is no proof and erases nothing.
 7. Otherwise M MUST find its entry (otherwise `not_a_recipient`) and open `sealed` with
    `space_id`, `new_epoch` and its own `ed_pk`.
 8. Remove the revoked devices from the members, add them to the revoked set, move to `new_epoch`.

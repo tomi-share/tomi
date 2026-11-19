@@ -157,6 +157,9 @@ impl std::fmt::Debug for KeyRingRecord {
 pub struct SpaceKeyRing {
     keys: BTreeMap<u32, SpaceKey>,
     superseded: BTreeMap<u32, Supersession>,
+    /// The epoch that was current when [`erase_keys`](Self::erase_keys) wiped every key (this
+    /// device was revoked): the ring then holds no key at all.
+    erased_at: Option<u32>,
 }
 
 impl SpaceKeyRing {
@@ -167,6 +170,7 @@ impl SpaceKeyRing {
         Self {
             keys,
             superseded: BTreeMap::new(),
+            erased_at: None,
         }
     }
 
@@ -181,7 +185,31 @@ impl SpaceKeyRing {
     }
 
     pub fn current_epoch(&self) -> u32 {
-        self.keys.keys().next_back().copied().unwrap_or(0)
+        self.keys
+            .keys()
+            .next_back()
+            .copied()
+            .or(self.erased_at)
+            .unwrap_or(0)
+    }
+
+    /// Wipes every space key (the ring keeps the `seq` of each rotation, which is not secret).
+    /// For a device that learned from a **verified signed rotation** that it was revoked
+    /// (`format-v1.md` §8.3 step 6). What was already opened is re-sealed under `LSK` and
+    /// stays readable; what is still raw can no longer be opened. Returns whether a key was
+    /// erased.
+    pub fn erase_keys(&mut self) -> bool {
+        if self.keys.is_empty() {
+            return false;
+        }
+        self.erased_at = Some(self.current_epoch());
+        self.keys.clear();
+        true
+    }
+
+    /// Whether [`erase_keys`](Self::erase_keys) wiped the ring.
+    pub fn is_erased(&self) -> bool {
+        self.keys.is_empty() && self.erased_at.is_some()
     }
 
     /// Key of `epoch`, if still held.
@@ -202,6 +230,11 @@ impl SpaceKeyRing {
         rotation_seq: u64,
         applied_at_ms: u64,
     ) -> Result<()> {
+        if self.is_erased() {
+            return Err(CoreError::Internal {
+                reason: "the space keys of this device were erased".into(),
+            });
+        }
         let current = self.current_epoch();
         let expected = current.saturating_add(1);
         if new_key.epoch() != expected {
@@ -327,6 +360,7 @@ impl SpaceKeyRing {
     pub fn to_records(&self) -> Vec<KeyRingRecord> {
         let mut epochs: Vec<u32> = self.keys.keys().copied().collect();
         epochs.extend(self.superseded.keys().copied());
+        epochs.extend(self.erased_at);
         epochs.sort_unstable();
         epochs.dedup();
         epochs
@@ -351,10 +385,24 @@ impl SpaceKeyRing {
                 superseded.insert(r.epoch, s);
             }
         }
+        // A ring whose keys were all erased (revoked device) has no key: its last record is
+        // the epoch that was current, with neither key nor supersession.
+        let erased_at = if keys.is_empty() {
+            let epoch = records
+                .iter()
+                .filter(|r| r.key.is_none() && r.superseded.is_none())
+                .map(|r| r.epoch)
+                .max()
+                .ok_or_else(|| CoreError::input("key ring without a key"))?;
+            Some(epoch)
+        } else {
+            None
+        };
         let current = keys
             .keys()
             .next_back()
             .copied()
+            .or(erased_at)
             .ok_or_else(|| CoreError::input("key ring without a key"))?;
         if superseded.contains_key(&current)
             || superseded.keys().any(|e| *e > current)
@@ -364,7 +412,11 @@ impl SpaceKeyRing {
         {
             return Err(CoreError::input("inconsistent key ring records"));
         }
-        Ok(Self { keys, superseded })
+        Ok(Self {
+            keys,
+            superseded,
+            erased_at,
+        })
     }
 }
 
@@ -461,6 +513,42 @@ mod tests {
         let restored = SpaceKeyRing::from_records(&ring.to_records()).unwrap();
         assert_eq!(restored.to_records(), ring.to_records());
         assert!(!format!("{:?}", ring.to_records()).contains(&format!("{:?}", k1.to_bytes())));
+    }
+
+    #[test]
+    fn erased_ring_holds_no_key_and_round_trips() {
+        let k1 = SpaceKey::generate(1).unwrap();
+        let k2 = SpaceKey::generate(2).unwrap();
+        let it = item();
+        let env1 = seal_item(&it, &k1).unwrap();
+        let env2 = seal_item(&it, &k2).unwrap();
+        let mut ring = SpaceKeyRing::new(k1);
+        ring.add_rotation_key(k2.clone(), 100, DAY).unwrap();
+        assert!(!ring.is_erased());
+        assert!(ring.erase_keys());
+        assert!(!ring.erase_keys(), "idempotent");
+        assert!(ring.is_erased());
+        assert!(ring.epochs().is_empty());
+        assert!(ring.current().is_err());
+        assert_eq!(ring.current_epoch(), 2);
+        for env in [&env1, &env2] {
+            assert!(!ring.open_received(env, &it.id, 5).is_readable());
+        }
+        assert!(ring
+            .add_rotation_key(SpaceKey::generate(3).unwrap(), 200, DAY)
+            .is_err());
+        let restored = SpaceKeyRing::from_records(&ring.to_records()).unwrap();
+        assert_eq!(restored.to_records(), ring.to_records());
+        assert!(restored.is_erased());
+        assert_eq!(restored.current_epoch(), 2);
+        // Nothing of the keys is left in the persisted form.
+        assert!(ring.to_records().iter().all(|r| r.key.is_none()));
+        // A ring that was never rotated erases too.
+        let mut fresh = SpaceKeyRing::new(SpaceKey::generate(1).unwrap());
+        assert!(fresh.erase_keys());
+        let again = SpaceKeyRing::from_records(&fresh.to_records()).unwrap();
+        assert!(again.is_erased());
+        assert_eq!(again.current_epoch(), 1);
     }
 
     #[test]
