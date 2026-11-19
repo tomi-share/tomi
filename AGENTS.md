@@ -34,7 +34,11 @@ Identifiers: application id `eu.shaffe.tomi`, URL scheme `tomi-share://`.
    secret content in clear at rest (SQLite, WAL, files), in logs, in notifications, or in an unprotected clipboard. System
    sharing of a secret only after biometric confirmation. Known trade-off: attachments of a secret are decrypted into
    `files/cache/` to be opened; this clear copy stays until the app goes to the background or the next start (then it is
-   wiped). Do not hide that it exists and do not add any other clear copy.
+   wiped). Precisely: on Android the purge runs 60 s after the app goes to the background (a grace so that "Open with" and
+   sharing can finish), the core purges again when it opens at the next start, and if the process dies inside those 60 s the
+   copy stays until that next start; on Windows it is purged 1 min after the last Tomi window stops being in use, on exit and
+   at the next start. Do not extend these delays, do not hide that the copy exists and do not add any other clear copy. See
+   `docs/threat-model.md`.
 4. **Format compatibility.** Changes are ADDITIVE (optional field ignored by older readers, tolerated new type, new
    crypto label) without touching the format. A breaking change means a new `format` / new `vN/` vector directory.
    The frozen vectors in `spec/vectors/` never change; if code and vectors disagree, the vectors win.
