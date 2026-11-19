@@ -271,7 +271,7 @@ Charter: `design/tomi/tokens.json` (reference) and `design/tomi/brand-guidelines
 | Relay binary / release | ➖ | ✅ `release-relay.yml` (Linux musl + Windows `.exe`, SHA-256, Forge deployment if configured) | ➖ | ➖ | ➖ | ➖ | On `relay-v*`. |
 | Android release (APK) | ➖ | ➖ | ➖ | 🟡 **manual**: `gh release upload android-dev`; debug APK; R8 disabled; no release signing | ➖ | ➖ | Asset name to align (`app-debug.apk` / `tomi-debug.apk`). No workflow produces the APK. |
 | Windows release (installer) | ➖ | ➖ | ➖ | ➖ | ➖ | 🟡 unsigned NSIS (`Tomi_0.1.0_x64-setup.exe`), `windows-preview` release **manual** | SmartScreen may warn. No workflow produces it. |
-| iOS distribution (TestFlight) | ➖ | ➖ | ➖ | ➖ | ❌ not done: Release archive, App Groups / Background Modes capabilities and signing team to be set up by the maintainer | ➖ | `Tomi` and `Tomi Dev` schemes; **never archive Dev** (the `Tomi Dev` scheme nonetheless has an `archive` action with no safeguard). |
+| iOS distribution (TestFlight) | ➖ | ➖ | ➖ | ➖ | ❌ not done: Release archive, App Groups / Background Modes capabilities and signing team to be set up by the maintainer | ➖ | `Tomi` and `Tomi Dev` schemes; **never archive with the Dev configuration** (the `Tomi Dev` scheme archives with `Release`, which has no developer tools). |
 | Artifact signing | ➖ | ❌ SHA-256 only (minisign / attestation to add) | ➖ | ❌ | 🚧 local signing via `Signing.local.xcconfig` | ❌ | `ci.yml`: "la CI ne signe rien" (CI signs nothing). |
 | Automatic updates | ➖ | 🟡 route `GET /updates/{*path}` | ➖ | ➖ | ➖ | ❌ no updater plugin (`createUpdaterArtifacts: false`) | |
 | Server deployment (`infra/`) | ➖ | 🟡 Caddy, nginx, systemd, `backup.sh`, `deploy.sh` not run; relay not installed on the production host as of 6 Nov. | ➖ | ➖ | ➖ | ➖ | See `infra/README.md`. |
@@ -306,7 +306,7 @@ Items marked ✅ in the code that have not yet been run on a physical device:
 11. **iOS: code screen without syntax colours** (Android: tree-sitter, 14 languages + PHP; Windows: ~12 languages); align the language lists.
 12. **iOS: no universal links** (`applinks:` absent): depends on the signing team and an AASA route to add to the relay.
 13. **iOS: no widget / send control** (Android: tile); whether it is useful is still to be decided.
-14. **iOS: no TestFlight and no delivery (CD)**, no safeguard against an archived `Tomi Dev` scheme; the Apple CI only builds and tests (never run yet: validate the three jobs on a first push).
+14. **iOS: no TestFlight and no delivery (CD)**, the archive action of the `Tomi Dev` scheme uses `Release` (no developer tools); the Apple CI only builds and tests (never run yet: validate the three jobs on a first push).
 15. **Android: no FCM push**, although the relay can send it (`push_token` "pas encore implémenté" (not implemented yet) in `ffi.rs`): to do on the core first, then Android.
 16. **Android: OFL font licences missing**, R8 / minify disabled, no release signing, Markdown rendering hardening still needed before a public release.
 17. **Android: unconditional background clipboard clearing** (it may overwrite a more recent copy); background purge of the plaintext copy to verify.

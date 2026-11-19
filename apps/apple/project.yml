@@ -15,7 +15,7 @@ configs:
   Release: release
 configFiles:
   Debug: Config/Debug.xcconfig
-  # Release + developer tools (real core, relay of the space): `Tomi Dev` scheme, never archived.
+  # Release + developer tools (real core, relay of the space): `Tomi Dev` scheme, whose archive action uses Release.
   Dev: Config/Dev.xcconfig
   Release: Config/Release.xcconfig
 packages:
@@ -132,7 +132,8 @@ schemes:
     test:
       targets:
         - TomiTests
-  # The real core on a device, as published, with the developer tools (Config/Dev.xcconfig).
+  # The real core on a device, as published, with the developer tools (Config/Dev.xcconfig). Its archive action uses
+  # Release on purpose: an archive of this scheme must never contain the developer tools (TOMI_DEV_TOOLS).
   Tomi Dev:
     build:
       targets:
@@ -142,4 +143,4 @@ schemes:
     profile:
       config: Dev
     archive:
-      config: Dev
+      config: Release

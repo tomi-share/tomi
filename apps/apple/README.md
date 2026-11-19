@@ -66,7 +66,8 @@ Apple team in it.
 The **Tomi Dev** scheme (configuration `Dev`, `Config/Dev.xcconfig`) is for testing real cases on an iPhone: like
 Release (real core, the space's relay), plus the development tools (`TOMI_DEV_TOOLS`). For example, the
 « Screen shared or recorded » cover offers « Continuer malgré le partage » there, for an iPhone mirrored to a Mac. This
-code does not exist in a Release build: never archive Dev for TestFlight.
+code does not exist in a Release build, and the scheme archives with Release (never archive with the Dev configuration
+for TestFlight).
 In Debug, `-TomiDebugScreenCaptured YES` shows this cover in the simulator.
 
 ### Continuous integration (`.github/workflows/ci.yml`)
