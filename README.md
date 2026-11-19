@@ -59,6 +59,13 @@ space from the app's first screen and pair your other devices.
 
 > The apps are in French for now (the default locale). Code, comments and documentation are in English.
 
+### Code signing policy
+
+The Windows installer is not code-signed yet. The project is applying for free code signing from the
+[SignPath Foundation](https://signpath.org/); who may sign, how a release is signed and what the program does with your data are
+in the [code signing policy](docs/CODE_SIGNING_POLICY.md). Whatever its signature status, every download can be verified
+(checksum and build provenance): see [docs/RELEASES.md](docs/RELEASES.md#verifying-a-download).
+
 ## Project status
 
 | Component | State |

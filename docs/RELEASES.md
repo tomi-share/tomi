@@ -199,7 +199,7 @@ gh attestation verify tomi-windows-setup.exe --repo tomi-share/tomi \
 
 A successful `gh attestation verify` prints the workflow, the commit and the run that built the file; any failure means you
 should not install it. The Windows installer is **not code-signed yet**, so SmartScreen will warn: verifying the attestation
-is the way to know what you are about to run (see the plan below).
+is the way to know what you are about to run (see "Windows code signing" below).
 
 Android APK:
 
@@ -216,31 +216,86 @@ key, so a build signed with a different certificate is not an update of this one
 
 Relay binaries: `sha256sum --check tomi-relay-<target>.sha256` as above.
 
-## Windows code signing: plan
+## Windows code signing
 
-Not done, and not configured in this repository: nothing in the workflows pretends otherwise. SmartScreen currently warns for
-the installer, which is why verification (above) is documented. The plan, in order:
+The Windows installer is **not code-signed yet**, and nothing in the repository pretends otherwise: SmartScreen warns, which is
+why verification (above) is documented. The project is applying for free code signing from the
+[SignPath Foundation](https://signpath.org/); the public side of that is [`CODE_SIGNING_POLICY.md`](CODE_SIGNING_POLICY.md)
+(roles, process, privacy), linked from the README and from the notes of every Windows release.
 
-1. **SignPath Foundation** (<https://signpath.org/>), which offers code signing for free to open-source projects. The usual
-   conditions, to confirm on their site when applying: an OSI-approved license (Tomi is Apache-2.0), a public repository,
-   releases built by a CI pipeline that SignPath can trace back to the source, and multi-factor authentication for the people
-   who approve signing. In practice the Windows job would upload the unsigned installer as an artifact, a SignPath signing
-   request would be submitted from the workflow (they provide a GitHub Action for this), and the signed file would then be
-   what gets checksummed, attested and published. The certificate would name SignPath Foundation as publisher. Application,
-   project configuration and the signing policy are owner tasks: they need an account and cannot be done from the repository.
-2. If that does not work out, a commercial alternative such as Microsoft's Azure Trusted Signing (check current availability
-   and eligibility), or an EV/OV certificate.
-3. Later: the Tauri updater with a minisign public key embedded in `tauri.conf.json` and the private key kept in CI secrets only,
-   so that installed copies update through a verified channel.
+### How it works in the pipeline
 
-Even with a certificate, SmartScreen reputation builds up with downloads; a signed installer can still show a warning at first.
+Signing is **off by default and switched on by one repository variable**, `SIGNPATH_ORGANIZATION_ID`. Without it, the pipeline is
+what it has always been: build, checksum, attestation, unsigned installer. With it (`build-apps.yml`, also used by
+`release-apps.yml`):
+
+1. the `windows` job builds the installer and uploads it, unsigned, as `tomi-windows-setup-unsigned.exe`;
+2. the `sign-windows` job submits it to SignPath with the SignPath GitHub action (pinned by commit SHA). SignPath checks the origin
+   (this repository, this commit, this run, GitHub-hosted runners) and **waits for an approver to approve the request by hand**
+   (the job waits up to two hours);
+3. the signed file is downloaded and must pass `Get-AuthenticodeSignature` with the status `Valid`, otherwise the job fails and
+   nothing is published (it fails closed);
+4. only then is the signed file checksummed, attested and uploaded as `windows-installer`, the artifact that the release
+   takes. The checksum and the attestation are those of the signed file.
+
+With signing on, `release-apps.yml` no longer needs `ALLOW_UNSIGNED_WINDOWS_RELEASE`, and the notes of the release carry the
+attribution that SignPath requires.
+
+### Turning it on (after the SignPath Foundation accepts the project)
+
+Account and project configuration need a SignPath account and cannot be done from the repository.
+
+1. **SignPath, organization:** add the predefined trusted build system *GitHub.com* and link it to the project. Installing the
+   SignPath GitHub App is optional but recommended (it lets SignPath evaluate the audit log).
+2. **SignPath, project** (its slug becomes `SIGNPATH_PROJECT_SLUG`): set the repository URL for origin verification to
+   `https://github.com/tomi-share/tomi`, and create this artifact configuration. The artifact is one `.exe`, not a zip. The
+   product name and version must be enforced for every build, which the SignPath Foundation requires:
+
+   ```xml
+   <artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+     <parameters>
+       <parameter name="version" required="true" />
+     </parameters>
+     <pe-file product-name="Tomi" product-version="${version}">
+       <authenticode-sign />
+     </pe-file>
+   </artifact-configuration>
+   ```
+
+   The workflow passes the `version` parameter from `apps/windows/src-tauri/tauri.conf.json`. A local build of version 0.1.0 has
+   `ProductName` `Tomi`, `ProductVersion` `0.1.0` and `FileVersion` `0.1.0` (`CompanyName` is empty), which is what this
+   configuration expects. Check it again after a change of the installer settings:
+   `(Get-Item .\tomi-windows-setup.exe).VersionInfo | Format-List ProductName, ProductVersion, FileVersion`.
+3. **SignPath, signing policy** (its slug becomes `SIGNPATH_SIGNING_POLICY_SLUG`): a release-signing policy where **each request is
+   approved by hand** by the approver named in the code signing policy, with origin verification required.
+4. **SignPath, CI user:** create a user with *submitter* permission on that policy and an API token for it.
+5. **GitHub:** store the token, then the three variables (`SIGNPATH_ORGANIZATION_ID` last, it is the switch):
+
+   ```sh
+   gh secret set SIGNPATH_API_TOKEN
+   gh api -X POST repos/tomi-share/tomi/actions/variables -f name=SIGNPATH_PROJECT_SLUG -f value=<project slug>
+   gh api -X POST repos/tomi-share/tomi/actions/variables -f name=SIGNPATH_SIGNING_POLICY_SLUG -f value=<policy slug>
+   gh api -X POST repos/tomi-share/tomi/actions/variables -f name=SIGNPATH_ORGANIZATION_ID -f value=<organization id>
+   ```
+
+6. **Test:** run **Actions > Build apps** with only Windows ticked and *Publish* unticked, approve the request in SignPath, and
+   check the artifact: the installer is signed (`Get-AuthenticodeSignature`, publisher *SignPath Foundation*).
+7. **Then** update [`CODE_SIGNING_POLICY.md`](CODE_SIGNING_POLICY.md) (status and the attribution line, see the comment in that
+   file) and the README, and cut a `windows-v*` release.
+
+Even with a certificate, SmartScreen reputation builds up with downloads: a signed installer can still show a warning at first.
+If the SignPath route does not work out, the alternatives are Microsoft's Azure Trusted Signing (check current availability and
+eligibility) or an EV/OV certificate, wired into the same job. Later: the Tauri updater, with a minisign public key embedded in
+`tauri.conf.json` and the private key kept in CI secrets only, so that installed copies update through a verified channel.
 
 ## Not done yet
 
-- [ ] Create the Android release keystore and configure the `ANDROID_RELEASE_*` secrets (see "Android release signing").
-      The workflow is ready for it; until it is done, CI publishes no APK at all (it builds an unsigned one as an artifact).
-- [ ] Code signing for the Windows installer (SmartScreen currently warns). Until then a `windows-v*` release needs the
-      repository variable `ALLOW_UNSIGNED_WINDOWS_RELEASE=true`, a conscious decision. Plan: "Windows code signing: plan".
+- [x] The Android release keystore exists and the `ANDROID_RELEASE_*` secrets and `ANDROID_RELEASE_CERT_SHA256` are configured
+      (see "Android release signing"). Still to do: publish the certificate fingerprint in "Verifying a download" with the first
+      release, and keep the keystore and its password backed up.
+- [ ] Code signing for the Windows installer (SmartScreen currently warns): the pipeline is ready and off by default; the SignPath
+      Foundation application and its configuration are owner tasks ("Windows code signing"). Until then a `windows-v*` release
+      needs the repository variable `ALLOW_UNSIGNED_WINDOWS_RELEASE=true`, a conscious decision.
 - [x] Workflows for `android-v*` and `windows-v*` tags (`release-apps.yml`): version checks, build, draft, attestation
       check, publish, generated notes with the protocol compatibility. Written without a CI run available: the first dry run
       (Actions > Release apps > Run workflow) is its first test.
