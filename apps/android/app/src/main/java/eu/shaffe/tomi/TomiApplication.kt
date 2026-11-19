@@ -229,7 +229,13 @@ class AppContainer(private val app: Application, val scope: CoroutineScope, val 
             LifecycleEventObserver { _, event ->
                 when (event) {
                     Lifecycle.Event.ON_START -> foreground.value = true
-                    Lifecycle.Event.ON_STOP -> foreground.value = false
+                    Lifecycle.Event.ON_STOP -> {
+                        foreground.value = false
+                        // The 2-minute authentication must not outlive the app session: whoever is handed the phone after the user
+                        // switched app must be asked again (the screen-off receiver only covers a locked phone). A BiometricPrompt
+                        // or a rotation does not stop the process, so the prompt itself never closes the window it just opened.
+                        authWindow.invalidate()
+                    }
                     else -> Unit
                 }
             },
@@ -285,7 +291,8 @@ class AppContainer(private val app: Application, val scope: CoroutineScope, val 
     }
 
     /**
-     * The 2-minute biometric window must not survive a locked phone: it is closed as soon as the screen turns off.
+     * The 2-minute biometric window must not survive a locked phone: it is closed as soon as the screen turns off (and when the app
+     * goes to the background, see [trackForeground]).
      * ACTION_SCREEN_OFF can only be received by a receiver registered at run time; it is a protected system broadcast,
      * so the receiver is not exported.
      */
