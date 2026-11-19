@@ -53,7 +53,7 @@ p256 = { version = "=0.14.0", default-features = false, features = ["ecdsa"] }
 toml = "1"
 clap = { version = "4", features = ["derive"] }
 ipnet = "2"
-fs4 = { version = "0.13", default-features = false }
+fs4 = { version = "1.1", default-features = false }
 
 # Outbound FCM HTTP v1 (blocking client run on the blocking pool) and RS256 signing of the
 # Google service-account assertion. Same TLS stack as tomi-core's `http` feature.
