@@ -179,6 +179,14 @@ export interface AppInfo {
   demoEntered: boolean;
   /** The pairing screen may offer to enter the demo space. */
   canEnterDemo: boolean;
+  /** The key rotation after a revocation keeps failing and is retried every hour. */
+  rotationStalled: boolean;
+}
+/** A device the relay removed on its own authority (an administrator, or its own departure). */
+export interface RelayRevocation {
+  deviceId: string;
+  name: string;
+  via: "admin" | "self" | "other";
 }
 export interface ExpiryRules {
   options: ExpiryChoice[];
@@ -424,6 +432,8 @@ export const api = {
   takePrefill: () => invoke<PrefillPayload | null>("take_prefill"),
 
   appInfo: () => invoke<AppInfo>("app_info"),
+  /** The devices the relay removed alone and the user was not told about: each comes back ONCE. */
+  takeRelayNotices: () => invoke<RelayRevocation[]>("take_relay_notices"),
   /** Enters the demo space of the core (a few seconds), then shows its feed. */
   enterDemo: () => invoke<void>("enter_demo"),
   /** Leaves the demo space (its files are erased): back to the welcome screen. */
@@ -508,6 +518,8 @@ export const events = {
     listen<number>("items-changed", (e) => cb(e.payload)),
   /** The devices, a history transfer or the state of the space changed. */
   spaceChanged: (cb: () => void): Promise<UnlistenFn> => listen("space-changed", () => cb()),
+  /** A relay removal is waiting: read it with `takeRelayNotices` (only a visible window does). */
+  relayRevocations: (cb: () => void): Promise<UnlistenFn> => listen("relay-revocations", () => cb()),
   jobChanged: (cb: (job: JobView) => void): Promise<UnlistenFn> =>
     listen<JobView>("job-changed", (e) => cb(e.payload)),
   popoverShown: (cb: () => void): Promise<UnlistenFn> => listen("popover-shown", () => cb()),

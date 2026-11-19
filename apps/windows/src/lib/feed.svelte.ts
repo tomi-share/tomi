@@ -12,7 +12,7 @@ import {
   type RenderMode,
   type RevealedSecret,
 } from "./api";
-import { errorMessage, fr } from "./i18n/fr";
+import { errorMessage, fr, relayNoticeText } from "./i18n/fr";
 import { archiveAction, type ArchiveAction } from "./itemLogic";
 
 /** A hidden value shown on screen goes back to "Masqué" after this long, or when the window loses focus. */
@@ -24,6 +24,8 @@ const FOCUS_GRACE_STEP_MS = 100;
 const UNDO_MS = 5_000;
 /** Cards seen at about the same time are read together after this delay. */
 const SEEN_BATCH_MS = 300;
+/** A sentence about a device removed by the relay stays long enough to be read. */
+const RELAY_NOTICE_MS = 9_000;
 
 /** The snackbar. `action` is a button of the banner (the "Annuler" of an archive). */
 export type Flash = {
@@ -48,6 +50,8 @@ class Feed {
   demo = $state(false);
   /** The pairing screen may offer to enter the demo space. */
   canEnterDemo = $state(false);
+  /** The key rotation after a revocation keeps failing (retried hourly): a removed device may still hold the key. */
+  rotationStalled = $state(false);
   /**
    * Items the core has already erased (read once) whose values are still on screen: the
    * card stays until the user masks it again, like the Android feed.
@@ -252,6 +256,21 @@ class Feed {
     for (const id of Object.keys(this.revealed)) this.hideValues(id);
   }
 
+  /**
+   * Devices the relay removed on its own authority, said once and without blocking anything. The
+   * core hands each one over ONCE, so only a window somebody looks at takes them: a hidden
+   * popover leaves them for the next window that is shown.
+   */
+  async takeRelayNotices(): Promise<void> {
+    if (document.hidden) return;
+    try {
+      const notices = await api.takeRelayNotices();
+      if (notices.length > 0) this.say(relayNoticeText(notices), "info", RELAY_NOTICE_MS);
+    } catch {
+      // Nothing was taken: the next change or the next time the window is shown tries again.
+    }
+  }
+
   async refreshStatus(): Promise<void> {
     try {
       const info = await api.appInfo();
@@ -259,6 +278,7 @@ class Feed {
       this.status = info.status;
       this.demo = info.demoEntered;
       this.canEnterDemo = info.canEnterDemo;
+      this.rotationStalled = info.rotationStalled && info.status.paired;
       if (wasPaired && !info.status.paired) this.#forgetEverything();
       this.preferredMode = info.settings.renderMode;
     } catch {
@@ -421,6 +441,7 @@ class Feed {
     const unlisten = await Promise.all([
       events.itemsChanged(() => void this.refresh()),
       events.spaceChanged(() => void this.refreshStatus()),
+      events.relayRevocations(() => void this.takeRelayNotices()),
       events.jobChanged((job) => this.#upsertJob(job)),
       events.focusItem((id) => {
         this.filter = "all";
@@ -456,12 +477,14 @@ class Feed {
     const onFocus = () => stopWatching();
     const onVisibility = () => {
       if (document.hidden) this.hideAllValues();
+      else void this.takeRelayNotices();
     };
     window.addEventListener("blur", onBlur);
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onVisibility);
     this.jobs = await api.activeJobs().catch(() => []);
     await Promise.all([this.refresh(), this.refreshStatus()]);
+    void this.takeRelayNotices();
     return () => {
       unlisten.forEach((u) => u());
       stopWatching();

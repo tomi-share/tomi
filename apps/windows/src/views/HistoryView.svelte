@@ -7,6 +7,7 @@
   import Icon from "../lib/Icon.svelte";
   import JobBar from "../lib/JobBar.svelte";
   import Logo from "../lib/Logo.svelte";
+  import RotationBanner from "../lib/RotationBanner.svelte";
   import StatusBanner from "../lib/StatusBanner.svelte";
   import { feed } from "../lib/feed.svelte";
   import { fr } from "../lib/i18n/fr";
@@ -70,7 +71,7 @@
       </nav>
     </header>
     <!-- On every tab but the welcome screen: a pending departure is never hidden by a tab. -->
-    <div class="departure-slot"><DepartureBanner /></div>
+    <div class="departure-slot"><DepartureBanner /><RotationBanner /></div>
   {/if}
 
   <main class="content">
@@ -173,6 +174,9 @@
   }
   .departure-slot {
     padding: var(--space-2) var(--space-4) 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
   }
   .departure-slot:empty {
     display: none;

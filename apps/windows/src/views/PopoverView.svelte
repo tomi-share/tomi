@@ -7,6 +7,7 @@
   import Icon from "../lib/Icon.svelte";
   import JobBar from "../lib/JobBar.svelte";
   import Logo from "../lib/Logo.svelte";
+  import RotationBanner from "../lib/RotationBanner.svelte";
   import StatusBanner from "../lib/StatusBanner.svelte";
   import { feed } from "../lib/feed.svelte";
   import { fr } from "../lib/i18n/fr";
@@ -106,6 +107,7 @@
   <div class="body scroll">
     <StatusBanner link />
     <DepartureBanner />
+    <RotationBanner link />
     {#if feed.canSend}
       <Composer bind:this={composer} />
     {/if}

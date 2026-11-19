@@ -270,6 +270,20 @@ export const fr = {
         "Windows ne peut pas ouvrir la clé qui protège les données : elles viennent d'un autre compte ou d'un autre PC.",
     } as Record<string, string>,
     seeDevices: "Appareils",
+    // The removal of a device is not finished (the key rotation keeps failing and is retried
+    // every hour): calm, no alarm, and what helps.
+    rotationStalledTitle: "Retrait d'appareil en cours",
+    rotationStalled:
+      "Un appareil retiré peut encore détenir la clé actuelle de ton espace. Tomi réessaie automatiquement. Ouvrir Tomi sur tes autres appareils peut aider.",
+  },
+  // A device the relay removed on its own (said once, without blocking anything).
+  relayNotice: {
+    admin: "{names} a été retiré par l'administrateur du relais.",
+    adminMany: "{names} ont été retirés par l'administrateur du relais.",
+    self: "{names} a quitté l'espace.",
+    selfMany: "{names} ont quitté l'espace.",
+    other: "{names} a été retiré de ton espace.",
+    otherMany: "{names} ont été retirés de ton espace.",
   },
   popover: {
     pin: "Garder ouvert",
@@ -795,4 +809,29 @@ export function formatRemainingTime(ms: number): string {
   if (hours < 48) return `${hours} heure${hours > 1 ? "s" : ""}`;
   const days = Math.round(hours / 24);
   return `${days} jours`;
+}
+
+/** "A", "A et B", "A, B et C". */
+function joinNames(names: string[]): string {
+  if (names.length < 2) return names.join("");
+  return `${names.slice(0, -1).join(", ")} et ${names[names.length - 1]}`;
+}
+
+/**
+ * The one-time notice of devices the relay removed on its own: one sentence per cause (the
+ * administrator, the device itself, anything else), several devices grouped in a sentence.
+ */
+export function relayNoticeText(list: { name: string; via: "admin" | "self" | "other" }[]): string {
+  const sentences: string[] = [];
+  for (const via of ["admin", "self", "other"] as const) {
+    const names = [...new Set(list.filter((r) => r.via === via).map((r) => r.name))];
+    if (names.length === 0) continue;
+    const forms = {
+      admin: [fr.relayNotice.admin, fr.relayNotice.adminMany],
+      self: [fr.relayNotice.self, fr.relayNotice.selfMany],
+      other: [fr.relayNotice.other, fr.relayNotice.otherMany],
+    }[via];
+    sentences.push(format(forms[names.length === 1 ? 0 : 1], { names: joinNames(names) }));
+  }
+  return sentences.join(" ");
 }
