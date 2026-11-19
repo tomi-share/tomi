@@ -21,6 +21,11 @@ pub const FORMAT_CLOUD: &str = "CanUploadToCloudClipboard";
 /// it is emptied without ever reading its content (only the presence of the format is tested).
 pub const FORMAT_ORIGIN: &str = "TomiClipboardOrigin";
 
+/// Carried, besides [`FORMAT_ORIGIN`], by every copy of a secret (and only by those). It lets the
+/// next start-up empty a clipboard that still holds a secret Tomi copied before it crashed
+/// (`panic = "abort"`: no exit handler runs). Like the origin tag, only its presence is tested.
+pub const FORMAT_SECRET_ORIGIN: &str = "TomiSecretClipboardOrigin";
+
 /// Delay before a copied secret is wiped from the clipboard.
 pub const SECRET_CLEAR_DELAY: std::time::Duration = std::time::Duration::from_secs(30);
 
@@ -83,6 +88,10 @@ mod imp {
     fn finish(sensitive: bool) -> AppResult<Option<u32>> {
         if sensitive {
             add_sensitive_formats()?;
+            // Not best effort: a secret that cannot be recognised after a crash is not copied.
+            let fmt = clipboard_win::register_format(FORMAT_SECRET_ORIGIN)
+                .ok_or_else(|| AppError::new("error.clipboard"))?;
+            sys(raw::set_without_clear(fmt.get(), &0u32.to_le_bytes()))?;
         }
         // Best effort: the copy itself must not fail for a missing tag.
         if let Some(fmt) = clipboard_win::register_format(FORMAT_ORIGIN) {
@@ -167,6 +176,18 @@ mod imp {
         empty_it()
     }
 
+    /// Empties the clipboard only if it carries the marker of a secret copied by Tomi
+    /// ([`FORMAT_SECRET_ORIGIN`]); a plain copy of Tomi, or anything from another program, stays.
+    /// Only the presence of the format is tested, never the content.
+    pub fn clear_tagged_secret() -> ClearResult {
+        let tagged = clipboard_win::register_format(FORMAT_SECRET_ORIGIN)
+            .is_some_and(|f| clipboard_win::is_format_avail(f.get()));
+        if !tagged {
+            return ClearResult::NotOurs;
+        }
+        empty_it()
+    }
+
     fn empty_it() -> ClearResult {
         match open() {
             Ok(_c) if raw::empty().is_ok() => ClearResult::Cleared,
@@ -206,9 +227,34 @@ mod imp {
     pub fn clear_tagged() -> ClearResult {
         ClearResult::NotOurs
     }
+    pub fn clear_tagged_secret() -> ClearResult {
+        ClearResult::NotOurs
+    }
 }
 
 pub use imp::*;
+
+/// How many times the start-up clear tries a clipboard another program keeps open.
+const LEFTOVER_TRIES: usize = 8;
+const LEFTOVER_PAUSE: std::time::Duration = std::time::Duration::from_millis(250);
+
+/// At start-up: a secret that a previous run copied and never got to wipe (a crash: the release
+/// build aborts on panic, so no exit handler ran) is emptied from the clipboard. Only a clipboard
+/// that still carries Tomi's secret marker is touched; whatever the user copied since is left
+/// alone. Blocking: call it off the async threads.
+pub fn clear_leftover_secret() -> ClearResult {
+    let mut last = ClearResult::Busy;
+    for i in 0..LEFTOVER_TRIES {
+        last = clear_tagged_secret();
+        if last != ClearResult::Busy {
+            break;
+        }
+        if i + 1 < LEFTOVER_TRIES {
+            std::thread::sleep(LEFTOVER_PAUSE);
+        }
+    }
+    last
+}
 
 #[cfg(test)]
 mod tests {
@@ -240,6 +286,7 @@ mod tests {
         assert_eq!(FORMAT_CLOUD, "CanUploadToCloudClipboard");
         assert_eq!(SECRET_CLEAR_DELAY.as_secs(), 30);
         assert_eq!(FORMAT_ORIGIN, "TomiClipboardOrigin");
+        assert_eq!(FORMAT_SECRET_ORIGIN, "TomiSecretClipboardOrigin");
     }
 }
 
@@ -333,6 +380,34 @@ mod win32_clipboard {
             clipboard_win::get_clipboard_string().unwrap(),
             "venu d'ailleurs"
         );
+        let _c = Clipboard::new_attempts(10).unwrap();
+        raw::empty().unwrap();
+    }
+
+    #[test]
+    #[ignore = "writes to the real Windows clipboard; run manually"]
+    fn the_start_up_clear_empties_a_leftover_secret_only() {
+        // A secret left by a crashed run: emptied, without reading it.
+        set_text("tomi-test-secret", true).unwrap();
+        assert!(available(FORMAT_SECRET_ORIGIN));
+        assert_eq!(clear_tagged_secret(), ClearResult::Cleared);
+        assert_eq!(clear_tagged_secret(), ClearResult::NotOurs, "nothing left");
+
+        // An ordinary copy of Tomi is not a secret: left alone.
+        set_text("pas un secret", false).unwrap();
+        assert!(!available(FORMAT_SECRET_ORIGIN));
+        assert_eq!(clear_tagged_secret(), ClearResult::NotOurs);
+        assert_eq!(
+            clipboard_win::get_clipboard_string().unwrap(),
+            "pas un secret"
+        );
+
+        // So is something copied by another program.
+        {
+            let _c = Clipboard::new_attempts(10).unwrap();
+            raw::set_string("venu d'ailleurs").unwrap();
+        }
+        assert_eq!(clear_tagged_secret(), ClearResult::NotOurs);
         let _c = Clipboard::new_attempts(10).unwrap();
         raw::empty().unwrap();
     }
