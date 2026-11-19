@@ -343,6 +343,7 @@ const EXECUTABLE_EXTENSIONS: &[&str] = &[
     "jnlp",
     "mht",
     "mhtml",
+    "one",
     "msu",
     "printerexport",
     "ops",
