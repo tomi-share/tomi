@@ -2921,6 +2921,28 @@
         }
       }
     },
+    "ios_devices_add_reason" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter un appareil à ton espace"
+          }
+        }
+      }
+    },
+    "ios_devices_add_unavailable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configure un verrouillage d’écran (code ou biométrie) pour ajouter un appareil à ton espace."
+          }
+        }
+      }
+    },
     "ios_devices_revoke_reason" : {
       "extractionState" : "manual",
       "localizations" : {

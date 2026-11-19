@@ -26,6 +26,13 @@ final class BiometricGate {
         await evaluateStrong(reason)
     }
 
+    /// Face ID / Touch ID or the passcode, asked every time, for an action that opens the space to another device
+    /// (adding one): the 2-minute window is neither used nor extended, so a phone left unlocked right after a reveal
+    /// cannot be used to add a device without the owner.
+    func authenticateFresh(reason: String) async -> AuthOutcome {
+        await evaluate(reason)
+    }
+
     func authenticate(reason: String) async -> AuthOutcome {
         if window.isValid { return .success }
         let outcome = await evaluate(reason)

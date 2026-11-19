@@ -54,7 +54,7 @@ struct DevicesScreen: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button(action: onAddDevice) { Image(systemName: "person.badge.plus") }
+                Button(action: addDevice) { Image(systemName: "person.badge.plus") }
                     .accessibilityLabel(Text("devices_add"))
             }
         }
@@ -133,6 +133,21 @@ struct DevicesScreen: View {
                 try await core.renameDevice(id: device.id, name: name)
             } catch {
                 feedback.show(L10n.text("devices_rename_failed"))
+            }
+        }
+    }
+
+    /// "Ajouter un appareil": Face ID / Touch ID or the passcode first, every time (never the 2-minute window), before
+    /// the invitation code is made: whoever holds the unlocked phone cannot add a device to the space alone.
+    private func addDevice() {
+        Task {
+            switch await gate.authenticateFresh(reason: L10n.text("ios_devices_add_reason")) {
+            case .success:
+                onAddDevice()
+            case .unavailable:
+                feedback.show(L10n.text("ios_devices_add_unavailable"))
+            case .cancelled, .failed:
+                break
             }
         }
     }
