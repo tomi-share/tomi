@@ -516,7 +516,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Action irréversible : une empreinte ou un visage enregistré est nécessaire."
+            "value" : "Action irréversible : confirme avec ton empreinte, ton visage ou le code de verrouillage du téléphone."
           }
         }
       }
@@ -527,7 +527,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Action irréversible : une empreinte ou un visage enregistré est nécessaire."
+            "value" : "Action irréversible : confirme avec ton empreinte, ton visage ou le code de verrouillage du téléphone."
           }
         }
       }
@@ -565,13 +565,24 @@
         }
       }
     },
+    "biometric_subtitle_pair" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le nouvel appareil recevra tout l’historique, secrets compris. Confirme avec ton empreinte, ton visage ou le code de verrouillage du téléphone."
+          }
+        }
+      }
+    },
     "biometric_subtitle_revoke" : {
       "extractionState" : "manual",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Action sensible : une empreinte ou un visage enregistré est nécessaire."
+            "value" : "Action sensible : confirme avec ton empreinte, ton visage ou le code de verrouillage du téléphone."
           }
         }
       }
@@ -664,6 +675,17 @@
         }
       }
     },
+    "biometric_title_pair" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter un appareil"
+          }
+        }
+      }
+    },
     "biometric_title_revoke" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -704,6 +726,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Partager le contenu masqué"
+          }
+        }
+      }
+    },
+    "channel_devices" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appareils"
+          }
+        }
+      }
+    },
+    "channel_devices_desc" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alerte quand un appareil est ajouté à ton espace. Aucun contenu, seulement le nom de l’appareil."
           }
         }
       }
@@ -1386,7 +1430,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pour supprimer ton espace, enregistre une empreinte ou un visage dans les réglages du téléphone. Rien n’a été effacé."
+            "value" : "Pour supprimer ton espace, configure un verrouillage d’écran (code, empreinte ou visage) dans les réglages du téléphone. Rien n’a été effacé."
           }
         }
       }
@@ -1794,7 +1838,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Cet appareil sera retiré de l’espace et la clé de l’espace sera renouvelée. Il ne pourra plus lire les nouveaux éléments. Une biométrie forte te sera demandée."
+            "value" : "Cet appareil sera retiré de l’espace et la clé de l’espace sera renouvelée. Il ne pourra plus lire les nouveaux éléments. Ton empreinte, ton visage ou ton code de verrouillage te sera demandé."
           }
         }
       }
@@ -1816,7 +1860,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aucune biométrie forte n’est configurée sur ce téléphone : révocation impossible."
+            "value" : "Aucun verrouillage d’écran n’est configuré sur ce téléphone : révocation impossible. Configure un code, une empreinte ou un visage dans les réglages."
           }
         }
       }
@@ -2069,7 +2113,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pour effacer sans confirmation du serveur, enregistre une empreinte ou un visage dans les réglages du téléphone. Désinstaller Tomi efface aussi tout ce qu’il contient."
+            "value" : "Pour effacer sans confirmation du serveur, configure un verrouillage d’écran (code, empreinte ou visage) dans les réglages du téléphone. Désinstaller Tomi efface aussi tout ce qu’il contient."
           }
         }
       }
@@ -2404,6 +2448,50 @@
         }
       }
     },
+    "invite_auth_required_body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pour ajouter un appareil, confirme ton identité avec ton empreinte, ton visage ou le code de verrouillage du téléphone."
+          }
+        }
+      }
+    },
+    "invite_auth_required_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirmation nécessaire"
+          }
+        }
+      }
+    },
+    "invite_auth_retry" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirmer"
+          }
+        }
+      }
+    },
+    "invite_auth_unavailable_body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pour ajouter un appareil, configure d’abord un verrouillage d’écran (code, empreinte ou visage) dans les réglages du téléphone."
+          }
+        }
+      }
+    },
     "invite_done_history" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2488,6 +2576,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nouveau code"
+          }
+        }
+      }
+    },
+    "invite_notice_auth_denied" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirmation annulée : rien n’a été ajouté. Appuie de nouveau sur « Ajouter cet appareil » quand tu es prêt."
           }
         }
       }
@@ -3682,6 +3781,17 @@
         }
       }
     },
+    "notice_link_appended_to_draft" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un lien d’une autre application a été ajouté à ton brouillon. Vérifie-le avant d’envoyer."
+          }
+        }
+      }
+    },
     "notice_params_dropped" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3788,6 +3898,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Illisible pour le moment : mise à jour de Tomi nécessaire"
+          }
+        }
+      }
+    },
+    "notif_device_added_body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "« %1$@ » a rejoint ton espace. Ce n’est pas toi ? Ouvre Appareils et révoque-le."
+          }
+        }
+      }
+    },
+    "notif_device_added_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouvel appareil ajouté"
           }
         }
       }
@@ -4498,6 +4630,17 @@
         }
       }
     },
+    "pair_link_received_warning" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce lien vient d’une autre application ou d’une page web. Rejoins uniquement un espace que tu viens de créer toi-même, avec un relais que tu reconnais."
+          }
+        }
+      }
+    },
     "pair_notifications_enable" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4954,6 +5097,28 @@
         }
       }
     },
+    "rotation_stalled_message" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un appareil retiré peut encore détenir la clé actuelle de ton espace. Tomi réessaie de la renouveler toutes les heures. Ouvrir Tomi sur tes autres appareils aide à y arriver."
+          }
+        }
+      }
+    },
+    "rotation_stalled_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retrait d’un appareil à terminer"
+          }
+        }
+      }
+    },
     "search_masked_note" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -5403,6 +5568,39 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Impossible de modifier l’épingle. Réessaie."
+          }
+        }
+      }
+    },
+    "snackbar_relay_revoked_admin" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "« %1$@ » a été retiré par l’administrateur du relais."
+          }
+        }
+      }
+    },
+    "snackbar_relay_revoked_other" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "« %1$@ » a été retiré de l’espace par le relais."
+          }
+        }
+      }
+    },
+    "snackbar_relay_revoked_self" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "« %1$@ » a quitté l’espace, d’après le relais."
           }
         }
       }
