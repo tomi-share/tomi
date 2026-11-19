@@ -66,20 +66,32 @@ impl Inner {
         if !self.is_trusted(peer) {
             return peer;
         }
-        let Some(xff) = headers.get("x-forwarded-for").and_then(|v| v.to_str().ok()) else {
-            return peer;
-        };
-        let hops: Vec<IpAddr> = xff
-            .split(',')
-            .filter_map(|s| s.trim().parse::<IpAddr>().ok())
-            .map(|ip| ip.to_canonical())
-            .collect();
-        hops.iter()
-            .rev()
-            .find(|ip| !self.is_trusted(**ip))
-            .or_else(|| hops.first())
-            .copied()
-            .unwrap_or(peer)
+        // Several header lines are one list (RFC 9110 §5.3): a proxy that adds its own line
+        // instead of appending to the client's must not let the client's line win.
+        let mut chain: Vec<&str> = Vec::new();
+        for line in headers.get_all("x-forwarded-for") {
+            let Ok(line) = line.to_str() else {
+                return peer;
+            };
+            chain.extend(line.split(','));
+        }
+        // Read from the right: the entries written by the trusted proxies come last. The first
+        // one that is not a trusted proxy is the client. An entry that is not an address, met
+        // before that point, makes the whole header untrustworthy: the TCP peer (the proxy)
+        // counts, which is the conservative bucket, never one the client could choose.
+        let mut last = None;
+        for hop in chain.iter().rev() {
+            let Ok(ip) = hop.trim().parse::<IpAddr>() else {
+                return peer;
+            };
+            let ip = ip.to_canonical();
+            if !self.is_trusted(ip) {
+                return ip;
+            }
+            last = Some(ip);
+        }
+        // Every hop is a trusted proxy: the outermost one is the best that is known.
+        last.unwrap_or(peer)
     }
 
     fn is_trusted(&self, ip: IpAddr) -> bool {

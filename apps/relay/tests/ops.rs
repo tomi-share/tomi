@@ -783,6 +783,52 @@ async fn a131_the_forwarded_address_is_trusted_only_from_a_trusted_proxy() {
         .err(429, "rate_limited");
 }
 
+#[tokio::test]
+async fn a131b_every_forwarded_for_line_counts_and_garbage_falls_back_to_the_proxy() {
+    let env = Env::with(|cfg, _| real_limits(cfg)).await;
+    let d = Dev::new("y");
+    // `lines` are separate header lines, in order.
+    let call = |lines: &[&str]| {
+        let mut b = Request::builder()
+            .method("POST")
+            .uri("/v1/auth/challenge")
+            .header("content-type", "application/json");
+        for l in lines {
+            b = b.header("x-forwarded-for", *l);
+        }
+        let req = b
+            .body(Body::from(json!({ "device_id": d.id }).to_string()))
+            .unwrap();
+        let peer: SocketAddr = "127.0.0.1:5000".parse().unwrap();
+        env.call_from(peer, req)
+    };
+    // A proxy that adds its own line instead of appending: the client's line comes first and
+    // the address the proxy saw is the last one. Each one of these is a client of its own.
+    for i in 0..30 {
+        let seen = format!("198.51.100.{i}");
+        assert_eq!(
+            call(&["203.0.113.50", &seen]).await.status,
+            409,
+            "client {i}"
+        );
+    }
+    // The client cannot pick its bucket by writing its own first line.
+    for _ in 0..10 {
+        call(&["1.1.1.1", "192.0.2.78"]).await;
+    }
+    call(&["2.2.2.2", "192.0.2.78"])
+        .await
+        .err(429, "rate_limited");
+    // An entry that is not an address, before any client address: nothing in the header is
+    // believed, the proxy's own address is counted (one shared bucket, never a chosen one).
+    for _ in 0..10 {
+        call(&["192.0.2.80", "not-an-ip"]).await;
+    }
+    call(&["192.0.2.81", "garbage"])
+        .await
+        .err(429, "rate_limited");
+}
+
 /// R1: a `Pairing`-authenticated request carries no session, so the per-device limit never
 /// applies to it. A token that is not valid for its channel (here nobody ever claimed a
 /// channel, so no token is) must therefore stay bounded per IP (`rl_ip_public`): otherwise

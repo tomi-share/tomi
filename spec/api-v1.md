@@ -2712,6 +2712,10 @@ Inactive devices are **never** deleted automatically: only a human revokes them.
 Token buckets (*token bucket*): `rate` = refill per minute, `burst` = capacity. Exceeding → `429 rate_limited`
 with `Retry-After`. The client IP is read from `X-Forwarded-For` **only** if the connection comes from an address
 in `trusted_proxies` (default `127.0.0.1/32`, `::1/128`); otherwise the TCP address.
+All the `X-Forwarded-For` header lines are read as one list, in order (several lines are equivalent to one
+comma-separated line, so a proxy that adds a line of its own cannot let the client's line win), from the right: the
+first address that is not in `trusted_proxies` is the client. An entry that is not an IP address, met before the
+client is found, makes the header unusable: the TCP address (the proxy) is counted.
 
 | Key | Scope | Rate / min | Burst |
 |-----|--------|-------------|--------|
