@@ -89,7 +89,11 @@ Workflow `.github/workflows/build-apps.yml`, **manual trigger only** (Actions ta
 `gh workflow run build-apps.yml -f android_variant=release`). It builds the Android APK (`release`, the default, or `debug`)
 and the Windows NSIS installer, then uploads them to the pre-releases `android-dev` and
 `windows-dev` (created on first use; `publish=false`: artifacts only). macOS/iOS builds are not run in CI, because macOS runners are more expensive.
-Tag naming, stable releases and changelog rules: see [RELEASES.md](RELEASES.md).
+Stable releases are cut from a tag (`android-vX.Y.Z`, `windows-vX.Y.Z`) by `.github/workflows/release-apps.yml`, which
+calls the same build jobs and refuses to publish unless the versions, the commit and the files check out; `release-apps.yml` has
+a dry run (Actions > Release apps > Run workflow). The checks can be run locally:
+`bash .github/scripts/check-release-version.sh android-v0.1.0`. Tag naming, the step-by-step procedure and changelog rules:
+see [RELEASES.md](RELEASES.md).
 
 - Quota: private repositories on the free plan get a limited monthly CI minute allowance, and Windows runners consume minutes at twice the normal rate.
 - Android: only a non-debuggable `release` APK signed with the release key (secrets `ANDROID_RELEASE_KEYSTORE_B64`,

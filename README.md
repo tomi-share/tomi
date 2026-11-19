@@ -49,8 +49,8 @@ can read. The details are in [`PROJECT.md`](PROJECT.md) and in the [specificatio
 
 | Platform | How to get it | Notes |
 |---|---|---|
-| Android | Latest [`android-dev`](https://github.com/tomi-share/tomi/releases/tag/android-dev) pre-release (`.apk`) | Development build, signed with the release key once the maintainer has configured it ([how it is checked](docs/RELEASES.md#android-release-signing)); never a debug build |
-| Windows | Latest [`windows-dev`](https://github.com/tomi-share/tomi/releases/tag/windows-dev) pre-release (`.exe` installer) | Development build, unsigned (SmartScreen will warn) |
+| Android | [Releases `android-v*`](https://github.com/tomi-share/tomi/releases?q=android-v) (`.apk`) | Signed with the project's release key, never a debug build ([how it is checked](docs/RELEASES.md#android-release-signing)); no release published yet |
+| Windows | [Releases `windows-v*`](https://github.com/tomi-share/tomi/releases?q=windows-v) (`.exe` installer) | Unsigned for now (SmartScreen will warn): [verify the download](docs/RELEASES.md#verifying-a-download); no release published yet |
 | iOS | Build from source (`apps/apple`) | TestFlight / App Store distribution is planned |
 | Relay | [`relay-latest`](https://github.com/tomi-share/tomi/releases/tag/relay-latest) (Linux and Windows binaries) | Deployment guide in [`infra/`](infra/README.md) |
 
