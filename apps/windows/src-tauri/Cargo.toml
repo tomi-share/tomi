@@ -67,7 +67,7 @@ winreg = "0.56"
 # Windows Hello (UserConsentVerifier) asks for a strong verification before the irreversible
 # departure actions (see strong_auth.rs), and the toast history is cleared after an erasure.
 # Already in the dependency tree through Tauri (same version, so the lock only gains an edge).
-windows-future = "0.3"
+windows-future = "0.100"
 windows = { version = "0.62", features = [
     "Data_Xml_Dom",
     "Foundation",
