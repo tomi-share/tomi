@@ -136,6 +136,65 @@ class FileSharingTest {
         assertEquals(FileShareOutcome.NothingToShare, none)
     }
 
+    // --- ONE file, from the "⋮" of its row ---------------------------------------------------------------------------------
+
+    @Test
+    fun oneFileIsSharedAloneByItsSlotWithoutTheDescription() = runTest {
+        val item = readableItem(
+            "t", source, now, attachments = listOf(png.withSlot(1), pdf.withSlot(3)), text = RichText("legende"), url = "https://a.example",
+        )
+        val gate = Gate(AuthOutcome.Failed)
+        val core = Core()
+        val outcome = FileSharing.prepareFile(item, 3, gate.authenticate, core.resolve)
+
+        outcome as FileShareOutcome.Ready
+        assertEquals(0, gate.calls)
+        assertEquals(listOf(3), core.asked)
+        assertEquals(listOf("content://tomi.test/t/3"), outcome.files.map { it.uri })
+        assertEquals(listOf("application/pdf"), outcome.files.map { it.mime })
+        assertEquals(null, outcome.text)
+    }
+
+    @Test
+    fun oneFileOfAHiddenItemGoesThroughTheGateAndIsDecryptedOnlyAfterIt() = runTest {
+        val ok = Gate(AuthOutcome.Success)
+        val core = Core()
+        val outcome = FileSharing.prepareFile(files(secret = true), 1, ok.authenticate, core.resolve)
+        assertEquals(1, ok.calls)
+        assertEquals(listOf(1), core.asked)
+        outcome as FileShareOutcome.Ready
+        assertEquals(null, outcome.text)
+
+        for ((auth, expected) in listOf(
+            AuthOutcome.Cancelled to FileShareOutcome.NotAuthenticated,
+            AuthOutcome.Failed to FileShareOutcome.NotAuthenticated,
+            AuthOutcome.Unavailable to FileShareOutcome.BiometricUnavailable,
+        )) {
+            val refused = Core()
+            val gate = Gate(auth)
+            assertEquals(expected, FileSharing.prepareFile(files(secret = true), 0, gate.authenticate, refused.resolve))
+            assertEquals(1, gate.calls)
+            assertTrue(refused.asked.isEmpty())
+        }
+    }
+
+    @Test
+    fun oneFileUnknownOrNotAvailableOnThisDeviceIsNothingToShare() = runTest {
+        // Unknown slot: the core is not even asked.
+        val core = Core()
+        assertEquals(FileShareOutcome.NothingToShare, FileSharing.prepareFile(files(), 7, Gate(AuthOutcome.Success).authenticate, core.resolve))
+        assertTrue(core.asked.isEmpty())
+        // Known slot, file not downloaded yet.
+        assertEquals(
+            FileShareOutcome.NothingToShare,
+            FileSharing.prepareFile(files(), 1, Gate(AuthOutcome.Success).authenticate, Core(missing = setOf(1)).resolve),
+        )
+        // An unknown slot of a hidden item does not even prompt.
+        val gate = Gate(AuthOutcome.Success)
+        assertEquals(FileShareOutcome.NothingToShare, FileSharing.prepareFile(files(secret = true), 7, gate.authenticate, Core().resolve))
+        assertEquals(0, gate.calls)
+    }
+
     @Test
     fun theIntentTypeIsTheMostPreciseOneThatCoversEveryFile() {
         assertEquals("image/png", FileSharing.commonMime(listOf("image/png", "IMAGE/PNG")))
