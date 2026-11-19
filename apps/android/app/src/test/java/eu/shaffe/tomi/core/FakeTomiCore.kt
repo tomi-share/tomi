@@ -1,11 +1,13 @@
 package eu.shaffe.tomi.core
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Clock
@@ -174,6 +176,22 @@ class FakeTomiCore(
     override suspend fun revokeDevice(id: String) {
         if (id == LOCAL_ID) return
         devicesState.update { list -> list.filterNot { it.id == id } }
+    }
+
+    private val rotationStalledState = MutableStateFlow(false)
+    private val relayRevocationChannel = Channel<RelayRevocation>(Channel.UNLIMITED)
+
+    override val rotationStalled: StateFlow<Boolean> = rotationStalledState.asStateFlow()
+    override val relayRevocations: Flow<RelayRevocation> = relayRevocationChannel.receiveAsFlow()
+
+    /** Tests: the key rotation after a revocation is (true) or is no longer (false) stalled on `device_set_mismatch`. */
+    fun setRotationStalled(stalled: Boolean) {
+        rotationStalledState.value = stalled
+    }
+
+    /** Tests: the relay alone removed a device; [relayRevocations] delivers it once (buffered until someone collects). */
+    fun relayRevoked(deviceId: String, name: String, via: RelayRevocationVia = RelayRevocationVia.Admin) {
+        relayRevocationChannel.trySend(RelayRevocation(deviceId, name, via))
     }
 
     private val departureState = MutableStateFlow<Departure?>(null)

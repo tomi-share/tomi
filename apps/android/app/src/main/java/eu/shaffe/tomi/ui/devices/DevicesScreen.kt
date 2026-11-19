@@ -59,6 +59,7 @@ import eu.shaffe.tomi.core.TomiCore
 import eu.shaffe.tomi.core.safeCore
 import eu.shaffe.tomi.security.AuthOutcome
 import eu.shaffe.tomi.ui.common.TomiSnackbarHost
+import eu.shaffe.tomi.ui.feed.RotationStalledBanner
 import eu.shaffe.tomi.ui.common.showFeedback
 import eu.shaffe.tomi.ui.common.rememberAuthenticator
 import eu.shaffe.tomi.ui.common.screenContentPadding
@@ -79,6 +80,9 @@ enum class DevicesEvent { RenameFailed, RevokeFailed }
 class DevicesViewModel(private val core: TomiCore) : ViewModel() {
     val devices: StateFlow<List<Device>?> = core.devices
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    /** The key rotation after a revocation keeps failing: the screen says the removed device may still hold the current key. */
+    val rotationStalled: StateFlow<Boolean> = core.rotationStalled
 
     private val busyState = MutableStateFlow(false)
 
@@ -112,6 +116,7 @@ fun DevicesScreen(viewModel: DevicesViewModel, onBack: () -> Unit, onAddDevice: 
     val revokeFailed = stringResource(R.string.devices_revoke_failed)
     val devices by viewModel.devices.collectAsStateWithLifecycle()
     val busy by viewModel.busy.collectAsStateWithLifecycle()
+    val rotationStalled by viewModel.rotationStalled.collectAsStateWithLifecycle()
     val authenticator = rememberAuthenticator()
     val scope = rememberCoroutineScope()
     val snackbar = remember { SnackbarHostState() }
@@ -168,6 +173,7 @@ fun DevicesScreen(viewModel: DevicesViewModel, onBack: () -> Unit, onAddDevice: 
                 }
             }
             Column {
+                if (rotationStalled) RotationStalledBanner()
                 if (busy) {
                     // A revocation rotates the space key at the relay: several seconds. Linear bar (charter 6.3), nothing near the symbol.
                     LinearProgressIndicator(Modifier.fillMaxWidth())

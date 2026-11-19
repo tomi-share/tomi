@@ -3,6 +3,7 @@ package eu.shaffe.tomi.ui.feed
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import eu.shaffe.tomi.AppContainer
+import eu.shaffe.tomi.core.RelayRevocation
 import eu.shaffe.tomi.core.TomiItem
 import eu.shaffe.tomi.core.ReadPolicy
 import eu.shaffe.tomi.core.safeCore
@@ -61,6 +62,9 @@ sealed interface FeedEvent {
     data object DeletedEverywhere : FeedEvent
     data object PinFailed : FeedEvent
 
+    /** The relay alone removed [revocation]'s device from the space: a one-time, non-blocking notice. */
+    data class RelayRevoked(val revocation: RelayRevocation) : FeedEvent
+
     /** A call on the core failed (network, storage...). The action did not happen; nothing is fatal. */
     data object ActionFailed : FeedEvent
 
@@ -107,6 +111,14 @@ class FeedViewModel(private val container: AppContainer) : ViewModel() {
 
     private val eventChannel = Channel<FeedEvent>(Channel.BUFFERED)
     val events = eventChannel.receiveAsFlow()
+
+    /** The removal of a device is not finished (the key rotation keeps failing): the feed header shows [RotationStalledBanner]. */
+    val rotationStalled: StateFlow<Boolean> = core.rotationStalled
+
+    init {
+        // A device the relay alone removed: said once, as a plain notice (the core hands each one over a single time).
+        viewModelScope.launch { core.relayRevocations.collect { eventChannel.send(FeedEvent.RelayRevoked(it)) } }
+    }
 
     private val merged = combine(core.items, revealed) { items, revealedSnapshots ->
         // An "after first read" secret leaves the core as soon as it is read; keep it on screen until it is hidden.

@@ -15,6 +15,7 @@ import uniffi.tomi_core.FfiDraft
 import uniffi.tomi_core.FfiDraftAttachment
 import uniffi.tomi_core.FfiItem
 import uniffi.tomi_core.FfiItemContent
+import uniffi.tomi_core.FfiRelayRevocation
 import uniffi.tomi_core.ReadPolicyKind
 import uniffi.tomi_core.SpaceStateKind
 import uniffi.tomi_core.TextContent
@@ -39,6 +40,16 @@ internal fun FfiDevice.toDomain(): Device =
 
 /** Devices that are still members: a revoked device is not shown in the list of devices of the space. */
 internal fun FfiDevice.isMember(): Boolean = state == DeviceStateKind.VERIFIED || state == DeviceStateKind.UNVERIFIED
+
+internal fun FfiRelayRevocation.toDomain(): RelayRevocation = RelayRevocation(
+    deviceId = deviceId,
+    deviceName = name,
+    via = when (via) {
+        "admin" -> RelayRevocationVia.Admin
+        "self" -> RelayRevocationVia.Self
+        else -> RelayRevocationVia.Other
+    },
+)
 
 internal fun SpaceStateKind.toDomain(): SpaceState = when (this) {
     SpaceStateKind.ACTIVE -> SpaceState.Active

@@ -15,6 +15,7 @@ import uniffi.tomi_core.FfiJoinOutcome
 import uniffi.tomi_core.FfiJoinPrompt
 import uniffi.tomi_core.FfiJoinSession
 import uniffi.tomi_core.FfiPairingPeer
+import uniffi.tomi_core.FfiRelayRevocation
 import uniffi.tomi_core.FfiSyncReport
 import uniffi.tomi_core.FfiTransfer
 import uniffi.tomi_core.FfiVerifyPrompt
@@ -241,6 +242,17 @@ internal open class NativeFake : RustTomiCoreInterface {
     override fun stopDoorbell() = unexpected()
 
     override fun takeResyncNotice(): Boolean = unexpected()
+
+    // The notices about the removal of a device: harmless defaults (RealTomiCore reads them after every change), settable by a test.
+    @Volatile
+    var rotationStalledNow = false
+    val pendingRelayRevocations = CopyOnWriteArrayList<FfiRelayRevocation>()
+
+    override fun rotationStalled(): Boolean = rotationStalledNow
+
+    /** Handed over once, like the core: what was returned is gone. */
+    override fun takeRelayRevocations(): List<FfiRelayRevocation> =
+        synchronized(pendingRelayRevocations) { pendingRelayRevocations.toList().also { pendingRelayRevocations.clear() } }
 
     override fun transfers(): List<FfiTransfer> = unexpected()
 

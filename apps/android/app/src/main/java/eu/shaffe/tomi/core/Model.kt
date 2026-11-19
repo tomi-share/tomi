@@ -301,5 +301,23 @@ enum class SpaceState {
     NotFound,
 }
 
+/** Who removed a device without a signed decision of the space ([RelayRevocation]). */
+enum class RelayRevocationVia {
+    /** The relay's administrator. */
+    Admin,
+
+    /** The device left on its own, as far as the relay says. */
+    Self,
+
+    /** Any other value the core may report in the future: said without a cause. */
+    Other,
+}
+
+/**
+ * A device that the relay alone removed from the space (`take_relay_revocations` of the core). Shown once, as a plain, non-blocking notice, so
+ * the user can react if it was not expected. [deviceName] is the device's name, or its id when the name is unknown: never any content.
+ */
+data class RelayRevocation(val deviceId: String, val deviceName: String, val via: RelayRevocationVia)
+
 /** Common type of the errors a [TomiCore] call may throw (storage, crypto, relay protocol). The pairing errors are [PairingException]. */
 open class TomiCoreException(message: String, cause: Throwable? = null) : Exception(message, cause)

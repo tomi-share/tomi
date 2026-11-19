@@ -159,6 +159,7 @@ fun FeedScreen(
     val departureBanner by leaveViewModel.banner.collectAsStateWithLifecycle()
     val canOfferLeave by leaveViewModel.canOfferLeave.collectAsStateWithLifecycle()
     val inDemo by viewModel.isDemo.collectAsStateWithLifecycle()
+    val rotationStalled by viewModel.rotationStalled.collectAsStateWithLifecycle()
     DepartureEventsEffect(leaveViewModel, snackbar)
     val onRetryDeparture = rememberDepartureRetry(leaveViewModel)
 
@@ -228,6 +229,7 @@ fun FeedScreen(
                 }
                 val banner: @Composable () -> Unit = {
                     if (inDemo) DemoBanner(onLeave = viewModel::leaveDemo)
+                    if (rotationStalled) RotationStalledBanner()
                     DepartureBanner(
                         state = departureBanner,
                         onRetry = onRetryDeparture,
@@ -880,6 +882,11 @@ fun FeedEventsEffect(viewModel: FeedViewModel, snackbar: SnackbarHostState) {
     val scope = rememberCoroutineScope()
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
+            if (event is FeedEvent.RelayRevoked) {
+                val notice = resources.getString(RelayRevocationNotice.messageRes(event.revocation.via), event.revocation.deviceName)
+                scope.launch { snackbar.showFeedback(notice) }
+                return@collect
+            }
             val undoLabel = resources.getString(R.string.action_undo)
             val message = resources.getString(
                 when (event) {
@@ -889,6 +896,7 @@ fun FeedEventsEffect(viewModel: FeedViewModel, snackbar: SnackbarHostState) {
                     FeedEvent.BiometricUnavailable -> R.string.toast_biometric_unavailable
                     FeedEvent.DeletedLocal -> R.string.snackbar_deleted_local
                     FeedEvent.DeletedEverywhere -> R.string.snackbar_deleted_everywhere
+                    is FeedEvent.RelayRevoked -> return@collect // Handled above.
                     FeedEvent.PinFailed -> R.string.snackbar_pin_failed
                     FeedEvent.ActionFailed -> R.string.snackbar_action_failed
                     is FeedEvent.ArchiveDone ->

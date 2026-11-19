@@ -429,6 +429,13 @@
     <string name="devices_revoke_failed">Impossible de révoquer l’appareil. Vérifie ta connexion et réessaie.</string>
     <string name="devices_revoking">Révocation en cours : la clé de l’espace est renouvelée, ça peut prendre quelques secondes.</string>
     <string name="devices_revoke_unavailable">Aucun verrouillage d’écran n’est configuré sur ce téléphone : révocation impossible. Configure un code, une empreinte ou un visage dans les réglages.</string>
+    <!-- The removal of a device is not finished: the key rotation keeps failing and Tomi retries every hour. Banner of the feed and of the devices screen. -->
+    <string name="rotation_stalled_title">Retrait d’un appareil à terminer</string>
+    <string name="rotation_stalled_message">Un appareil retiré peut encore détenir la clé actuelle de ton espace. Tomi réessaie de la renouveler toutes les heures. Ouvrir Tomi sur tes autres appareils aide à y arriver.</string>
+    <!-- One-time notice: the relay alone removed a device (its administrator, or a departure it reports). %1$s is the device name. -->
+    <string name="snackbar_relay_revoked_admin">« %1$s » a été retiré par l’administrateur du relais.</string>
+    <string name="snackbar_relay_revoked_self">« %1$s » a quitté l’espace, d’après le relais.</string>
+    <string name="snackbar_relay_revoked_other">« %1$s » a été retiré de l’espace par le relais.</string>
     <!-- Another device that has not shown up for a long time. Tomi only knows that, not that the app is uninstalled. -->
     <string name="devices_inactive_hint">Inactif depuis %1$s. Tu ne l’utilises plus ? Retire-le.</string>
     <plurals name="devices_inactive_duration">

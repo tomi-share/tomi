@@ -3,6 +3,7 @@ package eu.shaffe.tomi.core
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.emptyFlow
 
 /**
  * Boundary between the Android UI and the Tomi core.
@@ -28,6 +29,20 @@ interface TomiCore {
 
     /** State of the space (revoked device, protocol too recent for this app). */
     val spaceState: StateFlow<SpaceState>
+
+    /**
+     * True while the removal of a device is NOT finished: the key rotation that must follow a revocation keeps failing (`device_set_mismatch`)
+     * and the core retries it every hour. The removed device may still hold the current space key meanwhile: the UI shows a persistent,
+     * non-alarming banner, and nothing when false. Persisted by the core; re-read after a [sync] and on every change the core announces.
+     * Defaults to false for a core without a rotation (the tests' fake sets it).
+     */
+    val rotationStalled: StateFlow<Boolean> get() = NOT_STALLED
+
+    /**
+     * Devices that the relay alone removed (its administrator, or a departure it reports), each delivered ONCE: the core hands each one over
+     * a single time and this flow buffers what nobody collects yet. The UI shows a one-time, non-blocking notice for each. Defaults to none.
+     */
+    val relayRevocations: Flow<RelayRevocation> get() = emptyFlow()
 
     /** This device (never null once the core is initialised). */
     val localDevice: StateFlow<Device>
@@ -283,6 +298,9 @@ interface TomiCore {
      */
     fun isValidDeviceName(name: String): Boolean
 }
+
+/** [TomiCore.rotationStalled] of a core without a rotation. */
+private val NOT_STALLED: StateFlow<Boolean> = MutableStateFlow(false)
 
 /** [TomiCore.isDemo] of a core without a demo. */
 private val NOT_DEMO: StateFlow<Boolean> = MutableStateFlow(false)

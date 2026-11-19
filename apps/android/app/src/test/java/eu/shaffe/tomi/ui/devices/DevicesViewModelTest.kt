@@ -65,6 +65,19 @@ class DevicesViewModelTest {
     }
 
     @Test
+    fun `the stalled rotation of the core is what the screen shows`() = runTest {
+        val fake = FakeTomiCore(scope, startPaired = true)
+        val viewModel = DevicesViewModel(OfflineCore(fake))
+        assertFalse(viewModel.rotationStalled.value)
+
+        fake.setRotationStalled(true)
+        assertTrue(viewModel.rotationStalled.value)
+
+        fake.setRotationStalled(false)
+        assertFalse(viewModel.rotationStalled.value)
+    }
+
+    @Test
     fun `a revocation that fails is reported, and the busy state ends`() = runTest {
         val core = OfflineCore(FakeTomiCore(scope, startPaired = true))
         val gate = CompletableDeferred<Unit>().also { core.revokeGate = it }

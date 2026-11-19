@@ -100,7 +100,7 @@ private fun pendingText(last: PendingReason?): Int = when (last) {
 }
 
 @Composable
-private fun BannerCard(
+internal fun BannerCard(
     title: String?,
     text: String,
     progress: Boolean,
