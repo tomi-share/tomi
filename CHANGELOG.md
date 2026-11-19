@@ -16,12 +16,16 @@ version and the frozen vectors in `spec/vectors/`, not by application versions.
 - Android: the application id can be overridden with `-PtomiApplicationId=...` (default unchanged: `eu.shaffe.tomi`).
 - Core: unified core, with a demo mode that is entered and left from the real core (Android, Windows, iOS).
 - Windows, iOS: delete a single attachment, on this device only or everywhere.
+- CI: stable releases of the Android app and the Windows installer from `android-vX.Y.Z` / `windows-vX.Y.Z` tags
+  (`release-apps.yml`): the tag must match the version files (and `versionCode` must grow), the commit must be on `main`,
+  every file is checked and attested before the release is published, and the notes state the protocol compatibility
+  ([`docs/RELEASES.md`](docs/RELEASES.md)).
 
 ### Changed
 - iOS: long texts get bounded previews; String Catalog and generated design tokens cleaned up.
 
 ### Security
-- Core: the epoch-ordering rule no longer relies on relay-chosen positions; a sync page without progress ends the loop; SQLite `secure_delete` and WAL truncation; tombstones kept 90 days and items older than that refused as suspect; space keys erased on a verified signed self-revocation; persisted `rotation_stalled` flag and relay-revocation notices (not displayed by the apps yet).
+- Core: the epoch-ordering rule no longer relies on relay-chosen positions; a sync page without progress ends the loop; SQLite `secure_delete` and WAL truncation; tombstones kept 90 days and items older than that refused as suspect; space keys erased on a verified signed self-revocation; persisted `rotation_stalled` flag and relay-revocation notices, shown by the three apps (a calm banner while a key rotation keeps failing, and a one-time notice for a device the relay alone removed); relay-announced removals are validated (known verified device, `admin` or `self` only, bounded name and list), and a rotation blocked by a device the relay dropped while this one was away now completes.
 - Relay: every `X-Forwarded-For` line is read.
 - Android: fresh authentication before adding a device; the screen lock accepted for destructive actions; authentication window closed in the background; guaranteed purge of the decrypted attachment cache; alert when a device joins.
 - iOS: share inbox excluded from backups and dropped after 7 days; fresh authentication before adding a device; alert when a device joins; network loads blocked in the HTML web view.

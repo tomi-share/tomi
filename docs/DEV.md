@@ -9,8 +9,9 @@ the other documents describe intent and use cases.
 - Repository root: your local clone (for example `<repo>`), on Windows or any other platform. The commands below use PowerShell on Windows.
 - Rust 1.99 (MSVC). In a new PowerShell session, refresh the PATH before calling `cargo`:
   `$env:PATH = [System.Environment]::GetEnvironmentVariable("PATH","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("PATH","User")`
-- Android: SDK in `%LOCALAPPDATA%\Android\sdk` (`ANDROID_HOME`), platform 36, NDK 27, JDK 21.
-  `minSdk 33`, `targetSdk`/`compileSdk 36`. Physical test device: any Android 16 phone.
+- Android: SDK in `%LOCALAPPDATA%\Android\sdk` (`ANDROID_HOME`), platform 37.0 (`platforms;android-37.0`), build-tools 36.0.0, NDK 27, JDK 21 (Gradle 9.9.1 and AGP 9.5.1 through the wrapper;
+  the SDK platform and build-tools are downloaded by AGP when missing).
+  `minSdk 33`, `compileSdk 37`, `targetSdk 36`. Physical test device: any Android 16 phone.
 - Not installed by default: `gradle` (use the wrapper), `just`. Do not assume a tool is missing or present; check.
 - App identifier: `eu.shaffe.tomi`. Relay: configurable; no relay address is compiled into the Android app by default
   (`-PtomiRelayUrl=https://relay.example.org`, or `~/.gradle/gradle.properties` to keep it out of the repository;
@@ -88,7 +89,11 @@ Workflow `.github/workflows/build-apps.yml`, **manual trigger only** (Actions ta
 `gh workflow run build-apps.yml -f android_variant=release`). It builds the Android APK (`release`, the default, or `debug`)
 and the Windows NSIS installer, then uploads them to the pre-releases `android-dev` and
 `windows-dev` (created on first use; `publish=false`: artifacts only). macOS/iOS builds are not run in CI, because macOS runners are more expensive.
-Tag naming, stable releases and changelog rules: see [RELEASES.md](RELEASES.md).
+Stable releases are cut from a tag (`android-vX.Y.Z`, `windows-vX.Y.Z`) by `.github/workflows/release-apps.yml`, which
+calls the same build jobs and refuses to publish unless the versions, the commit and the files check out; `release-apps.yml` has
+a dry run (Actions > Release apps > Run workflow). The checks can be run locally:
+`bash .github/scripts/check-release-version.sh android-v0.1.0`. Tag naming, the step-by-step procedure and changelog rules:
+see [RELEASES.md](RELEASES.md).
 
 - Quota: private repositories on the free plan get a limited monthly CI minute allowance, and Windows runners consume minutes at twice the normal rate.
 - Android: only a non-debuggable `release` APK signed with the release key (secrets `ANDROID_RELEASE_KEYSTORE_B64`,

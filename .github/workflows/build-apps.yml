@@ -23,6 +23,9 @@ name: Build apps
 #                                   publish job refuses any APK signed by another certificate.
 #   TOMI_RELAY_URL                  default relay compiled into the apps (public, not a secret)
 
+# Also callable (`workflow_call`) by release-apps.yml, which builds exactly the same files for a stable tag and publishes them
+# itself: `publish` is then false, so the rolling pre-release step below never runs for a stable release. The called jobs
+# need the `id-token` and `attestations` permissions that the caller grants them.
 on:
   workflow_dispatch:
     inputs:
@@ -43,6 +46,27 @@ on:
         description: "Publish to the GitHub releases (otherwise artifacts only)"
         type: boolean
         default: true
+  workflow_call:
+    inputs:
+      android:
+        type: boolean
+        default: true
+      android_variant:
+        type: string
+        default: release
+      windows:
+        type: boolean
+        default: true
+      publish:
+        type: boolean
+        default: false
+    outputs:
+      android_publishable:
+        description: "true for a signed release APK (the only kind that may be published)"
+        value: ${{ jobs.android.outputs.publishable }}
+      android_cert_sha256:
+        description: "SHA-256 fingerprint of the certificate that signed the APK (public information)"
+        value: ${{ jobs.android.outputs.cert_sha256 }}
 
 permissions:
   contents: read
@@ -82,16 +106,16 @@ jobs:
       publishable: ${{ steps.apk.outputs.publishable }}
       cert_sha256: ${{ steps.key.outputs.cert_sha256 }}
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
         with:
           distribution: temurin
           java-version: "21"
       - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
         with:
-          packages: "platform-tools platforms;android-36 build-tools;36.0.0 ndk;${{ env.NDK_VERSION }}"
+          packages: "platform-tools platforms;android-37.0 build-tools;36.0.0 ndk;${{ env.NDK_VERSION }}"
       - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
         with:
           toolchain: ${{ env.RUST_VERSION }}
@@ -236,7 +260,7 @@ jobs:
       id-token: write       # attest-build-provenance: Sigstore signing identity of this workflow run
       attestations: write   # attest-build-provenance: stores the attestation
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
@@ -317,7 +341,7 @@ jobs:
       GH_REPO: ${{ github.repository }}
     steps:
       # For .github/scripts/verify-android-apk.sh (the same commit as this workflow run).
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2

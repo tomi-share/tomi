@@ -199,7 +199,7 @@ mod hello {
             let op: IAsyncOperation<UserConsentVerificationResult> = unsafe {
                 interop.RequestVerificationForWindowAsync(hwnd, &HSTRING::from(message))?
             };
-            // Not `op.get()`: that waits for ever. The prompt is watched, and closed when
+            // Not `op.join()`: that waits for ever. The prompt is watched, and closed when
             // nobody is waiting for it any more (the delay of `require` ran out).
             while op.Status()? == AsyncStatus::Started {
                 if cancel.load(Ordering::SeqCst) {
@@ -219,7 +219,7 @@ mod hello {
     fn availability() -> Option<UserConsentVerifierAvailability> {
         UserConsentVerifier::CheckAvailabilityAsync()
             .ok()?
-            .get()
+            .join()
             .ok()
     }
 

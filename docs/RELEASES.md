@@ -12,8 +12,8 @@ version; there is no global version number. Client/relay compatibility is carrie
 | Relay (moving pointer) | `relay-latest` | same assets as the latest relay release | rewritten by the workflow; do not edit by hand | **in place** |
 | Android, development | `android-dev` | rolling pre-release, release-signed APK `tomi-android-release.apk` (only when the release key is configured, see "Android release signing") | manual run of `build-apps.yml` | **in place** |
 | Windows, development | `windows-dev` | rolling pre-release, `tomi-windows-setup.exe` (unsigned) with `.sha256` and a build provenance attestation | manual run of `build-apps.yml` | **in place** |
-| Android, stable | `android-vX.Y.Z` | APK signed with the release key | push of the tag | planned (see below) |
-| Windows, stable | `windows-vX.Y.Z` | signed installer | push of the tag | planned (see below) |
+| Android, stable | `android-vX.Y.Z` | non-prerelease: APK signed with the release key, `.sha256`, attestation, notes | push of the tag (`release-apps.yml`) | **in place**, not run yet ("Cutting a stable release") |
+| Windows, stable | `windows-vX.Y.Z` | non-prerelease: NSIS installer (not code-signed yet), `.sha256`, attestation, notes | push of the tag (`release-apps.yml`) | **in place**, not run yet; needs the repository variable `ALLOW_UNSIGNED_WINDOWS_RELEASE` until the installer is signed |
 | CLI | `cli-vX.Y.Z` | binaries | push of the tag | planned |
 | iOS | none | distributed through TestFlight / App Store | | not applicable |
 
@@ -22,8 +22,9 @@ each build. They are always marked as pre-releases and are not stable releases.
 
 ## Rules
 
-1. The tag must match the version stored in the component's own file. The relay workflow already enforces this against the
-   Cargo workspace version; the Android (`versionName` in Gradle) and Windows (`tauri.conf.json`) workflows must do the same.
+1. The tag must match the version stored in the component's own file. The relay workflow enforces this against the
+   Cargo workspace version; `release-apps.yml` does the same for Android (`versionName` in Gradle, and `versionCode` must grow)
+   and Windows (`tauri.conf.json`, `package.json` and `src-tauri/Cargo.toml`), with `.github/scripts/check-release-version.sh`.
    A pushed tag is never reused: fix forward with a new version.
 2. The Cargo workspace version covers the Rust crates (relay, core, CLI). Android and Windows have their own version numbers.
 3. Release notes are scoped by path, because `crates/core` is shared:
@@ -34,6 +35,39 @@ each build. They are always marked as pre-releases and are not stable releases.
    pointer to `infra/`) and append the changelog. Do not edit the description of `relay-latest`.
 6. Relay release: bump the workspace version in `Cargo.toml`, push `relay-vX.Y.Z`, then check the optional deploy hook step
    (see `infra/forge/` and the `FORGE_DEPLOY_URL` secret) without assuming the deployment has finished.
+
+## Cutting a stable release
+
+Android and Windows, from `main` only. The repository must be public: the attestations that the release notes tell users to
+verify exist only for public repositories.
+
+1. Choose the version `X.Y.Z` of the product. They are independent: `android-v0.2.0` says nothing about Windows.
+   - Android: set `versionName = "X.Y.Z"` **and raise `versionCode`** in `apps/android/app/build.gradle.kts`. Android refuses an
+     update whose `versionCode` did not grow, so this is a one-way door: never lower it, never reuse it.
+   - Windows: set the same `version` in `apps/windows/src-tauri/tauri.conf.json`, `apps/windows/package.json` and
+     `apps/windows/src-tauri/Cargo.toml`.
+2. Add the user-visible changes to `CHANGELOG.md`, commit, and get it onto `main` (rebase, never a merge commit).
+3. Optional dry run, no tag needed: **Actions > Release apps > Run workflow**, with the tag you are about to create (for example
+   `android-v0.2.0`). It runs every check and the build, and publishes nothing.
+4. Tag the commit on `main` and push the tag:
+
+   ```sh
+   git switch main && git pull --ff-only
+   git tag -a android-v0.2.0 -m "Tomi for Android 0.2.0"
+   git push origin android-v0.2.0
+   ```
+
+5. The workflow stops, with a message, when: the tag is not `android-vX.Y.Z` or `windows-vX.Y.Z`; a version file disagrees with
+   the tag or did not go up; the commit is not on `main`; the repository is private; for Windows, `ALLOW_UNSIGNED_WINDOWS_RELEASE`
+   is not `true`; for Android, the release signing secrets are missing, or the APK is debuggable, debug-signed, unsigned or
+   signed by another certificate; a release already exists for the tag; or an attestation does not verify.
+6. Otherwise it creates a **draft** release with the files (`tomi-android-X.Y.Z.apk`, `tomi-windows-X.Y.Z-setup.exe`, each with its
+   `.sha256`) and generated notes (protocol compatibility, path-scoped changes, verification commands, and for Android the
+   certificate fingerprint), verifies the attestation of each file, and publishes. Then check it: `gh release view android-v0.2.0`,
+   and run the verification commands of the notes on a downloaded copy.
+
+A published tag is never reused, a stable release is never replaced with `--clobber`, and a mistake is fixed forward with the next
+version. When you only want a build to try, run the rolling `*-dev` builds from **Actions > Build apps**.
 
 ## Android release signing
 
@@ -177,7 +211,7 @@ apksigner verify --print-certs tomi-android-release.apk      # compare "certific
 ```
 
 Release certificate SHA-256 fingerprint: **not published yet** (the release key has not been created, see "Not done yet").
-It will be added here and in the release notes of the first signed build. Android refuses to update an app signed with another
+It will be added here, and the notes of every stable Android release carry it. Android refuses to update an app signed with another
 key, so a build signed with a different certificate is not an update of this one.
 
 Relay binaries: `sha256sum --check tomi-relay-<target>.sha256` as above.
@@ -205,11 +239,14 @@ Even with a certificate, SmartScreen reputation builds up with downloads; a sign
 
 - [ ] Create the Android release keystore and configure the `ANDROID_RELEASE_*` secrets (see "Android release signing").
       The workflow is ready for it; until it is done, CI publishes no APK at all (it builds an unsigned one as an artifact).
-- [ ] Code signing for the Windows installer (SmartScreen currently warns), before creating `windows-v*` tags. Plan: "Windows code signing: plan".
-- [ ] Workflows for `android-v*` and `windows-v*` tags: build, check that the tag matches the version file, publish a
-      non-prerelease with generated notes.
+- [ ] Code signing for the Windows installer (SmartScreen currently warns). Until then a `windows-v*` release needs the
+      repository variable `ALLOW_UNSIGNED_WINDOWS_RELEASE=true`, a conscious decision. Plan: "Windows code signing: plan".
+- [x] Workflows for `android-v*` and `windows-v*` tags (`release-apps.yml`): version checks, build, draft, attestation
+      check, publish, generated notes with the protocol compatibility. Written without a CI run available: the first dry run
+      (Actions > Release apps > Run workflow) is its first test.
 - [ ] `cli-v*` workflow and binaries, if the CLI is to be distributed.
-- [ ] A "minimum compatible versions" table in each release's notes (rule 4), possibly generated from the version files.
-- [ ] Decide the first public version (the crates are currently at the workspace version in `Cargo.toml`).
+- [ ] Minimum compatible versions in the notes (rule 4): the notes state the protocol and relay API version and the relay version at
+      release time; a stricter "minimum relay version" needs a decision on what counts as incompatible.
+- [ ] Decide the first public versions (Android and Windows are at 0.1.0; the crates are at the workspace version in `Cargo.toml`).
 - [ ] Optional: repository variable and secret checklist for a new fork: `TOMI_RELAY_URL` and `ANDROID_RELEASE_CERT_SHA256`
       (variables), the `ANDROID_RELEASE_*` secrets and `FORGE_DEPLOY_URL` (secret); documented in this file and in `docs/DEV.md`.

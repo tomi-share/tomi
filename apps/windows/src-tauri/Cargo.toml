@@ -51,7 +51,7 @@ tokio = { version = "1", features = ["time", "sync", "rt", "macros"] }
 url = "2"
 ammonia = "4"
 pulldown-cmark = { version = "0.13", default-features = false, features = ["html"] }
-base64 = "0.22"
+base64 = "0.23"
 mime_guess = "2"
 image = { version = "0.25", default-features = false, features = ["png", "jpeg", "gif", "bmp", "webp"] }
 drag = "2"
@@ -67,8 +67,8 @@ winreg = "0.56"
 # Windows Hello (UserConsentVerifier) asks for a strong verification before the irreversible
 # departure actions (see strong_auth.rs), and the toast history is cleared after an erasure.
 # Already in the dependency tree through Tauri (same version, so the lock only gains an edge).
-windows-future = "0.2"
-windows = { version = "0.61", features = [
+windows-future = "0.3"
+windows = { version = "0.62", features = [
     "Data_Xml_Dom",
     "Foundation",
     "Security_Credentials_UI",
