@@ -601,6 +601,11 @@ public final class RustTomiCoreAdapter: TomiKit.TomiCore {
         guard let entry = demoEntry, supportsDemoEntry else {
             throw TomiCoreError(.invalidInput, reason: "demo entry not supported")
         }
+        // Never on a device that belongs to a space (nor over a demo): the same rule as `canEnterDemo`, checked again here
+        // so that no caller can reach the demo's fixed codes from a provisioned device.
+        guard canEnterDemo else {
+            throw TomiCoreError(.invalidInput, reason: "demo entry refused")
+        }
         // A joining left open on the real core is closed first: nothing real stays pending behind the demo.
         await abandonJoin()
         try await call(on: pairing) { core in

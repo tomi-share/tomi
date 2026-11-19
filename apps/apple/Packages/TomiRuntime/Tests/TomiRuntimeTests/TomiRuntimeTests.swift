@@ -289,6 +289,19 @@ final class TomiRuntimeTests: XCTestCase {
         core.shutdown()
     }
 
+    func testTheDemoCannotBeEnteredTwiceNorOverASpace() async throws {
+        let core = try await open(.real(relayURL: URL(string: "https://relay.example.org")!))
+        await eventually("first reading") { core.state.loaded }
+        try await core.enterDemo()
+        do {
+            try await core.enterDemo()
+            XCTFail("already in the demo")
+        } catch {
+            XCTAssertEqual((error as? TomiCoreError)?.kind, .invalidInput)
+        }
+        core.shutdown()
+    }
+
     func testACoreOpenedAsADemoCannotEnterNorLeaveTheDemo() async throws {
         let core = try await open(.demo(startPaired: true, assets: nil))
         await eventually("first reading") { core.state.loaded }

@@ -308,9 +308,10 @@ struct FeedScreen: View {
                         if searching { searchHeader(layout) } else { header(layout) }
                     }
                     .id(Self.topId)
-                    // The demo entered from the real core: said at all times, with the way out.
-                    if model.core.canLeaveDemo {
-                        DemoBanner { Task { await model.core.leaveDemo() } }
+                    // Any demo (made-up data): said at all times, with the way out when it was entered from the real core.
+                    if model.core.isDemo {
+                        let leaveDemo: (() -> Void)? = model.core.canLeaveDemo ? { Task { await model.core.leaveDemo() } } : nil
+                        DemoBanner(onLeave: leaveDemo)
                             .padding(.horizontal, TomiSpace.screen)
                             .padding(.top, TomiSpace.s2)
                             .frame(maxWidth: TomiLayout.readableWidth)

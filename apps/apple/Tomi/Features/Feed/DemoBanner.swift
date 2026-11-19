@@ -1,10 +1,11 @@
 import SwiftUI
 import TomiDesign
 
-/// At the top of the feed while the demo entered from the real core is on screen: the data is made up, and "Quitter
-/// la démo" goes back to the welcome screen.
+/// At the top of the feed while a demo is on screen: the data is made up. When the demo was entered from the real core,
+/// "Quitter la démo" goes back to the welcome screen (`onLeave`); a core opened as a demo (debug builds) has no way out,
+/// but is labelled all the same.
 struct DemoBanner: View {
-    let onLeave: () -> Void
+    let onLeave: (() -> Void)?
 
     var body: some View {
         HStack(spacing: TomiSpace.s3) {
@@ -12,8 +13,10 @@ struct DemoBanner: View {
                 .tomiText(.caption)
                 .foregroundStyle(TomiColor.textMuted)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            Button(L10n.text("demo_leave"), action: onLeave)
-                .buttonStyle(.tomiText)
+            if let onLeave {
+                Button(L10n.text("demo_leave"), action: onLeave)
+                    .buttonStyle(.tomiText)
+            }
         }
         .padding(.horizontal, TomiSpace.s4)
         .padding(.vertical, TomiSpace.s2)
