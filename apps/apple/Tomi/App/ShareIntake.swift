@@ -21,6 +21,8 @@ final class ShareIntake {
     var onFailed: (() -> Void)?
     /// Files of a share left out by the limits of the item.
     var onSkippedFiles: ((Int) -> Void)?
+    /// Shares dropped because they waited longer than `ShareInbox.maxAge` (how many).
+    var onExpired: ((Int) -> Void)?
     private var stopped = false
 
     init(inbox: ShareInbox, coordinator: SendCoordinator) {
@@ -76,6 +78,9 @@ final class ShareIntake {
             }
             scheduleNext()
         } while again
+        // After the sending: what is still there past `ShareInbox.maxAge` could not be sent, and goes.
+        let dropped = inbox.dropExpired(now: Date())
+        if dropped > 0 { onExpired?(dropped) }
     }
 
     /// The core is replaced: this intake does nothing more.

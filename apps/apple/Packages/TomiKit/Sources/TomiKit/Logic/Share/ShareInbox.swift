@@ -10,6 +10,9 @@ public enum AppGroup {
     public static let isPairedKey = "core.isPaired"
     /// Key: the app could not open its data ("Données illisibles"); the extension says so instead of taking a share.
     public static let isUnreadableKey = "core.isUnreadable"
+    /// Key: how many shares were dropped (older than `ShareInbox.maxAge`) and not yet told to the user; the app says so
+    /// once, on screen, and resets it.
+    public static let expiredSharesKey = "inbox.expiredShares"
 
     /// The container, nil when the app group is not in the entitlements.
     public static func container(fileManager: FileManager = .default) -> URL? {
@@ -59,6 +62,9 @@ public struct ShareInbox: Sendable {
     public static let manifestName = "share.json"
     /// Leftovers of an extension stopped while copying, or of an app stopped while sending, are dropped after this.
     public static let staleAfter: TimeInterval = 24 * 3600
+    /// A share that nothing sent in this time is dropped (`dropExpired`): the inbox is plaintext at rest (class A, out of
+    /// backups), so it must not keep content for days when the app is not opened.
+    public static let maxAge: TimeInterval = 24 * 3600
 
     public let root: URL
 
@@ -81,6 +87,7 @@ public struct ShareInbox: Sendable {
 
     /// A new directory where the extension copies the files it receives before they are parsed.
     public func makeIncomingDirectory() throws -> URL {
+        try prepareRoot()
         let dir = root.appendingPathComponent(Self.incomingPrefix + UUID().uuidString.lowercased(), isDirectory: true)
         try fileManager.createDirectory(at: dir, withIntermediateDirectories: true)
         protect(dir)
@@ -93,6 +100,7 @@ public struct ShareInbox: Sendable {
         _ parsed: ParsedShare, secret: Bool, expiry: ExpiryChoice, id: String = UUID().uuidString.lowercased(),
         now: Date, window: TimeInterval
     ) throws -> ShareHandoff {
+        try prepareRoot()
         let building = root.appendingPathComponent(Self.buildingPrefix + id, isDirectory: true)
         let filesDir = building.appendingPathComponent("files", isDirectory: true)
         try? fileManager.removeItem(at: building)
@@ -108,6 +116,7 @@ public struct ShareInbox: Sendable {
                 } catch {
                     try fileManager.copyItem(at: file.url, to: target)
                 }
+                excludeFromBackup(target)
                 files.append(ShareHandoff.File(name: file.name, mime: file.mime, size: file.size))
             }
             let handoff = ShareHandoff(
@@ -210,6 +219,27 @@ public struct ShareInbox: Sendable {
         }
     }
 
+    /// Drops the shares that waited longer than `maxAge` (the app was not opened, or sending kept failing) and returns how
+    /// many. The age is the directory's creation date, kept by the renames of `claim` and `unclaim`: no manifest is read,
+    /// which the data protection would refuse while the device is locked (a background task). Only unclaimed shares: one
+    /// being sent is dot-prefixed and left to `purge`.
+    @discardableResult
+    public func dropExpired(now: Date, maxAge: TimeInterval = ShareInbox.maxAge) -> Int {
+        guard let names = try? fileManager.contentsOfDirectory(atPath: root.path) else { return 0 }
+        // An inbox made by a build that did not exclude it from backups: done at the app's next look.
+        excludeFromBackup(root)
+        var dropped = 0
+        for name in names where !name.hasPrefix(".") {
+            let url = directory(name)
+            guard let attributes = try? fileManager.attributesOfItem(atPath: url.path),
+                  let created = (attributes[.creationDate] as? Date) ?? (attributes[.modificationDate] as? Date),
+                  now.timeIntervalSince(created) > maxAge
+            else { continue }
+            if (try? fileManager.removeItem(at: url)) != nil { dropped += 1 }
+        }
+        return dropped
+    }
+
     /// Everything goes (this device left its space).
     public func removeAll() {
         try? fileManager.removeItem(at: root)
@@ -227,7 +257,23 @@ public struct ShareInbox: Sendable {
         #endif
     }
 
+    /// The inbox directory, out of backups (iCloud, Finder): a share is plaintext, a secret one included. A backup
+    /// exclusion covers what is inside the directory, so it is set on the root, and again on each directory and file made
+    ///.
+    private func prepareRoot() throws {
+        try fileManager.createDirectory(at: root, withIntermediateDirectories: true)
+        excludeFromBackup(root)
+    }
+
+    private func excludeFromBackup(_ url: URL) {
+        var url = url
+        var values = URLResourceValues()
+        values.isExcludedFromBackup = true
+        try? url.setResourceValues(values)
+    }
+
     private func protect(_ url: URL) {
+        excludeFromBackup(url)
         #if os(iOS)
         try? fileManager.setAttributes([.protectionKey: FileProtectionType.complete], ofItemAtPath: url.path)
         #endif

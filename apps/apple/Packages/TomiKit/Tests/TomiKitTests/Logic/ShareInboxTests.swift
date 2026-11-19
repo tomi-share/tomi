@@ -85,6 +85,26 @@ final class ShareInboxTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: broken.path))
     }
 
+    func testTheInboxAndItsSharesAreExcludedFromBackup() throws {
+        let file = try sharedFile("secret", name: "a.txt")
+        _ = try inbox.deposit(parsed(files: [file]), secret: true, expiry: .never, id: "kept", now: start, window: 0)
+        let excluded = { (url: URL) in try url.resourceValues(forKeys: [.isExcludedFromBackupKey]).isExcludedFromBackup }
+        XCTAssertEqual(try excluded(inbox.root), true)
+        XCTAssertEqual(try excluded(inbox.root.appendingPathComponent("kept", isDirectory: true)), true)
+        XCTAssertEqual(try excluded(inbox.root.appendingPathComponent("kept/files/0")), true)
+    }
+
+    func testSharesOlderThanTheMaxAgeAreDroppedWithoutReadingThem() throws {
+        _ = try inbox.deposit(parsed(), secret: true, expiry: .never, id: "old", now: start, window: 0)
+        XCTAssertEqual(inbox.dropExpired(now: Date()), 0, "fresh")
+        XCTAssertEqual(inbox.dropExpired(now: Date().addingTimeInterval(ShareInbox.maxAge - 60)), 0, "not yet")
+        let claimedShare = try inbox.deposit(parsed(), secret: false, expiry: .never, id: "claimed", now: start, window: 0)
+        let claimed = try XCTUnwrap(inbox.claim(claimedShare))
+        XCTAssertEqual(inbox.dropExpired(now: Date().addingTimeInterval(ShareInbox.maxAge + 60)), 1)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: claimed.path), "a share being sent is left to purge")
+        XCTAssertTrue(inbox.ready(now: start, maxWindow: 5).isEmpty)
+    }
+
     func testPurgeDropsClaimedSharesAndOldLeftoversOnly() throws {
         let share = try inbox.deposit(parsed(), secret: false, expiry: .never, id: "kept", now: start, window: 0)
         let claimedShare = try inbox.deposit(parsed(), secret: false, expiry: .never, id: "claimed", now: start, window: 0)

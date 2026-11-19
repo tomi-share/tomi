@@ -335,6 +335,7 @@ final class AppContainer {
                 intake.onChanged = { [weak self] in self?.drainShares() }
                 intake.onFailed = { [weak self] in self?.feedback.show(L10n.text("ios_share_inbox_failed")) }
                 intake.onSkippedFiles = { [weak self] in self?.feedback.show(L10n.text("banner_files_skipped", $0)) }
+                intake.onExpired = { [weak self] in self?.noteExpiredShares($0) }
                 shareIntake = intake
             }
             send = SendViewModel(core: core, coordinator: coordinator, picked: picked)
@@ -434,6 +435,21 @@ final class AppContainer {
         Task { await shareIntake.drain() }
     }
 
+    /// Shares were dropped for waiting longer than `ShareInbox.maxAge`: counted (the drop may come from a background
+    /// task, with no screen) and told once, on screen.
+    private func noteExpiredShares(_ count: Int) {
+        if count > 0, let defaults = AppGroup.defaults {
+            defaults.set(defaults.integer(forKey: AppGroup.expiredSharesKey) + count, forKey: AppGroup.expiredSharesKey)
+        }
+        tellExpiredShares()
+    }
+
+    private func tellExpiredShares() {
+        guard scenePhase == .active, let defaults = AppGroup.defaults, defaults.integer(forKey: AppGroup.expiredSharesKey) > 0 else { return }
+        defaults.set(0, forKey: AppGroup.expiredSharesKey)
+        feedback.show(L10n.text("ios_share_inbox_expired"))
+    }
+
     /// This device is no longer in a space (it left, or the space is gone): back to the welcome screen, after the
     /// clean-up of what the app keeps outside the core. The demo core cannot join again once it left: a fresh one.
     func pairingLost() {
@@ -515,6 +531,9 @@ final class AppContainer {
     func runInBackground(sendOnly: Bool) async -> Bool {
         // Launched for the task, without a scene: not on screen (no doorbell, no foreground work).
         if UIApplication.shared.applicationState == .background { scenePhase = .background }
+        // The shares of the extension are only read with the device unlocked, so they are not sent from here; one that
+        // waited past `ShareInbox.maxAge` is dropped (no content is read for that). Told at the next look.
+        if let inbox = ShareInbox.shared() { noteExpiredShares(inbox.dropExpired(now: Date())) }
         var openedHere = false
         if case .starting = phase {
             openedHere = true
@@ -600,6 +619,8 @@ final class AppContainer {
             inBackground = false
             core.enterForeground()
             retrier?.comeBack()
+            // What a background task dropped is told now; then what waits is sent, and the rest past its age goes.
+            tellExpiredShares()
             drainShares()
         case .background where !inBackground:
             inBackground = true

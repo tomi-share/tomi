@@ -3174,6 +3174,17 @@
         }
       }
     },
+    "ios_share_inbox_expired" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un partage resté plus de 24 h sans pouvoir être envoyé a été supprimé."
+          }
+        }
+      }
+    },
     "ios_share_inbox_failed" : {
       "extractionState" : "manual",
       "localizations" : {
