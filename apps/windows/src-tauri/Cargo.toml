@@ -68,7 +68,7 @@ winreg = "0.56"
 # departure actions (see strong_auth.rs), and the toast history is cleared after an erasure.
 # Already in the dependency tree through Tauri (same version, so the lock only gains an edge).
 windows-future = "0.2"
-windows = { version = "0.61", features = [
+windows = { version = "0.62", features = [
     "Data_Xml_Dom",
     "Foundation",
     "Security_Credentials_UI",
