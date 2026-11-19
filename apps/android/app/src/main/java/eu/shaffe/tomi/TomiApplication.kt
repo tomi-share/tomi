@@ -23,6 +23,7 @@ import eu.shaffe.tomi.notify.NewDeviceNotifier
 import eu.shaffe.tomi.notify.NotificationChannels
 import eu.shaffe.tomi.security.AuthWindow
 import eu.shaffe.tomi.security.BiometricGate
+import eu.shaffe.tomi.security.PlaintextPurgeWorker
 import eu.shaffe.tomi.security.SensitiveClipboard
 import eu.shaffe.tomi.send.FileAttachmentStaging
 import eu.shaffe.tomi.send.SendCoordinator
@@ -189,7 +190,12 @@ class AppContainer(private val app: Application, val scope: CoroutineScope, val 
     private fun purgeDecryptedFilesInBackground() {
         scope.launch {
             foreground.collectLatest { visible ->
-                if (visible) return@collectLatest
+                if (visible) {
+                    PlaintextPurgeWorker.cancel(app)
+                    return@collectLatest
+                }
+                // The process may die during the grace below (low memory): a job restarts it and purges anyway.
+                PlaintextPurgeWorker.schedule(app)
                 delay(PURGE_DELAY_MS)
                 try {
                     core.purgePlaintextCache()
