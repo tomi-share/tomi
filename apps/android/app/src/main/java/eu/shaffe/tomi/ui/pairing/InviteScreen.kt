@@ -62,7 +62,7 @@ import eu.shaffe.tomi.ui.theme.TomiTheme
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InviteScreen(viewModel: InviteViewModel, onBack: () -> Unit) {
-    FlagSecureEffect(enabled = true)
+    FlagSecureEffect(enabled = true, hideOverlays = true)
     // The fresh check that opens "Add a device" and the final confirmation need the current activity (BiometricPrompt).
     val authenticator = rememberAuthenticator()
     DisposableEffect(authenticator) {

@@ -83,7 +83,7 @@ import eu.shaffe.tomi.ui.theme.TomiTheme
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateSpaceScreen(viewModel: CreateSpaceViewModel, onBack: () -> Unit, onJoin: () -> Unit, onFinished: () -> Unit) {
-    FlagSecureEffect(enabled = true)
+    FlagSecureEffect(enabled = true, hideOverlays = true)
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = tomiContentInsets,

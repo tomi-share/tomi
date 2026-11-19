@@ -91,6 +91,12 @@ private object SensitiveWindowProtection {
 }
 
 /** One counter for the whole app, keyed by window: FLAG_SECURE (and the protection above) is set by the first user and cleared by the last. */
+/** Windows whose overlays are hidden ([FlagSecureEffect] `hideOverlays`): set by the first screen that asks, cleared by the last. */
+private val overlayHiddenWindows = ReferenceCounter<Window>(
+    onFirst = { it.setHideOverlayWindows(true) },
+    onLast = { it.setHideOverlayWindows(false) },
+)
+
 private val secureWindows = ReferenceCounter<Window>(
     onFirst = {
         it.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
@@ -107,15 +113,26 @@ private val secureWindows = ReferenceCounter<Window>(
  * on Android 14+, no accessibility service other than an accessibility tool ([SensitiveWindowProtection]).
  * Used whenever a secret is displayed in clear. Reference-counted per window, so two screens needing the flag
  * at once do not remove it from each other when one of them goes away.
+ *
+ * [hideOverlays] (pairing, invitation and creation screens, where a code is shown and a confirmation is tapped): also asks the system
+ * to hide the windows that other apps draw on top of ours (`setHideOverlayWindows`, the normal permission `HIDE_OVERLAY_WINDOWS`), a
+ * tapjacking hardening on top of the platform's untrusted-touch blocking. Same reference counting.
  */
 @Composable
-fun FlagSecureEffect(enabled: Boolean) {
+fun FlagSecureEffect(enabled: Boolean, hideOverlays: Boolean = false) {
     val context = LocalContext.current
     DisposableEffect(enabled, context) {
         val window = if (enabled) context.findActivity()?.window else null
         if (window != null) secureWindows.acquire(window)
         onDispose {
             if (window != null) secureWindows.release(window)
+        }
+    }
+    DisposableEffect(hideOverlays, context) {
+        val window = if (hideOverlays) context.findActivity()?.window else null
+        if (window != null) overlayHiddenWindows.acquire(window)
+        onDispose {
+            if (window != null) overlayHiddenWindows.release(window)
         }
     }
 }

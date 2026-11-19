@@ -9,10 +9,14 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <!-- The Rust core talks to the relay (HTTPS + WebSocket) from its own sockets: nothing else in the app may use the network.
          Received markdown and HTML are rendered offline on purpose (MarkdownGuard, HtmlSanitizer); the Android review still lists
-         hardening that isolation (parser flags aligned with the renderer, instrumented md4c test) as a precondition of this permission. -->
+         hardening that isolation as a precondition of this permission (parser flags aligned with the renderer: done, MarkdownEngineConfig;
+         instrumented md4c test on a device: still to do). -->
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Normal permission (no runtime prompt): haptic ticks of the swipe-to-archive, played by the Vibrator whatever the touch-feedback setting. -->
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Normal permission, nothing is asked: lets the pairing, invitation and creation screens hide the windows other apps draw over
+         them (tapjacking hardening, FlagSecureEffect hideOverlays). -->
+    <uses-permission android:name="android.permission.HIDE_OVERLAY_WINDOWS" />
 
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />

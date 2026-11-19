@@ -106,7 +106,7 @@ fun PairingScreen(
     onBack: () -> Unit,
     onDemoEntered: () -> Unit = {},
 ) {
-    FlagSecureEffect(enabled = true)
+    FlagSecureEffect(enabled = true, hideOverlays = true)
     LaunchedEffect(viewModel.demoEntered) {
         if (viewModel.demoEntered) onDemoEntered()
     }
