@@ -105,6 +105,10 @@ jobs:
     if: inputs.android
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    # The release signing secrets live in this environment, restricted to `main` and the android-v* / windows-v* tags, so that a
+    # workflow changed on another branch cannot read them (docs/RELEASES.md, "Android release signing"). A run from another branch
+    # is refused here. In a fork the environment is created empty, and the APK is then built unsigned, as documented.
+    environment: release
     permissions:
       contents: read
       id-token: write       # attest-build-provenance: Sigstore signing identity of this workflow run
@@ -372,6 +376,8 @@ jobs:
     needs: windows
     if: ${{ inputs.windows && vars.SIGNPATH_ORGANIZATION_ID != '' }}
     runs-on: windows-latest
+    # The SignPath API token (secret SIGNPATH_API_TOKEN) goes into this same environment, with the same branch and tag restrictions.
+    environment: release
     # A human approves each request: leave time for that (the SignPath action waits for it below).
     timeout-minutes: 180
     permissions:

@@ -123,10 +123,10 @@ Choose one strong password; PKCS12 uses it for both the store and the key. Then:
 
 ```sh
 # the secrets (GitHub CLI; secrets are stored encrypted by GitHub and cannot be read back)
-base64 -w0 tomi-release.jks | gh secret set ANDROID_RELEASE_KEYSTORE_B64      # PowerShell: [Convert]::ToBase64String([IO.File]::ReadAllBytes("tomi-release.jks"))
-gh secret set ANDROID_RELEASE_KEYSTORE_PASSWORD
-gh secret set ANDROID_RELEASE_KEY_ALIAS      # tomi
-gh secret set ANDROID_RELEASE_KEY_PASSWORD   # the same password
+base64 -w0 tomi-release.jks | gh secret set --env release ANDROID_RELEASE_KEYSTORE_B64      # PowerShell: [Convert]::ToBase64String([IO.File]::ReadAllBytes("tomi-release.jks"))
+gh secret set --env release ANDROID_RELEASE_KEYSTORE_PASSWORD
+gh secret set --env release ANDROID_RELEASE_KEY_ALIAS      # tomi
+gh secret set --env release ANDROID_RELEASE_KEY_PASSWORD   # the same password
 
 # the public fingerprint, to pin
 keytool -list -v -keystore tomi-release.jks -alias tomi | grep 'SHA256:'
@@ -138,9 +138,12 @@ updated (Android refuses an update signed by another key), and users would have 
 (`.gitignore` already excludes `*.jks` and `*.keystore`, hence the file name above). When the first release is published, also publish the
 certificate fingerprint in the release notes so that users can compare it (see "Verifying a download" below).
 
-Hardening, recommended: put the four secrets in a GitHub **Environment** (for example `release`) restricted to the `main`
-branch, so that a workflow file changed on another branch cannot read them, and reference it with `environment: release` on the
-`android` job. Anyone who can push a workflow to a branch of the repository can otherwise exfiltrate repository secrets.
+Hardening, applied: the four secrets are **environment secrets** of a GitHub Environment named `release`, restricted to the `main`
+branch and to the `android-v*` and `windows-v*` tags, and the `android` job of `build-apps.yml` uses `environment: release`
+(so does `sign-windows`, for the SignPath token). A workflow file changed on another branch cannot read them: anyone who can push a
+workflow to a branch of the repository could otherwise exfiltrate repository secrets. The consequence: a manual **Build apps** run
+must be started from `main` (a run from another branch is refused at the Android job). Set the secrets with
+`gh secret set NAME --env release`, not at repository level.
 
 ### Building a release by hand
 
@@ -272,7 +275,7 @@ Account and project configuration need a SignPath account and cannot be done fro
 5. **GitHub:** store the token, then the three variables (`SIGNPATH_ORGANIZATION_ID` last, it is the switch):
 
    ```sh
-   gh secret set SIGNPATH_API_TOKEN
+   gh secret set --env release SIGNPATH_API_TOKEN
    gh api -X POST repos/tomi-share/tomi/actions/variables -f name=SIGNPATH_PROJECT_SLUG -f value=<project slug>
    gh api -X POST repos/tomi-share/tomi/actions/variables -f name=SIGNPATH_SIGNING_POLICY_SLUG -f value=<policy slug>
    gh api -X POST repos/tomi-share/tomi/actions/variables -f name=SIGNPATH_ORGANIZATION_ID -f value=<organization id>
