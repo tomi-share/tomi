@@ -3196,6 +3196,61 @@
         }
       }
     },
+    "ios_relay_revoked_admin" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ a été retiré par l’administrateur du relais."
+          }
+        }
+      }
+    },
+    "ios_relay_revoked_other" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ a été retiré de ton espace par le relais."
+          }
+        }
+      }
+    },
+    "ios_relay_revoked_self" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ a quitté ton espace, d’après le relais."
+          }
+        }
+      }
+    },
+    "ios_rotation_stalled_body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un appareil retiré peut encore détenir la clé actuelle de ton espace. Tomi réessaie automatiquement ; ouvre Tomi sur tes autres appareils pour aider."
+          }
+        }
+      }
+    },
+    "ios_rotation_stalled_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retrait d’un appareil en cours"
+          }
+        }
+      }
+    },
     "ios_save_to_files" : {
       "extractionState" : "manual",
       "localizations" : {

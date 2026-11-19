@@ -62,5 +62,10 @@
   "ios_file_hidden": "Un fichier masqué ne s’affiche pas dans Tomi : son aperçu échapperait à la protection de l’écran. Tu peux le partager vers une autre app après Face ID.",
   "ios_file_load_failed": "Impossible d’ouvrir ce fichier. Réessaie dans un instant.",
   "ios_detail_title": "Détail",
+  "ios_relay_revoked_admin": "%1$s a été retiré par l’administrateur du relais.",
+  "ios_relay_revoked_other": "%1$s a été retiré de ton espace par le relais.",
+  "ios_relay_revoked_self": "%1$s a quitté ton espace, d’après le relais.",
+  "ios_rotation_stalled_body": "Un appareil retiré peut encore détenir la clé actuelle de ton espace. Tomi réessaie automatiquement ; ouvre Tomi sur tes autres appareils pour aider.",
+  "ios_rotation_stalled_title": "Retrait d’un appareil en cours",
   "ios_snackbar_copied": "Copié"
 }

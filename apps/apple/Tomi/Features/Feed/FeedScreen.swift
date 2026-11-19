@@ -317,6 +317,14 @@ struct FeedScreen: View {
                             .frame(maxWidth: TomiLayout.readableWidth)
                             .frame(maxWidth: .infinity)
                     }
+                    // A removal whose key rotation keeps failing: calm and persistent, gone as soon as the core clears it.
+                    if model.showsRotationStalled {
+                        RotationStalledBanner()
+                            .padding(.horizontal, TomiSpace.screen)
+                            .padding(.top, TomiSpace.s2)
+                            .frame(maxWidth: TomiLayout.readableWidth)
+                            .frame(maxWidth: .infinity)
+                    }
                     // What the departure is doing, at all times, under the header (Android `DepartureBanner`).
                     if let leave, let gate {
                         DepartureBannerView(model: leave, gate: gate)

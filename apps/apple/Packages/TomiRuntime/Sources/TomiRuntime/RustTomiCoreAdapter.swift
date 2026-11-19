@@ -51,6 +51,10 @@ private struct Snapshot: Sendable {
     var devices: [Device]?
     var items: [TomiItem]?
     var departure: Departure?
+    /// `rotation_stalled()`; false when not paired or in the demo.
+    var rotationStalled = false
+    /// What `take_relay_revocations()` handed over in this read (each entry comes out once).
+    var relayRevocations: [RelayRevocation] = []
 }
 
 /// `TomiKit.TomiCore` over the Rust core, real or demo.
@@ -163,6 +167,8 @@ public final class RustTomiCoreAdapter: TomiKit.TomiCore {
         // cheap here, an unchanged item being the very storage of the one on screen.
         if let items = snapshot.items, items != state.items { state.items = items }
         state.departure = snapshot.departure
+        if snapshot.rotationStalled != state.rotationStalled { state.rotationStalled = snapshot.rotationStalled }
+        state.addRelayRevocations(snapshot.relayRevocations)
         state.loaded = true
         startDoorbellIfNeeded()
     }
@@ -184,6 +190,12 @@ public final class RustTomiCoreAdapter: TomiKit.TomiCore {
         snapshot.localDevice = (try? core.localDevice()).map { CoreMapping.device($0, keepRevoked: true) } ?? nil
         snapshot.devices = (try? core.devices())?.compactMap { CoreMapping.device($0) }
         snapshot.items = (try? core.items()).map { ItemReuse.reuseUnchanged(previous: previous, fresh: $0.map(CoreMapping.item)) }
+        // Read on the core's change notification (a sync that records a removal or a failed rotation reports one), never
+        // polled. The demo has no relay. A failed read loses nothing: the core keeps the notices until they are taken.
+        if !snapshot.isDemo {
+            snapshot.rotationStalled = core.rotationStalled()
+            snapshot.relayRevocations = ((try? core.takeRelayRevocations()) ?? []).map(CoreMapping.relayRevocation)
+        }
         return snapshot
     }
 

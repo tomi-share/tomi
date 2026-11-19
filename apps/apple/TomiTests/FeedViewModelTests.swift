@@ -235,4 +235,41 @@ final class FeedViewModelTests: XCTestCase {
         let allowed = await model.authorizeView(PreviewFixtures.secret, file: true)
         XCTAssertTrue(allowed)
     }
+
+    // ---- Removal of devices ---------------------------------------------------------------------------------------------
+
+    func testTheRotationBannerFollowsTheCoreAndIsHiddenOtherwise() {
+        let model = makeModel()
+        XCTAssertFalse(model.showsRotationStalled)
+        core.state.rotationStalled = true
+        XCTAssertTrue(model.showsRotationStalled)
+        core.state.rotationStalled = false
+        XCTAssertFalse(model.showsRotationStalled)
+    }
+
+    func testARelayRemovalIsToldOnceAndNeverBlocks() {
+        let model = makeModel()
+        model.showRelayRevocations()
+        XCTAssertNil(feedback.current, "nothing reported: nothing shown")
+        core.state.addRelayRevocations([RelayRevocation(deviceId: "pc", name: "PC-Bureau", via: .administrator)])
+        model.showRelayRevocations()
+        XCTAssertEqual(feedback.current?.text.contains("PC-Bureau"), true)
+        XCTAssertNil(feedback.current?.actionTitle, "a plain notice, no choice to make")
+        feedback.dismiss()
+        model.showRelayRevocations()
+        XCTAssertNil(feedback.current, "once")
+        XCTAssertTrue(core.state.relayRevocations.isEmpty)
+    }
+
+    func testSeveralRelayRemovalsShareOneNotice() {
+        let model = makeModel()
+        core.state.addRelayRevocations([
+            RelayRevocation(deviceId: "pc", name: "PC-Bureau", via: .administrator),
+            RelayRevocation(deviceId: "tab", name: "Tablette", via: .device),
+        ])
+        model.showRelayRevocations()
+        let text = feedback.current?.text ?? ""
+        XCTAssertTrue(text.contains("PC-Bureau"))
+        XCTAssertTrue(text.contains("Tablette"))
+    }
 }

@@ -67,6 +67,18 @@ final class FeedViewModel {
         }
     }
 
+    /// The removal of a device is not finished (its key rotation keeps failing): a calm banner on the feed and on the
+    /// devices screen, until the core clears it.
+    var showsRotationStalled: Bool { core.state.rotationStalled }
+
+    /// Tells the user, once and without blocking, about the devices the relay alone removed (the core reported them).
+    /// A notice taken is gone from the state, so a second call shows nothing.
+    func showRelayRevocations() {
+        let notices = core.state.takeRelayRevocations()
+        guard !notices.isEmpty else { return }
+        feedback.show(notices.map { L10n.text($0.messageKey, $0.name) }.joined(separator: "\n"))
+    }
+
     /// The item of the core, else the revealed one that already left it (what `allItems` holds, without sorting the feed).
     func item(id: String) -> TomiItem? { core.state.items.first { $0.id == id } ?? revealed[id] }
 

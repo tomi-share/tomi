@@ -44,6 +44,10 @@ enum CoreMapping {
         )
     }
 
+    static func relayRevocation(_ r: FfiRelayRevocation) -> RelayRevocation {
+        RelayRevocation(deviceId: r.deviceId, name: r.name, via: RelayRevocation.Via(wire: r.via))
+    }
+
     static func richText(_ t: TextContent) -> RichText {
         RichText(plain: t.plain, html: t.html, markdown: t.markdown, sourceFormat: sourceFormat(t.sourceFormat))
     }

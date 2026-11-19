@@ -116,7 +116,11 @@ private struct ReadyRoot: View {
             .onChange(of: container.pairingFlow) { _, _ in
                 takePendingRoute()
                 takeShortcut()
+                takeRelayRevocations()
             }
+            .onChange(of: container.onboardingFlow) { _, _ in takeRelayRevocations() }
+            // The relay alone removed a device: a one-time notice, never a blocking one.
+            .onChange(of: core.state.relayRevocations, initial: true) { _, _ in takeRelayRevocations() }
             .onChange(of: container.resetPathRequested) { _, reset in
                 guard reset else { return }
                 container.resetPathRequested = false
@@ -219,6 +223,12 @@ private struct ReadyRoot: View {
         guard let route = container.pendingRoute, container.pairingFlow == false else { return }
         container.pendingRoute = nil
         path = [route]
+    }
+
+    /// Not during the entry (pairing, creation): the notice waits in the state until the feed shows.
+    private func takeRelayRevocations() {
+        guard container.pairingFlow == false, !container.onboardingFlow else { return }
+        feed.showRelayRevocations()
     }
 
     private func takeShortcut() {

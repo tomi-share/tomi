@@ -31,6 +31,10 @@ struct DevicesScreen: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             List {
+                if core.state.rotationStalled {
+                    RotationStalledBanner()
+                        .listRowBackground(Color.clear)
+                }
                 if busy {
                     // Linear bar (charter 6.3), nothing near the symbol.
                     VStack(alignment: .leading, spacing: TomiSpace.s2) {

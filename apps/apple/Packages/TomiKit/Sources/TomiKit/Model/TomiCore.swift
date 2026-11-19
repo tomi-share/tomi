@@ -29,8 +29,27 @@ public final class CoreState {
     public var departure: Departure?
     /// A call of the departure runs in the core (an attempt, even a cancelled one, or an erasure).
     public var departureRunning = false
+    /// The key rotation that must follow the removal of a device keeps failing (core `rotation_stalled()`): the removed
+    /// device may still hold the current key. The core retries every hour; the UI shows a persistent, calm banner.
+    public var rotationStalled = false
+    /// Devices the relay alone removed that the core reported and the UI has not shown yet (core
+    /// `take_relay_revocations()`, which hands each over once: the adapter reads it after a change).
+    public private(set) var relayRevocations: [RelayRevocation] = []
 
     public init() {}
+
+    /// Called by the adapter with what the core handed over: kept until the UI takes it.
+    public func addRelayRevocations(_ taken: [RelayRevocation]) {
+        guard !taken.isEmpty else { return }
+        relayRevocations = RelayNotices.merged(relayRevocations, with: taken)
+    }
+
+    /// The notices not shown yet; the list is emptied (each one is shown once).
+    public func takeRelayRevocations() -> [RelayRevocation] {
+        let notices = relayRevocations
+        if !notices.isEmpty { relayRevocations = [] }
+        return notices
+    }
 }
 
 /// Boundary between the UI and the Tomi core. Every call may throw `TomiCoreError`; the UI treats
