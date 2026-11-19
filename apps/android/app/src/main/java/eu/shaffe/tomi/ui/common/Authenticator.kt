@@ -61,6 +61,18 @@ class Authenticator(private val activity: FragmentActivity) {
         fresh = true,
     )
 
+    /**
+     * "Ajouter un appareil" (opening the invitation, and the final "codes identiques"): the new device receives the whole history,
+     * secrets and files included. Same gate as [forRevocation]: the screen lock or strong biometrics, never remembered, always asked.
+     */
+    suspend fun forPairing(): AuthOutcome = gate.authenticate(
+        activity = activity,
+        title = activity.getString(R.string.biometric_title_pair),
+        subtitle = activity.getString(R.string.biometric_subtitle_pair),
+        cancelLabel = activity.getString(R.string.action_cancel),
+        fresh = true,
+    )
+
     /** "Supprimer l'espace" (the only device): same gate as [forRevocation] (fresh, never remembered). */
     suspend fun forSpaceDeletion(): AuthOutcome = gate.authenticate(
         activity = activity,

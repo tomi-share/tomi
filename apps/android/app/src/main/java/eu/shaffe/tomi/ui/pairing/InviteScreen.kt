@@ -31,6 +31,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,6 +48,7 @@ import eu.shaffe.tomi.core.PairingPeer
 import eu.shaffe.tomi.core.SensitiveText
 import eu.shaffe.tomi.ui.common.CenteredScrollColumn
 import eu.shaffe.tomi.ui.common.FlagSecureEffect
+import eu.shaffe.tomi.ui.common.rememberAuthenticator
 import eu.shaffe.tomi.ui.common.screenContentPadding
 import eu.shaffe.tomi.ui.common.tomiContentInsets
 import eu.shaffe.tomi.ui.theme.TomiFonts
@@ -61,6 +63,12 @@ import eu.shaffe.tomi.ui.theme.TomiTheme
 @Composable
 fun InviteScreen(viewModel: InviteViewModel, onBack: () -> Unit) {
     FlagSecureEffect(enabled = true)
+    // The fresh check that opens "Add a device" and the final confirmation need the current activity (BiometricPrompt).
+    val authenticator = rememberAuthenticator()
+    DisposableEffect(authenticator) {
+        viewModel.authenticator = authenticator
+        onDispose { if (viewModel.authenticator === authenticator) viewModel.authenticator = null }
+    }
     LaunchedEffect(Unit) { viewModel.start() }
     val state = viewModel.state
 
@@ -96,6 +104,7 @@ fun InviteScreen(viewModel: InviteViewModel, onBack: () -> Unit) {
                 is InviteUiState.ShowCode -> ShowCodeContent(state, onCancel = ::leave)
                 is InviteUiState.Verify -> InviteVerifyContent(state, onAdd = viewModel::add, onRefuse = viewModel::refuse)
                 is InviteUiState.Adding -> AddingContent(state.peer, onCancel = ::leave)
+                is InviteUiState.AuthRequired -> AuthRequiredContent(state, onRetry = viewModel::restart, onClose = ::leave)
                 is InviteUiState.Done -> DoneContent(state, onFinished = onBack)
                 is InviteUiState.Failed -> FailedContent(state, onRetry = viewModel::restart, onClose = onBack)
             }
@@ -197,6 +206,15 @@ private fun InviteVerifyContent(state: InviteUiState.Verify, onAdd: () -> Unit, 
             PeerRow(state.peer)
             Spacer(Modifier.height(24.dp))
             VerificationCodeBoxes(state.verificationCode)
+            if (state.authDenied) {
+                Text(
+                    stringResource(R.string.invite_notice_auth_denied),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                )
+            }
             // If the other device shows an error instead of a code (the code was already used), the answer is "no" (spec 5.3).
             Text(
                 stringResource(R.string.invite_verify_hint),
@@ -316,6 +334,34 @@ private fun FailedContent(state: InviteUiState.Failed, onRetry: () -> Unit, onCl
         BottomActions {
             Button(onClick = onRetry, shape = TomiTheme.shapes.button, modifier = Modifier.fillMaxWidth().height(48.dp)) {
                 Text(stringResource(R.string.invite_new_code))
+            }
+            TextButton(onClick = onClose, shape = TomiTheme.shapes.button, modifier = Modifier.fillMaxWidth().height(48.dp)) {
+                Text(stringResource(R.string.action_close))
+            }
+        }
+    }
+}
+
+/** The fresh check of the user was refused or cancelled: nothing was opened at the relay. */
+@Composable
+private fun AuthRequiredContent(state: InviteUiState.AuthRequired, onRetry: () -> Unit, onClose: () -> Unit) {
+    Column(Modifier.fillMaxSize()) {
+        CenteredScrollColumn(
+            Modifier.weight(1f).padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
+        ) {
+            Text(stringResource(R.string.invite_auth_required_title), style = MaterialTheme.typography.titleLarge)
+            Text(
+                stringResource(if (state.unavailable) R.string.invite_auth_unavailable_body else R.string.invite_auth_required_body),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        BottomActions {
+            if (!state.unavailable) {
+                Button(onClick = onRetry, shape = TomiTheme.shapes.button, modifier = Modifier.fillMaxWidth().height(48.dp)) {
+                    Text(stringResource(R.string.invite_auth_retry))
+                }
             }
             TextButton(onClick = onClose, shape = TomiTheme.shapes.button, modifier = Modifier.fillMaxWidth().height(48.dp)) {
                 Text(stringResource(R.string.action_close))

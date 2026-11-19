@@ -14,6 +14,8 @@ import eu.shaffe.tomi.core.PairingPeer
 import eu.shaffe.tomi.core.SensitiveText
 import eu.shaffe.tomi.core.TomiCoreException
 import eu.shaffe.tomi.core.VerificationCode
+import eu.shaffe.tomi.security.AuthOutcome
+import eu.shaffe.tomi.ui.common.Authenticator
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -36,12 +38,20 @@ sealed interface InviteUiState {
     ) : InviteUiState
 
     /** The new device said hello: the user compares the verification code and decides. */
-    data class Verify(val peer: PairingPeer, val verificationCode: VerificationCode) : InviteUiState
+    data class Verify(
+        val peer: PairingPeer,
+        val verificationCode: VerificationCode,
+        /** The check of the user that follows "Ajouter cet appareil" was refused or cancelled: nothing was added. */
+        val authDenied: Boolean = false,
+    ) : InviteUiState
 
     /** "Add" was pressed: waiting for the person on the new device to confirm too. */
     data class Adding(val peer: PairingPeer) : InviteUiState
 
     data class Done(val peer: PairingPeer, val historyAnnounced: Boolean) : InviteUiState
+
+    /** The fresh check of the user that opens "Add a device" was refused, cancelled or impossible (no screen lock set). */
+    data class AuthRequired(val unavailable: Boolean) : InviteUiState
 
     data class Failed(val reason: PairingFailure) : InviteUiState
 }
@@ -71,7 +81,20 @@ class InviteViewModel(private val container: AppContainer) : ViewModel() {
     var state by mutableStateOf<InviteUiState>(InviteUiState.Starting)
         private set
 
-    private val flow = InviteFlow(container.core, SystemClock::elapsedRealtime, { state = it }, ::discard)
+    /**
+     * The prompt owner (the current activity), attached by the screen while it is shown and dropped when it goes: a view model must not
+     * keep an activity alive. Without one (the screen is being recreated) the check counts as cancelled, never as passed.
+     */
+    @Volatile
+    var authenticator: Authenticator? = null
+
+    private val flow = InviteFlow(
+        container.core,
+        SystemClock::elapsedRealtime,
+        { state = it },
+        ::discard,
+        authenticate = { authenticator?.forPairing() ?: AuthOutcome.Cancelled },
+    )
     private var started = false
     private var job: Job? = null
 

@@ -281,6 +281,8 @@
     <string name="biometric_subtitle_revoke">Action sensible : confirme avec ton empreinte, ton visage ou le code de verrouillage du téléphone.</string>
     <string name="biometric_title_erase">Effacer ce téléphone</string>
     <string name="biometric_subtitle_erase">Action irréversible : confirme avec ton empreinte, ton visage ou le code de verrouillage du téléphone.</string>
+    <string name="biometric_title_pair">Ajouter un appareil</string>
+    <string name="biometric_subtitle_pair">Le nouvel appareil recevra tout l’historique, secrets compris. Confirme avec ton empreinte, ton visage ou le code de verrouillage du téléphone.</string>
     <string name="biometric_title_delete_space">Supprimer ton espace</string>
     <string name="biometric_subtitle_delete_space">Action irréversible : confirme avec ton empreinte, ton visage ou le code de verrouillage du téléphone.</string>
     <string name="toast_biometric_unavailable">Configure un verrouillage d’écran ou une biométrie pour afficher, copier ou partager les contenus masqués.</string>
@@ -505,6 +507,11 @@
     <string name="invite_error_cancelled">L’ajout de l’appareil a été annulé sur l’autre appareil.</string>
     <string name="invite_error_busy">Un ajout d’appareil est déjà en cours. Termine-le ou attends un instant, puis réessaie.</string>
     <string name="invite_error_failed">L’ajout de l’appareil n’a pas abouti. Réessaie.</string>
+    <string name="invite_auth_required_title">Confirmation nécessaire</string>
+    <string name="invite_auth_required_body">Pour ajouter un appareil, confirme ton identité avec ton empreinte, ton visage ou le code de verrouillage du téléphone.</string>
+    <string name="invite_auth_unavailable_body">Pour ajouter un appareil, configure d’abord un verrouillage d’écran (code, empreinte ou visage) dans les réglages du téléphone.</string>
+    <string name="invite_auth_retry">Confirmer</string>
+    <string name="invite_notice_auth_denied">Confirmation annulée : rien n’a été ajouté. Appuie de nouveau sur « Ajouter cet appareil » quand tu es prêt.</string>
 
     <!-- Create the space (the first device) -->
     <string name="create_title">Crée ton espace</string>

@@ -6,6 +6,7 @@ import eu.shaffe.tomi.core.PairingException
 import eu.shaffe.tomi.core.PairingFailure
 import eu.shaffe.tomi.core.TomiCore
 import eu.shaffe.tomi.core.TomiCoreException
+import eu.shaffe.tomi.security.AuthOutcome
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 
@@ -19,12 +20,16 @@ import kotlinx.coroutines.CompletableDeferred
  *
  * @param now `SystemClock.elapsedRealtime()`: the countdown of the code does not follow the clock of the phone.
  * @param discard closes a session at the relay without waiting, on a scope that outlives the screen.
+ * @param authenticate a FRESH check of the user (never answered by the remembered 2-minute window): once before the invitation is
+ * opened, and again when the user says that the codes are identical, because the whole history (secrets and files included) is
+ * sealed for the new device right after. Anyone holding the unlocked phone for a minute could otherwise add their own device.
  */
 internal class InviteFlow(
     private val core: TomiCore,
     private val now: () -> Long,
     private val publish: (InviteUiState) -> Unit,
     private val discard: (InviteSession) -> Unit,
+    private val authenticate: suspend () -> AuthOutcome,
 ) {
     private var session: InviteSession? = null
     private var decision: CompletableDeferred<Boolean>? = null
@@ -38,8 +43,18 @@ internal class InviteFlow(
         renewals = 0
         aborted = false
         var notice: Int? = null
+        // Once per run: the code renews itself while the screen is open (up to MAX_RENEWALS), which must not prompt every two
+        // minutes. The confirmation below is gated again, and that one is what releases the history.
+        publish(InviteUiState.Starting)
+        val outcome = authenticate()
+        if (outcome != AuthOutcome.Success) {
+            publish(InviteUiState.AuthRequired(unavailable = outcome == AuthOutcome.Unavailable))
+            return
+        }
+        var first = true
         while (!aborted) {
-            publish(InviteUiState.Starting)
+            if (!first) publish(InviteUiState.Starting)
+            first = false
             val invitation = try {
                 core.startInvitation()
             } catch (e: CancellationException) {
@@ -81,13 +96,26 @@ internal class InviteFlow(
             }
 
             renewals = 0
-            publish(InviteUiState.Verify(prompt.peer, prompt.verificationCode))
-            val add = CompletableDeferred<Boolean>().also { decision = it }.await()
-            decision = null
-            if (aborted) {
-                // The user left while comparing.
-                close()
-                return
+            var denied = false
+            var add: Boolean
+            while (true) {
+                publish(InviteUiState.Verify(prompt.peer, prompt.verificationCode, authDenied = denied))
+                add = CompletableDeferred<Boolean>().also { decision = it }.await()
+                decision = null
+                if (aborted) {
+                    // The user left while comparing.
+                    close()
+                    return
+                }
+                if (!add) break
+                // "They are the same": the history is sealed for the new device once both sides confirm. Prove it is the owner
+                // who presses, not whoever holds the unlocked phone. A refused check keeps the comparison on screen.
+                if (authenticate() == AuthOutcome.Success) break
+                if (aborted) {
+                    close()
+                    return
+                }
+                denied = true
             }
             if (!add) {
                 // "They are different": nothing was given to anyone. The channel is closed and a new code is made.

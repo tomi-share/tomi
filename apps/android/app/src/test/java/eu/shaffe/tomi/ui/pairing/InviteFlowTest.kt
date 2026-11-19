@@ -13,6 +13,7 @@ import eu.shaffe.tomi.core.SensitiveText
 import eu.shaffe.tomi.core.TomiCore
 import eu.shaffe.tomi.core.TomiCoreException
 import eu.shaffe.tomi.core.VerificationCode
+import eu.shaffe.tomi.security.AuthOutcome
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -82,11 +83,23 @@ class InviteFlowTest {
 
     private fun expiring() = Session(onAwaitPeer = { throw PairingException(PairingFailure.Expired) })
 
-    private class Harness(script: List<Any>) {
+    /** [outcomes]: the answers of the fresh checks of the user, in order; once they run out, every check passes. */
+    private class Harness(script: List<Any>, outcomes: List<AuthOutcome> = emptyList()) {
+        private val pending = ArrayDeque(outcomes)
+        var checks = 0
         val core = ScriptedCore(ArrayDeque(script))
         val states = mutableListOf<InviteUiState>()
         val discarded = mutableListOf<InviteSession>()
-        val flow = InviteFlow(core, now = { 1_000L }, publish = { states += it }, discard = { discarded += it })
+        val flow = InviteFlow(
+            core,
+            now = { 1_000L },
+            publish = { states += it },
+            discard = { discarded += it },
+            authenticate = {
+                checks++
+                pending.removeFirstOrNull() ?: AuthOutcome.Success
+            },
+        )
         val last: InviteUiState get() = states.last()
     }
 
@@ -250,6 +263,78 @@ class InviteFlowTest {
             assertFalse(printed, printed.contains("482"))
             assertFalse(printed, printed.contains("crayon"))
         }
+        job.cancelAndJoin()
+    }
+
+    @Test
+    fun theInvitationIsNotOpenedWithoutAFreshCheckOfTheUser() = runTest {
+        for (refused in listOf(AuthOutcome.Cancelled, AuthOutcome.Failed, AuthOutcome.Unavailable)) {
+            val h = Harness(listOf(happy()), outcomes = listOf(refused))
+            h.flow.run()
+
+            assertEquals("$refused: nothing was opened at the relay", 0, h.core.starts)
+            assertEquals(InviteUiState.AuthRequired(unavailable = refused == AuthOutcome.Unavailable), h.last)
+        }
+    }
+
+    @Test
+    fun theCheckHappensBeforeTheInvitationIsOpened() = runTest {
+        val h = Harness(listOf(happy()))
+        val job = launch { h.flow.run() }
+        runCurrent()
+
+        // One check to open the invitation, none yet for the confirmation (the user has not said "identiques").
+        assertEquals(1, h.checks)
+        assertTrue(h.last is InviteUiState.Verify)
+        job.cancelAndJoin()
+    }
+
+    @Test
+    fun theFinalConfirmationNeedsASecondFreshCheck() = runTest {
+        val session = happy()
+        val h = Harness(listOf(session))
+        val job = launch { h.flow.run() }
+        runCurrent()
+        h.flow.add()
+        advanceUntilIdle()
+
+        assertEquals("open + confirm", 2, h.checks)
+        assertEquals(1, session.confirms)
+        assertTrue(h.last is InviteUiState.Done)
+        job.cancelAndJoin()
+    }
+
+    @Test
+    fun aRefusedConfirmationAddsNothingAndKeepsTheComparisonOnScreen() = runTest {
+        val session = happy()
+        val h = Harness(listOf(session), outcomes = listOf(AuthOutcome.Success, AuthOutcome.Cancelled))
+        val job = launch { h.flow.run() }
+        runCurrent()
+        h.flow.add()
+        runCurrent()
+
+        assertEquals("the device is not confirmed, nothing is synced", 0, session.confirms)
+        assertEquals(0, h.core.syncs)
+        assertEquals(InviteUiState.Verify(peer, VerificationCode("482 913"), authDenied = true), h.last)
+        assertTrue("the invitation stays open for another try", h.discarded.isEmpty())
+
+        // A second try with a passing check adds the device.
+        h.flow.add()
+        advanceUntilIdle()
+        assertEquals(1, session.confirms)
+        assertTrue(h.last is InviteUiState.Done)
+        job.cancelAndJoin()
+    }
+
+    @Test
+    fun refusingTheComparisonNeedsNoCheck() = runTest {
+        val h = Harness(listOf(happy(), happy()))
+        val job = launch { h.flow.run() }
+        runCurrent()
+        h.flow.refuse()
+        runCurrent()
+
+        assertEquals("only the check that opened the invitation", 1, h.checks)
         job.cancelAndJoin()
     }
 }
