@@ -262,7 +262,7 @@ jobs:
           java-version: "21"
       - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
         with:
-          packages: "platform-tools platforms;android-36 build-tools;36.0.0 ndk;${{ env.NDK_VERSION }}"
+          packages: "platform-tools platforms;android-37.0 build-tools;36.0.0 ndk;${{ env.NDK_VERSION }}"
       - name: NDK variables
         run: echo "ANDROID_NDK_HOME=${ANDROID_HOME}/ndk/${NDK_VERSION}" >> "$GITHUB_ENV"
       # Native libraries of the core (same command as `just android-ndk-libs`, in debug and for two

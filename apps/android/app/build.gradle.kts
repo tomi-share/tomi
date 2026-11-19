@@ -29,7 +29,7 @@ val tomiCoreRelease = providers.gradleProperty("tomiCoreProfile").orElse("releas
 
 android {
     namespace = "eu.shaffe.tomi"
-    compileSdk = 36
+    compileSdk = 37
     // Same NDK as the CI (NDK_VERSION) and docs/DEV.md: one NDK for libtomi_highlight (CMake) and libtomi_core (cargo-ndk).
     ndkVersion = "27.0.12077973"
 
