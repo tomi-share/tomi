@@ -11,6 +11,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import eu.shaffe.tomi.MainActivity
 import eu.shaffe.tomi.R
+import eu.shaffe.tomi.core.Device
 import eu.shaffe.tomi.core.ItemKind
 import eu.shaffe.tomi.core.TomiItem
 import eu.shaffe.tomi.core.kind
@@ -45,6 +46,15 @@ class IncomingNotifications(
                 post(SUMMARY_ID, buildSummary(batch, item).build())
             }
         }
+    }
+
+    /**
+     * "Nouvel appareil ajouté": a detection control, shown on the devices that did not add it. Only the device name and platform
+     * (metadata the space's members already see), never content; private on the lock screen, with a neutral public version.
+     */
+    fun showDeviceAdded(device: Device) {
+        if (!canPost()) return
+        post(deviceNotificationId(device.id), buildDeviceAdded(device).build())
     }
 
     fun cancel(itemId: String) {
@@ -119,6 +129,25 @@ class IncomingNotifications(
             .setContentIntent(openAppIntent())
     }
 
+    internal fun buildDeviceAdded(device: Device): NotificationCompat.Builder {
+        val publicVersion = NotificationCompat.Builder(context, NotificationChannels.DEVICES)
+            .setSmallIcon(R.drawable.ic_stat_tomi)
+            .setColor(ContextCompat.getColor(context, R.color.notification_accent))
+            .setContentTitle(context.getString(R.string.notif_device_added_title))
+            .build()
+        return NotificationCompat.Builder(context, NotificationChannels.DEVICES)
+            .setSmallIcon(R.drawable.ic_stat_tomi)
+            .setColor(ContextCompat.getColor(context, R.color.notification_accent))
+            .setCategory(NotificationCompat.CATEGORY_STATUS)
+            .setAutoCancel(true)
+            .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+            .setPublicVersion(publicVersion)
+            .setContentTitle(context.getString(R.string.notif_device_added_title))
+            .setContentText(context.getString(R.string.notif_device_added_body, device.name))
+            .setStyle(NotificationCompat.BigTextStyle().bigText(context.getString(R.string.notif_device_added_body, device.name)))
+            .setContentIntent(openAppIntent())
+    }
+
     private fun baseBuilder(channelId: String, secret: Boolean): NotificationCompat.Builder {
         val publicVersion = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.ic_stat_tomi)
@@ -168,6 +197,9 @@ class IncomingNotifications(
     }
 
     private fun notificationId(itemId: String): Int = itemId.hashCode()
+
+    /** Distinct from an item's id (the same hash space) so that a device and an item can never replace each other. */
+    private fun deviceNotificationId(deviceId: String): Int = ("device:" + deviceId).hashCode()
 
     internal companion object {
         /**

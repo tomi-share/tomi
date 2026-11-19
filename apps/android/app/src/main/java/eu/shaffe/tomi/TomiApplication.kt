@@ -19,6 +19,7 @@ import eu.shaffe.tomi.core.TomiCore
 import eu.shaffe.tomi.core.isOutgoing
 import eu.shaffe.tomi.notify.IncomingNotifications
 import eu.shaffe.tomi.notify.IncomingNotifier
+import eu.shaffe.tomi.notify.NewDeviceNotifier
 import eu.shaffe.tomi.notify.NotificationChannels
 import eu.shaffe.tomi.security.AuthWindow
 import eu.shaffe.tomi.security.BiometricGate
@@ -163,6 +164,12 @@ class AppContainer(private val app: Application, val scope: CoroutineScope, val 
         cleanUpAfterLeaving()
         departureRetrier.start()
         IncomingNotifier(
+            core = core,
+            notifications = notifications,
+            scope = scope,
+            isAppVisible = { ProcessLifecycleOwner.get().lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED) },
+        ).start()
+        NewDeviceNotifier(
             core = core,
             notifications = notifications,
             scope = scope,

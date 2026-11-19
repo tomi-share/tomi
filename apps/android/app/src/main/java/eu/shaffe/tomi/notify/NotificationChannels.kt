@@ -14,6 +14,7 @@ object NotificationChannels {
     const val TEXT = "incoming_text"
     const val FILES = "incoming_files"
     const val SECRETS = "incoming_secrets"
+    const val DEVICES = "space_devices"
     private const val GROUP = "incoming"
 
     fun channelFor(kind: ItemKind): String = when (kind) {
@@ -33,6 +34,12 @@ object NotificationChannels {
                 channel(context, LINKS, R.string.channel_links, R.string.channel_links_desc),
                 channel(context, TEXT, R.string.channel_text, R.string.channel_text_desc),
                 channel(context, FILES, R.string.channel_files, R.string.channel_files_desc),
+                // Outside the "received items" group: it is an alert about the space, not an incoming item. Private on the lock screen.
+                NotificationChannel(DEVICES, context.getString(R.string.channel_devices), NotificationManager.IMPORTANCE_HIGH).apply {
+                    description = context.getString(R.string.channel_devices_desc)
+                    lockscreenVisibility = NotificationCompat.VISIBILITY_PRIVATE
+                    setShowBadge(false)
+                },
                 channel(context, SECRETS, R.string.channel_secrets, R.string.channel_secrets_desc).apply {
                     // Secrets never show on the lock screen, and their content is never in a notification anyway.
                     lockscreenVisibility = NotificationCompat.VISIBILITY_SECRET

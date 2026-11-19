@@ -1,5 +1,6 @@
 package eu.shaffe.tomi.notify
 
+import eu.shaffe.tomi.core.Device
 import eu.shaffe.tomi.core.ItemKind
 import eu.shaffe.tomi.core.TomiItem
 import eu.shaffe.tomi.core.kind
@@ -98,5 +99,23 @@ class PairingGrace(private val nowMs: () -> Long, private val graceMs: Long = DE
     companion object {
         /** Long enough for an import over a slow network, short enough that a real item sent minutes later still notifies. */
         const val DEFAULT_GRACE_MS = 2 * 60_000L
+    }
+}
+
+/**
+ * Spots a device that joined the space since the last emission of the device list: the detection control against someone adding a
+ * device to the space (a notification on the OTHER devices lets the owner revoke it). The first emission is the existing list, and the
+ * list that arrives while this device is itself being paired ([importing]) is not news; the known ids still follow, so that nothing is
+ * announced twice. This device is never announced to itself.
+ */
+class NewDeviceDetector {
+    private var known: Set<String>? = null
+
+    @Synchronized
+    fun onDevices(devices: List<Device>, importing: Boolean): List<Device> {
+        val previous = known
+        known = devices.mapTo(HashSet()) { it.id }
+        if (previous == null || importing) return emptyList()
+        return devices.filter { it.id !in previous && !it.isThisDevice }
     }
 }

@@ -298,6 +298,10 @@
     <string name="channel_files_desc">Fichiers et images reçus de tes autres appareils</string>
     <string name="channel_secrets">Masqués</string>
     <string name="channel_secrets_desc">Contenus masqués reçus. Jamais affichés sur l’écran verrouillé, sans aperçu.</string>
+    <string name="channel_devices">Appareils</string>
+    <string name="channel_devices_desc">Alerte quand un appareil est ajouté à ton espace. Aucun contenu, seulement le nom de l’appareil.</string>
+    <string name="notif_device_added_title">Nouvel appareil ajouté</string>
+    <string name="notif_device_added_body">« %1$s » a rejoint ton espace. Ce n’est pas toi ? Ouvre Appareils et révoque-le.</string>
     <string name="notif_title_secret">Contenu masqué · %1$s</string>
     <string name="notif_title_link">Lien de %1$s</string>
     <string name="notif_title_image">Image de %1$s</string>
