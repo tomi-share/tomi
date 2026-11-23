@@ -3,7 +3,11 @@ import SwiftUI
 import TomiDesign
 import TomiKit
 import TomiRuntime
+#if canImport(UIKit)
 import UIKit
+#else
+import AppKit
+#endif
 import UniformTypeIdentifiers
 
 /// The send screen (Android `SendScreen`): optional title, text or link, chosen files, what was detected and for
@@ -60,7 +64,7 @@ struct SendScreen: View {
             toolbar(axis: axis)
         }
         .navigationTitle(Text("send_title"))
-        .navigationBarTitleDisplayMode(.inline)
+        .inlineNavigationTitle()
         .photosPicker(isPresented: $choosingPhotos, selection: $photoSelection, maxSelectionCount: SendViewModel.maxAttachments, matching: .any(of: [.images, .videos]))
         .fileImporter(isPresented: $choosingFiles, allowedContentTypes: [.item], allowsMultipleSelection: true) { result in
             if case let .success(urls) = result { Task { await attachFiles(urls) } }
@@ -70,7 +74,18 @@ struct SendScreen: View {
             photoSelection = []
             Task { await attachPhotos(items) }
         }
-        .onAppear { model.screenAppeared() }
+        .onAppear {
+            model.screenAppeared()
+            offerClipboard()
+        }
+        // What was offered is not kept once the screen is left: it is looked at again at the next opening.
+        .onDisappear { model.dismissSuggestion() }
+        // Nor past its minute, with the screen left open.
+        .task(id: model.suggestion) {
+            guard model.suggestion != nil else { return }
+            try? await Task.sleep(for: .seconds(ClipboardSuggestions.maxAge))
+            if !Task.isCancelled, !ClipboardWatcher.shared.stillOffers() { model.dismissSuggestion() }
+        }
         .onChange(of: model.leaveAfterSend) { _, leave in
             guard leave else { return }
             model.consumeLeaveAfterSend()
@@ -83,8 +98,93 @@ struct SendScreen: View {
             model.consumeNotice()
         }
         // A revealed secret is masked again as soon as the app is no longer active, or when the switch goes off.
-        .onChange(of: scenePhase) { _, phase in if phase != .active { showSecret = false } }
+        .onChange(of: scenePhase) { _, phase in
+            if phase != .active { showSecret = false } else { offerClipboard() }
+        }
         .onChange(of: model.secret) { _, secret in if !secret { showSecret = false } }
+        #if os(macOS)
+        // Command-V on this screen is "Coller": files, an image, a text with its rich variant. Left to the field
+        // being typed in when it would only insert plain text at the cursor.
+        .background(MacPasteShortcut { pasteShortcut() })
+        #endif
+    }
+
+    #if os(macOS)
+    /// True when the paste was taken here (the key goes no further).
+    private func pasteShortcut() -> Bool {
+        guard model.editable else { return false }
+        // Files or a copied image: always attached, a text field could do nothing with them.
+        if MacSendInput.holdsFilesOrImage() {
+            paste()
+            return true
+        }
+        // In the title: the field's own paste, at the cursor.
+        if focus == .title { return false }
+        // In a content already started: at the cursor too, unless the copy is marked concealed (the content is
+        // then hidden and locked, which only "Coller" does).
+        if focus == .text && !model.text.isEmpty && !MacSendInput.holdsConcealed() { return false }
+        paste()
+        return true
+    }
+    #endif
+
+    // MARK: Clipboard suggestion
+
+    /// Offers what was copied less than a minute ago, on an empty draft. Nothing is typed: it shows in the place of
+    /// the content until the person takes it, writes something else or dismisses it.
+    private func offerClipboard() {
+        model.offer(ClipboardWatcher.shared.suggestion())
+    }
+
+    /// Takes the suggestion: what a paste does (the same reading of the clipboard, the same rules for a hidden
+    /// content).
+    /// False, with nothing pasted, when the clipboard is no longer what was offered (something else was copied
+    /// since, or the minute is over): the screen shows what is there now instead, and nothing is sent unseen.
+    @discardableResult
+    private func useSuggestion() async -> Bool {
+        guard model.suggestion != nil else { return false }
+        guard ClipboardWatcher.shared.stillOffers() else {
+            offerClipboard()
+            return false
+        }
+        ClipboardWatcher.shared.consume()
+        model.dismissSuggestion()
+        await pasteNow()
+        return true
+    }
+
+    private func dismissSuggestion() {
+        ClipboardWatcher.shared.consume()
+        model.dismissSuggestion()
+    }
+
+    /// "Envoyer" with nothing written but a suggestion whose content the app knows (macOS): it is what is sent.
+    private var canSendSuggestion: Bool {
+        !model.canSend && model.editable && model.suggestion?.isRead == true
+    }
+
+    private func suggestionRow(_ suggestion: ClipboardSuggestion) -> some View {
+        HStack(spacing: TomiSpace.s2) {
+            Button { Task { await useSuggestion() } } label: {
+                HStack(spacing: TomiSpace.s2) {
+                    TomiIcon.paste.image.foregroundStyle(TomiColor.brand)
+                    Text("ios_clip_hint").tomiText(.caption).foregroundStyle(TomiColor.textMuted)
+                    Spacer(minLength: 0)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(Text(verbatim: L10n.text("ios_clip_use") + " : " + suggestion.ghostText))
+            Button(action: dismissSuggestion) {
+                TomiIcon.close.image
+                    .foregroundStyle(TomiColor.textMuted)
+                    .frame(width: 32, height: 24)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(Text("ios_clip_dismiss"))
+        }
+        .padding(.horizontal, TomiSpace.s1)
     }
 
     // MARK: Form
@@ -98,6 +198,7 @@ struct SendScreen: View {
                 .onSubmit { focus = .text }
                 .tomiFieldBox(focused: focus == .title)
             contentField
+            if let suggestion = model.suggestion { suggestionRow(suggestion) }
             ForEach(model.attachments) { item in
                 AttachmentRow(name: item.file.name) { model.onRemoveAttachment(item.id) }
             }
@@ -135,13 +236,22 @@ struct SendScreen: View {
                     .onTapGesture { showSecret = true }
                     .accessibilityLabel(Text("detect_masked"))
             } else {
-                TextField(L10n.text("send_content_label"), text: binding, axis: .vertical)
+                // A suggestion shows where the content will be, as a placeholder does: nothing is typed.
+                TextField(
+                    text: binding, prompt: Text(verbatim: model.suggestion?.ghostText ?? L10n.text("send_content_label")),
+                    axis: .vertical
+                ) { Text("send_content_label") }
+                    .onKeyPress(.tab) {
+                        guard model.suggestion != nil, model.text.isEmpty else { return .ignored }
+                        Task { await useSuggestion() }
+                        return .handled
+                    }
                     .lineLimit(4...10)
                     .tomiText(.body)
                     .focused($focus, equals: .text)
-                    .textInputAutocapitalization(model.secret ? .never : .sentences)
+                    .autocapitalization(sentences: !model.secret)
                     .autocorrectionDisabled(model.secret)
-                    .keyboardType(model.secret ? .asciiCapable : .default)
+                    .asciiKeyboard(model.secret)
                     .privacySensitive(model.secret)
             }
             if model.secret {
@@ -173,10 +283,15 @@ struct SendScreen: View {
             .disabled(!model.editable)
             .accessibilityLabel(Text("action_attach"))
         } primary: {
-            FloatingPrimaryButton(icon: .send, label: "action_send", enabled: model.canSend) {
+            FloatingPrimaryButton(icon: .send, label: "action_send", enabled: model.canSend || canSendSuggestion) {
                 focus = nil
-                Task { await model.send() }
+                Task {
+                    if canSendSuggestion, await !useSuggestion() { return }
+                    await model.send()
+                }
             }
+            // Command-Return sends (Return alone is a new line in the text).
+            .keyboardShortcut(.return, modifiers: .command)
         }
     }
 
@@ -184,9 +299,19 @@ struct SendScreen: View {
     /// Android's `EXTRA_IS_SENSITIVE`.
     static let concealedType = "org.nspasteboard.ConcealedType"
 
-    /// The single place in the app that reads the clipboard, on the user's touch only. Takes the text and, when the
-    /// source gave some, the HTML of the first item; a copied link counts as text. Nothing else (no image, no file).
+    /// Reads the clipboard for the draft, on the user's gesture: "Coller", Command-V on this screen (Mac), or taking
+    /// the suggestion. The only other reading is the Mac's look at a copy made less than a minute ago, to offer it
+    /// (`ClipboardWatcher`); iOS reads nothing before the gesture. Takes the text and, when the source gave some, the HTML of the first item; a copied
+    /// link counts as text. iOS takes nothing else (no image, no file).
     private func paste() {
+        Task { await pasteNow() }
+    }
+
+    private func pasteNow() async {
+        #if os(macOS)
+        // On the Mac a paste also takes copied files and a copied image (`MacSendInput`).
+        await MacSendInput.paste(into: model, picked: picked)
+        #else
         let board = UIPasteboard.general
         // The checks below do not read the clipboard (no prompt); then one read of what is there.
         let concealed = board.contains(pasteboardTypes: [Self.concealedType])
@@ -198,6 +323,7 @@ struct SendScreen: View {
         let plain = board.hasStrings ? board.string : (board.hasURLs ? board.url?.absoluteString : nil)
         let html = hasHTML ? board.data(forPasteboardType: UTType.html.identifier).flatMap { String(data: $0, encoding: .utf8) } : nil
         model.onPasted(plain: plain ?? html.map(HtmlText.toPlain), html: html, concealed: concealed)
+        #endif
     }
 
     // MARK: Attachments

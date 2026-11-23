@@ -1,7 +1,6 @@
 import SwiftUI
 import TomiDesign
 import TomiKit
-import UIKit
 
 /// One item of the feed. Port of `ItemCard.kt`: header (kind, source and time, pin, archive, unread dot, copy, menu),
 /// body by kind (unreadable, hidden closed or revealed, text in the chosen mode, link, attachments), "Lire la suite",
@@ -86,7 +85,7 @@ struct ItemCard: View {
         model.onCardOpened(item)
         switch action {
         case .openLink:
-            if let url = item.url.flatMap(URL.init(string:)) { UIApplication.shared.open(url) }
+            if let url = item.url.flatMap(URL.init(string:)) { SystemActions.open(url) }
         case .reveal: model.reveal(item)
         case .hide: model.hide(item.id)
         case .openImage: model.openViewer(item, attachmentIndex: 0)

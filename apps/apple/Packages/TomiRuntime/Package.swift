@@ -1,12 +1,13 @@
 // swift-tools-version:5.9
 // Everything that touches the Rust core: the adapter of `TomiKit.TomiCore` over `RustTomiCore`
 // (real or demo), the wrapping key in the Keychain, the storage paths. Shared by the app and,
-// later, its share extension. Tests run on the iOS simulator (the core is an iOS XCFramework).
+// later, its share extension. Tests run on the Mac (`swift test`) and on the iOS simulator: the
+// core XCFramework has a slice for each.
 import PackageDescription
 
 let package = Package(
     name: "TomiRuntime",
-    platforms: [.iOS(.v17)],
+    platforms: [.iOS(.v17), .macOS(.v14)],
     products: [
         .library(name: "TomiRuntime", targets: ["TomiRuntime"]),
     ],

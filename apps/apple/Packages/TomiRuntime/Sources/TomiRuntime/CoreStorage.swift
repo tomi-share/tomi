@@ -129,6 +129,12 @@ public struct KeychainWrapKeyStore: WrapKeyStoring {
             kSecAttrAccount as String: account,
             kSecAttrSynchronizable as String: false,
         ]
+        #if os(macOS)
+        // On the Mac the default is the file-based login keychain, which ignores
+        // `kSecAttrAccessible` and the access group: ask for the data protection keychain, the
+        // one iOS always uses. It needs an app signed with an application identifier.
+        query[kSecUseDataProtectionKeychain as String] = true
+        #endif
         if let accessGroup { query[kSecAttrAccessGroup as String] = accessGroup }
         return query
     }

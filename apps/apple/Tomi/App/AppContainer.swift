@@ -1,6 +1,11 @@
 import Foundation
+import Security
 import SwiftUI
+#if canImport(UIKit)
 import UIKit
+#else
+import AppKit
+#endif
 import UserNotifications
 import TomiKit
 import TomiRuntime
@@ -18,6 +23,9 @@ final class AppContainer {
         /// cannot be read (Android `StartupState.Unreadable`). `resetFailed`: a reset was asked and could not erase
         /// the local data either.
         case unreadable(resetFailed: Bool)
+        /// The Keychain refuses this build (macOS: an app not signed with its application identifier). The data are
+        /// not damaged: nothing is offered to erase them, the app says what is wrong.
+        case misconfigured
     }
 
     private(set) var phase = Phase.starting
@@ -48,11 +56,20 @@ final class AppContainer {
     /// A creation link opened the app while it is not in a space: the creation screen offers it (relay and token).
     var pendingCreate = false
     @ObservationIgnored private var pendingSetupLink: ParsedSetupLink?
+    #if DEBUG
+    /// Debug builds: a screen of the entry to show without a click (`create`, `join`, `welcome`), for the tools that
+    /// look at the app with no mouse.
+    var debugEntryRoute: String?
+    #endif
     /// A notification tap or a link that came before the core was ready (a cold start): replayed once it is.
     @ObservationIgnored private var pendingNotification: NotificationResponse?
     @ObservationIgnored private var pendingLink: DeepLink?
     /// The core whose items are followed (one chain of observation per core).
     @ObservationIgnored private var watchedCore: ObjectIdentifier?
+    #if os(macOS)
+    /// The core `coreLoaded` already ran for (weak: a released core never passes for a new one at the same address).
+    @ObservationIgnored private weak var loadedCore: (any TomiCore)?
+    #endif
     /// Screens showing a secret right now (`sensitiveScreen()`): covered in the app switcher and while the screen is
     /// recorded or mirrored.
     private(set) var sensitiveScreens = 0
@@ -99,6 +116,36 @@ final class AppContainer {
     /// The device locks: the 2-minute biometric window closes and revealed items are masked. A screenshot was taken
     /// (iOS cannot prevent it): what was revealed is masked at once. The screen starts or stops being recorded.
     private func observeSecurityEvents() {
+        #if os(macOS)
+        // The screen locks, the Mac sleeps or the session is switched: the 2-minute window closes and revealed items
+        // are masked. macOS tells neither a screenshot nor a recording.
+        let lock = { [weak self] (_: Notification) -> Void in
+            MainActor.assumeIsolated {
+                self?.gate.window.invalidate()
+                self?.surfaceLeft(closed: false)
+                // Nobody is at the Mac: the decrypted files do not wait for their minute.
+                self?.purgeClearCopies()
+            }
+        }
+        let workspace = NSWorkspace.shared.notificationCenter
+        observers = [
+            // Back from sleep: the doorbell of the core starts afresh (its connection died with the sleep) and what
+            // arrived meanwhile is fetched.
+            workspace.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.wokeUp() }
+            },
+            DistributedNotificationCenter.default().addObserver(
+                forName: Notification.Name("com.apple.screenIsLocked"), object: nil, queue: .main, using: lock
+            ),
+            workspace.addObserver(forName: NSWorkspace.willSleepNotification, object: nil, queue: .main, using: lock),
+            workspace.addObserver(forName: NSWorkspace.screensDidSleepNotification, object: nil, queue: .main, using: lock),
+            workspace.addObserver(forName: NSWorkspace.sessionDidResignActiveNotification, object: nil, queue: .main, using: lock),
+            // Quitting before the 30 s of a secret copy: it does not stay on the clipboard.
+            NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification, object: nil, queue: .main) { _ in
+                MainActor.assumeIsolated { SensitiveClipboard.clearSecret() }
+            },
+        ]
+        #else
         let center = NotificationCenter.default
         observers = [
             center.addObserver(forName: UIApplication.protectedDataWillBecomeUnavailableNotification, object: nil, queue: .main) { [weak self] _ in
@@ -115,9 +162,13 @@ final class AppContainer {
             },
         ]
         updateCaptured()
+        #endif
     }
 
     private func updateCaptured() {
+        #if os(macOS)
+        // macOS has no public "the screen is being recorded": the window is kept out of captures instead.
+        #else
         var captured = UIApplication.shared.connectedScenes.compactMap { ($0 as? UIWindowScene)?.screen.isCaptured }.contains(true)
         #if DEBUG
         // The simulator is never "captured": `-TomiDebugScreenCaptured YES` shows the cover there.
@@ -131,7 +182,135 @@ final class AppContainer {
             feed?.hideAll()
             FeedViewModel.screenCaptureStarted()
         }
+        #endif
     }
+
+    #if os(macOS)
+    // MARK: Life of the Mac app
+    //
+    // The Mac app has no scene phase: it runs for days in the menu bar, its popover or its window shown now and then.
+    // "On screen" is a surface being used (`surfaceVisible`); the core stays in the foreground the whole time (its
+    // doorbell open), and what iOS does when it goes to the background is done here when the surfaces are left.
+
+    /// Asked by the menus and the keyboard of the Mac app, taken by the screens: open the search of the feed, go back
+    /// one screen (Escape).
+    var searchRequests = 0
+    var backRequests = 0
+    /// Screens pushed over the first one in the surface on screen (told by the root): Escape goes back while there
+    /// are some, then closes the popover.
+    var stackDepth = 0
+
+    /// A surface of the app (popover, window) is on screen and used. What arrives while none is: notified.
+    private(set) var surfaceVisible = false
+    @ObservationIgnored private var purgeTask: Task<Void, Never>?
+    /// The decrypted files stay this long after the last use of Tomi: a file just opened in another app (Preview)
+    /// must still be there (docs/macos-app.md, A10; the Windows app does the same).
+    static var clearCopiesDelay: Duration = .seconds(60)
+    @ObservationIgnored private var fallbackSync: Task<Void, Never>?
+
+    func surfaceVisibilityChanged(_ visible: Bool) {
+        guard visible != surfaceVisible else { return }
+        surfaceVisible = visible
+        purgeTask?.cancel()
+        purgeTask = nil
+        if visible {
+            // Back to Tomi: the notifications of what was read meanwhile go, a pending departure gets its attempt.
+            itemsChanged()
+            retrier?.comeBack()
+            scheduler?.retryNow()
+            drainShares()
+            // What was dropped while no surface was open is told now that someone looks.
+            tellExpiredShares()
+        } else {
+            schedulePurge()
+        }
+    }
+
+    /// The decrypted files go one minute from now unless a surface is used by then. Armed when the last surface is
+    /// left, and when something is decrypted with no surface on screen (a file opened from a notification).
+    func schedulePurge() {
+        purgeTask?.cancel()
+        purgeTask = Task { [weak self] in
+            try? await Task.sleep(for: Self.clearCopiesDelay)
+            guard !Task.isCancelled, let self, !self.surfaceVisible else { return }
+            self.purgeClearCopies()
+        }
+    }
+
+    /// Erases what Tomi decrypted to show or hand over (the cache of the core, the copies under their names) and
+    /// what the cards prepared from the texts. Never the doorbell: the Mac app keeps receiving.
+    func purgeClearCopies() {
+        purgeTask?.cancel()
+        purgeTask = nil
+        // Nobody has used Tomi for a minute (or the Mac is locked): the 2 minutes of an authentication end here too,
+        // as they do on iOS when the app goes to the background.
+        gate.window.invalidate()
+        feed?.fileRequest = nil
+        FeedViewModel.sweepShareCopies()
+        CardTexts.clear()
+        guard let core else { return }
+        Task { try? await core.purgePlaintextCache() }
+    }
+
+    /// The Mac woke up: a new doorbell loop (the core asks for it rather than waiting on a dead connection), and a
+    /// sync. The stop also erases the decrypted files, which the lock before the sleep already did.
+    private func wokeUp() {
+        guard let core, !core.isDemo else { return }
+        core.enterBackground()
+        core.enterForeground()
+        retrier?.comeBack()
+        scheduler?.retryNow()
+    }
+
+    /// How often the Mac app asks the relay what waits, whatever the doorbell says (Windows: 5 minutes too).
+    static var fallbackSyncInterval: Duration = .seconds(5 * 60)
+
+    /// The Mac app runs for days without a window. Its doorbell can die silently (a connection the relay or a box on
+    /// the way dropped without telling): a sync every few minutes fetches what it missed, and starts the doorbell
+    /// again if it had given up. Never on the demo core, never outside a space.
+    private func startFallbackSync(_ core: any TomiCore) {
+        fallbackSync?.cancel()
+        fallbackSync = nil
+        guard !core.isDemo else { return }
+        fallbackSync = Task { [weak self, weak core] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: Self.fallbackSyncInterval)
+                guard !Task.isCancelled, let self, let core, self.core === core else { return }
+                if core.state.isPaired { core.enterForeground() }
+            }
+        }
+    }
+
+    /// The network came back: the doorbell is started if it had given up, and what waits is fetched.
+    func networkCameBack() {
+        scheduler?.retryNow()
+        guard let core, !core.isDemo else { return }
+        core.enterForeground()
+    }
+
+    /// Received items not read yet (the dot of the menu bar icon, the badge of the Dock icon).
+    var unreadCount: Int {
+        guard let core, core.state.loaded, core.state.isPaired else { return 0 }
+        let local = core.state.localDevice?.id
+        return core.state.items.filter { item in
+            !item.read && !item.archived && local.map { !item.isOutgoing(localDeviceId: $0) } ?? true
+        }.count
+    }
+
+    /// The surface that shows the app (the popover, the window) is left, or closed: what a hidden item showed is
+    /// masked again, and its viewer goes (it lives in the model: it would still be there at the next opening).
+    /// `closed`: the surface is gone, every viewer goes with it.
+    func surfaceLeft(closed: Bool) {
+        guard let feed else { return }
+        feed.hideAll()
+        if closed {
+            feed.viewerRequest = nil
+            feed.fileRequest = nil
+        } else if let request = feed.viewerRequest, feed.item(id: request.itemId)?.secret != false {
+            feed.viewerRequest = nil
+        }
+    }
+    #endif
 
     func sensitiveScreenAppeared() { sensitiveScreens += 1 }
     func sensitiveScreenDisappeared() { sensitiveScreens = max(0, sensitiveScreens - 1) }
@@ -209,16 +388,25 @@ final class AppContainer {
         let update = notifierState.update(
             items: core.state.items, localDeviceId: core.state.localDevice?.id,
             // On screen or just covered (Control Center, a call): the feed shows it (Android: started).
-            appVisible: scenePhase != .background,
+            appVisible: isOnScreen,
             importing: importing
         )
         notifications.cancel(update.cancel)
         update.show.forEach(notifications.show)
         // Another device joined the space (never in the demo, whose devices are made up).
         if !core.isDemo {
-            newDeviceState.update(devices: core.state.devices, appVisible: scenePhase != .background, importing: importing)
+            newDeviceState.update(devices: core.state.devices, appVisible: isOnScreen, importing: importing)
                 .forEach(notifications.showDeviceAdded)
         }
+    }
+
+    /// The feed is in front of the user: what arrives is not notified.
+    private var isOnScreen: Bool {
+        #if os(macOS)
+        surfaceVisible
+        #else
+        scenePhase != .background
+        #endif
     }
 
     /// A tap on a notification or one of its buttons (Android `NotificationActionActivity`).
@@ -227,6 +415,11 @@ final class AppContainer {
             pendingNotification = response
             return
         }
+        #if os(macOS)
+        // Acted on with every surface closed: what it decrypts (a file opened) does not wait for a surface to be
+        // left to get its minute.
+        defer { if !surfaceVisible { schedulePurge() } }
+        #endif
         if response.opensDevices {
             if core?.state.isPaired == true { pendingRoute = .devices }
             return
@@ -249,7 +442,7 @@ final class AppContainer {
                     break
                 }
                 feed.onCardOpened(item)
-                UIApplication.shared.open(target)
+                SystemActions.open(target)
             case .copyText, .authenticateAndCopy:
                 // A hidden item asks for biometrics first (`FeedViewModel.copy`).
                 feed.copy(item)
@@ -323,6 +516,11 @@ final class AppContainer {
         Task.detached(priority: .utility) { TextRenderingWarmUp.run() }
         // The card texts of the core that was open before (the demo, another space) are not this one's.
         CardTexts.clear()
+        #if os(macOS)
+        // macOS has no expiry of its own for the clipboard: a secret copied by a run that was stopped before its 30 s
+        // is still there. Only what carries Tomi's mark; anything else copied since is the user's.
+        SensitiveClipboard.clearSecret()
+        #endif
         do {
             let paths = try self.paths()
             try paths.prepareSendDirectories()
@@ -360,15 +558,19 @@ final class AppContainer {
             self.retrier = retrier
             leave = LeaveSpaceModel(core: core, followUp: retrier)
             feed = FeedViewModel(core: core, prefs: prefs, gate: gate, network: network, feedback: feedback)
+            if Self.startsInDemo() { await enterDemoAtLaunch(core) }
             phase = .ready(core)
             AppGroup.defaults?.set(false, forKey: AppGroup.isUnreadableKey)
             apply(scenePhase, to: core)
+        } catch WrapKeyError.keychain(errSecMissingEntitlement) {
+            // A build that may not use the Keychain: the key may well be there, only out of reach of this build.
+            phase = .misconfigured
         } catch {
             // Nothing is logged: the message of a Keychain or storage failure may carry a path.
             phase = .unreadable(resetFailed: false)
             // Launched for a background task before the first unlock, the Keychain is not readable yet: that is not
             // damaged data, the share extension is not told (`runInBackground` lets the screen try again).
-            if scenePhase != .background && UIApplication.shared.applicationState != .background {
+            if scenePhase != .background && !Self.launchedInBackground {
                 AppGroup.defaults?.set(true, forKey: AppGroup.isUnreadableKey)
             }
         }
@@ -376,7 +578,10 @@ final class AppContainer {
 
     /// "Réessayer" of "Données illisibles": opens again (a Keychain that was not readable yet).
     func retryOpening() {
-        guard case .unreadable = phase else { return }
+        switch phase {
+        case .unreadable, .misconfigured: break
+        default: return
+        }
         phase = .starting
         Task { await start() }
     }
@@ -420,6 +625,13 @@ final class AppContainer {
     /// The core has read its state: chooses the first screen (once), resumes the sends left queued.
     func coreLoaded() {
         guard let core else { return }
+        #if os(macOS)
+        // The Mac app runs without a window: its delegate calls this as soon as the core is loaded, and every screen
+        // that shows (the popover at each opening, the window) calls it again. Once per core.
+        guard loadedCore !== core else { return }
+        loadedCore = core
+        startFallbackSync(core)
+        #endif
         if pairingFlow == nil { pairingFlow = !core.state.isPaired }
         itemsChanged()
         watchItems(core)
@@ -462,7 +674,7 @@ final class AppContainer {
     }
 
     private func tellExpiredShares() {
-        guard scenePhase == .active, let defaults = AppGroup.defaults, defaults.integer(forKey: AppGroup.expiredSharesKey) > 0 else { return }
+        guard isOnScreen, scenePhase == .active, let defaults = AppGroup.defaults, defaults.integer(forKey: AppGroup.expiredSharesKey) > 0 else { return }
         defaults.set(0, forKey: AppGroup.expiredSharesKey)
         feedback.show(L10n.text("ios_share_inbox_expired"))
     }
@@ -483,8 +695,9 @@ final class AppContainer {
             leave = LeaveSpaceModel(core: core, followUp: retrier)
             if let coordinator, let picked { send = SendViewModel(core: core, coordinator: coordinator, picked: picked) }
         }
-        #if DEBUG
-        if let core, core.isDemo { reopenDemo() }
+        #if DEBUG || TOMI_DEV_TOOLS
+        // The isolated demo core (the app hosting the tests, the previews) has no space to come back to.
+        if case .demo = mode, let core, core.isDemo { reopenDemo() }
         #endif
     }
 
@@ -507,14 +720,17 @@ final class AppContainer {
         ShareInbox.shared()?.removeAll()
         AppGroup.defaults?.set(false, forKey: AppGroup.isPairedKey)
         // A secret copied by Tomi (marked concealed) leaves the clipboard; anything else copied there is the user's.
-        if UIPasteboard.general.contains(pasteboardTypes: [SensitiveClipboard.tomiSecretType]) {
-            UIPasteboard.general.items = []
-        }
+        SensitiveClipboard.clearSecret()
     }
 
     /// The network or the app came back: one automatic attempt of a pending departure (at most one a minute).
     func departureComeBack() {
         retrier?.comeBack()
+    }
+
+    /// The network came back: a send that waits for its next try (up to 15 minutes away) leaves now.
+    func retryWaitingSends() {
+        scheduler?.retryNow()
     }
 
     /// Leaves the pairing screen, through the first-launch explanation the first time.
@@ -548,7 +764,7 @@ final class AppContainer {
     /// sending was asked) and pushes what is queued, the undo window being long over. True when it could run.
     func runInBackground(sendOnly: Bool) async -> Bool {
         // Launched for the task, without a scene: not on screen (no doorbell, no foreground work).
-        if UIApplication.shared.applicationState == .background { scenePhase = .background }
+        if Self.launchedInBackground { scenePhase = .background }
         // The shares of the extension are only read with the device unlocked, so they are not sent from here; one that
         // waited past `ShareInbox.maxAge` is dropped (no content is read for that). Told at the next look.
         if let inbox = ShareInbox.shared() { noteExpiredShares(inbox.dropExpired(now: Date())) }
@@ -562,11 +778,15 @@ final class AppContainer {
             guard case .opening = phase else { break }
             try? await Task.sleep(for: .milliseconds(100))
         }
-        if case .unreadable = phase {
-            // Before the first unlock the files cannot be read: the screen will try again. Only an opening made
-            // here is undone; "Données illisibles" already on screen (and its reset failure) stays.
+        switch phase {
+        case .unreadable, .misconfigured:
+            // Before the first unlock the files (and sometimes the Keychain) cannot be read: the screen will try
+            // again. Only an opening made here is undone; "Données illisibles" already on screen (and its reset
+            // failure) stays.
             if openedHere { phase = .starting }
             return false
+        default:
+            break
         }
         guard let core, !core.isDemo else { return false }
         // The state is read just after the opening: wait for it a moment.
@@ -586,7 +806,7 @@ final class AppContainer {
         return !Task.isCancelled
     }
 
-    #if DEBUG
+    #if DEBUG || TOMI_DEV_TOOLS
     /// A fresh demo core, unpaired (the previous one left its space).
     private func reopenDemo() {
         resumeTask?.cancel()
@@ -600,26 +820,15 @@ final class AppContainer {
         retrier = nil
         Task { await start() }
     }
-
-    /// "Entrer en mode démo" of the pairing screen: the demo core, unpaired, replacing the current one if it is the
-    /// real core (debug builds only).
-    func openDemoForPairing() async -> (any TomiCore)? {
-        if let core, core.isDemo { return core }
-        resumeTask?.cancel()
-        retrier?.stop()
-        (core as? RustTomiCoreAdapter)?.shutdown()
-        mode = .demo(startPaired: false, assets: Bundle.main.url(forResource: "demo", withExtension: nil))
-        phase = .starting
-        feed = nil
-        send = nil
-        await start()
-        return core
-    }
     #endif
 
     func scenePhaseChanged(_ scenePhase: ScenePhase) {
         self.scenePhase = scenePhase
         if scenePhase == .active { updateCaptured() }
+        #if os(iOS)
+        // The minute of a copy runs from the moment Tomi is back in front (iOS does not tell when it was made).
+        if scenePhase == .active { ClipboardWatcher.shared.look() }
+        #endif
         // A background task left the opening to the screen (files not readable yet then): it starts now.
         if scenePhase == .active, case .starting = phase { Task { await start() } }
         // Revealed items are masked as soon as the app is no longer active (app switcher, Control Center, a call), before
@@ -639,6 +848,7 @@ final class AppContainer {
             retrier?.comeBack()
             // What a background task dropped is told now; then what waits is sent, and the rest past its age goes.
             tellExpiredShares()
+            scheduler?.retryNow()
             drainShares()
         case .background where !inBackground:
             inBackground = true
@@ -646,7 +856,9 @@ final class AppContainer {
             // point to nothing (not on `inactive`: Face ID makes the scene inactive).
             feed?.fileRequest = nil
             FeedViewModel.sweepShareCopies()
+            #if os(iOS)
             if !core.isDemo { BackgroundWork.schedule(hasQueued: hasQueuedSends) }
+            #endif
             gate.window.invalidate()
             core.enterBackground()
             // What the cards prepared from the texts is not kept while the app is off screen.
@@ -656,18 +868,25 @@ final class AppContainer {
         }
     }
 
-    /// Debug builds run on the demo core, already in the demo space (`-TomiStartUnpaired YES`: not yet,
-    /// to go through the pairing screen); `-TomiCoreMode real` picks the real core against the debug
-    /// relay URL. Release builds always run on the real core. The relay of the build (`TOMI_RELAY_URL`,
-    /// `Config/Local.xcconfig`) is optional: without one the relay comes from the link or QR code of the pairing, the
-    /// "Relais" field or the creation link.
-    nonisolated static func defaultMode(arguments: UserDefaults = .standard, bundle: Bundle = .main) -> CoreMode {
-        let relay = configuredRelay(bundle: bundle)
-        #if TOMI_DEMO
-        if arguments.string(forKey: "TomiCoreMode") != "real" {
-            let paired = !arguments.bool(forKey: "TomiStartUnpaired")
-            return .demo(startPaired: paired, assets: bundle.url(forResource: "demo", withExtension: nil))
+    /// Every build runs on the one core (the unified core); the demo is entered from the pairing screen, never at
+    /// launch. The relay of the build (`TOMI_RELAY_URL`, `Config/Local.xcconfig`) is optional: without one the relay
+    /// comes from the link or QR code of the pairing, the "Relay" field or the creation link, and a device that is in
+    /// a space keeps the relay of that space. Developer builds (Debug, Dev) take three launch arguments:
+    /// `-TomiRelayURL <url>` (a local relay), `-TomiStartInDemo YES` (`startsInDemo`) and `-TomiIsolatedDemo YES`.
+    ///
+    /// The app that hosts the unit tests is the exception: it must touch neither the space of the person at this
+    /// device nor the network, so it opens the isolated demo core (`testing`).
+    nonisolated static func defaultMode(
+        arguments: UserDefaults = .standard, bundle: Bundle = .main, testing: Bool = AppContainer.isHostingTests
+    ) -> CoreMode {
+        var relay = configuredRelay(bundle: bundle)
+        #if DEBUG || TOMI_DEV_TOOLS
+        // `-TomiIsolatedDemo YES`: the same isolated demo core, to look at the app on a device that is in a real space
+        // without opening that space (the demo of the unified core can only be entered from outside a space).
+        if testing || arguments.bool(forKey: "TomiIsolatedDemo") {
+            return .demo(startPaired: true, assets: bundle.url(forResource: "demo", withExtension: nil))
         }
+        if let local = arguments.string(forKey: "TomiRelayURL").flatMap(URL.init(string:)) { relay = local }
         #endif
         return .real(relayURL: relay)
     }
@@ -685,11 +904,41 @@ final class AppContainer {
         return URL(string: text)
     }
 
+    /// The app was launched by XCTest to host the unit tests.
+    nonisolated static var isHostingTests: Bool {
+        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+    }
+
+    /// Developer builds, `-TomiStartInDemo YES`: the core enters its demo at launch when the device is in no space
+    /// (to look at the app without a space, without a click). Never in a Release build.
+    nonisolated static func startsInDemo(arguments: UserDefaults = .standard) -> Bool {
+        #if DEBUG || TOMI_DEV_TOOLS
+        arguments.bool(forKey: "TomiStartInDemo")
+        #else
+        false
+        #endif
+    }
+
+    /// Waits for the core to have read its state, then enters the demo if it can (no space, built with the demo).
+    private func enterDemoAtLaunch(_ core: RustTomiCoreAdapter) async {
+        for _ in 0..<100 where !core.state.loaded { try? await Task.sleep(for: .milliseconds(50)) }
+        if core.canEnterDemo { try? await core.enterDemo() }
+    }
+
     static var appVersion: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.0.0"
     }
 
     static var deviceName: String {
-        UIDevice.current.name
+        SystemActions.deviceName
+    }
+
+    /// iOS launched the app for a background task, without a scene. Never on macOS: the app has no such launch.
+    private static var launchedInBackground: Bool {
+        #if os(iOS)
+        UIApplication.shared.applicationState == .background
+        #else
+        false
+        #endif
     }
 }

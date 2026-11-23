@@ -624,7 +624,7 @@ public final class RustTomiCoreAdapter: TomiKit.TomiCore {
             try core.enterDemo(config: DemoConfig(
                 filesDir: entry.filesDir,
                 assetsDir: entry.assetsDir,
-                platform: "ios",
+                platform: CoreFactory.platform,
                 appVersion: entry.appVersion,
                 deviceName: entry.deviceName,
                 startPaired: true

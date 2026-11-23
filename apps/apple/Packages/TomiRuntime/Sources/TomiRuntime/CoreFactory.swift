@@ -30,6 +30,16 @@ public struct DemoEntry: Sendable {
 }
 
 public enum CoreFactory {
+    /// What this build announces to the space as its platform (`CoreConfig.platform`): the other
+    /// devices show it in their device list.
+    public static var platform: String {
+        #if os(macOS)
+        "macos"
+        #else
+        "ios"
+        #endif
+    }
+
     /// Opens the Rust core. Blocks (database, and for the demo the writing of its history):
     /// never call it on the main thread; prefer `open`.
     public static func openRust(
@@ -50,7 +60,7 @@ public enum CoreFactory {
                     wrapKey: key,
                     relayUrl: relayURL?.absoluteString,
                     appVersion: appVersion,
-                    platform: "ios",
+                    platform: platform,
                     // The pairing screen asks "get the history?" itself.
                     autoImport: false
                 ))
@@ -58,7 +68,7 @@ public enum CoreFactory {
                 return try RustTomiCore.openDemo(config: DemoConfig(
                     filesDir: paths.demo.path,
                     assetsDir: assets?.path,
-                    platform: "ios",
+                    platform: platform,
                     appVersion: appVersion,
                     deviceName: deviceName,
                     startPaired: startPaired

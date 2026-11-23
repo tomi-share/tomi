@@ -1,0 +1,196 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "NSCameraUsageDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi verwendet die Kamera nur, um einen QR-Code zu scannen: den eines Geräts, dem du beitrittst, oder den eines Installationsschlüssels."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi uses the camera only to scan a QR code: the one of a device to join, or the one of an installation key."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi usa la cámara solo para escanear un código QR: el de un dispositivo al que unirte o el de una clave de instalación."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi utilise la caméra seulement pour scanner un QR code : celui d’un appareil à rejoindre, ou celui d’une clé d’installation."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi कैमरे का इस्तेमाल सिर्फ़ QR कोड स्कैन करने के लिए करता है: जिस डिवाइस से जुड़ना है उसका, या इंस्टॉलेशन कुंजी का।"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi menggunakan kamera hanya untuk memindai kode QR: milik perangkat yang akan Anda ikuti, atau milik kunci instalasi."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi usa la fotocamera solo per scansionare un codice QR: quello di un dispositivo a cui unirti o quello di una chiave di installazione."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomiは、QRコード（参加するデバイスのもの、またはインストールキーのもの）をスキャンするためにのみカメラを使用します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi는 QR 코드를 스캔할 때만 카메라를 사용해요. 참여할 기기의 코드 또는 설치 키의 코드예요."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi gebruikt de camera alleen om een QR-code te scannen: die van een apparaat waarbij je aansluit, of die van een installatiesleutel."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi używa kamery tylko do zeskanowania kodu QR: urządzenia, do którego dołączasz, albo klucza instalacyjnego."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Tomi usa a câmera apenas para escanear um código QR: o de um dispositivo ao qual se juntar ou o de uma chave de instalação."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi использует камеру только для сканирования QR-кода: устройства, к которому вы присоединяетесь, или ключа установки."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi kamerayı yalnızca bir QR kodu taramak için kullanır: katılacağınız bir cihazın veya bir kurulum anahtarının kodu."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi 仅使用相机扫描二维码：要加入的设备的二维码，或安装密钥的二维码。"
+          }
+        }
+      }
+    },
+    "Send with Tomi" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit Tomi senden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send with Tomi"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enviar con Tomi"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envoyer avec Tomi"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi से भेजें"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kirim dengan Tomi"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invia con Tomi"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomiで送信"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi로 보내기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versturen met Tomi"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wyślij przez Tomi"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enviar com o Tomi"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отправить через Tomi"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi ile gönder"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用 Tomi 发送"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

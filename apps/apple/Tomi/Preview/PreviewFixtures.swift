@@ -1,7 +1,12 @@
 #if DEBUG
 import Foundation
 import TomiKit
+#if canImport(UIKit)
 import UIKit
+#else
+import ImageIO
+import UniformTypeIdentifiers
+#endif
 
 /// Items written in Swift so that every card variant shows in `#Preview` and in the view-model tests, without the
 /// Rust core. The app itself always runs on the real core (demo mode in Debug, 23 items); these never ship.
@@ -113,12 +118,29 @@ enum PreviewFixtures {
 
     /// A small gradient so the thumbnail of the image card is visible.
     static func thumbnail() -> Data? {
+        #if os(macOS)
+        let space = CGColorSpaceCreateDeviceRGB()
+        guard let context = CGContext(
+            data: nil, width: 320, height: 200, bitsPerComponent: 8, bytesPerRow: 0, space: space,
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else { return nil }
+        let colors = [CGColor(red: 0.19, green: 0.69, blue: 0.78, alpha: 1), CGColor(red: 0.35, green: 0.34, blue: 0.84, alpha: 1)] as CFArray
+        if let gradient = CGGradient(colorsSpace: space, colors: colors, locations: [0, 1]) {
+            context.drawLinearGradient(gradient, start: .zero, end: CGPoint(x: 320, y: 200), options: [])
+        }
+        let data = NSMutableData()
+        guard let image = context.makeImage(),
+              let destination = CGImageDestinationCreateWithData(data, UTType.png.identifier as CFString, 1, nil) else { return nil }
+        CGImageDestinationAddImage(destination, image, nil)
+        return CGImageDestinationFinalize(destination) ? data as Data : nil
+        #else
         UIGraphicsImageRenderer(size: CGSize(width: 320, height: 200)).pngData { context in
             let colors = [UIColor.systemTeal.cgColor, UIColor.systemIndigo.cgColor] as CFArray
             if let gradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: colors, locations: [0, 1]) {
                 context.cgContext.drawLinearGradient(gradient, start: .zero, end: CGPoint(x: 320, y: 200), options: [])
             }
         }
+        #endif
     }
 }
 

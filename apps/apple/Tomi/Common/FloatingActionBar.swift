@@ -57,13 +57,21 @@ struct ActionBarScaffold<Content: View, Bar: View>: View {
 
     /// Height of the occupied bottom corner on the side of the strip (`containerCornerInsets`, iOS 26), 0 before.
     private static func bottomCornerHeight(_ proxy: GeometryProxy, edge: SideEdge) -> Double {
+        #if os(iOS)
         guard #available(iOS 26.0, *) else { return 0 }
         let corners = proxy.containerCornerInsets
         return Double(edge == .trailing ? corners.bottomTrailing.height : corners.bottomLeading.height)
+        #else
+        // A Mac window has no corner taken by the system.
+        return 0
+        #endif
     }
 
     /// The occupied corners are known from iOS 26 (`containerCornerInsets`); before, there is no band.
     private static func topBand(_ proxy: GeometryProxy) -> TopCornerBand? {
+        #if os(macOS)
+        return nil
+        #else
         guard #available(iOS 26.0, *) else { return nil }
         let insets = proxy.safeAreaInsets
         let corners = proxy.containerCornerInsets
@@ -73,6 +81,7 @@ struct ActionBarScaffold<Content: View, Bar: View>: View {
             topLeadingCorner: (width: Double(corners.topLeading.width), height: Double(corners.topLeading.height)),
             topTrailingCorner: (width: Double(corners.topTrailing.width), height: Double(corners.topTrailing.height))
         )
+        #endif
     }
 }
 
@@ -81,14 +90,20 @@ private struct SystemBarEdgeReader<Content: View>: View {
     @ViewBuilder let content: (SideEdge?) -> Content
 
     var body: some View {
+        #if os(iOS)
         if #available(iOS 27.1, *) {
             VerticalEdgeProbe(content: content)
         } else {
             content(nil)
         }
+        #else
+        // No system bar on a side of a Mac window: the action bar is at the bottom.
+        content(nil)
+        #endif
     }
 }
 
+#if os(iOS)
 @available(iOS 27.1, *)
 private struct VerticalEdgeProbe<Content: View>: View {
     @Environment(\.toolbarVerticalEdge) private var edge
@@ -98,6 +113,7 @@ private struct VerticalEdgeProbe<Content: View>: View {
         content(edge.map { $0 == .leading ? SideEdge.leading : .trailing })
     }
 }
+#endif
 
 /// The capsule of secondary actions plus the square primary button (`brand`, radius 12), laid along `axis`. On iOS 26
 /// and later both are Liquid Glass (the material of the system bars, interactive, merged in one container); before, the

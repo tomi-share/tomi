@@ -272,4 +272,27 @@ final class FeedViewModelTests: XCTestCase {
         XCTAssertTrue(text.contains("PC-Bureau"))
         XCTAssertTrue(text.contains("Tablette"))
     }
+    // MARK: Pin, delete here
+
+    func testThePinGoesOnThenOffAndTheItemJoinsThePinnedOnes() async {
+        let model = makeModel()
+        XCTAssertFalse(model.sections.pinned.contains { $0.id == "link" })
+        model.togglePin(PreviewFixtures.link)
+        await eventually { model.sections.pinned.contains { $0.id == "link" } }
+        XCTAssertEqual(core.calls.last, "pin:link")
+        model.togglePin(model.item(id: "link")!)
+        await eventually { !model.sections.pinned.contains { $0.id == "link" } }
+        XCTAssertEqual(core.calls.last, "unpin:link")
+    }
+
+    func testDeletingHereNeverDeletesEverywhere() async {
+        let model = makeModel()
+        model.deleteLocal(PreviewFixtures.files)
+        await eventually { feedback.current != nil }
+        XCTAssertTrue(core.calls.contains("deleteLocal:files"))
+        XCTAssertFalse(core.calls.contains { $0.hasPrefix("deleteEverywhere") }, "the other devices keep it")
+        XCTAssertNil(model.item(id: "files"))
+        XCTAssertEqual(feedback.current?.text, L10n.text("snackbar_deleted_local"))
+    }
+
 }

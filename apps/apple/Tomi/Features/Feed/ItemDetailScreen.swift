@@ -2,7 +2,6 @@ import QuickLook
 import SwiftUI
 import TomiDesign
 import TomiKit
-import UIKit
 
 /// Detail of an item (Android `ItemDetailScreen`): the card unfolded, the hint of a hidden item, the metadata (type,
 /// expiry, pinned, status), and the floating toolbar (copy, pin, share, archive, and more: open, copy link, delete).
@@ -50,8 +49,8 @@ struct ItemDetailScreen: View {
             }
         }
         .navigationTitle(Text("ios_detail_title"))
-        .navigationBarTitleDisplayMode(.inline)
-        // "Supprimer le fichier partout" (rows of a batch) is offered only when the relay can carry it.
+        .inlineNavigationTitle()
+        // "Delete the file everywhere" (rows of a batch) is offered only when the relay can carry it.
         .task { await model.refreshAttachmentRemovalSupport() }
         // The item may arrive after the screen (loading): it counts as seen as soon as it is there, and the screen goes
         // back by itself only once it has been seen and then disappears.
@@ -151,7 +150,7 @@ struct ItemDetailScreen: View {
                 if let url {
                     Button {
                         model.onCardOpened(item)
-                        UIApplication.shared.open(url)
+                        SystemActions.open(url)
                     } label: { Label(L10n.text("action_open"), systemImage: TomiIcon.open.systemName) }
                 }
                 if copyLink {

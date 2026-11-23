@@ -179,34 +179,6 @@ final class PairingViewModel {
         return left.seconds * 1000 + left.attoseconds / 1_000_000_000_000_000
     }
 
-    /// Debug builds: the whole simulated pairing in one go (demo code, codes accepted, history kept) on the demo core,
-    /// so a tester reaches the feed without a QR code. Stays on Working until the screen goes away.
-    @discardableResult
-    func enterDemo(open: () async -> (any TomiCore)?) async -> Bool {
-        guard phase == .input else { return false }
-        phase = .working
-        error = nil
-        guard let core = await open() else {
-            phase = .input
-            error = "pair_error_network"
-            return false
-        }
-        do {
-            guard case .awaitingVerification = try await core.pairWithCode(code: Self.demoCode, relayUrl: nil) else {
-                phase = .input
-                error = "pair_error_unexpected"
-                return false
-            }
-            try await core.confirmPairing(importHistory: true)
-            pendingLink = nil
-            return true
-        } catch {
-            phase = .input
-            self.error = "pair_error_unexpected"
-            return false
-        }
-    }
-
     /// The discreet demo entry of the join screen: offered only by a real core built with the demo, in no space.
     var canEnterDemo: Bool { core()?.canEnterDemo ?? false }
 

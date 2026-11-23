@@ -154,7 +154,7 @@ struct CreateSpaceScreen: View {
                         SecureField("", text: binding)
                     }
                 }
-                .textInputAutocapitalization(.never)
+                .noAutocapitalization()
                 .autocorrectionDisabled()
                 .textContentType(nil)
                 .submitLabel(.next)
@@ -175,7 +175,7 @@ struct CreateSpaceScreen: View {
     private var nameCard: some View {
         TomiCard {
             HStack(spacing: TomiSpace.s3) {
-                Image(systemName: "iphone").font(.system(size: 20)).foregroundStyle(TomiColor.textMuted)
+                SystemActions.thisDeviceIcon.font(.system(size: 20)).foregroundStyle(TomiColor.textMuted)
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("create_name_label").tomiText(.caption).foregroundStyle(TomiColor.textMuted)

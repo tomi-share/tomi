@@ -74,8 +74,9 @@ public final class NotificationBatcher: @unchecked Sendable {
 // notify and what a notification says; posting it is the app's).
 
 /// Turns "a new unread item arrived from another device" into notifications to show, unless the app is on screen, and
-/// tells which notifications to take down (items read elsewhere, deleted or expired). The first reading is the existing
-/// history: it notifies nothing.
+/// tells which notifications to take down: items read (here or elsewhere), deleted, expired (the core drops them from
+/// the list) or archived (put away: nothing to announce any more; Windows `notify::remove`, Android keeps it). The
+/// first reading is the existing history: it notifies nothing.
 public struct IncomingNotifierState: Sendable {
     private var known: Set<String>?
     private var notified: Set<String> = []
@@ -93,14 +94,15 @@ public struct IncomingNotifierState: Sendable {
         var update = Update()
         let previous = known
         known = Set(items.map(\.id))
-        let unread = Set(items.filter { !$0.read }.map(\.id))
+        // What a notification may still announce: there, not read, not put away.
+        let unread = Set(items.filter { !$0.read && !$0.archived }.map(\.id))
         for id in notified.subtracting(unread).sorted() {
             update.cancel.append(id)
             notified.remove(id)
         }
         guard let previous, !importing else { return update }
         let outgoing = { (item: TomiItem) in localDeviceId.map(item.isOutgoing(localDeviceId:)) ?? false }
-        let fresh = items.filter { !previous.contains($0.id) && !outgoing($0) && !$0.read }
+        let fresh = items.filter { !previous.contains($0.id) && !outgoing($0) && !$0.read && !$0.archived }
         guard !fresh.isEmpty, !appVisible else { return update }
         for item in fresh.reversed() {
             notified.insert(item.id)

@@ -2,7 +2,9 @@ import Foundation
 import ImageIO
 import Photos
 import TomiKit
+#if canImport(UIKit)
 import UIKit
+#endif
 import UniformTypeIdentifiers
 
 /// The image viewer to show over the stack (a full-screen cover).
@@ -129,7 +131,12 @@ extension FeedViewModel {
                 return
             }
             let type = UTType(mimeType: attachment.mime) ?? UTType(filenameExtension: (attachment.name as NSString).pathExtension) ?? .image
+            #if os(iOS)
             UIPasteboard.general.setData(data, forPasteboardType: type.identifier)
+            ClipboardWatcher.shared.noticeOwnCopy()
+            #else
+            MacFileActions.copyToClipboard(data, type: type)
+            #endif
             onCardOpened(item)
             feedback.show(L10n.text("ios_snackbar_copied"))
         }
@@ -147,9 +154,58 @@ extension FeedViewModel {
             }
             if !Self.presentExport(URL(fileURLWithPath: path), name: Self.fileName(attachment)) {
                 feedback.show(L10n.text("snackbar_image_failed"))
+            } else {
+                #if os(macOS)
+                // No dialog on the Mac: say where it went.
+                feedback.show(L10n.text("macos_saved_to_downloads", MacDownloads.displayName))
+                #endif
             }
         }
     }
+
+    #if os(macOS)
+    /// "Ouvrir": the file in the app the Mac chose for it, under its own name (a hard link, erased with the clear
+    /// copies). A hidden item's file is never handed to another app this way (it is shared, behind the gate).
+    func openAttachmentInDefaultApp(_ item: TomiItem, index: Int) {
+        guard item.isReadable, !item.secret, item.attachments.indices.contains(index) else { return }
+        let attachment = item.attachments[index]
+        Task {
+            guard let path = await attachmentPath(item.id, item.attachments.slot(at: index)),
+                  let link = Self.viewLink(URL(fileURLWithPath: path), name: Self.fileName(attachment)) else {
+                feedback.show(L10n.text("snackbar_image_unavailable"))
+                return
+            }
+            onCardOpened(item)
+            if !MacFileActions.open(link) { feedback.show(L10n.text("snackbar_image_failed")) }
+        }
+    }
+
+    /// A file dragged out of Tomi (to the Finder, Mail, another app): decrypted when it is dropped, handed under its
+    /// own name. Nil for a hidden or unreadable item: nothing of it leaves by a drag.
+    func dragProvider(_ item: TomiItem, index: Int) -> NSItemProvider? {
+        guard item.isReadable, !item.secret, item.attachments.indices.contains(index) else { return nil }
+        let attachment = item.attachments[index]
+        let name = Self.fileName(attachment)
+        let type = UTType(filenameExtension: (name as NSString).pathExtension) ?? UTType(mimeType: attachment.mime) ?? .data
+        let itemId = item.id
+        let slot = item.attachments.slot(at: index)
+        let provider = NSItemProvider()
+        provider.suggestedName = name
+        provider.registerFileRepresentation(forTypeIdentifier: type.identifier, fileOptions: [], visibility: .all) { [weak self] completion in
+            Task { @MainActor in
+                guard let self, let path = await self.attachmentPath(itemId, slot),
+                      let link = Self.viewLink(URL(fileURLWithPath: path), name: name) else {
+                    completion(nil, false, nil)
+                    return
+                }
+                // The receiver copies the file; the link goes with the clear copies.
+                completion(link, false, nil)
+            }
+            return nil
+        }
+        return provider
+    }
+    #endif
 
     /// A hidden item is not shared while the screen is shared or recorded: the share sheet shows the file (its name, a
     /// preview) above every cover of the app.
@@ -160,7 +216,12 @@ extension FeedViewModel {
     }
 
     private static var screenCaptured: Bool {
+        #if os(iOS)
         UIApplication.shared.connectedScenes.contains { ($0 as? UIWindowScene)?.screen.isCaptured == true }
+        #else
+        // macOS does not tell: the window that shows a hidden item is kept out of captures instead.
+        false
+        #endif
     }
 
     /// True when the action may go on: at once for a normal item, after the gate for a hidden one.
@@ -226,8 +287,12 @@ extension FeedViewModel {
 
     // MARK: System
 
-    /// Adds the file to the photo library (permission "add only", asked the first time).
+    /// Adds the file to the photo library (permission "add only", asked the first time). On the Mac: the download
+    /// folder instead (`MacDownloads`: the app does not ask for the photo library there).
     private static func addToPhotos(_ url: URL, name: String) async -> Bool {
+        #if os(macOS)
+        return MacDownloads.save(url, name: name) != nil
+        #else
         let status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
         guard status == .authorized || status == .limited else { return false }
         do {
@@ -240,8 +305,25 @@ extension FeedViewModel {
         } catch {
             return false
         }
+        #endif
     }
 
+    #if os(macOS)
+    /// "Save" on the Mac: a copy in the download folder (`Downloads/Tomi`, or the one of the settings),
+    /// with no dialog. Never called for a hidden item.
+    private static func presentExport(_ source: URL, name: String) -> Bool {
+        MacDownloads.save(source, name: name) != nil
+    }
+
+    /// The share menu of the Mac, on a copy under the name of the file (erased when the menu closes).
+    private static func presentShare(_ source: URL, name: String, sensitive: Bool) -> Bool {
+        guard let copy = temporaryCopy(source, name: name) else { return false }
+        return MacFileActions.share(copy, sensitive: sensitive)
+    }
+
+    /// iOS only (a share sheet of a hidden item closes when the screen starts being recorded): macOS does not tell.
+    static func screenCaptureStarted() {}
+    #else
     /// The system picker that saves a copy where the user chooses (Files, iCloud Drive...).
     private static func presentExport(_ source: URL, name: String) -> Bool {
         guard let presenter = SystemShare.topViewController(), let copy = temporaryCopy(source, name: name) else { return false }
@@ -270,9 +352,10 @@ extension FeedViewModel {
     }
 
     private static var sensitiveSheetFolder: URL?
+    #endif
 
     /// A copy under its own name in a folder of its own of the temporary directory (swept at start and in the
-    /// background), readable only while the device is unlocked.
+    /// background), readable only while the device is unlocked (iOS: macOS has no such file protection).
     private static func temporaryCopy(_ source: URL, name: String) -> URL? {
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent("\(sharePrefix)\(UUID().uuidString)", isDirectory: true)
         let copy = dir.appendingPathComponent(name)
@@ -288,6 +371,7 @@ extension FeedViewModel {
         }
     }
 
+    #if os(iOS)
     private static func presentShare(_ source: URL, name: String, sensitive: Bool) -> Bool {
         // The screen may have started being shared during the Face ID prompt: a hidden item's sheet does not open.
         if sensitive && screenCaptured { return true }
@@ -321,6 +405,7 @@ extension FeedViewModel {
         presenter.present(controller, animated: true)
         return true
     }
+    #endif
 
     private static let sharePrefix = "share-"
 
@@ -335,7 +420,7 @@ extension FeedViewModel {
 
     /// Decodes an image for the screen (Android `ImageBitmapLoader`): EXIF orientation applied, at most 4096 px on the
     /// longest side and 12 MP, so a 50 MP photo neither exhausts memory nor exceeds the texture size. Off the main thread.
-    nonisolated static func loadImage(_ url: URL) -> UIImage? {
+    nonisolated static func loadImage(_ url: URL) -> PlatformImage? {
         guard let source = CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary) else { return nil }
         let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any]
         let width = properties?[kCGImagePropertyPixelWidth] as? Int ?? 0
@@ -349,7 +434,7 @@ extension FeedViewModel {
             kCGImageSourceThumbnailMaxPixelSize: max(edge, 1),
         ]
         guard let image = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else { return nil }
-        return UIImage(cgImage: image)
+        return PlatformImage(cgImage: image)
     }
 
     /// Reads a code file into memory (2 MB at most); the decrypted copy of the core cache is read, never copied.
@@ -359,6 +444,7 @@ extension FeedViewModel {
     }
 }
 
+#if os(iOS)
 /// Erases the copy handed to the "Enregistrer dans Fichiers" picker once it closes, saved or cancelled.
 @MainActor
 private final class ExportCleanup: NSObject, UIDocumentPickerDelegate {
@@ -371,3 +457,4 @@ private final class ExportCleanup: NSObject, UIDocumentPickerDelegate {
 
     private func erase() { try? FileManager.default.removeItem(at: folder) }
 }
+#endif

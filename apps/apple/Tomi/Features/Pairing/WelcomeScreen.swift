@@ -36,7 +36,8 @@ struct WelcomeScreen: View {
             }
         }
         .background(TomiColor.bg.ignoresSafeArea())
-        .toolbar(.hidden, for: .navigationBar)
+        .hiddenNavigationBar()
+        .appWindowTitle()
     }
 }
 
