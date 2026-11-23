@@ -130,11 +130,16 @@ export function pairingErrorMessage(err: AppError | null, role: "invite" | "join
   return errorMessage(err);
 }
 
+const ONE_DECIMAL = new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const NO_DECIMAL = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 });
+
+/** A size, with one decimal under 10 units, written as the language writes numbers (`1.5 MB`, `1,5 Mo`). */
 export function formatBytes(n: number): string {
   const u = msg.units;
   if (n < 1024) return format(u.bytes, { n });
-  if (n < 1024 * 1024) return format(u.kilobytes, { n: (n / 1024).toFixed(n < 10 * 1024 ? 1 : 0) });
-  return format(u.megabytes, { n: (n / 1024 / 1024).toFixed(n < 10 * 1024 * 1024 ? 1 : 0) });
+  const scaled = (value: number) => (value < 10 ? ONE_DECIMAL : NO_DECIMAL).format(value);
+  if (n < 1024 * 1024) return format(u.kilobytes, { n: scaled(n / 1024) });
+  return format(u.megabytes, { n: scaled(n / 1024 / 1024) });
 }
 
 /** A short delay, `1 min 42 s` or `42 s`, rounded up to the second. */

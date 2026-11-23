@@ -67,5 +67,10 @@
   "ios_relay_revoked_self": "%1$@ keluar dari ruang Anda, menurut relai.",
   "ios_rotation_stalled_body": "Perangkat yang dikeluarkan mungkin masih menyimpan kunci ruang Anda saat ini. Tomi mencoba lagi secara otomatis; buka Tomi di perangkat Anda yang lain untuk membantu.",
   "ios_rotation_stalled_title": "Pengeluaran perangkat sedang berlangsung",
-  "ios_snackbar_copied": "Disalin"
+  "ios_snackbar_copied": "Disalin",
+  "_system": {
+    "NSCameraUsageDescription": "Tomi menggunakan kamera hanya untuk memindai kode QR penyambungan.",
+    "NSFaceIDUsageDescription": "Tomi meminta Face ID sebelum menampilkan, menyalin, atau membagikan item tersembunyi.",
+    "NSPhotoLibraryAddUsageDescription": "Tomi menyimpan ke Foto gambar yang Anda pilih untuk ditambahkan."
+  }
 }

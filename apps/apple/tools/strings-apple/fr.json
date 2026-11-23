@@ -20,10 +20,10 @@
   "ios_debug_simulate_unreadable": "Simuler un élément illisible",
   "ios_devices_add_reason": "Ajouter un appareil à ton espace",
   "ios_devices_add_unavailable": "Configure un verrouillage d’écran (code ou biométrie) pour ajouter un appareil à ton espace.",
-  "ios_devices_revoke_reason":"Retirer un appareil de ton espace",
+  "ios_devices_revoke_reason": "Retirer un appareil de ton espace",
   "ios_notif_device_added_title": "Nouvel appareil ajouté",
   "ios_notif_device_added_body": "%1$@ fait maintenant partie de ton espace. Ce n’était pas toi ? Retire-le depuis Appareils.",
-  "ios_notice_files_skipped":"Certains fichiers n’ont pas été joints : 25 Mo maximum par fichier, 20 fichiers au plus.",
+  "ios_notice_files_skipped": "Certains fichiers n’ont pas été joints : 25 Mo maximum par fichier, 20 fichiers au plus.",
   "ios_onboarding_headline": "Ajoute Tomi à tes favoris de partage",
   "ios_onboarding_step_1": "1. Dans n’importe quelle application, appuie sur Partager.",
   "ios_onboarding_step_2": "2. Fais défiler la rangée des applications jusqu’au bout, puis touche Plus.",
@@ -36,7 +36,7 @@
   "ios_platform_ios": "iOS",
   "ios_platform_macos": "macOS",
   "ios_share_inbox_expired": "Un partage resté plus de 7 jours sans pouvoir être envoyé a été supprimé.",
-  "ios_share_inbox_failed":"Un partage n’a pas pu être envoyé. Tomi réessaiera.",
+  "ios_share_inbox_failed": "Un partage n’a pas pu être envoyé. Tomi réessaiera.",
   "ios_capture_cover": "Un contenu masqué est affiché alors que l’écran de cet iPhone est partagé ou enregistré. Tomi le cache pour qu’il n’apparaisse pas dans la copie.",
   "ios_capture_cover_close": "Masquer et revenir au fil",
   "ios_save_to_files": "Enregistrer dans Fichiers",
@@ -67,5 +67,10 @@
   "ios_relay_revoked_self": "%1$@ a quitté ton espace, d’après le relais.",
   "ios_rotation_stalled_body": "Un appareil retiré peut encore détenir la clé actuelle de ton espace. Tomi réessaie automatiquement ; ouvre Tomi sur tes autres appareils pour aider.",
   "ios_rotation_stalled_title": "Retrait d’un appareil en cours",
-  "ios_snackbar_copied": "Copié"
+  "ios_snackbar_copied": "Copié",
+  "_system": {
+    "NSCameraUsageDescription": "Tomi utilise la caméra seulement pour scanner le QR code d’appairage.",
+    "NSFaceIDUsageDescription": "Tomi demande Face ID avant d’afficher, de copier ou de partager un contenu masqué.",
+    "NSPhotoLibraryAddUsageDescription": "Tomi enregistre dans Photos les images que tu choisis d’y ajouter."
+  }
 }

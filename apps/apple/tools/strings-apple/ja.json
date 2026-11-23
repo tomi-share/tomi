@@ -67,5 +67,10 @@
   "ios_relay_revoked_self": "リレーによると、%1$@はスペースから離れました。",
   "ios_rotation_stalled_body": "除外したデバイスが、スペースの現在のキーをまだ保持している可能性があります。Tomiは自動的に再試行します。ほかのデバイスでTomiを開くと、完了しやすくなります。",
   "ios_rotation_stalled_title": "デバイスを除外しています",
-  "ios_snackbar_copied": "コピーしました"
+  "ios_snackbar_copied": "コピーしました",
+  "_system": {
+    "NSCameraUsageDescription": "Tomiは、ペアリング用のQRコードをスキャンするためにのみカメラを使用します。",
+    "NSFaceIDUsageDescription": "Tomiは、非表示のアイテムを表示、コピー、共有する前にFace IDを求めます。",
+    "NSPhotoLibraryAddUsageDescription": "Tomiは、追加することを選んだ画像を「写真」に保存します。"
+  }
 }

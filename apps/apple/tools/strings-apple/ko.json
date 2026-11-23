@@ -67,5 +67,10 @@
   "ios_relay_revoked_self": "릴레이에 따르면 %1$@이(가) 내 공간에서 나갔어요.",
   "ios_rotation_stalled_body": "제거된 기기가 아직 내 공간의 현재 키를 가지고 있을 수 있어요. Tomi가 자동으로 다시 시도해요. 다른 기기에서 Tomi를 열면 도움이 돼요.",
   "ios_rotation_stalled_title": "기기 제거 진행 중",
-  "ios_snackbar_copied": "복사됨"
+  "ios_snackbar_copied": "복사됨",
+  "_system": {
+    "NSCameraUsageDescription": "Tomi는 페어링 QR 코드를 스캔할 때만 카메라를 사용해요.",
+    "NSFaceIDUsageDescription": "Tomi는 숨김 항목을 표시, 복사 또는 공유하기 전에 Face ID를 요청해요.",
+    "NSPhotoLibraryAddUsageDescription": "Tomi는 추가하기로 선택한 이미지를 사진 앱에 저장해요."
+  }
 }

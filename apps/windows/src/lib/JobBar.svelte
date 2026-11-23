@@ -2,7 +2,7 @@
   import { api, type JobView } from "./api";
   import { feed } from "./feed.svelte";
   import Icon from "./Icon.svelte";
-  import { errorMessage, formatBytes, msg } from "./i18n";
+  import { errorMessage, format, formatBytes, msg } from "./i18n";
 
   let now = $state(Date.now());
 
@@ -43,7 +43,7 @@
       <div class="job" class:failed={job.state === "failed"} role="status" aria-live="polite">
         {#if job.state === "pending"}
           <!-- "Envoi dans 3 s · Annuler": the undo window. -->
-          <span class="text">{msg.job.pending} <span class="tnum count">{seconds(job)} s</span></span>
+          <span class="text">{msg.job.pending} <span class="tnum count">{format(msg.units.seconds, { s: seconds(job) })}</span></span>
           <button class="action" type="button" onclick={() => cancel(job.id)}>{msg.job.cancel}</button>
         {:else if job.state === "sending"}
           <span class="text">

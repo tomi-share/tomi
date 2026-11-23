@@ -67,5 +67,10 @@
   "ios_relay_revoked_self": "%1$@ salió de tu espacio, según el retransmisor.",
   "ios_rotation_stalled_body": "Es posible que un dispositivo quitado aún tenga la clave actual de tu espacio. Tomi lo vuelve a intentar automáticamente; abre Tomi en tus otros dispositivos para ayudar.",
   "ios_rotation_stalled_title": "Quitando un dispositivo",
-  "ios_snackbar_copied": "Copiado"
+  "ios_snackbar_copied": "Copiado",
+  "_system": {
+    "NSCameraUsageDescription": "Tomi usa la cámara solo para escanear el código QR de vinculación.",
+    "NSFaceIDUsageDescription": "Tomi pide Face ID antes de mostrar, copiar o compartir un elemento oculto.",
+    "NSPhotoLibraryAddUsageDescription": "Tomi guarda en Fotos las imágenes que eliges añadir."
+  }
 }

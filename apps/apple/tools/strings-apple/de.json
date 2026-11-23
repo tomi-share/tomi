@@ -67,5 +67,10 @@
   "ios_relay_revoked_self": "%1$@ hat laut Relay deinen Raum verlassen.",
   "ios_rotation_stalled_body": "Ein entferntes Gerät besitzt vielleicht noch den aktuellen Schlüssel deines Raums. Tomi versucht es automatisch erneut; öffne Tomi auf deinen anderen Geräten, um zu helfen.",
   "ios_rotation_stalled_title": "Gerät wird entfernt",
-  "ios_snackbar_copied": "Kopiert"
+  "ios_snackbar_copied": "Kopiert",
+  "_system": {
+    "NSCameraUsageDescription": "Tomi verwendet die Kamera nur, um den QR-Code der Kopplung zu scannen.",
+    "NSFaceIDUsageDescription": "Tomi fragt nach Face ID, bevor ein verborgener Eintrag angezeigt, kopiert oder geteilt wird.",
+    "NSPhotoLibraryAddUsageDescription": "Tomi sichert in Fotos die Bilder, die du dort hinzufügen möchtest."
+  }
 }
