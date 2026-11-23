@@ -68,9 +68,115 @@
   "ios_rotation_stalled_body": "Wykluczone urządzenie może nadal mieć aktualny klucz twojej przestrzeni. Tomi ponawia próbę automatycznie; otwórz Tomi na swoich pozostałych urządzeniach, aby pomóc.",
   "ios_rotation_stalled_title": "Wykluczanie urządzenia w toku",
   "ios_snackbar_copied": "Skopiowano",
+  "macos_viewer_previous": "Poprzedni obraz",
+  "macos_viewer_next": "Następny obraz",
+  "macos_pasted_image_name": "wklejony-obraz.png",
+  "macos_menu_open": "Otwórz Tomi",
+  "macos_menu_window": "Otwórz w oknie",
+  "macos_menu_settings": "Ustawienia…",
+  "macos_menu_quit": "Zakończ Tomi",
+  "macos_status_unread": "Tomi, niektóre odebrane elementy są nieprzeczytane",
+  "macos_settings_login": "Otwieraj Tomi po zalogowaniu",
+  "macos_settings_login_hint": "Bez tego po ponownym uruchomieniu nic nie jest odbierane, dopóki nie otworzysz Tomi.",
+  "macos_settings_version": "Wersja",
+  "macos_settings_title": "Ustawienia Tomi",
+  "macos_settings_shortcut": "Skrót otwierający Tomi",
+  "macos_settings_shortcut_hint": "Otwiera Tomi z dowolnej aplikacji; użyj go ponownie, aby zamknąć Tomi.",
+  "macos_settings_shortcut_refused": "Ten skrót jest już zajęty (przez inną aplikację lub drugi skrót Tomi). Zachowano poprzedni.",
+  "macos_settings_shortcut_change": "Zmień…",
+  "macos_settings_shortcut_recording": "Naciśnij klawisze",
+  "macos_key_space": "Spacja",
+  "macos_settings_notifications": "Powiadomienia",
+  "macos_settings_notifications_hint": "Gdy nadejdzie element, a Tomi nie jest otwarte przed tobą.",
+  "macos_settings_notifications_denied": "Odrzucone przez macOS: po nadejściu elementu nic się nie wyświetla. Zezwól Tomi w Ustawieniach systemowych, w sekcji Powiadomienia.",
+  "macos_settings_notifications_on": "Dozwolone",
+  "macos_settings_notifications_open": "Otwórz ustawienia Maca…",
+  "ios_misconfigured_title": "Ta wersja Tomi nie jest poprawnie podpisana",
+  "ios_misconfigured_body": "System odmawia jej dostępu do pęku kluczy, więc Tomi nie może otworzyć swoich danych. Nic nie zostało uszkodzone ani wymazane: zainstaluj wersję podpisaną identyfikatorem aplikacji.",
+  "macos_saved_to_downloads": "Zapisano w %1$@",
+  "macos_downloads_default_name": "Pobrane › Tomi",
+  "macos_settings_downloads": "Folder zapisu",
+  "macos_settings_downloads_hint": "Tu trafiają pliki, które zapisujesz z Tomi.",
+  "macos_settings_downloads_choose": "Wybierz…",
+  "macos_settings_downloads_default": "Domyślny",
+  "macos_menu_new_send": "Nowa wysyłka",
+  "macos_menu_feed": "Strumień",
+  "_mac_comment": "Wersja na Maca tekstów wspólnych z telefonami (strings-from-android.py): _mac_replacements są stosowane do każdego tekstu, _mac podaje cały tekst. „telefon” i „Mac” są rodzaju męskiego, ale odmieniają się inaczej (tego Maca, tym Macu): pary obejmują więc formę przypadku.",
+  "_mac_replacements": [
+    [
+      "przywrócenie telefonu",
+      "przywrócenie Maca"
+    ],
+    [
+      "ustawieniach telefonu",
+      "ustawieniach Maca"
+    ],
+    [
+      "tego telefonu",
+      "tego Maca"
+    ],
+    [
+      "tym telefonie",
+      "tym Macu"
+    ],
+    [
+      "Ten telefon",
+      "Ten Mac"
+    ],
+    [
+      "ten telefon",
+      "ten Mac"
+    ]
+  ],
+  "ios_clip_text": "Skopiowano tekst",
+  "ios_clip_link": "Skopiowano link",
+  "ios_clip_image": "Skopiowano obraz",
+  "ios_clip_files": "Skopiowano pliki: %1$@",
+  "ios_clip_hidden": "Skopiowano ukrytą treść",
+  "ios_clip_hint": "Schowek · stuknij, aby wkleić",
+  "ios_clip_use": "Użyj schowka",
+  "ios_clip_dismiss": "Ignoruj schowek",
+  "macos_settings_send_shortcut": "Skrót wysyłający zaznaczenie",
+  "macos_settings_send_shortcut_hint": "Z dowolnej aplikacji: kopiuje to, co jest w niej zaznaczone (tekst, pliki, obraz), i otwiera z tym wysyłanie w Tomi.",
+  "macos_settings_copy_selection_denied": "Aby skopiować zaznaczenie, macOS musi zezwolić Tomi (Ustawienia systemowe, Prywatność i ochrona, Dostępność). Bez tego ten skrót otwiera wysyłanie bez kopiowania czegokolwiek.",
+  "macos_settings_copy_selection_open": "Otwórz ustawienia Maca…",
+  "_mac": {
+    "biometric_subtitle_delete_space": "Tego działania nie można cofnąć: wymagane jest użycie Touch ID lub hasła tego Maca.",
+    "biometric_subtitle_erase": "Tego działania nie można cofnąć: wymagane jest użycie Touch ID lub hasła tego Maca.",
+    "biometric_subtitle_revoke": "Działanie wrażliwe: wymagane jest użycie Touch ID lub hasła tego Maca.",
+    "delete_space_unavailable_biometric": "Aby usunąć swoją przestrzeń, trzeba użyć Touch ID lub hasła tego Maca. Nic nie zostało wymazane.",
+    "erase_unavailable_biometric": "Aby wymazać bez potwierdzenia serwera, trzeba użyć Touch ID lub hasła tego Maca.",
+    "devices_revoke_message": "To urządzenie zostanie wykluczone z przestrzeni, a klucz przestrzeni zostanie odnowiony. Nie będzie już mogło odczytywać nowych elementów. Pojawi się prośba o Touch ID lub hasło tego Maca.",
+    "devices_revoke_unavailable": "Nie można użyć ani Touch ID, ani hasła tego Maca: unieważnienie nie jest możliwe.",
+    "detail_masked_hint": "Pokaż, Kopiuj i Udostępnij wymagają Touch ID lub hasła tego Maca.",
+    "detail_revealed_hint": "Ukrywa się ponownie po kilku sekundach i gdy tylko opuścisz Tomi.",
+    "toast_biometric_unavailable": "Nie można użyć ani Touch ID, ani hasła tego Maca: nie można pokazywać, kopiować ani udostępniać ukrytej treści.",
+    "feed_empty_archives": "Brak zarchiwizowanych elementów. Zarchiwizuj element z jego menu „⋯”.",
+    "invite_verify_hint": "Jeśli drugie urządzenie pokazuje błąd zamiast kodu, kliknij „Kody się różnią”.",
+    "pair_link_received_hint": "Nic nie dzieje się automatycznie. Kliknij „Dołącz”, aby kontynuować.",
+    "notif_body_secret": "Kliknij, aby skopiować (wymagane uwierzytelnienie)",
+    "source_this_phone": "Ten Mac",
+    "snackbar_image_saved": "Zapisano obraz w twoim folderze zapisu",
+    "ios_file_hidden": "Ukryty plik nie jest pokazywany w Tomi: jego podgląd wymknąłby się ochronie ekranu. Możesz udostępnić go innej aplikacji po potwierdzeniu za pomocą Touch ID lub hasła tego Maca.",
+    "ios_save_to_files": "Zachowaj",
+    "ios_pair_camera_settings": "Otwórz ustawienia Maca",
+    "ios_onboarding_headline": "Tomi mieszka na twoim pasku menu",
+    "ios_onboarding_step_1": "1. Kliknij ikonę Tomi obok zegara: otworzy się twój strumień.",
+    "ios_onboarding_step_2": "2. Z dowolnej aplikacji ⌃⇧Spacja otwiera Tomi. Zaznacz tekst lub pliki, a potem naciśnij ⌃⇧V: wysyłanie otworzy się z twoim zaznaczeniem. Wyślij (⌘↩).",
+    "ios_onboarding_step_3": "3. Tomi otwiera się po zalogowaniu, aby odbierać nawet przy zamkniętych oknach. Skrót i tę opcję możesz zmienić w Ustawieniach.",
+    "onboarding_open_share": "Otwórz ustawienia",
+    "menu_share_help": "Skrót i pasek menu",
+    "ios_clip_hint": "Schowek · Tab, aby go użyć, lub wyślij od razu",
+    "biometric_subtitle_pair": "Nowe urządzenie otrzyma całą historię, także elementy ukryte. Potwierdź za pomocą Touch ID lub hasła tego Maca.",
+    "invite_auth_required_body": "Aby dodać urządzenie, potwierdź swoją tożsamość za pomocą Touch ID lub hasła tego Maca."
+  },
   "_system": {
     "NSCameraUsageDescription": "Tomi używa aparatu tylko do zeskanowania kodu QR parowania.",
     "NSFaceIDUsageDescription": "Tomi prosi o Face ID przed pokazaniem, skopiowaniem lub udostępnieniem ukrytego elementu.",
     "NSPhotoLibraryAddUsageDescription": "Tomi zapisuje w Zdjęciach obrazy, które zdecydujesz się tam dodać."
+  },
+  "_system_mac": {
+    "NSCameraUsageDescription": "Tomi używa kamery tylko do zeskanowania kodu QR: urządzenia, do którego dołączasz, albo klucza instalacyjnego.",
+    "Send with Tomi": "Wyślij przez Tomi"
   }
 }

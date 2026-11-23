@@ -3,7 +3,18 @@ import Foundation
 /// The shared container of the app and its share extension (App Group): the inbox of shares and the few values the
 /// extension reads.
 public enum AppGroup {
-    public static let identifier = "group.eu.shaffe.tomi"
+    /// iOS: the app group of the apps. macOS: the group of the team (`<team>.eu.shaffe.tomi`), which the Mac app and
+    /// its extension give in their Info.plist (`TomiAppGroup`): macOS serves such a group to what the team signed
+    /// with no provisioning profile, where the `group.` form of iOS needs one.
+    /// Empty on a Mac build that does not give it (a test bundle, a tool): there is then no shared container, rather
+    /// than the group of iOS that the Mac app and its extension would each believe to share.
+    public static let identifier: String = {
+        #if os(macOS)
+        return Bundle.main.object(forInfoDictionaryKey: "TomiAppGroup") as? String ?? ""
+        #else
+        return "group.eu.shaffe.tomi"
+        #endif
+    }()
     /// Posted (Darwin notification) by the extension when a share is put in the inbox.
     public static let inboxChanged = "eu.shaffe.tomi.share-inbox"
     /// `UserDefaults(suiteName: identifier)` key: this device is in a space (written by the app, read by the extension).
@@ -16,10 +27,11 @@ public enum AppGroup {
 
     /// The container, nil when the app group is not in the entitlements.
     public static func container(fileManager: FileManager = .default) -> URL? {
-        fileManager.containerURL(forSecurityApplicationGroupIdentifier: identifier)
+        guard !identifier.isEmpty else { return nil }
+        return fileManager.containerURL(forSecurityApplicationGroupIdentifier: identifier)
     }
 
-    public static var defaults: UserDefaults? { UserDefaults(suiteName: identifier) }
+    public static var defaults: UserDefaults? { identifier.isEmpty ? nil : UserDefaults(suiteName: identifier) }
 }
 
 /// One share put in the inbox by the extension: what the app hands to its core once `notBefore` is past. The files are

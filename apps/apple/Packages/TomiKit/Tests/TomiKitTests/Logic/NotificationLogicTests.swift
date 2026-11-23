@@ -130,6 +130,47 @@ final class IncomingNotifierTests: XCTestCase {
         XCTAssertEqual(state.update(items: [], localDeviceId: "phone", appVisible: false).cancel, [])
     }
 
+    func testANotificationIsTakenDownOnceItsItemIsArchived() {
+        var state = IncomingNotifierState()
+        _ = state.update(items: [], localDeviceId: "phone", appVisible: false)
+        XCTAssertEqual(state.update(items: [item("a"), item("b")], localDeviceId: "phone", appVisible: false).show.count, 2)
+        // "a" is put away without being read (here, or on another device): nothing to announce any more.
+        var archived = item("a")
+        archived.archived = true
+        let update = state.update(items: [archived, item("b")], localDeviceId: "phone", appVisible: false)
+        XCTAssertEqual(update.cancel, ["a"])
+        XCTAssertEqual(update.show, [])
+        // Taken down once, and not shown again when it comes back out of the archives.
+        XCTAssertEqual(state.update(items: [item("a"), item("b")], localDeviceId: "phone", appVisible: false), .init())
+    }
+
+    func testAnItemThatExpiredLeavesTheListAndItsNotificationGoes() {
+        var state = IncomingNotifierState()
+        _ = state.update(items: [], localDeviceId: "phone", appVisible: false)
+        _ = state.update(items: [item("a")], localDeviceId: "phone", appVisible: false)
+        // The core drops an expired item from the list: the same path as a deletion.
+        XCTAssertEqual(state.update(items: [], localDeviceId: "phone", appVisible: true).cancel, ["a"], "even with the app on screen")
+    }
+
+    func testAnItemThatArrivesAlreadyArchivedIsNotAnnounced() {
+        var state = IncomingNotifierState()
+        _ = state.update(items: [], localDeviceId: "phone", appVisible: false)
+        var archived = item("a")
+        archived.archived = true
+        XCTAssertEqual(state.update(items: [archived], localDeviceId: "phone", appVisible: false).show, [])
+    }
+
+    func testAnUnreadableItemIsAnnouncedLikeAHiddenOne() {
+        // It may well be a hidden one: no device name, no content, no button.
+        let unreadable = TomiItem(id: "u", content: .unreadable(.updateRequired), sourceDevice: office, createdAt: Date())
+        let content = IncomingNotificationContent.forItem(unreadable)
+        XCTAssertEqual(content.titleKey, "notif_public_title")
+        XCTAssertNil(content.titleArgument)
+        XCTAssertEqual(content.body, .key("notif_body_unreadable"))
+        XCTAssertNil(content.secondary)
+        XCTAssertEqual(content.group, .secrets)
+    }
+
     func testAHiddenItemSaysNothingNotEvenTheDeviceName() {
         let content = IncomingNotificationContent.forItem(item("s", secret: true))
         XCTAssertEqual(content.group, .secrets)

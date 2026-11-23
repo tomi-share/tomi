@@ -28,6 +28,8 @@ struct RootView: View {
                     onRetry: { container.retryOpening() },
                     onReset: { container.resetUnreadableData() }
                 )
+            } else if case .misconfigured = container.phase {
+                MisconfiguredScreen { container.retryOpening() }
             } else {
                 opening
             }
@@ -126,20 +128,35 @@ private struct ReadyRoot: View {
                 container.resetPathRequested = false
                 path = []
             }
-            // The network came back: one automatic attempt of a pending departure.
+            // The network came back: one automatic attempt of a pending departure, and the sends that wait leave.
             .onChange(of: container.network.isOnline) { _, online in
-                if online { container.departureComeBack() }
+                guard online else { return }
+                container.departureComeBack()
+                container.retryWaitingSends()
             }
+            #if os(macOS)
+            // Escape on the Mac goes back one screen (`MacSurfaces.escape`). Not from a screen whose way back does
+            // more than leave (an invitation being shown, the first-launch page): they keep their own button.
+            .onChange(of: path.count, initial: true) { _, depth in container.stackDepth = depth }
+            .onChange(of: container.backRequests) { _, _ in
+                switch path.last {
+                case .invite?, .onboarding?, nil: break
+                default: path.removeLast()
+                }
+            }
+            #endif
     }
 
     @ViewBuilder
     private var content: some View {
         if container.pairingFlow == true {
-            EntryFlow(container: container, core: core, openDemo: demoEntry)
+            EntryFlow(container: container, core: core)
         } else if container.onboardingFlow {
             NavigationStack {
                 OnboardingScreen { container.finishOnboarding() }
+                    .screenControls()
             }
+            .systemBarControls()
         } else {
             stack
         }
@@ -163,21 +180,24 @@ private struct ReadyRoot: View {
                 },
                 isOnTop: path.isEmpty
             )
-            .toolbar(.hidden, for: .navigationBar)
+            .hiddenNavigationBar()
+            .appWindowTitle()
+            .screenControls()
             .navigationDestination(for: Route.self) { route in
-                destination(route)
+                destination(route).screenControls()
             }
         }
+        .systemBarControls()
         // One presenter for the whole stack: the feed stays under the detail.
         // The image viewer, over everything (night background, no bars).
-        .fullScreenCover(item: Binding(get: { feed.viewerRequest }, set: { feed.viewerRequest = $0 })) { request in
+        .coverScreen(item: Binding(get: { feed.viewerRequest }, set: { feed.viewerRequest = $0 })) { request in
             ImageViewerScreen(request: request, model: feed, onClose: { feed.viewerRequest = nil }) { id in
                 feed.viewerRequest = nil
                 path.append(.item(id))
             }
         }
         // Another file (documents, audio, video): the file viewer, over everything like the image viewer.
-        .fullScreenCover(item: Binding(get: { feed.fileRequest }, set: { feed.fileRequest = $0 })) { request in
+        .coverScreen(item: Binding(get: { feed.fileRequest }, set: { feed.fileRequest = $0 })) { request in
             FileViewerScreen(request: request, model: feed, onClose: { feed.fileRequest = nil }) { id in
                 feed.fileRequest = nil
                 path.append(.item(id))
@@ -237,13 +257,6 @@ private struct ReadyRoot: View {
         path = [.send]
     }
 
-    private var demoEntry: (() async -> (any TomiCore)?)? {
-        #if DEBUG
-        return { await container.openDemoForPairing() }
-        #else
-        return nil
-        #endif
-    }
 }
 
 /// Routes of the entry, a device not in a space yet.
@@ -256,13 +269,14 @@ private enum EntryRoute: Hashable {
 private struct EntryFlow: View {
     let container: AppContainer
     let core: any TomiCore
-    let openDemo: (() async -> (any TomiCore)?)?
     @State private var path: [EntryRoute] = []
 
     var body: some View {
         NavigationStack(path: $path) {
             WelcomeScreen(onCreateSpace: { path.append(.create) }, onJoinSpace: { path.append(.join) })
+                .screenControls()
                 .navigationDestination(for: EntryRoute.self) { route in
+                    Group {
                     switch route {
                     case .create:
                         CreateSpaceDestination(core: core, takeLink: { container.takeSetupLink() }) {
@@ -275,12 +289,14 @@ private struct EntryFlow: View {
                             model: container.pairing,
                             localDeviceName: core.state.localDevice?.name ?? AppContainer.deviceName,
                             onFinished: { container.finishPairing(showOnboarding: true) },
-                            openDemo: openDemo,
                             onDemoEntered: { container.finishPairing(showOnboarding: false) }
                         )
                     }
+                    }
+                    .screenControls()
                 }
         }
+        .systemBarControls()
         // A pairing link opened the app: the join screen, with the link offered.
         .onChange(of: container.pendingJoin, initial: true) { _, join in
             guard join else { return }
@@ -293,6 +309,13 @@ private struct EntryFlow: View {
             container.pendingCreate = false
             path = [.create]
         }
+        #if DEBUG
+        .onChange(of: container.debugEntryRoute, initial: true) { _, route in
+            guard let route else { return }
+            container.debugEntryRoute = nil
+            path = route == "create" ? [.create] : (route == "join" ? [.join] : [])
+        }
+        #endif
         // A pairing settled at start-up while the join screen waits on its first step.
         .onChange(of: core.state.isPaired) { _, paired in
             container.pairing.pairedChanged(paired)
@@ -301,6 +324,11 @@ private struct EntryFlow: View {
         }
         // "Masquer et revenir" of the privacy cover: the pairing code or the new space leave the screen.
         .onChange(of: container.leaveEntryRequests) { _, _ in path = [] }
+        #if os(macOS)
+        // Told so that Escape does not close anything here; the screens of the entry go back by their own button
+        // only (creating a space or joining one has steps that must not be skipped).
+        .onChange(of: path.count, initial: true) { _, depth in container.stackDepth = depth }
+        #endif
         .onChange(of: path) { old, new in
             // Back from the join to an earlier screen: the pairing in progress (if any) is left.
             if old.contains(.join) && !new.contains(.join) { container.pairing.reset() }

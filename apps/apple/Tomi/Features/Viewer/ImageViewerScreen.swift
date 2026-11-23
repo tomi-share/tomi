@@ -136,9 +136,9 @@ private struct ViewerPages: View {
     var body: some View {
         ActionBarScaffold { layout in
             ZStack {
-                TabView(selection: Binding(get: { current }, set: { page = $0 })) {
-                    ForEach(Array(images.enumerated()), id: \.element.attachmentIndex) { index, image in
-                        ViewerPage(
+                ViewerPager(count: images.count, current: Binding(get: { current }, set: { page = $0 })) { index in
+                    let image = images[index]
+                    ViewerPage(
                             itemId: item.id, attachmentIndex: image.attachmentIndex,
                             description: L10n.text("viewer_image_description", index + 1, images.count),
                             model: model,
@@ -146,11 +146,8 @@ private struct ViewerPages: View {
                             onTap: { if !voiceOver { barsVisible.toggle() } },
                             onPullDown: pulled,
                             protected: item.secret
-                        )
-                        .tag(index)
-                    }
+                    )
                 }
-                .tabViewStyle(.page(indexDisplayMode: .never))
                 .ignoresSafeArea()
                 .offset(y: pull)
                 .scaleEffect(1 - min(pull, 400) / 2000)
@@ -197,7 +194,9 @@ private struct ViewerPages: View {
         .animation(.easeOut(duration: TomiMotion.medium), value: recentlyActive)
         // The feed shows through while the image is pulled down.
         .background(ImageViewerScreen.background.opacity(1 - min(pull, 300) / 300).ignoresSafeArea())
+        #if os(iOS)
         .statusBarHidden(!barsVisible)
+        #endif
         .persistentSystemOverlays(barsVisible ? .automatic : .hidden)
         // The counter wakes up on a page change or a tap, and goes 2.5 s later while the bars are hidden.
         .task(id: "\(current)-\(barsVisible)") {
@@ -271,8 +270,9 @@ private struct ViewerPages: View {
                 .accessibilityLabel(Text("viewer_action_delete"))
             }
             Menu {
-                // Never Files for a hidden item (no lasting clear copy).
-                if ViewerActions.canSaveToGallery(item) {
+                // Never Files for a hidden item (no lasting clear copy). On the Mac the button of the bar already saves
+                // to the one folder there is.
+                if ViewerActions.canSaveToGallery(item), SystemActions.savesImagesInTwoPlaces {
                     Button { model.saveAttachmentToFiles(item, index: attachmentIndex) } label: {
                         Label(L10n.text("ios_save_to_files"), systemImage: "folder")
                     }
@@ -338,7 +338,7 @@ private struct ViewerPage: View {
     /// A hidden item's image: left out of captures.
     var protected = false
 
-    private enum State { case loading, failed, ready(UIImage) }
+    private enum State { case loading, failed, ready(PlatformImage) }
     @SwiftUI.State private var state = State.loading
 
     var body: some View {
@@ -372,4 +372,63 @@ private struct ViewerPage: View {
             state = image.map(State.ready) ?? .failed
         }
     }
+}
+
+/// The images of the item, one at a time. iOS: a horizontal swipe pages between them. macOS, which has no paging
+/// view: the current one, with the arrow keys and an arrow on each side.
+private struct ViewerPager<Page: View>: View {
+    let count: Int
+    @Binding var current: Int
+    @ViewBuilder let page: (Int) -> Page
+
+    var body: some View {
+        #if os(iOS)
+        TabView(selection: $current) {
+            ForEach(0..<count, id: \.self) { index in
+                page(index).tag(index)
+            }
+        }
+        .tabViewStyle(.page(indexDisplayMode: .never))
+        #else
+        ZStack {
+            if (0..<count).contains(current) {
+                page(current).id(current)
+            }
+            HStack {
+                arrow("chevron.left", label: "macos_viewer_previous", to: current - 1)
+                Spacer()
+                arrow("chevron.right", label: "macos_viewer_next", to: current + 1)
+            }
+            .padding(.horizontal, TomiSpace.s3)
+        }
+        .focusable()
+        .focusEffectDisabled()
+        .onKeyPress(.leftArrow) { move(to: current - 1) }
+        .onKeyPress(.rightArrow) { move(to: current + 1) }
+        #endif
+    }
+
+    #if os(macOS)
+    private func move(to index: Int) -> KeyPress.Result {
+        guard (0..<count).contains(index) else { return .ignored }
+        current = index
+        return .handled
+    }
+
+    @ViewBuilder
+    private func arrow(_ symbol: String, label: LocalizedStringKey, to index: Int) -> some View {
+        if (0..<count).contains(index) {
+            Button { current = index } label: {
+                Image(systemName: symbol)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 36, height: 36)
+                    .background(Color.black.opacity(0.45), in: Circle())
+                    .contentShape(Circle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(Text(label))
+        }
+    }
+    #endif
 }

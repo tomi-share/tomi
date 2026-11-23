@@ -49,6 +49,25 @@ final class PickedFiles: Sendable {
         }.value
     }
 
+    /// Bytes pasted without a file behind them (an image copied to the clipboard), kept under `name`. Nil over 25 MB.
+    func importData(_ data: Data, name: String) async -> SharedFile? {
+        let root = self.root
+        return await Task.detached(priority: .userInitiated) {
+            guard Int64(data.count) <= ShareLimits.maxFileBytes else { return nil }
+            let dir = root.appendingPathComponent(UUID().uuidString, isDirectory: true)
+            let target = dir.appendingPathComponent(name.isEmpty ? "file" : name)
+            do {
+                try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+                try data.write(to: target)
+            } catch {
+                try? FileManager.default.removeItem(at: dir)
+                return nil
+            }
+            let mime = UTType(filenameExtension: target.pathExtension)?.preferredMIMEType ?? "application/octet-stream"
+            return SharedFile(url: target, name: target.lastPathComponent, mime: mime, size: Int64(data.count))
+        }.value
+    }
+
     private static func copy(from source: URL, name: String, root: URL) -> SharedFile? {
         let size = (try? source.resourceValues(forKeys: [.fileSizeKey]).fileSize).map(Int64.init) ?? -1
         guard size >= 0, size <= ShareLimits.maxFileBytes else { return nil }

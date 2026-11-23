@@ -1,7 +1,6 @@
 import SwiftUI
 import TomiDesign
 import TomiKit
-import UIKit
 import UserNotifications
 
 /// The end of the entry, shared by "Ton espace est prêt" and "Appareil ajouté" (Android `PairedContent`): a green check,
@@ -143,7 +142,7 @@ struct CameraProblem: View {
             VStack(alignment: .leading, spacing: TomiSpace.s1) {
                 Text(deniedMessage).tomiText(.body).foregroundStyle(TomiColor.error)
                 Button(L10n.text("ios_pair_camera_settings")) {
-                    if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
+                    if let url = SystemActions.cameraSettingsURL { openURL(url) }
                 }
                 .buttonStyle(.tomiText)
             }
@@ -156,8 +155,9 @@ struct EntryBackButton: ToolbarContent {
     let action: () -> Void
 
     var body: some ToolbarContent {
-        ToolbarItem(placement: .topBarLeading) {
+        ToolbarItem(placement: .tomiLeading) {
             Button(action: action) { TomiIcon.back.image }
+                .barControl()
                 .accessibilityLabel(Text("action_back"))
         }
     }
@@ -194,8 +194,8 @@ struct RelayField: View {
                     Text("relay_field_label").tomiText(.label).foregroundStyle(TomiColor.text)
                     TextField("", text: Binding(get: { text }, set: { onChange($0) }), prompt: Text(verbatim: "relay.example.org"))
                         .tomiText(.mono)
-                        .keyboardType(.URL)
-                        .textInputAutocapitalization(.never)
+                        .urlKeyboard()
+                        .noAutocapitalization()
                         .autocorrectionDisabled()
                         .textContentType(nil)
                         .submitLabel(.done)

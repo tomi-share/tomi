@@ -38,6 +38,13 @@ public enum TomiColor {
     /// A selected button of a floating bar: `brand` at 24 %, visible on the bar in light and dark (Android `ToolbarIconButton`).
     public static let barSelected = brand.opacity(0.24)
 
+    /// Search in a code file: every occurrence, and the current one, more pressed. Ochre tints kept readable under
+    /// `text` on `surfaceAlt` (the values of Android `CodePalette`). The colours of the code itself are the tokens
+    /// above: keyword `brand`, function and tag `secret`, string `success`, number and attribute `secondary`,
+    /// comment `textMuted`.
+    public static let codeSearchMatch = dynamic(0xE9CF9B, 0x4A3B1C)
+    public static let codeSearchCurrent = dynamic(0xD9A441, 0x7A5A1A)
+
     /// Colour of the logo: night on a light background, white on a dark one (charter §4.3).
     public static let logo = dynamic(TomiTokens.ColorIdentity.night, 0xFFFFFF)
 

@@ -18,6 +18,10 @@ private struct SensitiveScreenMarker: ViewModifier {
 
     func body(content: Content) -> some View {
         content
+            #if os(macOS)
+            // macOS has no cover to draw: the whole window leaves the captures while the screen is shown (A6).
+            .captureProtected(counted)
+            #endif
             .onAppear { visible = true; update(active) }
             .onChange(of: active) { _, now in update(visible && now) }
             .onDisappear { visible = false; update(false) }

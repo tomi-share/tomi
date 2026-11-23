@@ -42,6 +42,9 @@ final class SendViewModel {
     /// One-shot: an item was just sent, the screen hands over to the feed (where the item shows up, with the
     /// "Envoyé / Annuler" banner). Consumed by the screen with `consumeLeaveAfterSend`.
     private(set) var leaveAfterSend = false
+    /// What was just copied, offered in the place of the content without being typed (`ClipboardSuggestion`). Gone as
+    /// soon as the draft holds something.
+    private(set) var suggestion: ClipboardSuggestion?
 
     private let core: any TomiCore
     private let coordinator: SendCoordinator
@@ -86,8 +89,21 @@ final class SendViewModel {
         ExpiryPolicy.options(secret: secret, hasAttachment: hasAttachment)
     }
 
+    /// Offers what was just copied, on an empty draft only (nil: nothing to offer).
+    func offer(_ suggestion: ClipboardSuggestion?) {
+        let empty = ClipboardSuggestions.canOffer(
+            title: title, text: text, attachments: attachments.count, sending: sending, justSent: submission != nil
+        )
+        self.suggestion = empty ? suggestion : nil
+    }
+
+    func dismissSuggestion() {
+        suggestion = nil
+    }
+
     /// `tomi-share://send` pre-fill: only fills the fields, never sends.
     func prefill(title: String?, url: String?, text: String?, droppedParameters: Bool) {
+        suggestion = nil
         dropSnapshot()
         submission = nil
         self.title = title ?? ""
@@ -100,10 +116,14 @@ final class SendViewModel {
 
     func onTitleChange(_ value: String) {
         guard editable else { return }
+        // A draft is being written: what shows in the place of the content would look like part of it.
+        if !value.isBlank { suggestion = nil }
         title = String(value.prefix(SharePayloadParser.maxTitle))
     }
 
     func onTextChange(_ value: String) {
+        // Something else is written: the suggestion steps aside.
+        if !value.isEmpty { suggestion = nil }
         guard editable else { return }
         text = String(value.prefix(SharePayloadParser.maxText))
         pastedHTML = nil
@@ -125,6 +145,7 @@ final class SendViewModel {
     /// the content is then hidden, and the switch locked on.
     func onPasted(plain: String?, html: String?, concealed: Bool) {
         guard editable else { return }
+        suggestion = nil
         guard let clean = plain.map({ String($0.prefix(SharePayloadParser.maxText)) }), !clean.isEmpty else {
             notice = "notice_paste_empty"
             return
@@ -149,6 +170,7 @@ final class SendViewModel {
             files.forEach { picked.delete($0) }
             return
         }
+        suggestion = nil
         let room = Self.maxAttachments - attachments.count
         let added = files.prefix(max(room, 0)).map { PickedFile(file: $0) }
         files.dropFirst(max(room, 0)).forEach { picked.delete($0) }

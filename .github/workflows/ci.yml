@@ -7,8 +7,9 @@ name: CI
 # Apple: a macOS runner counts 10x against the quota of private repositories, hence three levels.
 #   1. `apple-generated` (Linux, free)  : are the derived files up to date? On every PR.
 #   2. `apple-packages`  (macOS, ~5 min): TomiKit and TomiDesign, pure Swift packages. On every PR.
-#   3. `apple-app`       (macOS, ~30 min): iOS Rust core, app and tests on a simulator. Only on a
-#      push to main or on a manual run with the `apple_app` box ticked.
+#   3. `apple-app`       (macOS, ~30 min): iOS and macOS Rust core, iOS app and tests on a simulator,
+#      tests of the Mac app (unsigned). Only on a push to main or on a manual run with the
+#      `apple_app` box ticked.
 # Job 3 runs on the `xcode-27` image (Xcode 27.2, iOS 27 SDK): `macos-latest` only has the iOS 26
 # SDK and cannot compile `toolbarVerticalEdge` (iOS 27.1). It is a preview image at GitHub; if the
 # label goes away, switch to `macos-latest` once Xcode 27 is its default.
@@ -374,11 +375,12 @@ jobs:
       - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
         with:
           toolchain: ${{ env.RUST_VERSION }}
-          targets: aarch64-apple-ios,aarch64-apple-ios-sim,x86_64-apple-ios
+          targets: aarch64-apple-ios,aarch64-apple-ios-sim,x86_64-apple-ios,aarch64-apple-darwin,x86_64-apple-darwin
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       # `--debug`: CI checks that it compiles, runs and passes the tests, not performance.
-      # Same script as `just apple-core`, hence the same XCFramework as locally.
-      - name: Rust core for iOS (XCFramework)
+      # Same script as `just apple-core`, hence the same XCFramework as locally: iOS and macOS
+      # slices (the Mac app is tested further down).
+      - name: Rust core for iOS and macOS (XCFramework)
         run: bash apps/apple/tools/build-core.sh --debug
       - name: XcodeGen
         run: brew install xcodegen
@@ -418,6 +420,18 @@ jobs:
           xcodebuild test -project Tomi.xcodeproj -scheme Tomi \
             -destination "platform=iOS Simulator,id=$SIM_UDID" \
             -resultBundlePath build/Tomi.xcresult -quiet
+      # The Mac app: the tests of the app compiled against the Mac build, plus the Mac-only ones.
+      # Unsigned: the runner has neither the team nor the profile that the entitlements of the app
+      # ask for (data protection keychain, app group). The two classes that depend on them are
+      # left out here; they pass locally, signed (`apps/apple/README.md`).
+      - name: Tests of the Mac app (unsigned)
+        working-directory: apps/apple
+        run: |
+          xcodebuild test -project Tomi.xcodeproj -scheme "Tomi Mac" \
+            -destination "platform=macOS" CODE_SIGNING_ALLOWED=NO \
+            -skip-testing:TomiMacTests/KeychainWrapKeyStoreTests \
+            -skip-testing:TomiMacTests/MacShareInboxTests \
+            -resultBundlePath build/TomiMac.xcresult -quiet
       - name: Reports on failure
         if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

@@ -68,9 +68,151 @@
   "ios_rotation_stalled_body": "Çıkarılan bir cihaz alanınızın geçerli anahtarını hâlâ tutuyor olabilir. Tomi otomatik olarak yeniden deniyor; yardımcı olmak için Tomi’yi diğer cihazlarınızda açın.",
   "ios_rotation_stalled_title": "Cihaz çıkarma sürüyor",
   "ios_snackbar_copied": "Kopyalandı",
+  "macos_viewer_previous": "Önceki görsel",
+  "macos_viewer_next": "Sonraki görsel",
+  "macos_pasted_image_name": "yapistirilan-gorsel.png",
+  "macos_menu_open": "Tomi’yi aç",
+  "macos_menu_window": "Pencerede aç",
+  "macos_menu_settings": "Ayarlar…",
+  "macos_menu_quit": "Tomi’den çık",
+  "macos_status_unread": "Tomi, alınan bazı öğeler okunmadı",
+  "macos_settings_login": "Oturum açıldığında Tomi’yi aç",
+  "macos_settings_login_hint": "Bu seçenek olmadan, yeniden başlatmanın ardından Tomi’yi açana kadar hiçbir şey alınmaz.",
+  "macos_settings_version": "Sürüm",
+  "macos_settings_title": "Tomi Ayarları",
+  "macos_settings_shortcut": "Tomi’yi açma kısayolu",
+  "macos_settings_shortcut_hint": "Herhangi bir uygulamadan Tomi’yi açar; kapatmak için yeniden basın.",
+  "macos_settings_shortcut_refused": "Bu kısayol zaten kullanılıyor (başka bir uygulama veya Tomi’nin diğer kısayolu tarafından). Önceki kısayol korunur.",
+  "macos_settings_shortcut_change": "Değiştir…",
+  "macos_settings_shortcut_recording": "Tuşlara basın",
+  "macos_key_space": "Boşluk",
+  "macos_settings_notifications": "Bildirimler",
+  "macos_settings_notifications_hint": "Bir öğe geldiğinde ve Tomi önünüzde açık değilken.",
+  "macos_settings_notifications_denied": "macOS tarafından reddedildi: bir öğe geldiğinde hiçbir şey gösterilmez. Sistem Ayarları’nda, Bildirimler bölümünde Tomi’ye izin verin.",
+  "macos_settings_notifications_on": "İzin verildi",
+  "macos_settings_notifications_open": "Mac ayarlarını aç…",
+  "ios_misconfigured_title": "Tomi’nin bu sürümü doğru imzalanmamış",
+  "ios_misconfigured_body": "Sistemin Anahtar Zinciri’ne erişimi reddediliyor, bu yüzden Tomi verilerini açamıyor. Hiçbir şey bozulmadı veya silinmedi: uygulamanın tanımlayıcısıyla imzalanmış bir sürüm yükleyin.",
+  "macos_saved_to_downloads": "%1$@ konumuna kaydedildi",
+  "macos_downloads_default_name": "İndirilenler › Tomi",
+  "macos_settings_downloads": "Kayıt klasörü",
+  "macos_settings_downloads_hint": "Tomi’den kaydettiğiniz dosyaların gittiği yer.",
+  "macos_settings_downloads_choose": "Seç…",
+  "macos_settings_downloads_default": "Varsayılan",
+  "macos_menu_new_send": "Yeni gönderim",
+  "macos_menu_feed": "Akış",
+  "_mac_comment": "Telefonlarla paylaşılan metinlerin Mac ifadesi (strings-from-android.py): _mac_replacements her metne uygulanır, _mac bir metnin tamamını verir. Türkçede ek, Mac’in okunuşuna göre değişir (Mac’i, Mac’in, Mac’te, Mac’e): bu yüzden çiftler eki de içerir.",
+  "_mac_replacements": [
+    [
+      "bu telefondaki",
+      "bu Mac’teki"
+    ],
+    [
+      "Bu telefondaki",
+      "Bu Mac’teki"
+    ],
+    [
+      "bu telefonda",
+      "bu Mac’te"
+    ],
+    [
+      "Bu telefonda",
+      "Bu Mac’te"
+    ],
+    [
+      "bu telefonun",
+      "bu Mac’in"
+    ],
+    [
+      "Bu telefonun",
+      "Bu Mac’in"
+    ],
+    [
+      "bu telefonu",
+      "bu Mac’i"
+    ],
+    [
+      "Bu telefonu",
+      "Bu Mac’i"
+    ],
+    [
+      "bu telefona",
+      "bu Mac’e"
+    ],
+    [
+      "Bu telefona",
+      "Bu Mac’e"
+    ],
+    [
+      "bu telefon",
+      "bu Mac"
+    ],
+    [
+      "Bu telefon",
+      "Bu Mac"
+    ],
+    [
+      "telefonun ekran kilidi",
+      "Mac’in ekran kilidi"
+    ],
+    [
+      "telefonun ayarlarından",
+      "Mac’in ayarlarından"
+    ],
+    [
+      "telefon geri yüklendi",
+      "Mac geri yüklendi"
+    ]
+  ],
+  "ios_clip_text": "Metin kopyalandı",
+  "ios_clip_link": "Bağlantı kopyalandı",
+  "ios_clip_image": "Görsel kopyalandı",
+  "ios_clip_files": "Dosyalar kopyalandı: %1$@",
+  "ios_clip_hidden": "Gizli içerik kopyalandı",
+  "ios_clip_hint": "Pano · yapıştırmak için dokunun",
+  "ios_clip_use": "Panoyu kullan",
+  "ios_clip_dismiss": "Panoyu yok say",
+  "macos_settings_send_shortcut": "Seçimi gönderme kısayolu",
+  "macos_settings_send_shortcut_hint": "Herhangi bir uygulamadan: orada seçili olanı (metin, dosyalar, görsel) kopyalar ve Tomi’de gönderimi bununla açar.",
+  "macos_settings_copy_selection_denied": "Seçimi kopyalamak için macOS’in Tomi’ye izin vermesi gerekir (Sistem Ayarları > Gizlilik ve Güvenlik > Erişilebilirlik). Bu izin olmadan kısayol, hiçbir şey kopyalamadan gönderimi açar.",
+  "macos_settings_copy_selection_open": "Mac ayarlarını aç…",
+  "_mac": {
+    "biometric_subtitle_delete_space": "Bu işlem geri alınamaz: Touch ID veya bu Mac’in parolası gerekir.",
+    "biometric_subtitle_erase": "Bu işlem geri alınamaz: Touch ID veya bu Mac’in parolası gerekir.",
+    "biometric_subtitle_revoke": "Hassas işlem: Touch ID veya bu Mac’in parolası gerekir.",
+    "delete_space_unavailable_biometric": "Alanınızı silmek için Touch ID veya bu Mac’in parolası gerekir. Hiçbir şey silinmedi.",
+    "erase_unavailable_biometric": "Sunucu onayı olmadan temizlemek için Touch ID veya bu Mac’in parolası gerekir.",
+    "devices_revoke_message": "Bu cihaz alandan çıkarılacak ve alan anahtarı yenilenecek. Yeni öğeleri artık okuyamayacak. Sizden Touch ID veya bu Mac’in parolası istenecek.",
+    "devices_revoke_unavailable": "Ne Touch ID ne de bu Mac’in parolası kullanılabiliyor: erişim kesilemez.",
+    "detail_masked_hint": "Göster, Kopyala ve Paylaş için Touch ID veya bu Mac’in parolası gerekir.",
+    "detail_revealed_hint": "Birkaç saniye sonra ve Tomi’den ayrıldığınız anda yeniden gizlenir.",
+    "toast_biometric_unavailable": "Ne Touch ID ne de bu Mac’in parolası kullanılabiliyor: gizli içerik gösterilemez, kopyalanamaz veya paylaşılamaz.",
+    "feed_empty_archives": "Arşivlenmiş öğe yok. Bir öğeyi “⋯” menüsünden arşivleyin.",
+    "invite_verify_hint": "Diğer cihaz kod yerine bir hata gösterirse “Kodlar farklı” düğmesine tıklayın.",
+    "pair_link_received_hint": "Hiçbir şey otomatik olarak yapılmaz. Devam etmek için “Katıl” düğmesine tıklayın.",
+    "notif_body_secret": "Kopyalamak için tıklayın (kimlik doğrulama gerekir)",
+    "source_this_phone": "Bu Mac",
+    "snackbar_image_saved": "Görsel, kayıt klasörünüze kaydedildi",
+    "ios_file_hidden": "Gizli bir dosya Tomi’de gösterilmez: önizlemesi ekran korumasının dışına çıkabilir. Touch ID ile veya bu Mac’in parolasıyla doğruladıktan sonra dosyayı başka bir uygulamayla paylaşabilirsiniz.",
+    "ios_save_to_files": "Kaydet",
+    "ios_pair_camera_settings": "Mac ayarlarını aç",
+    "ios_onboarding_headline": "Tomi menü çubuğunuzda yaşar",
+    "ios_onboarding_step_1": "1. Saatin yanındaki Tomi simgesine tıklayın: akışınız açılır.",
+    "ios_onboarding_step_2": "2. Herhangi bir uygulamada ⌃⇧Boşluk Tomi’yi açar. Bir metin veya dosyalar seçip ⌃⇧V tuşlarına basın: gönderim, seçiminizle açılır. Gönderin (⌘↩).",
+    "ios_onboarding_step_3": "3. Tomi, pencereler kapalıyken de öğe alabilmek için oturum açtığınızda açılır. Kısayolu ve bu seçeneği Ayarlar’dan değiştirebilirsiniz.",
+    "onboarding_open_share": "Ayarlar’ı aç",
+    "menu_share_help": "Kısayol ve menü çubuğu",
+    "ios_clip_hint": "Pano · kullanmak için Tab’a basın veya doğrudan gönderin",
+    "biometric_subtitle_pair": "Yeni cihaz, gizli öğeler dahil tüm geçmişi alacak. Touch ID veya bu Mac’in parolasıyla onaylayın.",
+    "invite_auth_required_body": "Cihaz eklemek için Touch ID veya bu Mac’in parolasıyla kimliğinizi doğrulayın."
+  },
   "_system": {
     "NSCameraUsageDescription": "Tomi kamerayı yalnızca eşleme QR kodunu taramak için kullanır.",
     "NSFaceIDUsageDescription": "Tomi, gizli bir öğeyi göstermeden, kopyalamadan veya paylaşmadan önce Face ID ister.",
     "NSPhotoLibraryAddUsageDescription": "Tomi, eklemeyi seçtiğiniz görüntüleri Fotoğraflar’a kaydeder."
+  },
+  "_system_mac": {
+    "NSCameraUsageDescription": "Tomi kamerayı yalnızca bir QR kodu taramak için kullanır: katılacağınız bir cihazın veya bir kurulum anahtarının kodu.",
+    "Send with Tomi": "Tomi ile gönder"
   }
 }

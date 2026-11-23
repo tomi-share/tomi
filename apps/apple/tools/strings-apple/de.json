@@ -68,9 +68,143 @@
   "ios_rotation_stalled_body": "Ein entferntes Gerät besitzt vielleicht noch den aktuellen Schlüssel deines Raums. Tomi versucht es automatisch erneut; öffne Tomi auf deinen anderen Geräten, um zu helfen.",
   "ios_rotation_stalled_title": "Gerät wird entfernt",
   "ios_snackbar_copied": "Kopiert",
+  "macos_viewer_previous": "Vorheriges Bild",
+  "macos_viewer_next": "Nächstes Bild",
+  "macos_pasted_image_name": "eingefuegtes-bild.png",
+  "macos_menu_open": "Tomi öffnen",
+  "macos_menu_window": "In einem Fenster öffnen",
+  "macos_menu_settings": "Einstellungen …",
+  "macos_menu_quit": "Tomi beenden",
+  "macos_status_unread": "Tomi, einige empfangene Einträge sind ungelesen",
+  "macos_settings_login": "Tomi beim Anmelden öffnen",
+  "macos_settings_login_hint": "Ohne diese Option wird nach einem Neustart nichts empfangen, bis du Tomi öffnest.",
+  "macos_settings_version": "Version",
+  "macos_settings_title": "Tomi-Einstellungen",
+  "macos_settings_shortcut": "Tastenkurzbefehl zum Öffnen von Tomi",
+  "macos_settings_shortcut_hint": "Öffnet Tomi aus jeder App; drücke ihn erneut, um Tomi zu schließen.",
+  "macos_settings_shortcut_refused": "Dieser Tastenkurzbefehl ist bereits belegt (von einer anderen App oder vom anderen Kurzbefehl von Tomi). Der bisherige bleibt erhalten.",
+  "macos_settings_shortcut_change": "Ändern …",
+  "macos_settings_shortcut_recording": "Drücke die Tasten",
+  "macos_key_space": "Leertaste",
+  "macos_settings_notifications": "Mitteilungen",
+  "macos_settings_notifications_hint": "Wenn ein Eintrag ankommt und Tomi nicht vor dir geöffnet ist.",
+  "macos_settings_notifications_denied": "Von macOS abgelehnt: Beim Eingang eines Eintrags wird nichts angezeigt. Erlaube Tomi in den Systemeinstellungen unter „Mitteilungen“.",
+  "macos_settings_notifications_on": "Erlaubt",
+  "macos_settings_notifications_open": "Einstellungen des Mac öffnen …",
+  "ios_misconfigured_title": "Diese Version von Tomi ist nicht korrekt signiert",
+  "ios_misconfigured_body": "Der Zugriff auf den Schlüsselbund des Systems wird ihr verweigert, daher kann Tomi seine Daten nicht öffnen. Nichts ist beschädigt oder gelöscht: Installiere eine Version, die mit der Kennung der App signiert ist.",
+  "macos_saved_to_downloads": "Gespeichert in %1$@",
+  "macos_downloads_default_name": "Downloads › Tomi",
+  "macos_settings_downloads": "Speicherordner",
+  "macos_settings_downloads_hint": "Hierhin kommen die Dateien, die du aus Tomi speicherst.",
+  "macos_settings_downloads_choose": "Auswählen …",
+  "macos_settings_downloads_default": "Standard",
+  "macos_menu_new_send": "Neue Sendung",
+  "macos_menu_feed": "Feed",
+  "_mac_comment": "Die Mac-Formulierung der mit den Telefonen geteilten Texte (strings-from-android.py): _mac_replacements werden auf jeden Text angewendet, _mac gibt einen ganzen Text vor. „Telefon“ ist ein Neutrum, „Mac“ ein Maskulinum: Die Paare enthalten daher das Verb oder die Präposition, die den Fall festlegt.",
+  "_mac_replacements": [
+    [
+      "Dieses Telefon leeren",
+      "Diesen Mac leeren"
+    ],
+    [
+      "dieses Telefon leeren",
+      "diesen Mac leeren"
+    ],
+    [
+      "Dieses Telefon ohne",
+      "Diesen Mac ohne"
+    ],
+    [
+      "Dieses Telefon wird",
+      "Dieser Mac wird"
+    ],
+    [
+      "Dieses Telefon wurde",
+      "Dieser Mac wurde"
+    ],
+    [
+      "Dieses Telefon bleibt",
+      "Dieser Mac bleibt"
+    ],
+    [
+      "Dieses Telefon gehört",
+      "Dieser Mac gehört"
+    ],
+    [
+      "erkennt dieses Telefon",
+      "erkennt diesen Mac"
+    ],
+    [
+      "wird dieses Telefon",
+      "wird dieser Mac"
+    ],
+    [
+      "diesem Telefon",
+      "diesem Mac"
+    ],
+    [
+      "des Telefons",
+      "des Mac"
+    ],
+    [
+      "Telefon wiederhergestellt",
+      "Mac wiederhergestellt"
+    ],
+    [
+      "Dieses Telefon",
+      "Dieser Mac"
+    ]
+  ],
+  "ios_clip_text": "Text kopiert",
+  "ios_clip_link": "Link kopiert",
+  "ios_clip_image": "Bild kopiert",
+  "ios_clip_files": "Dateien kopiert: %1$@",
+  "ios_clip_hidden": "Verborgener Inhalt kopiert",
+  "ios_clip_hint": "Zwischenablage · zum Einfügen tippen",
+  "ios_clip_use": "Zwischenablage verwenden",
+  "ios_clip_dismiss": "Zwischenablage ignorieren",
+  "macos_settings_send_shortcut": "Tastenkurzbefehl zum Senden der Auswahl",
+  "macos_settings_send_shortcut_hint": "Aus jeder App: Kopiert, was dort ausgewählt ist (Text, Dateien, Bild), und öffnet damit das Senden in Tomi.",
+  "macos_settings_copy_selection_denied": "Um die Auswahl zu kopieren, muss macOS Tomi erlauben (Systemeinstellungen > Datenschutz & Sicherheit > Bedienungshilfen). Ohne diese Erlaubnis öffnet der Kurzbefehl das Senden, ohne etwas zu kopieren.",
+  "macos_settings_copy_selection_open": "Einstellungen des Mac öffnen …",
+  "_mac": {
+    "biometric_subtitle_delete_space": "Diese Aktion kann nicht rückgängig gemacht werden: Touch ID oder das Passwort dieses Mac ist erforderlich.",
+    "biometric_subtitle_erase": "Diese Aktion kann nicht rückgängig gemacht werden: Touch ID oder das Passwort dieses Mac ist erforderlich.",
+    "biometric_subtitle_revoke": "Sensible Aktion: Touch ID oder das Passwort dieses Mac ist erforderlich.",
+    "delete_space_unavailable_biometric": "Um deinen Raum zu löschen, ist Touch ID oder das Passwort dieses Mac nötig. Es wurde nichts gelöscht.",
+    "erase_unavailable_biometric": "Um ohne Bestätigung des Servers zu leeren, ist Touch ID oder das Passwort dieses Mac nötig.",
+    "devices_revoke_message": "Dieses Gerät wird aus dem Raum entfernt und der Schlüssel des Raums wird erneuert. Es kann danach keine neuen Einträge mehr lesen. Du wirst nach Touch ID oder dem Passwort dieses Mac gefragt.",
+    "devices_revoke_unavailable": "Weder Touch ID noch das Passwort dieses Mac kann verwendet werden: Ausschließen ist nicht möglich.",
+    "detail_masked_hint": "Anzeigen, Kopieren und Teilen erfordern Touch ID oder das Passwort dieses Mac.",
+    "detail_revealed_hint": "Wird nach einigen Sekunden wieder verborgen, und sobald du Tomi verlässt.",
+    "toast_biometric_unavailable": "Weder Touch ID noch das Passwort dieses Mac kann verwendet werden: Verborgene Inhalte können nicht angezeigt, kopiert oder geteilt werden.",
+    "feed_empty_archives": "Keine archivierten Einträge. Archiviere einen Eintrag über sein Menü „⋯“.",
+    "invite_verify_hint": "Wenn das andere Gerät statt eines Codes einen Fehler anzeigt, klicke auf „Sie sind verschieden“.",
+    "pair_link_received_hint": "Nichts geschieht automatisch. Klicke auf „Beitreten“, um fortzufahren.",
+    "notif_body_secret": "Zum Kopieren klicken (Authentifizierung erforderlich)",
+    "source_this_phone": "Dieser Mac",
+    "snackbar_image_saved": "Bild in deinem Speicherordner gespeichert",
+    "ios_file_hidden": "Eine verborgene Datei wird in Tomi nicht angezeigt: Ihre Vorschau würde den Bildschirmschutz umgehen. Du kannst sie nach Touch ID oder dem Passwort dieses Mac mit einer anderen App teilen.",
+    "ios_save_to_files": "Speichern",
+    "ios_pair_camera_settings": "Einstellungen des Mac öffnen",
+    "ios_onboarding_headline": "Tomi wohnt in deiner Menüleiste",
+    "ios_onboarding_step_1": "1. Klicke auf das Tomi-Symbol neben der Uhr: Dein Feed wird geöffnet.",
+    "ios_onboarding_step_2": "2. Aus jeder App öffnet ⌃⇧Leertaste Tomi. Wähle einen Text oder Dateien aus und drücke dann ⌃⇧V: Das Senden wird mit deiner Auswahl geöffnet. Senden (⌘↩).",
+    "ios_onboarding_step_3": "3. Tomi wird beim Anmelden geöffnet, um auch bei geschlossenen Fenstern zu empfangen. Den Kurzbefehl und diese Option kannst du in den Einstellungen ändern.",
+    "onboarding_open_share": "Einstellungen öffnen",
+    "menu_share_help": "Kurzbefehl und Menüleiste",
+    "ios_clip_hint": "Zwischenablage · Tab zum Verwenden oder direkt senden",
+    "biometric_subtitle_pair": "Das neue Gerät erhält den gesamten Verlauf, auch verborgene Einträge. Bestätige mit Touch ID oder dem Passwort dieses Mac.",
+    "invite_auth_required_body": "Um ein Gerät hinzuzufügen, bestätige deine Identität mit Touch ID oder dem Passwort dieses Mac."
+  },
   "_system": {
     "NSCameraUsageDescription": "Tomi verwendet die Kamera nur, um den QR-Code der Kopplung zu scannen.",
     "NSFaceIDUsageDescription": "Tomi fragt nach Face ID, bevor ein verborgener Eintrag angezeigt, kopiert oder geteilt wird.",
     "NSPhotoLibraryAddUsageDescription": "Tomi sichert in Fotos die Bilder, die du dort hinzufügen möchtest."
+  },
+  "_system_mac": {
+    "NSCameraUsageDescription": "Tomi verwendet die Kamera nur, um einen QR-Code zu scannen: den eines Geräts, dem du beitrittst, oder den eines Installationsschlüssels.",
+    "Send with Tomi": "Mit Tomi senden"
   }
 }

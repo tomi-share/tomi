@@ -1,7 +1,9 @@
 import Foundation
 import ImageIO
 import TomiKit
+#if canImport(UIKit)
 import UIKit
+#endif
 import UniformTypeIdentifiers
 import UserNotifications
 
@@ -151,12 +153,19 @@ final class NotificationRouter: NSObject, UNUserNotificationCenterDelegate, @unc
     func userNotificationCenter(
         _ center: UNUserNotificationCenter, willPresent notification: UNNotification
     ) async -> UNNotificationPresentationOptions {
+        #if os(macOS)
+        // Posted only while no surface of Tomi is used; Tomi may still be the active app (its settings in front),
+        // where macOS would keep the notification silent. Not over a surface opened since it was posted.
+        await MainActor.run { AppContainer.current?.surfaceVisible == true } ? [] : [.banner, .list, .sound]
+        #else
         // On screen, the feed already shows it.
         []
+        #endif
     }
 }
 
-/// Sets the notification delegate at launch.
+#if os(iOS)
+/// Sets the notification delegate at launch (iOS; the Mac app does it in `MacAppDelegate`).
 final class TomiAppDelegate: NSObject, UIApplicationDelegate {
     func application(
         _ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
@@ -166,6 +175,7 @@ final class TomiAppDelegate: NSObject, UIApplicationDelegate {
         return true
     }
 }
+#endif
 
 /// The notification size of a thumbnail: 300 px on its longest side, JPEG (a notification shows it small, and its
 /// expanded view needs no more).

@@ -1,9 +1,9 @@
 import Foundation
 
 // Port of apps/android/app/src/main/java/eu/shaffe/tomi/ui/code/CodeFileLogic.kt.
-// Pure logic of the code file screen: which attachments are code files, which grammar would colour them (data only: iOS v1
-// has no syntax colouring, the grammar only drives a "no colours" banner), what is allowed on screen, how a file is decoded
-// and the in-file search. The per-line colour runs (`CodeLines.bucketRuns`) are not ported.
+// Pure logic of the code file screen: which attachments are code files, which grammar Android colours them with, what is
+// allowed on screen, how a file is decoded and the in-file search. The colours themselves are in `CodeHighlighter.swift`
+// (a hand-written tokenizer, where Android uses tree-sitter), with the per-line colour runs (`CodeLines.bucketRuns`).
 // Offsets of `CodeDocument` and `CodeMatch` are UTF-16 code units (as in Kotlin, and as `NSRange` / UITextView use).
 
 /// File extensions → grammar (fence language) that would colour them, plus the code extensions that have no grammar. A code

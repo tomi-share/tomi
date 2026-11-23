@@ -175,6 +175,105 @@ final class InAppSendSchedulerTests: XCTestCase {
         XCTAssertTrue(core.calls.filter { $0.hasPrefix("dispatch") }.isEmpty)
         XCTAssertTrue(scheduler.pending.isEmpty)
     }
+
+    // MARK: The network or the app comes back
+
+    /// A scheduler whose waits last until something cancels them (the real ones last up to 15 minutes).
+    private func makeWaitingScheduler() -> InAppSendScheduler {
+        core = PreviewCore(items: [], localDevice: PreviewFixtures.phone)
+        return InAppSendScheduler(
+            core: core, monotonicMs: { [unowned self] in now }, now: { Date(timeIntervalSince1970: 100) },
+            sleep: { [unowned self] duration in
+                sleeps.append(duration)
+                try await Task.sleep(for: .seconds(600))
+            },
+            keepAlive: { {} }
+        )
+    }
+
+    private var dispatches: Int { core.calls.filter { $0.hasPrefix("dispatch") }.count }
+
+    func testASendWaitingForItsNextTryLeavesWhenTheNetworkComesBack() async {
+        let scheduler = makeWaitingScheduler()
+        core.dispatchResults = [.retryLater, .sent]
+        scheduler.ensureScheduled(itemId: "a", createdAt: Date(timeIntervalSince1970: 0))
+        await settle()
+        XCTAssertEqual(dispatches, 1)
+        XCTAssertEqual(sleeps, [.seconds(15)], "waiting for its next try")
+        scheduler.retryNow()
+        await settle()
+        XCTAssertEqual(dispatches, 2, "tried at once, not 15 s later")
+        XCTAssertTrue(scheduler.pending.isEmpty, "and it left")
+    }
+
+    func testTheBackOffStartsAgainAfterARetryThatFails() async {
+        let scheduler = makeWaitingScheduler()
+        core.dispatchResults = [.retryLater, .retryLater, .sent]
+        scheduler.ensureScheduled(itemId: "a", createdAt: Date(timeIntervalSince1970: 0))
+        await settle()
+        scheduler.retryNow()
+        await settle()
+        XCTAssertEqual(dispatches, 2)
+        XCTAssertEqual(sleeps, [.seconds(15), .seconds(15)], "from 15 s again, not 30")
+        XCTAssertEqual(scheduler.pending, ["a"])
+        scheduler.cancel(itemId: "a")
+        await settle()
+    }
+
+    func testAnItemStillInItsUndoWindowIsNotSentEarlier() async {
+        let scheduler = makeWaitingScheduler()
+        scheduler.schedule(itemId: "a", deadline: UndoDeadline(atElapsedMs: 3_000, windowMs: 3_000))
+        await settle()
+        scheduler.retryNow()
+        await settle()
+        XCTAssertEqual(dispatches, 0, "\"Annuler\" still holds")
+        XCTAssertEqual(scheduler.pending, ["a"])
+        scheduler.cancel(itemId: "a")
+        await settle()
+    }
+
+    func testANetworkThatFlapsCountsOnce() async {
+        let scheduler = makeWaitingScheduler()
+        core.dispatchResults = [.retryLater, .retryLater, .retryLater, .sent]
+        scheduler.ensureScheduled(itemId: "a", createdAt: Date(timeIntervalSince1970: 0))
+        await settle()
+        scheduler.retryNow()
+        await settle()
+        XCTAssertEqual(dispatches, 2)
+        now += 1_000
+        scheduler.retryNow()
+        await settle()
+        XCTAssertEqual(dispatches, 2, "one second later: the same return")
+        now += InAppSendScheduler.retryNowMinGapMs
+        scheduler.retryNow()
+        await settle()
+        XCTAssertEqual(dispatches, 3)
+        scheduler.cancel(itemId: "a")
+        await settle()
+    }
+
+    func testACancelledSendIsNotTriedAgainWhenTheNetworkComesBack() async {
+        let scheduler = makeWaitingScheduler()
+        core.dispatchResults = [.retryLater, .sent]
+        scheduler.ensureScheduled(itemId: "a", createdAt: Date(timeIntervalSince1970: 0))
+        await settle()
+        XCTAssertEqual(dispatches, 1, "waiting for its next try")
+        // "Annuler" won the race against that first try.
+        scheduler.cancel(itemId: "a")
+        await settle()
+        scheduler.retryNow()
+        await settle()
+        XCTAssertEqual(dispatches, 1, "what was cancelled is never dispatched again")
+        XCTAssertTrue(scheduler.pending.isEmpty)
+    }
+
+    func testNothingWaitingNothingDone() async {
+        let scheduler = makeWaitingScheduler()
+        scheduler.retryNow()
+        await settle()
+        XCTAssertEqual(dispatches, 0)
+        XCTAssertTrue(scheduler.pending.isEmpty)
+    }
 }
 
 final class FileAttachmentStagingTests: XCTestCase {
@@ -262,6 +361,93 @@ final class SendViewModelTests: XCTestCase {
         )
         addTeardownBlock { [root] in try? FileManager.default.removeItem(at: root!) }
         return SendViewModel(core: core, coordinator: coordinator, picked: picked)
+    }
+
+    // MARK: What was just copied is offered, never typed
+
+    func testASuggestionShowsOnAnEmptyDraftAndTypesNothing() {
+        let model = makeModel()
+        model.offer(.text(preview: "https://a.example", isLink: true))
+        XCTAssertEqual(model.suggestion, .text(preview: "https://a.example", isLink: true))
+        XCTAssertEqual(model.text, "", "offered, not typed")
+        XCTAssertFalse(model.canSend, "the draft itself is still empty")
+        XCTAssertFalse(core.calls.contains { $0.hasPrefix("enqueue") })
+    }
+
+    func testWritingSomethingElseMakesTheSuggestionStepAside() {
+        let model = makeModel()
+        model.offer(.text(preview: "copié", isLink: false))
+        model.onTextChange("autre chose")
+        XCTAssertNil(model.suggestion)
+        XCTAssertEqual(model.text, "autre chose", "nothing to remove first")
+    }
+
+    func testWritingATitleMakesTheSuggestionStepAsideToo() {
+        let model = makeModel()
+        model.offer(.text(preview: "copié", isLink: false))
+        model.onTitleChange("Mon titre")
+        XCTAssertNil(model.suggestion, "else \"Envoyer\" would send the title alone under a content that only looks written")
+        XCTAssertTrue(model.canSend)
+    }
+
+    func testPastingAttachingOrALinkReplaceTheSuggestion() {
+        let model = makeModel()
+        model.offer(.image)
+        model.onPasted(plain: "collé", html: nil, concealed: false)
+        XCTAssertNil(model.suggestion)
+
+        let attached = makeModel()
+        attached.offer(.files(names: ["a.pdf"]))
+        attached.onAttach([SharedFile(url: root.appendingPathComponent("b.txt"), name: "b.txt", mime: "text/plain", size: 1)])
+        XCTAssertNil(attached.suggestion)
+
+        let linked = makeModel()
+        linked.offer(.hidden)
+        linked.prefill(title: nil, url: "https://a.example", text: nil, droppedParameters: false)
+        XCTAssertNil(linked.suggestion)
+    }
+
+    func testNothingIsOfferedOverWhatIsAlreadyThere() {
+        let model = makeModel()
+        model.onTextChange("déjà écrit")
+        model.offer(.text(preview: "copié", isLink: false))
+        XCTAssertNil(model.suggestion, "a draft is never competed with")
+        model.onTextChange("")
+        model.offer(.text(preview: "copié", isLink: false))
+        XCTAssertNotNil(model.suggestion)
+        model.dismissSuggestion()
+        XCTAssertNil(model.suggestion)
+        model.offer(nil)
+        XCTAssertNil(model.suggestion)
+    }
+
+    func testNoMoreThanTwentyFilesAreKeptAndTheScreenSaysSo() {
+        let model = makeModel()
+        let files = (0..<25).map { SharedFile(url: root.appendingPathComponent("f\($0).txt"), name: "f\($0).txt", mime: "text/plain", size: 1) }
+        model.onAttach(files)
+        XCTAssertEqual(model.attachments.count, SendViewModel.maxAttachments)
+        XCTAssertEqual(SendViewModel.maxAttachments, 20)
+        XCTAssertEqual(model.attachments.map(\.file.name).last, "f19.txt", "the first ones, in order")
+        XCTAssertEqual(model.notice, "ios_notice_files_skipped")
+        // Full: one more is refused too.
+        model.consumeNotice()
+        model.onAttach([SharedFile(url: root.appendingPathComponent("late.txt"), name: "late.txt", mime: "text/plain", size: 1)])
+        XCTAssertEqual(model.attachments.count, 20)
+        XCTAssertEqual(model.notice, "ios_notice_files_skipped")
+    }
+
+    func testALinkOnlyFillsTheSendScreenAndSaysWhatItLeftOut() {
+        let model = makeModel()
+        model.prefill(title: "Titre", url: "https://a.example/x", text: "note", droppedParameters: true)
+        XCTAssertEqual(model.title, "Titre")
+        XCTAssertEqual(model.text, "https://a.example/x\nnote")
+        XCTAssertEqual(model.notice, "notice_params_dropped", "the parameters the link carried and Tomi ignores")
+        XCTAssertFalse(model.secret, "a link never chooses to hide for the user")
+        XCTAssertFalse(core.calls.contains { $0.hasPrefix("enqueue") }, "`tomi-share://send` never sends")
+        model.prefill(title: nil, url: nil, text: "seul", droppedParameters: false)
+        XCTAssertEqual(model.title, "")
+        XCTAssertEqual(model.text, "seul")
+        XCTAssertNil(model.notice)
     }
 
     func testWhatLooksLikeAPasswordIsHiddenButCanBeShown() {

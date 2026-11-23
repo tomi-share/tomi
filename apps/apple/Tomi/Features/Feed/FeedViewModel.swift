@@ -6,7 +6,13 @@ import TomiKit
 @MainActor
 @Observable
 final class FeedViewModel {
+    /// What a hidden item shows is masked again by itself after this long. Shorter on the Mac, where the window stays
+    /// on a desk screen (the value of the Windows app; docs/macos-app.md, A8).
+    #if os(macOS)
+    static let autoHideSeconds: Double = 15
+    #else
     static let autoHideSeconds: Double = 30
+    #endif
     static let maxQuery = 200
 
     let core: any TomiCore
