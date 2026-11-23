@@ -199,6 +199,11 @@ final class PreviewCore: TomiCore {
         return cancelResult
     }
 
+    func registerPush(provider: String, token: String) async throws {
+        // Never the token itself: it is a secret.
+        calls.append("registerPush:\(provider)")
+    }
+
     func deleteLocal(id: String) async throws {
         calls.append("deleteLocal:\(id)")
         state.items.removeAll { $0.id == id }

@@ -101,6 +101,8 @@
   "macos_settings_downloads_default": "Varsayılan",
   "macos_menu_new_send": "Yeni gönderim",
   "macos_menu_feed": "Akış",
+  "ios_push_title": "Tomi",
+  "ios_push_body": "Yeni öğe",
   "_mac_comment": "Telefonlarla paylaşılan metinlerin Mac ifadesi (strings-from-android.py): _mac_replacements her metne uygulanır, _mac bir metnin tamamını verir. Türkçede ek, Mac’in okunuşuna göre değişir (Mac’i, Mac’in, Mac’te, Mac’e): bu yüzden çiftler eki de içerir.",
   "_mac_replacements": [
     [

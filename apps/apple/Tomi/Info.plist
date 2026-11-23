@@ -23,6 +23,7 @@
 	<array>
 		<string>fetch</string>
 		<string>processing</string>
+		<string>remote-notification</string>
 	</array>
 	<!-- Default relay of a device that has none (Config/Local.xcconfig); empty: none, the relay then comes from the link, the QR code, the "Relais" field or the creation link. -->
 	<key>TomiRelayURL</key>

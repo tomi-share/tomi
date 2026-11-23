@@ -101,6 +101,8 @@
   "macos_settings_downloads_default": "Domyślny",
   "macos_menu_new_send": "Nowa wysyłka",
   "macos_menu_feed": "Strumień",
+  "ios_push_title": "Tomi",
+  "ios_push_body": "Nowy element",
   "_mac_comment": "Wersja na Maca tekstów wspólnych z telefonami (strings-from-android.py): _mac_replacements są stosowane do każdego tekstu, _mac podaje cały tekst. „telefon” i „Mac” są rodzaju męskiego, ale odmieniają się inaczej (tego Maca, tym Macu): pary obejmują więc formę przypadku.",
   "_mac_replacements": [
     [

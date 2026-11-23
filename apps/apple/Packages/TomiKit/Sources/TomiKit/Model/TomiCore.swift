@@ -94,6 +94,10 @@ public protocol TomiCore: AnyObject {
     /// Marks the item read on all devices; consumes an "after first read" item everywhere. Never
     /// consumes an unreadable item.
     func markRead(id: String) async throws
+    /// Gives the relay the push token of this device for the push service `provider` (`"apns"`,
+    /// `"apns-sandbox"`), so that it is woken when something arrives while the app is stopped. Needs the network.
+    func registerPush(provider: String, token: String) async throws
+
     /// Path of the decrypted attachment, downloading it if needed. Nil if unavailable or removed. `slot` is `Attachment.slot`
     /// (stable position in the payload), NOT the position in `attachments`: they differ once an attachment was removed.
     func attachmentPath(itemId: String, slot: Int) async throws -> String?
@@ -184,4 +188,9 @@ public extension TomiCore {
     var canLeaveDemo: Bool { false }
     func enterDemo() async throws { throw TomiCoreError(.invalidInput, reason: "demo entry not supported") }
     func leaveDemo() async {}
+}
+
+extension TomiCore {
+    /// A core that registers no push token (test doubles).
+    public func registerPush(provider: String, token: String) async throws {}
 }

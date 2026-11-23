@@ -113,6 +113,20 @@ pub struct Config {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub fcm_project_id: Option<String>,
 
+    /// The `.p8` signing key of the Apple developer account (APNs, §6.4). Absent: no push to
+    /// the Apple devices. The three values below are needed with it.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub apns_key_file: Option<PathBuf>,
+    /// The identifier of that key (10 characters).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub apns_key_id: Option<String>,
+    /// The team of the developer account (10 characters).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub apns_team_id: Option<String>,
+    /// The bundle identifier of the app (default `eu.shaffe.tomi`).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub apns_topic: Option<String>,
+
     pub rl_ip_public: Rate,
     pub rl_ip_space_create: Rate,
     pub rl_ip_auth: Rate,
@@ -174,6 +188,10 @@ impl Default for Config {
             min_free_disk_bytes: 1_073_741_824,
             fcm_service_account_file: None,
             fcm_project_id: None,
+            apns_key_file: None,
+            apns_key_id: None,
+            apns_team_id: None,
+            apns_topic: None,
             rl_ip_public: Rate::new(30.0, 10),
             rl_ip_space_create: Rate::new(1.0, 5),
             rl_ip_auth: Rate::new(20.0, 10),
@@ -401,7 +419,14 @@ fn apply_env(
 ) -> Result<(), ConfigError> {
     let defaults = toml::Table::try_from(Config::default())
         .map_err(|e| ConfigError::Invalid(format!("internal: {e}")))?;
-    let optional_strings = ["fcm_service_account_file", "fcm_project_id"];
+    let optional_strings = [
+        "fcm_service_account_file",
+        "fcm_project_id",
+        "apns_key_file",
+        "apns_key_id",
+        "apns_team_id",
+        "apns_topic",
+    ];
     // Keys that are absent from the defaults (`None` is not serialised) but are integers.
     let optional_integers = ["max_space_bytes"];
     for (name, raw) in env {

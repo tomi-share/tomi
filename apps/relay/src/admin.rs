@@ -181,14 +181,17 @@ type HealthRow = (String, Option<i64>, Option<i64>, Option<String>);
 
 /// Health of the push doorbell: `disabled`, `ok`, `auth_error`, `degraded` or `unknown`.
 fn fcm_health(st: &AppState, recorded: Option<HealthRow>) -> Value {
-    let Some(file) = &st.cfg.fcm_service_account_file else {
+    // One state for the two providers (FCM, APNs): disabled only when neither is configured.
+    if st.cfg.fcm_service_account_file.is_none() && st.cfg.apns_key_file.is_none() {
         return json!({ "state": "disabled" });
-    };
+    }
     // A service account that cannot be loaded is an authentication problem, whatever the
-    // database remembers.
-    if let Err(e) = FcmCredentials::load(file, st.cfg.fcm_project_id.as_deref()) {
-        tracing::debug!("admin: service account check failed ({e})");
-        return json!({ "state": "auth_error", "last_error": { "class": "invalid_service_account" } });
+    // database remembers. (An APNs key that cannot be read is recorded at start, `app.rs`.)
+    if let Some(file) = &st.cfg.fcm_service_account_file {
+        if let Err(e) = FcmCredentials::load(file, st.cfg.fcm_project_id.as_deref()) {
+            tracing::debug!("admin: service account check failed ({e})");
+            return json!({ "state": "auth_error", "last_error": { "class": "invalid_service_account" } });
+        }
     }
     match recorded {
         None => json!({ "state": "unknown" }),

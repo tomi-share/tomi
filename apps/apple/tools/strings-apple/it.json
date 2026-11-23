@@ -101,6 +101,8 @@
   "macos_settings_downloads_default": "Predefinita",
   "macos_menu_new_send": "Nuovo invio",
   "macos_menu_feed": "Feed",
+  "ios_push_title": "Tomi",
+  "ios_push_body": "Nuovo elemento",
   "_mac_comment": "The Mac wording of texts shared with the phones (strings-from-android.py): _mac_replacements are applied to every text, _mac gives a whole text.",
   "_mac_replacements": [
     [

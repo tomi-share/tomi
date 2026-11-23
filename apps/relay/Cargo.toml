@@ -60,6 +60,14 @@ fs4 = { version = "1.1", default-features = false }
 ureq = { version = "3.5.1", default-features = false, features = ["rustls"] }
 ring = "0.17"
 
+# Outbound APNs (HTTP/2 only, which ureq does not speak). hyper is already there for the server;
+# the TLS stack and the roots are the ones of ureq (rustls with ring, webpki-roots): no second one.
+hyper = { version = "1", features = ["client", "http2"] }
+hyper-util = { version = "0.1", features = ["client-legacy", "http2", "tokio"] }
+hyper-rustls = { version = "0.27", default-features = false, features = ["http2", "ring", "tls12"] }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
+webpki-roots = "1"
+
 [dev-dependencies]
 tempfile = "3"
 tower = { version = "0.5", features = ["util"] }

@@ -101,6 +101,8 @@
   "macos_settings_downloads_default": "По умолчанию",
   "macos_menu_new_send": "Новая отправка",
   "macos_menu_feed": "Лента",
+  "ios_push_title": "Tomi",
+  "ios_push_body": "Новый элемент",
   "_mac_comment": "Формулировки для Mac текстов, общих с телефонами (strings-from-android.py): _mac_replacements применяются к каждому тексту, _mac задаёт текст целиком.",
   "_mac_replacements": [
     [

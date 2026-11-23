@@ -271,14 +271,24 @@ pub async fn put_push(State(st): State<AppState>, req: Request) -> ApiResult<Res
     let mut o = json_body(&ctx.parts, body, st.cfg.max_json_body_bytes, true).await?;
     let provider = o.string("provider", true);
     let token = o.string("token", true);
+    let apple = matches!(
+        provider.as_deref(),
+        Some(crate::apns::PROVIDER | crate::apns::PROVIDER_SANDBOX)
+    );
     if let Some(p) = &provider {
-        if p != "fcm" {
-            o.error("provider", "expected \"fcm\"");
+        if p != "fcm" && !apple {
+            o.error("provider", "expected \"fcm\", \"apns\" or \"apns-sandbox\"");
         }
     }
     if let Some(t) = &token {
         if !(1..=4096).contains(&t.len()) || !t.bytes().all(|b| (0x21..=0x7e).contains(&b)) {
             o.error("token", "expected 1 to 4096 printable ASCII characters");
+        } else if apple && !crate::apns::is_device_token(t) {
+            // It goes in the path of the request to Apple: hexadecimal only.
+            o.error(
+                "token",
+                "expected an APNs device token (64 to 200 hexadecimal characters)",
+            );
         }
     }
     o.finish()?;

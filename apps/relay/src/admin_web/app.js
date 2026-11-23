@@ -1890,7 +1890,7 @@
       ['En service depuis', fmtDuration(a.uptime_secs) + ' (démarré le ' + fmtDate(a.started_at) + ')'],
       ['Horloge du serveur', fmtDate(a.server_time) +
         (Math.abs(skew) >= 60 ? ' (écart de ' + fmtDuration(Math.abs(skew)) + ' avec cet appareil)' : '')],
-      ['Notifications push', a.push_configured ? 'compte de service FCM configuré' : 'non configurées'],
+      ['Notifications push', a.push_configured ? 'configurées' : 'non configurées'],
       ['Ta session', 'se ferme après ' + fmtDuration(a.session.idle_ttl_secs) + ' sans activité, au plus tard ' +
         rel(a.session.absolute_ends_at)]
     ]);

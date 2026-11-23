@@ -851,6 +851,19 @@ impl RelayTransport for HttpTransport {
         .map(|_| ())
     }
 
+    fn register_push(&self, provider: &str, token: &str) -> TResult<()> {
+        self.json_call(
+            "PUT",
+            "/v1/me/push",
+            Some(json!({ "provider": provider, "token": token })),
+        )
+        .map(|_| ())
+    }
+
+    fn unregister_push(&self) -> TResult<()> {
+        self.json_call("DELETE", "/v1/me/push", None).map(|_| ())
+    }
+
     fn post_rotation(&self, rotation: &[u8]) -> TResult<u64> {
         let (_, v) = self.json_call(
             "POST",

@@ -383,6 +383,31 @@ async fn a78_a_dead_token_is_removed() {
     )
     .await
     .err(422, "validation_failed");
+    // An Apple device: its token is hexadecimal, for the production or the development endpoint.
+    let apple = "a1".repeat(32);
+    for provider in ["apns", "apns-sandbox"] {
+        env.put(
+            &devs[0],
+            "/v1/me/push",
+            json!({ "provider": provider, "token": apple }),
+        )
+        .await
+        .ok(204);
+    }
+    assert_eq!(
+        env.sql_count("SELECT count(*) FROM push_registrations WHERE provider = 'apns-sandbox'"),
+        1
+    );
+    // It ends in the path of the request to Apple: nothing but hexadecimal.
+    for bad in ["tok-new", "../3/device/x", "a1a1"] {
+        env.put(
+            &devs[0],
+            "/v1/me/push",
+            json!({ "provider": "apns", "token": bad }),
+        )
+        .await
+        .err(422, "validation_failed");
+    }
 }
 
 /// A recorded POST: `(url, headers, body)`.
