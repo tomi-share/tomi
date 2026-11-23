@@ -16,7 +16,8 @@ Monorepo:
 - `apps/relay` (`tomi-relay`) — the blind HTTP relay.
 - `apps/android` — Kotlin / Jetpack Compose (Material 3), real core through UniFFI; a fake core exists for tests only.
 - `apps/windows` — Tauri + Svelte.
-- `apps/apple` — SwiftUI (iOS), real core through UniFFI (`TomiCore`).
+- `apps/apple` — SwiftUI (iOS and macOS), real core through UniFFI (`TomiCore`). The Mac app is the `TomiMac` target of
+  the same project: same screens, a menu bar app (`docs/macos-app.md`).
 - `spec/` — normative specification (`format-v1.md`, `api-v1.md`, `pairing-v1.md`, pin and archive contracts) and frozen
   test vectors in `spec/vectors/`.
 - `design/` — brand guidelines and assets. `infra/` — deployment guide and templates. `docs/` — design notes.
@@ -60,6 +61,15 @@ Identifiers: application id `eu.shaffe.tomi`, URL scheme `tomi-share://`.
   the symbol. No circular-arrow icon and no spinner next to the logo (brand guidelines §6.3).
 - iOS: native Liquid Glass (iOS 26+) for the floating bar and controls — a design of its own, not an imitation of Android.
   Behavior and content stay aligned with Android; any deliberate difference is recorded in `docs/FEATURES.md`.
+- macOS: a **menu bar app**. The icon next to the clock opens the feed in a popover; the full window opens on demand (the
+  Dock icon exists only while it is open). Screens and rules are those of iOS: the same files of `apps/apple/Tomi`
+  compile for both, what is specific to the Mac lives in `apps/apple/TomiMac`. A shared screen is not duplicated for the
+  Mac: `#if os(macOS)` in the file, or a common name in `Tomi/Common/Platform.swift`. A screen change is checked on
+  **both** platforms. Every button or menu a screen puts in `.toolbar` carries `barControl()`, and the content of a
+  pushed screen carries `screenControls()` (`apps/apple/README.md`); without them the bar buttons shrink to their
+  symbol. To look at the Mac app without taking over the session of the person at the Mac, use the `tomi-share://debug-…`
+  tools and the off-screen launch (`apps/apple/README.md`, "macOS app"): never simulated keystrokes or clicks on their
+  desktop. Any deliberate difference with iOS is recorded in `docs/FEATURES.md` (macOS column).
 - UI strings follow the language of the device; English is the reference and the fallback (`res/values/strings.xml`,
   `Localizable.xcstrings` generated from it, `apps/windows/src/lib/i18n/`). How to add a language: `docs/LOCALIZATION.md`.
   Code, comments and documentation are in English.
@@ -76,7 +86,7 @@ Identifiers: application id `eu.shaffe.tomi`, URL scheme `tomi-share://`.
 - **iOS**: Swift packages under `apps/apple/Packages`; the app project is generated with XcodeGen from `apps/apple/project.yml`.
 - **Apple generated files** (`Localizable.xcstrings`, `TomiTokens.swift`) are derived, and CI ("Apple (generated files up to date)")
   fails when they are stale. So **any change to `apps/android/app/src/main/res/values/strings.xml`,
-  `apps/apple/tools/strings-apple.json` or `design/tomi/tokens.json` must ship in the same commit as the regenerated files**,
+  a file of `apps/apple/tools/strings-apple/` or `design/tomi/tokens.json` must ship in the same commit as the regenerated files**,
   even for an Android-only change. Regenerate with `just apple-project` (or `python3 -I apps/apple/tools/strings-from-android.py`
   and `tokens-to-swift.py` from `apps/apple`). With no working Python (e.g. the Windows Store stub), edit the catalog by hand
   exactly as the script would (keys sorted, `"extractionState" : "manual"`, `fr` unit `translated`; write `%1$@` in `ios_` keys,
