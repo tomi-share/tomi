@@ -1,0 +1,291 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "NSCameraUsageDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi verwendet die Kamera nur, um den QR-Code der Kopplung zu scannen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi uses the camera only to scan the pairing QR code."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi usa la cámara solo para escanear el código QR de vinculación."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi utilise la caméra seulement pour scanner le QR code d’appairage."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi कैमरे का इस्तेमाल सिर्फ़ पेयरिंग का QR कोड स्कैन करने के लिए करता है।"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi menggunakan kamera hanya untuk memindai kode QR penyambungan."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi usa la fotocamera solo per scansionare il codice QR di abbinamento."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomiは、ペアリング用のQRコードをスキャンするためにのみカメラを使用します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi는 페어링 QR 코드를 스캔할 때만 카메라를 사용해요."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi gebruikt de camera alleen om de QR-code voor het koppelen te scannen."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi używa aparatu tylko do zeskanowania kodu QR parowania."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Tomi usa a câmera apenas para escanear o código QR de pareamento."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi использует камеру только для сканирования QR-кода сопряжения."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi kamerayı yalnızca eşleme QR kodunu taramak için kullanır."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi 仅使用相机扫描配对二维码。"
+          }
+        }
+      }
+    },
+    "NSFaceIDUsageDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi fragt nach Face ID, bevor ein verborgener Eintrag angezeigt, kopiert oder geteilt wird."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi asks for Face ID before showing, copying or sharing a hidden item."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi pide Face ID antes de mostrar, copiar o compartir un elemento oculto."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi demande Face ID avant d’afficher, de copier ou de partager un contenu masqué."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi किसी छिपे हुए आइटम को दिखाने, कॉपी करने या शेयर करने से पहले Face ID माँगता है।"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi meminta Face ID sebelum menampilkan, menyalin, atau membagikan item tersembunyi."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi richiede Face ID prima di mostrare, copiare o condividere un elemento nascosto."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomiは、非表示のアイテムを表示、コピー、共有する前にFace IDを求めます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi는 숨김 항목을 표시, 복사 또는 공유하기 전에 Face ID를 요청해요."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi vraagt om Face ID voordat een verborgen item wordt getoond, gekopieerd of gedeeld."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi prosi o Face ID przed pokazaniem, skopiowaniem lub udostępnieniem ukrytego elementu."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Tomi pede o Face ID antes de mostrar, copiar ou compartilhar um item oculto."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi запрашивает Face ID перед показом, копированием или отправкой скрытого элемента."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi, gizli bir öğeyi göstermeden, kopyalamadan veya paylaşmadan önce Face ID ister."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi 在显示、拷贝或共享已隐藏条目前会要求使用面容 ID。"
+          }
+        }
+      }
+    },
+    "NSPhotoLibraryAddUsageDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi sichert in Fotos die Bilder, die du dort hinzufügen möchtest."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi saves to Photos the images you choose to add there."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi guarda en Fotos las imágenes que eliges añadir."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi enregistre dans Photos les images que tu choisis d’y ajouter."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi वे इमेज Photos में सहेजता है जिन्हें आप वहाँ जोड़ना चुनते हैं।"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi menyimpan ke Foto gambar yang Anda pilih untuk ditambahkan."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi salva in Foto le immagini che scegli di aggiungere."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomiは、追加することを選んだ画像を「写真」に保存します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi는 추가하기로 선택한 이미지를 사진 앱에 저장해요."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi bewaart in Foto’s de afbeeldingen die je daar wilt toevoegen."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi zapisuje w Zdjęciach obrazy, które zdecydujesz się tam dodać."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Tomi salva em Fotos as imagens que você escolhe adicionar."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi сохраняет в «Фото» изображения, которые вы решили туда добавить."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi, eklemeyi seçtiğiniz görüntüleri Fotoğraflar’a kaydeder."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomi 会将你选择添加的图片存储到“照片”。"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

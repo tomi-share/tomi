@@ -67,5 +67,10 @@
   "ios_relay_revoked_self": "Według przekaźnika urządzenie %1$@ opuściło twoją przestrzeń.",
   "ios_rotation_stalled_body": "Wykluczone urządzenie może nadal mieć aktualny klucz twojej przestrzeni. Tomi ponawia próbę automatycznie; otwórz Tomi na swoich pozostałych urządzeniach, aby pomóc.",
   "ios_rotation_stalled_title": "Wykluczanie urządzenia w toku",
-  "ios_snackbar_copied": "Skopiowano"
+  "ios_snackbar_copied": "Skopiowano",
+  "_system": {
+    "NSCameraUsageDescription": "Tomi używa aparatu tylko do zeskanowania kodu QR parowania.",
+    "NSFaceIDUsageDescription": "Tomi prosi o Face ID przed pokazaniem, skopiowaniem lub udostępnieniem ukrytego elementu.",
+    "NSPhotoLibraryAddUsageDescription": "Tomi zapisuje w Zdjęciach obrazy, które zdecydujesz się tam dodać."
+  }
 }

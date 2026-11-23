@@ -67,5 +67,10 @@
   "ios_relay_revoked_self": "रिले के अनुसार, %1$@ ने आपका स्पेस छोड़ दिया।",
   "ios_rotation_stalled_body": "हो सकता है कि हटाए गए डिवाइस के पास अब भी आपके स्पेस की मौजूदा कुंजी हो। Tomi अपने-आप फिर से कोशिश करता है; मदद के लिए अपने दूसरे डिवाइस पर Tomi खोलें।",
   "ios_rotation_stalled_title": "डिवाइस हटाया जा रहा है",
-  "ios_snackbar_copied": "कॉपी किया गया"
+  "ios_snackbar_copied": "कॉपी किया गया",
+  "_system": {
+    "NSCameraUsageDescription": "Tomi कैमरे का इस्तेमाल सिर्फ़ पेयरिंग का QR कोड स्कैन करने के लिए करता है।",
+    "NSFaceIDUsageDescription": "Tomi किसी छिपे हुए आइटम को दिखाने, कॉपी करने या शेयर करने से पहले Face ID माँगता है।",
+    "NSPhotoLibraryAddUsageDescription": "Tomi वे इमेज Photos में सहेजता है जिन्हें आप वहाँ जोड़ना चुनते हैं।"
+  }
 }

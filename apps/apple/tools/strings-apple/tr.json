@@ -67,5 +67,10 @@
   "ios_relay_revoked_self": "Aktarıcıya göre %1$@ alanınızdan ayrıldı.",
   "ios_rotation_stalled_body": "Çıkarılan bir cihaz alanınızın geçerli anahtarını hâlâ tutuyor olabilir. Tomi otomatik olarak yeniden deniyor; yardımcı olmak için Tomi’yi diğer cihazlarınızda açın.",
   "ios_rotation_stalled_title": "Cihaz çıkarma sürüyor",
-  "ios_snackbar_copied": "Kopyalandı"
+  "ios_snackbar_copied": "Kopyalandı",
+  "_system": {
+    "NSCameraUsageDescription": "Tomi kamerayı yalnızca eşleme QR kodunu taramak için kullanır.",
+    "NSFaceIDUsageDescription": "Tomi, gizli bir öğeyi göstermeden, kopyalamadan veya paylaşmadan önce Face ID ister.",
+    "NSPhotoLibraryAddUsageDescription": "Tomi, eklemeyi seçtiğiniz görüntüleri Fotoğraflar’a kaydeder."
+  }
 }

@@ -67,5 +67,10 @@
   "ios_relay_revoked_self": "据中继显示，%1$@ 已离开你的空间。",
   "ios_rotation_stalled_body": "已移除的设备可能仍持有你空间的当前密钥。Tomi 会自动重试；在你的其他设备上打开 Tomi 会有所帮助。",
   "ios_rotation_stalled_title": "正在移除设备",
-  "ios_snackbar_copied": "已复制"
+  "ios_snackbar_copied": "已复制",
+  "_system": {
+    "NSCameraUsageDescription": "Tomi 仅使用相机扫描配对二维码。",
+    "NSFaceIDUsageDescription": "Tomi 在显示、拷贝或共享已隐藏条目前会要求使用面容 ID。",
+    "NSPhotoLibraryAddUsageDescription": "Tomi 会将你选择添加的图片存储到“照片”。"
+  }
 }

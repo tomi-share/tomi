@@ -13,6 +13,10 @@ Conversions: `%1$s` -> `%1$@`, `%1$d` -> `%1$lld` (and the unnumbered forms), An
 Texts of the Apple apps only (`ios_` keys) come from tools/strings-apple/<lang>.json. A key missing in a language
 falls back to English in the app; a key that English does not have is refused here.
 
+The sentences the system shows when it asks for a permission (camera, Face ID, Photos) are in the same files, under
+`_system`: they go to Tomi/Resources/InfoPlist.xcstrings. Their English is also the value of the build setting in
+project.yml (what a device in a language the app does not have is shown); the two are checked to be the same.
+
 Usage: python3 -I apps/apple/tools/strings-from-android.py
 """
 
@@ -28,6 +32,7 @@ OUTPUT = ROOT / "apps/apple/Tomi/Resources/Localizable.xcstrings"
 # The language of res/values: the reference, and what a device in a language the app does not have is shown.
 REFERENCE = "en"
 APPLE_ONLY = Path(__file__).resolve().parent / "strings-apple"
+PROJECT = ROOT / "apps/apple/project.yml"
 
 
 def languages() -> dict:
@@ -106,6 +111,31 @@ def read_apple(language: str, android: dict) -> dict:
     return out
 
 
+def write_catalog(output: Path, strings: dict) -> None:
+    catalog = {"sourceLanguage": REFERENCE, "strings": strings, "version": "1.0"}
+    output.parent.mkdir(parents=True, exist_ok=True)
+    text = json.dumps(catalog, ensure_ascii=False, indent=2, sort_keys=True, separators=(",", " : "))
+    output.write_text(text + "\n", encoding="utf-8")
+    print(f"wrote {output.relative_to(ROOT)} ({len(strings)} keys, {len(languages())} languages)")
+
+
+def system_texts(section: str, output: Path) -> None:
+    """Writes the catalog of the permission sentences (Info.plist keys) from `section` of each language file."""
+    strings = {}
+    project = PROJECT.read_text(encoding="utf-8")
+    for language in languages():
+        source = APPLE_ONLY / f"{language}.json"
+        texts = json.loads(source.read_text(encoding="utf-8")).get(section, {}) if source.exists() else {}
+        for name, value in texts.items():
+            if language == REFERENCE and f'INFOPLIST_KEY_{name}: "{value}"' not in project:
+                raise SystemExit(f"project.yml: INFOPLIST_KEY_{name} must be the English text of {section}")
+            if language != REFERENCE and name not in strings:
+                raise SystemExit(f"{source.name}: {section} names {name}, which {REFERENCE} does not have")
+            entry = strings.setdefault(name, {"extractionState": "manual", "localizations": {}})
+            entry["localizations"][CATALOG_TAGS.get(language, language)] = unit(value)
+    write_catalog(output, strings)
+
+
 def main() -> int:
     strings = {}
     reference = None
@@ -121,11 +151,8 @@ def main() -> int:
         for name, localization in texts.items():
             entry = strings.setdefault(name, {"extractionState": "manual", "localizations": {}})
             entry["localizations"][CATALOG_TAGS.get(language, language)] = localization
-    catalog = {"sourceLanguage": REFERENCE, "strings": strings, "version": "1.0"}
-    OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-    text = json.dumps(catalog, ensure_ascii=False, indent=2, sort_keys=True, separators=(",", " : "))
-    OUTPUT.write_text(text + "\n", encoding="utf-8")
-    print(f"wrote {OUTPUT.relative_to(ROOT)} ({len(strings)} keys, {len(languages())} languages)")
+    write_catalog(OUTPUT, strings)
+    system_texts("_system", OUTPUT.with_name("InfoPlist.xcstrings"))
     return 0
 
 

@@ -34,8 +34,13 @@ A translation follows the same choices in its own language and keeps every place
 - `apps/apple/Tomi/Resources/Localizable.xcstrings` is **generated**, never edited: `python3 -I
   apps/apple/tools/strings-from-android.py` reads the Android files of every language and, for the texts only the
   Apple apps have (`ios_` keys), `apps/apple/tools/strings-apple/<lang>.json`.
+- The sentences the system shows when it asks for a permission (camera, Face ID, Photos) are in the same
+  `strings-apple/<lang>.json` files, under `_system`; the generator writes them to `Tomi/Resources/InfoPlist.xcstrings`.
+  Their English is also the build setting of `apps/apple/project.yml`, which is what a device in another language shows.
 - To add a language: add the Android file, add `tools/strings-apple/<lang>.json`, run the generator. The source
-  language of the catalog and the development language of the project (`apps/apple/project.yml`) are English.
+  language of the catalogs and the development language of the project (`apps/apple/project.yml`) are English.
+- The app follows the language of the device; with several languages in the app, iOS also offers a per-app choice in
+  Settings > Tomi > Language.
 - Dates and sizes use the device locale (`TomiLocale` in TomiKit); texts are formatted with it (plural rules).
 - The tests assert French texts: they pin the locale they need.
 
