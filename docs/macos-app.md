@@ -244,7 +244,7 @@ in `PROJECT.md`, implemented nowhere), push.
 | Layer | Where | Shared by | What the Mac changes there |
 |---|---|---|---|
 | Protocol, formats, frozen vectors | `spec/` | all | nothing |
-| Relay | `apps/relay` | all | nothing (`"macos"` is already a valid platform; no APNs) |
+| Relay | `apps/relay` | all | nothing (`"macos"` is already a valid platform; the APNs sending of the relay only serves iPhones) |
 | Core: crypto, sync, storage, pairing, departure, demo | `crates/core` | all | **nothing** (no platform-specific code in the core) |
 | Core contract | `crates/core/src/ffi.rs` (UniFFI) | Android, iOS, **Mac** | nothing. Windows, for its part, calls the internal Rust API without UniFFI. |
 | Core packaged for Swift | `Packages/TomiCore` (XCFramework) | iOS, **Mac** | add a macOS slice to the build script |
@@ -295,8 +295,8 @@ four files) and adds `TomiMac/` for what is its own. No mass move and no new pac
 
 ### 5.1 Imposed by the platform or a dependency
 
-1. **No push**: the relay has no APNs. Mac switched off, asleep, or Tomi quit: nothing arrives; everything is caught up
-   on resume. (Android, iOS and Windows have the same limit.)
+1. **No push on the Mac**: the app does not register with APNs (the relay only sends to iPhones, `api-v1.md` §6.4).
+   Mac switched off, asleep, or Tomi quit: nothing arrives; everything is caught up on resume.
 2. **Capture exclusion not guaranteed**: `sharingType = .none` is respected by the classic capture tools, but its
    effect with the recent capture APIs is to be checked on macOS 27. macOS has no public equivalent of "the screen is
    being recorded": no "Screen shared" cover as on iOS.

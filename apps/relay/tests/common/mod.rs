@@ -259,6 +259,8 @@ impl Env {
             cleanup: true,
             fcm_http: None,
             fcm_base: None,
+            apns_http: None,
+            apns_base: None,
         };
         tweak(&mut cfg, &mut opts);
         let state = open(cfg, opts).await.unwrap();
@@ -303,6 +305,8 @@ impl Env {
             cleanup: true,
             fcm_http: None,
             fcm_base: None,
+            apns_http: None,
+            apns_base: None,
         };
         let state = open(cfg, opts).await.unwrap();
         let router = tomi_relay::routes::router(state.clone());

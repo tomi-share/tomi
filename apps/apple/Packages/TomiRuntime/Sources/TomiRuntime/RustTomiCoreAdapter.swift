@@ -264,6 +264,11 @@ public final class RustTomiCoreAdapter: TomiKit.TomiCore {
         try await call(on: local) { try $0.deleteEverywhere(id: id) }
     }
 
+    public func registerPush(provider: String, token: String) async throws {
+        guard !isDemo else { return }
+        try await call(on: network) { try $0.registerPush(provider: provider, token: token) }
+    }
+
     public func markRead(id: String) async throws {
         try await call(on: local) { try $0.markRead(id: id) }
     }

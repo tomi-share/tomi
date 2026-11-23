@@ -101,6 +101,8 @@
   "macos_settings_downloads_default": "默认",
   "macos_menu_new_send": "新发送",
   "macos_menu_feed": "信息流",
+  "ios_push_title": "Tomi",
+  "ios_push_body": "新条目",
   "_mac_comment": "与手机共用的文本的 Mac 表述（strings-from-android.py）：_mac_replacements 应用于每个文本，_mac 给出整段文本。",
   "_mac_replacements": [
     [

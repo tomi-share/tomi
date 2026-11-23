@@ -101,6 +101,8 @@
   "macos_settings_downloads_default": "Default",
   "macos_menu_new_send": "Kiriman baru",
   "macos_menu_feed": "Linimasa",
+  "ios_push_title": "Tomi",
+  "ios_push_body": "Item baru",
   "_mac_comment": "Kata-kata versi Mac untuk teks yang dibagikan dengan ponsel (strings-from-android.py): _mac_replacements diterapkan ke setiap teks, _mac memberikan teks utuh.",
   "_mac_replacements": [
     [

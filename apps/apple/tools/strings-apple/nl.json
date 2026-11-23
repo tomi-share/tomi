@@ -101,6 +101,8 @@
   "macos_settings_downloads_default": "Standaard",
   "macos_menu_new_send": "Nieuw item versturen",
   "macos_menu_feed": "Feed",
+  "ios_push_title": "Tomi",
+  "ios_push_body": "Nieuw item",
   "_mac_comment": "De Mac-formulering van teksten die met de telefoons worden gedeeld (strings-from-android.py): _mac_replacements worden op elke tekst toegepast, _mac geeft een hele tekst. „Telefoon” en „Mac” zijn allebei de-woorden (deze, hij), dus de vervangingen hoeven verder niets aan te passen.",
   "_mac_replacements": [
     [

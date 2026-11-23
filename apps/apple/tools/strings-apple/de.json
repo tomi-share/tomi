@@ -101,6 +101,8 @@
   "macos_settings_downloads_default": "Standard",
   "macos_menu_new_send": "Neue Sendung",
   "macos_menu_feed": "Feed",
+  "ios_push_title": "Tomi",
+  "ios_push_body": "Neuer Eintrag",
   "_mac_comment": "Die Mac-Formulierung der mit den Telefonen geteilten Texte (strings-from-android.py): _mac_replacements werden auf jeden Text angewendet, _mac gibt einen ganzen Text vor. „Telefon“ ist ein Neutrum, „Mac“ ein Maskulinum: Die Paare enthalten daher das Verb oder die Präposition, die den Fall festlegt.",
   "_mac_replacements": [
     [

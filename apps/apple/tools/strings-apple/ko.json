@@ -101,6 +101,8 @@
   "macos_settings_downloads_default": "기본값",
   "macos_menu_new_send": "새로 보내기",
   "macos_menu_feed": "피드",
+  "ios_push_title": "Tomi",
+  "ios_push_body": "새 항목",
   "_mac_comment": "휴대전화와 공유하는 텍스트의 Mac 표현(strings-from-android.py): _mac_replacements는 모든 텍스트에 적용되고, _mac은 텍스트 전체를 지정해요.",
   "_mac_replacements": [
     [
