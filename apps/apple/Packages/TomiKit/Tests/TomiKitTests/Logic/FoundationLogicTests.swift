@@ -121,6 +121,9 @@ final class ReviewFindingsTests: XCTestCase {
         var hebrew = Calendar(identifier: .hebrew)
         hebrew.timeZone = TimeZone(identifier: "Europe/Paris")!
         let date = Date(timeIntervalSince1970: 1_793_872_800)
+        // The month is asserted in French: the language is pinned, whatever the machine.
+        TomiLocale.current = Locale(identifier: "fr_FR")
+        defer { TomiLocale.current = .autoupdatingCurrent }
         XCTAssertTrue(formatDateTime(date, calendar: hebrew).contains("nov."))
     }
 
