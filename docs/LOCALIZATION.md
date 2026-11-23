@@ -29,18 +29,21 @@ A translation follows the same choices in its own language and keeps every place
   needs (`one`, `few`, `many`, `other`...); formatted strings keep the same placeholders.
 - Dates and numbers use the device locale (`ui/common/Formatting.kt`).
 
-## iOS
+## iOS and macOS
 
 - `apps/apple/Tomi/Resources/Localizable.xcstrings` is **generated**, never edited: `python3 -I
   apps/apple/tools/strings-from-android.py` reads the Android files of every language and, for the texts only the
-  Apple apps have (`ios_` keys), `apps/apple/tools/strings-apple/<lang>.json`.
+  Apple apps have (`ios_` keys, and `macos_` keys for what only the Mac app says),
+  `apps/apple/tools/strings-apple/<lang>.json`. The same file gives the Mac wording of a text shared with the phones
+  (`_mac`, `_mac_replacements`): "this Mac", Touch ID, a click instead of a tap.
 - The sentences the system shows when it asks for a permission (camera, Face ID, Photos) are in the same
   `strings-apple/<lang>.json` files, under `_system`; the generator writes them to `Tomi/Resources/InfoPlist.xcstrings`.
   Their English is also the build setting of `apps/apple/project.yml`, which is what a device in another language shows.
+  The Mac app has its own (`_system_mac` -> `TomiMac/InfoPlist.xcstrings`), with the title of its Services menu item.
 - To add a language: add the Android file, add `tools/strings-apple/<lang>.json`, run the generator. The source
   language of the catalogs and the development language of the project (`apps/apple/project.yml`) are English.
 - The app follows the language of the device; with several languages in the app, iOS also offers a per-app choice in
-  Settings > Tomi > Language.
+  Settings > Tomi > Language (on the Mac: System Settings > General > Language & Region > Applications).
 - Dates and sizes use the device locale (`TomiLocale` in TomiKit); texts are formatted with it (plural rules).
 - The tests assert French texts: they pin the locale they need.
 

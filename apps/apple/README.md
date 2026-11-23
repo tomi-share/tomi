@@ -1,11 +1,11 @@
-# Tomi for Apple (iOS, then macOS)
+# Tomi for Apple (iOS and macOS)
 
 Tomi's Apple clients, written in SwiftUI, at the same functional level as the Android client. Like Android, they
 call the Rust core `tomi-core` through UniFFI bindings: no cryptographic primitive, no network access, and no sensitive
 storage is written in Swift.
 
-A single Xcode project (generated from `project.yml`) holds the iOS targets and, later, the macOS targets; shared code
-lives in local SwiftPM packages. Implementation specification, milestones and conventions:
+A single Xcode project (generated from `project.yml`) holds the iOS and the macOS targets; shared code lives in local
+SwiftPM packages. The Mac app is described in [`docs/macos-app.md`](../../docs/macos-app.md) and in "macOS app" below. Implementation specification, milestones and conventions:
 [`docs/archive/apple-spec-implementation.md`](../../docs/archive/apple-spec-implementation.md).
 
 ## Structure
@@ -14,14 +14,17 @@ lives in local SwiftPM packages. Implementation specification, milestones and co
 apps/apple/
   project.yml               # XcodeGen → Tomi.xcodeproj (ignored by git)
   Config/                   # xcconfig (Debug, Release); Signing.local.xcconfig and Local.xcconfig (default relay) are ignored
-  Tomi/                     # iOS app target (SwiftUI); macOS later in the same project
+  Tomi/                     # iOS app target (SwiftUI); its screens and models are also compiled by the Mac target
+  TomiMac/                  # what only the Mac app has (entry point, AppKit counterparts of the UIKit files)
+  TomiMac/Share/            # macOS share extension (reuses the files of TomiShare/)
+  TomiMacTests/             # Mac-only tests (the TomiMacTests target also compiles TomiTests/)
   TomiShare/                # iOS share extension
   Packages/
     TomiCore/               # the Rust core for Swift (UniFFI bindings + generated XCFramework)
     TomiKit/                # pure logic (model, detection, filters, tap per type…), testable on macOS
     TomiDesign/             # design charter: colours, typography, logo, base components
     TomiRuntime/            # core adapter (real or demo), Keychain, paths, send queue; shared with the extension
-  tools/build-core.sh       # builds the XCFramework and the generated Swift (`just apple-core`)
+  tools/build-core.sh       # builds the XCFramework (iOS + macOS) and the generated Swift (`just apple-core`)
   tools/simulator-udid.sh   # identifier of the « iPhone Duo » simulator (two share this name, so `name=` is ambiguous)
 ```
 
@@ -44,7 +47,8 @@ demo from the real core).
 - Rust via **rustup** (not Homebrew's `rust`), toolchain 1.99 (the one used in CI), and the targets:
 
 ```sh
-rustup target add aarch64-apple-ios aarch64-apple-ios-sim x86_64-apple-ios
+rustup target add aarch64-apple-ios aarch64-apple-ios-sim x86_64-apple-ios   # iOS : appareil, simulateurs
+rustup target add aarch64-apple-darwin x86_64-apple-darwin                    # macOS : Apple silicon, Intel
 ```
 
 ## Build and test
@@ -56,10 +60,13 @@ just apple-test          # all Apple tests (macOS, then the iPhone Duo simulator
 open Tomi.xcodeproj      # Xcode: signing, TestFlight, visual debugging
 ```
 
-In Debug, the app starts on the **demo core** (no network, the demo space shared by all apps). The launch argument
-`-TomiCoreMode real` uses the real core against a local relay (`just dev-relay`, `http://localhost:8080`);
-the core accepts `http://localhost` only if it is itself compiled in debug (`just apple-core --debug`).
-Release always uses the real core, with the demo: « Rejoins ton espace » offers to enter it. Never build the core of a
+Every build, Debug included, starts on the **same core** (the unified core): no demo at launch. The demo is entered from
+the pairing screen. Launch arguments, for the developer only (Debug and Dev builds): `-TomiStartInDemo YES` makes that
+core enter its demo at launch, on a device that is in no space; `-TomiRelayURL http://localhost:8080` targets a local
+relay (`just dev-relay`; the core accepts `http://localhost` only if it is itself compiled in debug,
+`just apple-core --debug`); `-TomiIsolatedDemo YES` opens the isolated demo core instead, to look at the app on a device
+that is in a real space without opening that space (`tomi-share://debug-…` tools). The app that hosts the unit tests is
+the exception: it opens the isolated demo core, so it touches neither the network nor the space of the person. Never build the core of a
 TestFlight archive with `--no-demo`. Signing: copy `Config/Signing.local.example.xcconfig` to `Config/Signing.local.xcconfig` (git-ignored) and set your
 Apple team in it.
 
@@ -78,7 +85,7 @@ A macOS runner counts **10x** against the quota of private repositories, so the 
 |---|---|---|---|
 | `Apple (generated files up to date)` | Linux (free) | every PR touching `apps/apple/`, `design/tomi/tokens.json` or the Android texts | replays `tokens-to-swift.py` and `strings-from-android.py`, fails if the committed `TomiTokens.swift` or `Localizable.xcstrings` differ |
 | `Apple (TomiKit, TomiDesign)` | `macos-latest` | same | `swift test` of the two pure packages (a few minutes) |
-| `Apple (iOS core, app, simulator)` | `xcode-27` | push to `main`, or manual run with the `apple_app` box ticked | Rust core for the 3 iOS targets in debug, XCFramework, `xcodegen`, TomiRuntime and app tests on a simulator |
+| `Apple (iOS core, app, simulator)` | `xcode-27` | push to `main`, or manual run with the `apple_app` box ticked | Rust core for the iOS and macOS targets in debug, XCFramework, `xcodegen`, TomiRuntime and app tests on a simulator, tests of the Mac app (unsigned) |
 
 The third job runs on the **`xcode-27`** image, a preview at GitHub: it is the only one with the iOS 27 SDK, which
 `toolbarVerticalEdge` (iOS 27.1) requires. `macos-latest` only has the iOS 26 SDK and would not build the app. When
@@ -105,13 +112,74 @@ A device that is already in a space keeps its space's relay.
 
 To build with a default relay (your own), copy `Config/Local.example.xcconfig` to `Config/Local.xcconfig`
 (git-ignored) and set `TOMI_RELAY_URL = https:/$()/relay.example.org` (`$()` stops `//` from starting a
-comment). The **Debug** build keeps `http://localhost:8080` (`just dev-relay`).
+comment). A local relay is given at launch: `-TomiRelayURL http://localhost:8080` (`just dev-relay`).
 
 Links are read by the core (`CoreLinkReader`, free functions `parsePairLink`, `parseSetupLink`,
 `isInstallTokenShape`): the app does not reimplement what a valid relay or link is. The app's QR scanner accepts
 any relay. **Universal Links**: the host is no longer unique, so `applinks:<relay>` (entitlement
 `com.apple.developer.associated-domains`) will have to be declared per build, with the AASA file served by that relay; this
 is not enabled yet, only the `tomi-share://` scheme opens the app from a link.
+
+## macOS app
+
+Target `TomiMac`, scheme "Tomi Mac" (macOS 26 minimum, sandboxed, hardened runtime). It compiles the files of `Tomi/`
+(screens, models) and those of `TomiMac/`. Sharing rule:
+
+- a file of `Tomi/` that cannot exist on the Mac (pure UIKit) is **excluded** from the target in `project.yml` and has
+  a counterpart of the same name in `TomiMac/` (`CaptureShield`, `SystemShare`, `QRScanner`, `ZoomableImage`,
+  `SwipeToArchive`);
+- the others carry `#if os(macOS)` branches; what the two platforms name differently goes through
+  `Tomi/Common/Platform.swift` (`PlatformImage`, `SystemActions.open`, `inlineNavigationTitle()`, `coverScreen`…);
+- the top bar: on the Mac every button of the content has the plain style (`macScreenDefaults`, the screens draw their
+  own), but in the bar of a window that style shrinks a button to its symbol, with no margin. So the navigation stack
+  carries `systemBarControls()` (back button of the system), the content of each screen `screenControls()`, and **every
+  button or menu a screen puts in `.toolbar` carries `barControl()`**; a screen with no title on iOS (feed, code screen,
+  welcome) carries `appWindowTitle()`, otherwise the window keeps the title of the previous screen;
+- the texts of the Mac only are `macos_…` keys of `tools/strings-apple/<lang>.json`; a text shared with the phones that
+  the Mac says differently ("this Mac", Touch ID, "click") has its variant there (`_mac`, `_mac_replacements`), carried
+  by the catalog as a device variation.
+
+```sh
+just apple-core && just apple-project
+xcodebuild build -project Tomi.xcodeproj -scheme "Tomi Mac" -destination 'platform=macOS' -allowProvisioningUpdates
+xcodebuild test  -project Tomi.xcodeproj -scheme "Tomi Mac" -destination 'platform=macOS' -allowProvisioningUpdates
+```
+
+The Mac app is signed with the team of `Config/Signing.local.xcconfig` and a profile: its `keychain-access-groups`
+entitlement requires it, and it gives the app the identifier without which the data protection keychain refuses it
+(`-allowProvisioningUpdates` lets Xcode create that profile the first time). The tests (`TomiMacTests`) are those of the
+iOS app, compiled against the Mac build, plus those of `TomiMacTests/` (paste, shortcut, life cycle).
+
+It is a menu bar app: at launch it only shows its icon next to the clock (`TomiMac/MacAppDelegate.swift`,
+`MacSurfaces.swift`). The app icon comes from `swift tools/mac-app-icon.swift` (run it again if the charter changes).
+
+Tools of the Debug builds (absent from Release), to look at and drive the app with no mouse and no screen recording
+permission (`TomiMac/DebugSnapshot.swift`). Each tool is a link; what it produces goes to the standard output of the
+app, one line `TOMI-DEBUG <name> <base64>` (launch the app with `open -n Tomi.app --stdout <file>`: the folder of a
+signed app cannot be read from outside):
+
+- `tomi-share://debug-snapshot`: a PNG image of each visible window (`window-<n>`);
+- `tomi-share://debug-state`: the state the app knows of itself (phase of the core, surface on screen, unread count,
+  notifications);
+- `tomi-share://debug-items`: the items of the demo core, to open one with `tomi-share://item/<id>`;
+- `tomi-share://debug-incoming`: a link arrives from another device of the demo;
+- `tomi-share://debug-window`, `tomi-share://debug-settings`: open the full window and the settings (the popover opens
+  with `tomi-share://open` or the global shortcut);
+- `tomi-share://debug-command?name=<command>`: what a menu or a key asks for (`search`, `new-send`, `devices`, `window`,
+  `escape`, `filter-<name>`); `tomi-share://debug-open-file?id=<item>&index=<n>&as=<file|image|code>`;
+  `tomi-share://debug-remove-file?id=<item>&index=<n>` (removes one attachment of a demo item, to see what the screen
+  showing it does);
+- `tomi-share://debug-suggest?kind=<text|files|image|hidden|none>`: the send screen offers a made-up copy, as it does
+  for something copied less than a minute ago (the clipboard is neither read nor written);
+- `tomi-share://debug-go?to=<screen>`: shows a screen without a click (`send`, `devices`, `invite`, `onboarding`,
+  `feed`; on a Mac with no space: `create`, `join`, `welcome`);
+- nothing of a real space leaves that way: snapshot and list are refused as soon as the app is in a real space, and
+  during a pairing;
+- `-TomiDebugOffscreen YES`: every window of Tomi opens off the screens and never takes the keyboard, to look at the
+  app while someone is using the Mac (send the links with `open -g`);
+- `-TomiTracePhases YES`: writes the state of the surfaces at each change (`TOMI-TRACE`);
+- `-TomiProtectCaptures YES`: turns the capture exclusion on (`TomiMac/CaptureShield.swift`), off by default in Debug
+  and Dev.
 
 ## Privacy on screen (specific to Apple apps)
 
@@ -192,24 +260,33 @@ delete, and « … » (Details).
 ## Building the core
 
 ```sh
-just apple-core              # or: apps/apple/tools/build-core.sh [--debug] [--no-demo]
+just apple-core              # or: apps/apple/tools/build-core.sh [--debug] [--no-demo] [--platform=ios|macos|all]
+just apple-core --platform=macos   # the macOS slices only (faster; the XCFramework then links on the Mac only)
+                             # `apple-core-test` and `apple-test` need both platforms (the default)
 just apple-core --no-demo    # a build without the demo (never for a TestFlight / App Store archive)
-just apple-core-test         # tests of the TomiCore package on the iPhone Duo simulator
+just apple-core-test         # tests of the TomiCore package on the Mac, then on the iPhone Duo simulator
 ```
 
 The script:
 
 1. builds `tomi-core` with the features `ffi` (= `runtime` + `http` + `uniffi`) and `demo` (demo mode, removed by
    `--no-demo`) for the device (`aarch64-apple-ios`) and the simulator (`aarch64-apple-ios-sim` + `x86_64-apple-ios`,
-   merged with `lipo`), as a static library (`cargo rustc --crate-type staticlib`): on iOS a Rust library
-   is linked statically into the app;
+   merged with `lipo`) and macOS (`aarch64-apple-darwin` + `x86_64-apple-darwin`, merged with `lipo`: Apple silicon
+   first, Intel compiled but not tried on a machine), as a static library (`cargo rustc --crate-type staticlib`): a
+   Rust library is linked statically into the app;
 2. generates `tomi_core.swift`, `tomi_coreFFI.h` and the module map with the crate's `uniffi-bindgen`
    (`--library`: the bindings are read from the archive's metadata, so they always match the compiled code);
-3. assembles `tomi_coreFFI.xcframework` (one device slice, one simulator slice) and copies the generated Swift
+3. assembles `tomi_coreFFI.xcframework` (one iOS device slice, one simulator slice, one macOS slice) and copies the generated Swift
    into `Packages/TomiCore/Sources/TomiCore/Generated/`.
 
 Both products are git-ignored: rerun `just apple-core` after any change to `crates/core/src/ffi.rs`.
-`IPHONEOS_DEPLOYMENT_TARGET` (17.0 by default) sets the minimum version for SQLite and ring, compiled by `cc`.
+`IPHONEOS_DEPLOYMENT_TARGET` (17.0 by default) and `MACOSX_DEPLOYMENT_TARGET` (14.0 by default: the minimum of the
+packages, whose tests run on the Mac) set the minimum version for SQLite and ring, compiled by `cc`.
+
+`TomiCore` and `TomiRuntime` declare macOS: `swift test --package-path Packages/TomiRuntime` tests them on the Mac,
+without a simulator. On macOS the wrap key goes to the data protection keychain (`kSecUseDataProtectionKeychain`), which
+requires an app signed with an application identifier; the tests of the packages use an in-memory key store. The core
+announces `platform: "macos"` on a Mac (`CoreFactory.platform`).
 
 ## Core integration rules (see `crates/core/src/ffi.rs`)
 
@@ -221,4 +298,4 @@ Both products are git-ignored: rerun `just apple-core` after any change to `crat
   never synchronised); another key makes the database unreadable.
 - `filesDir`: private folder excluded from backups; call `purgePlaintextCache()` when the app goes to the background.
 - `relayUrl` must be `https://`; `http://localhost` only in a debug build (the simulator shares the Mac's network).
-- `platform: "ios"` (or `"macos"`).
+- `platform`: `"ios"` or `"macos"`, given by `CoreFactory.platform`.
