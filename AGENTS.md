@@ -17,7 +17,8 @@ Monorepo:
 - `apps/android` — Kotlin / Jetpack Compose (Material 3), real core through UniFFI; a fake core exists for tests only.
 - `apps/windows` — Tauri + Svelte.
 - `apps/apple` — SwiftUI (iOS and macOS), real core through UniFFI (`TomiCore`). The Mac app is the `TomiMac` target of
-  the same project: same screens, a menu bar app (`docs/macos-app.md`).
+  the same project: same screens, a menu bar app (`docs/macos-app.md`). Push for iPhone (APNs; written, not in
+  service yet): `docs/push-apns.md`.
 - `spec/` — normative specification (`format-v1.md`, `api-v1.md`, `pairing-v1.md`, pin and archive contracts) and frozen
   test vectors in `spec/vectors/`.
 - `design/` — brand guidelines and assets. `infra/` — deployment guide and templates. `docs/` — design notes.

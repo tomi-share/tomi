@@ -176,6 +176,10 @@ internal open class NativeFake : RustTomiCoreInterface {
 
     override fun sync(pushToken: String?): FfiSyncReport = syncImpl()
 
+    override fun registerPush(provider: String, token: String) = unexpected()
+
+    override fun unregisterPush() = unexpected()
+
     override fun enqueue(draft: FfiDraft): String {
         enqueued = draft
         return draft.id.orEmpty()

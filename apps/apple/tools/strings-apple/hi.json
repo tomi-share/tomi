@@ -101,6 +101,8 @@
   "macos_settings_downloads_default": "डिफ़ॉल्ट",
   "macos_menu_new_send": "नया भेजें",
   "macos_menu_feed": "फ़ीड",
+  "ios_push_title": "Tomi",
+  "ios_push_body": "नया आइटम",
   "_mac_comment": "फ़ोन के साथ साझा किए गए टेक्स्ट का Mac वाला रूप (strings-from-android.py): _mac_replacements हर टेक्स्ट पर लागू होते हैं, _mac पूरा टेक्स्ट देता है। हिंदी में “फ़ोन” और “Mac” दोनों पुल्लिंग हैं, इसलिए जोड़ों में सिर्फ़ संज्ञा बदलती है।",
   "_mac_replacements": [
     [

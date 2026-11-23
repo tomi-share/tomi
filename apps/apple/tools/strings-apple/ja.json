@@ -101,6 +101,8 @@
   "macos_settings_downloads_default": "デフォルト",
   "macos_menu_new_send": "新規送信",
   "macos_menu_feed": "フィード",
+  "ios_push_title": "Tomi",
+  "ios_push_body": "新しいアイテム",
   "_mac_comment": "スマートフォンと共有するテキストのMac向けの表現（strings-from-android.py）：_mac_replacementsはすべてのテキストに適用され、_macはテキスト全体を指定します。",
   "_mac_replacements": [
     [

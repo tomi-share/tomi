@@ -58,12 +58,44 @@ pub enum PushError {
     InvalidArgument,
     /// 429/5xx/network: retry later.
     Transient { retry_after: Option<Duration> },
+    /// No sender is configured for the provider of this registration: nothing is sent, the
+    /// token is kept (the provider may be configured later).
+    Unsupported,
 }
 
 /// Sends one content-free wake-up. Implementations never log the token.
 #[async_trait]
 pub trait PushSender: Send + Sync {
     async fn wake(&self, target: &PushTarget, urgency: Urgency) -> Result<(), PushError>;
+}
+
+/// Sends each wake-up through the sender of its provider: FCM for Android, APNs for the Apple
+/// devices. A registration whose provider has no sender here is left alone.
+#[derive(Default)]
+pub struct ProviderSenders {
+    pub fcm: Option<Arc<dyn PushSender>>,
+    pub apns: Option<Arc<dyn PushSender>>,
+}
+
+impl ProviderSenders {
+    pub fn is_empty(&self) -> bool {
+        self.fcm.is_none() && self.apns.is_none()
+    }
+}
+
+#[async_trait]
+impl PushSender for ProviderSenders {
+    async fn wake(&self, target: &PushTarget, urgency: Urgency) -> Result<(), PushError> {
+        let sender = match target.provider.as_str() {
+            "fcm" => self.fcm.as_ref(),
+            crate::apns::PROVIDER | crate::apns::PROVIDER_SANDBOX => self.apns.as_ref(),
+            _ => None,
+        };
+        match sender {
+            Some(sender) => sender.wake(target, urgency).await,
+            None => Err(PushError::Unsupported),
+        }
+    }
 }
 
 /// A request to wake a device.
@@ -274,6 +306,8 @@ impl Worker {
                     self.record(Outcome::AuthError).await;
                     return true;
                 }
+                // Nothing was sent: no window to wait for, no health to record.
+                Err(PushError::Unsupported) => return false,
                 Err(PushError::Transient { retry_after }) => {
                     self.record(Outcome::Transient).await;
                     if attempt == 3 {
@@ -382,6 +416,72 @@ pub fn set_health(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    struct Counting(std::sync::atomic::AtomicUsize);
+    #[async_trait]
+    impl PushSender for Counting {
+        async fn wake(&self, _: &PushTarget, _: Urgency) -> Result<(), PushError> {
+            self.0.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+            Ok(())
+        }
+    }
+
+    fn counting() -> Arc<Counting> {
+        Arc::new(Counting(std::sync::atomic::AtomicUsize::new(0)))
+    }
+
+    fn sent(c: &Counting) -> usize {
+        c.0.load(std::sync::atomic::Ordering::SeqCst)
+    }
+
+    fn target_of(provider: &str) -> PushTarget {
+        PushTarget {
+            provider: provider.to_owned(),
+            token: "t".to_owned(),
+        }
+    }
+
+    #[tokio::test]
+    async fn each_registration_goes_to_the_sender_of_its_provider() {
+        let (fcm, apns) = (counting(), counting());
+        let senders = ProviderSenders {
+            fcm: Some(fcm.clone()),
+            apns: Some(apns.clone()),
+        };
+        senders
+            .wake(&target_of("fcm"), Urgency::High)
+            .await
+            .unwrap();
+        senders
+            .wake(&target_of("apns"), Urgency::High)
+            .await
+            .unwrap();
+        senders
+            .wake(&target_of("apns-sandbox"), Urgency::Normal)
+            .await
+            .unwrap();
+        assert_eq!((sent(&fcm), sent(&apns)), (1, 2));
+        assert_eq!(
+            senders.wake(&target_of("unifiedpush"), Urgency::High).await,
+            Err(PushError::Unsupported)
+        );
+    }
+
+    #[tokio::test]
+    async fn a_provider_that_is_not_configured_sends_nothing() {
+        let fcm = counting();
+        let only_fcm = ProviderSenders {
+            fcm: Some(fcm.clone()),
+            apns: None,
+        };
+        assert_eq!(
+            only_fcm.wake(&target_of("apns"), Urgency::High).await,
+            Err(PushError::Unsupported)
+        );
+        assert_eq!(sent(&fcm), 0, "never handed to the other provider");
+        assert!(ProviderSenders::default().is_empty());
+        assert!(!only_fcm.is_empty());
+    }
 
     #[test]
     fn target_debug_hides_the_token() {

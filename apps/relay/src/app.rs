@@ -8,6 +8,7 @@ use std::sync::{Arc, Mutex};
 
 use rusqlite::params;
 
+use crate::apns::{ApnsCredentials, ApnsSender, Http2Poster};
 use crate::blobstore;
 use crate::clock::{Clock, SystemClock};
 use crate::config::{Config, Timing};
@@ -16,7 +17,7 @@ use crate::disk::{DiskProbe, RealDisk};
 use crate::fcm::{FcmCredentials, FcmSender, HttpPost, UreqPoster};
 use crate::hub::{close, Hub};
 use crate::install;
-use crate::push::{set_health, PushDispatcher, PushSender};
+use crate::push::{set_health, ProviderSenders, PushDispatcher, PushSender};
 use crate::ratelimit::Limiter;
 use crate::routes;
 use crate::spaces::{data_refused, Space, Spaces};
@@ -56,7 +57,14 @@ pub struct Options {
     pub fcm_http: Option<Arc<dyn HttpPost>>,
     /// Base URL of the FCM API (default: Google's).
     pub fcm_base: Option<String>,
+    /// HTTP client of the APNs sender (default: real HTTP/2).
+    pub apns_http: Option<Arc<dyn HttpPost>>,
+    /// Base URL replacing both APNs endpoints (default: Apple's).
+    pub apns_base: Option<String>,
 }
+
+/// The bundle identifier of the Tomi apps of Apple.
+const APNS_DEFAULT_TOPIC: &str = "eu.shaffe.tomi";
 
 impl Default for Options {
     fn default() -> Self {
@@ -71,6 +79,8 @@ impl Default for Options {
             cleanup: true,
             fcm_http: None,
             fcm_base: None,
+            apns_http: None,
+            apns_base: None,
         }
     }
 }
@@ -143,44 +153,84 @@ pub async fn open(cfg: Config, opts: Options) -> anyhow::Result<AppState> {
             opts.clock.clone(),
             opts.timing.push_min_interval,
         ),
-        PushChoice::FromConfig => match &cfg.fcm_service_account_file {
-            None => PushDispatcher::disabled(),
-            Some(file) => match FcmCredentials::load(file, cfg.fcm_project_id.as_deref()) {
-                Ok(creds) => {
-                    let http: Arc<dyn HttpPost> = opts
-                        .fcm_http
-                        .clone()
-                        .unwrap_or_else(|| Arc::new(UreqPoster::default()));
-                    let sender = Arc::new(FcmSender::new(
-                        creds,
-                        http,
-                        opts.clock.clone(),
-                        opts.fcm_base.clone(),
-                    ));
-                    write_health(spaces.routing(), now, "unknown", None);
-                    PushDispatcher::spawn(
-                        sender,
-                        spaces.clone(),
-                        hub.clone(),
-                        opts.clock.clone(),
-                        opts.timing.push_min_interval,
+        PushChoice::FromConfig => {
+            let mut senders = ProviderSenders::default();
+            let mut broken = None;
+            if let Some(file) = &cfg.fcm_service_account_file {
+                match FcmCredentials::load(file, cfg.fcm_project_id.as_deref()) {
+                    Ok(creds) => {
+                        let http: Arc<dyn HttpPost> = opts
+                            .fcm_http
+                            .clone()
+                            .unwrap_or_else(|| Arc::new(UreqPoster::default()));
+                        senders.fcm = Some(Arc::new(FcmSender::new(
+                            creds,
+                            http,
+                            opts.clock.clone(),
+                            opts.fcm_base.clone(),
+                        )));
+                    }
+                    Err(e) => {
+                        // The relay keeps serving; only that push doorbell is out (§6.3).
+                        tracing::error!(
+                            "push: the FCM service account is unusable ({e}); FCM is disabled"
+                        );
+                        broken = Some("invalid_service_account");
+                    }
+                }
+            }
+            if let Some(file) = &cfg.apns_key_file {
+                let creds = match (&cfg.apns_key_id, &cfg.apns_team_id) {
+                    (Some(key_id), Some(team_id)) => ApnsCredentials::load(
+                        file,
+                        key_id,
+                        team_id,
+                        cfg.apns_topic.as_deref().unwrap_or(APNS_DEFAULT_TOPIC),
                     )
+                    .map_err(|e| e.to_string()),
+                    _ => Err(
+                        "apns_key_id and apns_team_id are required with apns_key_file".to_owned(),
+                    ),
+                };
+                let http: Result<Arc<dyn HttpPost>, String> = match opts.apns_http.clone() {
+                    Some(http) => Ok(http),
+                    None => Http2Poster::new().map(|p| Arc::new(p) as Arc<dyn HttpPost>),
+                };
+                match creds.and_then(|c| http.map(|h| (c, h))) {
+                    Ok((creds, http)) => {
+                        senders.apns = Some(Arc::new(ApnsSender::new(
+                            creds,
+                            http,
+                            opts.clock.clone(),
+                            opts.apns_base.clone(),
+                        )));
+                    }
+                    Err(e) => {
+                        // The same: the relay serves, the Apple devices are not woken (§6.4).
+                        tracing::error!("push: the APNs key is unusable ({e}); APNs is disabled");
+                        broken = Some("invalid_apns_key");
+                    }
                 }
-                Err(e) => {
-                    // The relay keeps serving; only the push doorbell is out (§6.3).
-                    tracing::error!(
-                        "push: the FCM service account is unusable ({e}); push is disabled"
-                    );
-                    write_health(
-                        spaces.routing(),
-                        now,
-                        "auth_error",
-                        Some("invalid_service_account"),
-                    );
-                    PushDispatcher::disabled()
+            }
+            if senders.is_empty() {
+                if let Some(class) = broken {
+                    write_health(spaces.routing(), now, "auth_error", Some(class));
                 }
-            },
-        },
+                PushDispatcher::disabled()
+            } else {
+                match broken {
+                    Some(class) => write_health(spaces.routing(), now, "auth_error", Some(class)),
+                    None => write_health(spaces.routing(), now, "unknown", None),
+                }
+                PushDispatcher::spawn(
+                    Arc::new(senders),
+                    spaces.clone(),
+                    hub.clone(),
+                    opts.clock.clone(),
+                    opts.timing.push_min_interval,
+                )
+            }
+        }
     };
 
     let limiter = Limiter::new(opts.clock.clone());

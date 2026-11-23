@@ -1524,6 +1524,8 @@ async fn refused_starts(env: &Env) -> Vec<String> {
         cleanup: !read_only,
         fcm_http: None,
         fcm_base: None,
+        apns_http: None,
+        apns_base: None,
     };
     let mut why = Vec::new();
     for read_only in [false, true] {
@@ -1790,6 +1792,8 @@ async fn s19i_a_start_refused_for_another_reason_is_not_the_data_exit_code() {
         cleanup: true,
         fcm_http: None,
         fcm_base: None,
+        apns_http: None,
+        apns_base: None,
     };
     let first = open(Config::for_tests(dir.path()), options())
         .await
@@ -1823,6 +1827,8 @@ async fn s19j_a_relay_lock_that_cannot_be_opened_is_the_data_exit_code() {
             cleanup: true,
             fcm_http: None,
             fcm_base: None,
+            apns_http: None,
+            apns_base: None,
         },
     )
     .await
@@ -2191,6 +2197,8 @@ async fn s26_an_empty_data_dir_is_refused_when_required() {
         cleanup: true,
         fcm_http: None,
         fcm_base: None,
+        apns_http: None,
+        apns_base: None,
     };
     let dir = tempfile::tempdir().unwrap();
     let missing = dir.path().join("not-mounted");

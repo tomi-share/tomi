@@ -102,7 +102,7 @@ sees the metadata of all its spaces; no space sees that of another (§1.3).
 | Per item-state event (pin, archive): random `event_id`, issuing `device_id`, `key_epoch`, size (constant), time, `seq`; **neither `item_id`, nor state, nor even the state type** | encrypted propagation of pin and archive (§4.8) |
 | Space keys **encrypted for each device** (`wrapped`), unreadable by the relay | rotation |
 | Opaque messages of pairing channels, for ~2 minutes | pairing rendezvous |
-| For the whole relay: the list of its spaces; pending **invitations** (SHA-256 fingerprint of the installation token and its date, never the token); the quota override of each space; the default space quota, if it has been set from the web admin panel (§8.7.1); the health status of FCM sending | space creation (§3.1), quotas (§8.4), supervision (§8.7) |
+| For the whole relay: the list of its spaces; pending **invitations** (SHA-256 fingerprint of the installation token and its date, never the token); the quota override of each space; the default space quota, if it has been set from the web admin panel (§8.7.1); the health status of push sending (FCM, APNs) | space creation (§3.1), quotas (§8.4), supervision (§8.7) |
 
 The relay **does not know**: the content type, the secret flag, the "after first read" policy, the
 expiration the user wants (it only sees the retention deadline, §4.8), names, MIME types and the
@@ -118,6 +118,7 @@ event, nor its type, nor the meaning pin/unpin or archive/unarchive). **It holds
 | **Compromised relay** (EC2 taken over, database copied, backup stolen) | All of §1.2: temporal graph of sends, sizes, number of blobs per item, reads, device presence, device names | Withhold, delete, delay items or events; invent an unsigned revocation ("by the administrator" or "voluntary departure"); rename a device; refuse service | E2EE (`format-v1.md`): no reading of content. AAD binding `item_id` and `key_epoch`: no swapping of envelopes. Device certificates, tombstones and rotations (which carry the revocations) **signed** by a device and **verified by clients** with `core`: the relay cannot slip its own key into the device list (D38) nor forge a deletion. |
 | **Network attacker** (public Wi-Fi, ISP) | IP address of the relay, volumes and timing of TLS traffic | Cut the connection | TLS 1.2+ (Caddy, Let's Encrypt). No secret in a URL. |
 | **Google / FCM** | The device's FCM token, the time of each doorbell, its priority (`HIGH` = a device must ring, `NORMAL` = silent update), the package name | Delay or lose a doorbell | FCM message with constant content (§6.3); catch-up by cursor. |
+| **Apple / APNs** | The device's APNs token, the time of each doorbell, whether it must ring (alert) or not (silent wake-up), the app identifier | Delay or lose a doorbell | Constant body (§6.4): two keys of fixed app texts, no identifier, type, `seq` or counter; the content never goes through Apple. Catch-up by cursor covers a lost doorbell. |
 | **Unknown person who discovers the URL** | `GET /v1/hello`, `/healthz`, `/updates/` | Try to create a space, guess a pairing channel, fill the disk | Single-use installation token, issued by the operator (one invitation per space to create); all writes require a session of a member device; rate limits and quotas. |
 | **Another person on the same relay** (they have their own space) | The same public responses as the unknown person (`hello` only says that at least one space exists); everything a member of **their** space sees | Try an identifier (session token, `device_id`, channel number) to reach another's space; randomly claim an open pairing channel (the other pairing fails, CPace prevents any takeover); exhaust the shared limits (`rl_global_claim`, same IP address, §8.5); fill the relay's total (§8.4) | The space of a request is that of its identifier, and only that space's database is consulted (§1.4): reading, writing, revoking, purging or counting in another's space is impossible. An identifier that designates no space receives the unknown-identifier response: one cannot know whether it exists elsewhere. A signing key or `device_id` already known in another space is refused at registration (`device_exists`): this reveals the existence of the key only to whoever already knows it. A quota per space (set by the operator) bounds each; cryptography remains the barrier for content (each space has its key, which the relay has never had). |
 | **The relay operator** (who hosts other people) | The metadata of **all** spaces (§1.2): devices, times, sizes, presence | Revoke a device, erase a space (`tomi-relay admin`, §8.7), shut down the service | They read nothing and cannot forge a device accepted by the others (like the compromised relay, first line). It is no longer "their own relay" for other people: they SHOULD know what it sees. |
@@ -1062,8 +1063,8 @@ Rules:
 
 | Field | Type | Req. | Rule |
 |-------|------|--------|-------|
-| `provider` | string | yes | `"fcm"` in v1. Unknown value → `422`. (`"unifiedpush"` is reserved.) |
-| `token` | string | yes | FCM registration token, 1 to 4096 printable ASCII characters |
+| `provider` | string | yes | `"fcm"` (Android), `"apns"` or `"apns-sandbox"` (Apple devices, §6.4: Apple's production or development endpoint, depending on the app's signature). Unknown value → `422`. (`"unifiedpush"` is reserved.) |
+| `token` | string | yes | registration token, 1 to 4096 printable ASCII characters; for `apns` and `apns-sandbox`: Apple's device token, 64 to 200 hexadecimal characters (it is used as a path in the request to Apple), otherwise `422` |
 
 Replaces the device's previous registration, if any. A same `token` already registered by another device
 **of the same space** is removed from that device (reinstallation); two spaces may carry the same token (the
@@ -1904,10 +1905,12 @@ trait PushSender: Send + Sync {
     /// Sends one content-free wake-up to `target`. Never logs the token.
     async fn wake(&self, target: &PushTarget, urgency: Urgency) -> Result<(), PushError>;
 }
-enum PushError { Unregistered, AuthFailure, InvalidArgument, Transient { retry_after: Option<Duration> } }
+enum PushError { Unregistered, AuthFailure, InvalidArgument, Transient { retry_after: Option<Duration> }, Unsupported }
 ```
 
-One `FcmSender` implementation in v1; `UnifiedPushSender` will be added without changing the caller
+Two implementations: `FcmSender` (this section) and `ApnsSender` (§6.4), behind one sender that picks by `provider`
+(`Unsupported`: the provider of a registration is not configured on this relay; nothing is sent and the token is
+kept). `UnifiedPushSender` will be added without changing the caller
 (`provider = "unifiedpush"`, token = endpoint URL).
 
 When to send:
@@ -1951,6 +1954,47 @@ Exact message (FCM HTTP v1 API, `POST https://fcm.googleapis.com/v1/projects/<pr
 Note: since late 2026, Firebase offers, in early access, `android_v2` (`remote_notification` /
 `background_sync`). Tomi v1 stays on `android` + `priority`; any eventual migration changes only `FcmSender`.
 See [the Firebase migration page](https://firebase.google.com/docs/cloud-messaging/send/v2-api).
+
+### 6.4 APNs (iPhone, iPad)
+
+iOS stops an app that leaves the screen: without push, nothing arrives until it is reopened. The Mac is not
+concerned (its app keeps the WebSocket doorbell open). Same `PushSender` interface, same sending rule as in §6.3
+(registered token **and** no open WebSocket connection, never to the author, 2 s anti-burst), `ApnsSender`
+implementation. A registration whose provider is not configured on this relay is not served, and its token is
+kept.
+
+The relay knows nothing about an item: what it asks Apple to display is **constant**. Two possible requests,
+`POST https://api.push.apple.com/3/device/<token>` (or `api.sandbox.push.apple.com` for an `apns-sandbox`
+registration), over HTTP/2:
+
+| | Item that must ring (`ring = true`) | Other wake-up |
+|---|---|---|
+| `apns-push-type` | `alert` | `background` |
+| `apns-priority` | `10` | `5` |
+| `apns-collapse-id` | `tomi` | absent |
+| body | `{"aps":{"alert":{"title-loc-key":"ios_push_title","loc-key":"ios_push_body"},"sound":"default","content-available":1}}` | `{"aps":{"content-available":1}}` |
+
+Common headers: `apns-topic` = app identifier (`apns_topic`, default `eu.shaffe.tomi`), `apns-expiration` = now + 86,400 s,
+`authorization: bearer <provider token>`.
+
+- The body carries **no** identifier, type, `seq` or counter. The two keys designate fixed texts of the app
+  ("Tomi", "New item"): the notification is displayed at once, even if iOS has stopped the app, and only says
+  that something has arrived.
+- `content-available` lets iOS wake the app when it is willing to: the app synchronizes, displays its own
+  notifications (type, sender, preview; never anything from a Hidden item), without their sound, then removes the
+  generic notification (identifier `tomi`). If nothing could be synchronized, the generic notification stays.
+- `apns-collapse-id` constant: only one generic notification at a time on the device.
+- Responses: `410`, or `400` with `reason` = `BadDeviceToken`, `DeviceTokenNotForTopic` or `Unregistered` →
+  delete the token (`push = false`); any other `400`, or any other status not listed here, is a relay bug: log
+  `ERROR`, token kept; `403` → `AuthFailure` (health status `auth_error`); `429`/`5xx` → retry as in §6.3.
+- Credentials: the `.p8` signing key of the developer account (`apns_key_file`, mode `0600`), its identifier
+  (`apns_key_id`), the team (`apns_team_id`). Provider token: JWT ES256 `{"alg":"ES256","kid":<apns_key_id>}` /
+  `{"iss":<apns_team_id>,"iat":<seconds>}`, renewed every 50 minutes. Unreadable key or missing identifiers →
+  `auth_error`; the relay keeps running without APNs. Missing key → APNs disabled.
+- The health status of sending (§8.7) is shared by FCM and APNs.
+
+Apple learns what Google learns in §1.3: the device token, the time of each doorbell and whether it must ring,
+the app identifier.
 
 ## 7. Client-side synchronization algorithm (normative for `crates/core`)
 
@@ -2825,6 +2869,9 @@ variable `TOMI_RELAY_<KEY IN UPPERCASE>`. Any unknown key makes startup fail (ty
 | `min_free_disk_bytes` | 1073741824 | §8.4 |
 | `fcm_service_account_file` | absent | FCM disabled if absent |
 | `fcm_project_id` | read from the service account file | |
+| `apns_key_file` | absent | `.p8` key of the Apple developer account (§6.4); APNs disabled if absent |
+| `apns_key_id`, `apns_team_id` | absent | identifier of the key and of the team (10 characters); required with `apns_key_file` |
+| `apns_topic` | `eu.shaffe.tomi` | app identifier |
 | `rl_*` | §8.5 | limits, in the form `{ per_minute = 30, burst = 10 }` |
 | `log_format` | `"json"` | `json` or `text` |
 

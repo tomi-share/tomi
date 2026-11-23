@@ -1636,8 +1636,8 @@ impl RustTomiCore {
 
     /// `sync`: fetches the log, drains the outbox, advances transfers. Safe to call often.
     ///
-    /// `push_token` (FCM) is accepted for the contract; registering it with the relay
-    /// (`PUT /v1/me/push`) is not implemented yet.
+    /// `push_token` is accepted for the contract and ignored: a push token is given to the relay
+    /// with [`register_push`](Self::register_push), which also says which push service it is for.
     pub fn sync(&self, push_token: Option<String>) -> FfiResult<FfiSyncReport> {
         let _ = push_token;
         let r = self.engine().sync()?;
@@ -1948,6 +1948,18 @@ impl RustTomiCore {
 
     pub fn rename_device(&self, id: String, name: String) -> FfiResult<()> {
         Ok(self.engine().rename_device(&id, &name)?)
+    }
+
+    /// `registerPush`: gives the relay the push token of this device, for the push service
+    /// `provider` (`"fcm"`, `"apns"`, `"apns-sandbox"`). The app calls it when the system gives
+    /// or renews the token and after each start, once in a space. Needs the network.
+    pub fn register_push(&self, provider: String, token: String) -> FfiResult<()> {
+        Ok(self.engine().register_push(&provider, &token)?)
+    }
+
+    /// `unregisterPush`: this device is no longer woken by a push.
+    pub fn unregister_push(&self) -> FfiResult<()> {
+        Ok(self.engine().unregister_push()?)
     }
 
     /// `revokeDevice`: revokes and rotates the space key. Needs the network.

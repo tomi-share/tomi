@@ -22,6 +22,9 @@ final class IncomingNotifications {
     static let opensDevicesKey = "opensDevices"
 
     private let center = UNUserNotificationCenter.current()
+    /// Runs for which the notifications are shown without their sound (the generic notification of a push just rang
+    /// for them). A count: two pushes, or a push and a refresh of iOS, may run at once.
+    var quietRuns = 0
 
     /// Once, at start-up: the categories and their buttons ("Copier" / "Voir"). Hidden previews show the generic title.
     func registerCategories() {
@@ -53,7 +56,7 @@ final class IncomingNotifications {
         }
         notification.threadIdentifier = content.group.rawValue
         notification.userInfo = [Self.itemIdKey: item.id]
-        notification.sound = .default
+        notification.sound = quietRuns > 0 ? nil : .default
         notification.interruptionLevel = .active
         if let image = Self.imageAttachment(item) { notification.attachments = [image] }
         let request = UNNotificationRequest(identifier: item.id, content: notification, trigger: nil)
@@ -172,7 +175,23 @@ final class TomiAppDelegate: NSObject, UIApplicationDelegate {
     ) -> Bool {
         UNUserNotificationCenter.current().delegate = NotificationRouter.shared
         BackgroundWork.register()
+        PushRegistration.start()
         return true
+    }
+
+    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        PushRegistration.received(deviceToken)
+    }
+
+    /// No token (no network, a simulator): the app works as before, fetching when iOS lets it.
+    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {}
+
+    func application(
+        _ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable: Any]
+    ) async -> UIBackgroundFetchResult {
+        // An alert rang; a background wake-up did not.
+        let rang = (userInfo["aps"] as? [AnyHashable: Any])?["alert"] != nil
+        return await PushRegistration.woken(rang: rang)
     }
 }
 #endif

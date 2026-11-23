@@ -1037,6 +1037,25 @@ impl Engine {
         Ok(())
     }
 
+    /// Registers the push token of this device with the relay (`PUT /v1/me/push`), so that it is
+    /// woken when something arrives while no doorbell is open. `provider` is the push service
+    /// (`"fcm"`, `"apns"`, `"apns-sandbox"`). Needs the network and a space; nothing is kept
+    /// locally (the app gives the token again when it changes, and at each start).
+    pub fn register_push(&self, provider: &str, token: &str) -> Result<()> {
+        self.active()?;
+        self.ensure_session()?;
+        self.authed(|| self.transport.register_push(provider, token))?;
+        Ok(())
+    }
+
+    /// Takes the push registration of this device back (`DELETE /v1/me/push`).
+    pub fn unregister_push(&self) -> Result<()> {
+        self.active()?;
+        self.ensure_session()?;
+        self.authed(|| self.transport.unregister_push())?;
+        Ok(())
+    }
+
     /// Revokes `target` and rotates the space key (`api-v1.md` §7.6). Needs the network.
     pub fn revoke_device(&self, target: &str) -> Result<()> {
         let _rotating = RotatingGuard::take(self);

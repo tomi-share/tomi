@@ -281,6 +281,7 @@ final class AppContainer {
         }
     }
 
+
     /// The network came back: the doorbell is started if it had given up, and what waits is fetched.
     func networkCameBack() {
         scheduler?.retryNow()
@@ -308,6 +309,30 @@ final class AppContainer {
             feed.fileRequest = nil
         } else if let request = feed.viewerRequest, feed.item(id: request.itemId)?.secret != false {
             feed.viewerRequest = nil
+        }
+    }
+    #endif
+
+    #if os(iOS)
+    @ObservationIgnored private var registeredPush: String?
+    @ObservationIgnored private var registeringPush = false
+
+    /// Gives the relay the push token of this iPhone, once in a real space (again at each start and when iOS renews
+    /// the token: the relay keeps the last one). Nothing on the demo core.
+    func registerPush() {
+        guard let core, !core.isDemo, core.state.loaded, core.state.isPaired, let token = PushRegistration.token else { return }
+        // Once per token and core, until it worked: asked again at each return to the front while it has not.
+        let wanted = "\(ObjectIdentifier(core).hashValue)#\(token)"
+        guard registeredPush != wanted, !registeringPush else { return }
+        registeringPush = true
+        Task {
+            defer { registeringPush = false }
+            do {
+                try await core.registerPush(provider: PushRegistration.provider, token: token)
+                registeredPush = wanted
+            } catch {
+                // No network, an older relay: tried again later.
+            }
         }
     }
     #endif
@@ -384,6 +409,10 @@ final class AppContainer {
         if core.state.loaded { AppGroup.defaults?.set(core.state.isPaired, forKey: AppGroup.isPairedKey) }
         // Checked at every change, paired or not, so that it sees the moment this device joins.
         let importing = core.state.loaded && pairingGrace.isImporting(paired: core.state.isPaired)
+        #if os(iOS)
+        // This device just joined a space (or the registration has not worked yet): the relay gets its push token.
+        registerPush()
+        #endif
         guard core.state.isPaired else { return }
         let update = notifierState.update(
             items: core.state.items, localDeviceId: core.state.localDevice?.id,
@@ -633,6 +662,9 @@ final class AppContainer {
         startFallbackSync(core)
         #endif
         if pairingFlow == nil { pairingFlow = !core.state.isPaired }
+        #if os(iOS)
+        registerPush()
+        #endif
         itemsChanged()
         watchItems(core)
         if !core.state.isPaired { cleanUpAfterLeaving() }
@@ -687,6 +719,10 @@ final class AppContainer {
         cleanUpAfterLeaving()
         notifierState.reset()
         newDeviceState.reset()
+        #if os(iOS)
+        // The next space (maybe on another relay) knows nothing of this token: it is registered again there.
+        registeredPush = nil
+        #endif
         // Nothing of the departure (an open dialog, a refusal, a series) nor of a draft outlives the space.
         if let core {
             retrier?.stop()
@@ -738,6 +774,9 @@ final class AppContainer {
         pairing.reset()
         onboardingFlow = showOnboarding && !prefs.onboardingDone
         pairingFlow = false
+        #if os(iOS)
+        registerPush()
+        #endif
     }
 
     func finishOnboarding() {
@@ -762,7 +801,13 @@ final class AppContainer {
 
     /// A background task of iOS: opens the core if the app was launched for it, fetches what waits (unless only the
     /// sending was asked) and pushes what is queued, the undo window being long over. True when it could run.
-    func runInBackground(sendOnly: Bool) async -> Bool {
+    /// What started a run in the background: iOS itself, or a push (which rang, or not).
+    enum BackgroundPush { case rang, silent }
+
+    func runInBackground(sendOnly: Bool, push: BackgroundPush? = nil) async -> Bool {
+        // The push already rang: what it announces is shown without ringing again.
+        if push == .rang { notifications.quietRuns += 1 }
+        defer { if push == .rang { notifications.quietRuns -= 1 } }
         // Launched for the task, without a scene: not on screen (no doorbell, no foreground work).
         if Self.launchedInBackground { scenePhase = .background }
         // The shares of the extension are only read with the device unlocked, so they are not sent from here; one that
@@ -797,7 +842,22 @@ final class AppContainer {
         // What arrives now is notified (the screen, which usually starts the following, may never open).
         watchItems(core)
         itemsChanged()
-        if !sendOnly { try? await core.sync(pushToken: nil) }
+        if !sendOnly {
+            do {
+                try await core.sync(pushToken: nil)
+            } catch {
+                // Woken by a push and nothing could be fetched: the generic notification stays.
+                if push != nil { return false }
+            }
+        }
+        if push != nil {
+            // The state the screens read follows the core a moment later, and iOS may stop the app as soon as this
+            // returns: read it now and show what arrived, before the generic notification is taken down.
+            await (core as? RustTomiCoreAdapter)?.refresh()
+            itemsChanged()
+            // Sending what waits is the work of the refresh and of the sending task: a push has 30 seconds.
+            return !Task.isCancelled
+        }
         guard let id = core.state.localDevice?.id else { return true }
         let queued = core.state.items.filter { $0.isOutgoing(localDeviceId: id) && $0.deliveries.contains { $0.state == .queued } }
         for item in queued where !Task.isCancelled && Date().timeIntervalSince(item.createdAt) * 1000 >= Double(SendCoordinator.undoWindowMs) {
@@ -827,7 +887,13 @@ final class AppContainer {
         if scenePhase == .active { updateCaptured() }
         #if os(iOS)
         // The minute of a copy runs from the moment Tomi is back in front (iOS does not tell when it was made).
-        if scenePhase == .active { ClipboardWatcher.shared.look() }
+        if scenePhase == .active {
+            ClipboardWatcher.shared.look()
+            // In front of the person: the generic notification of a push has nothing more to say, and a registration
+            // that failed (no network) is tried again.
+            PushRegistration.removeGeneric()
+            registerPush()
+        }
         #endif
         // A background task left the opening to the screen (files not readable yet then): it starts now.
         if scenePhase == .active, case .starting = phase { Task { await start() } }

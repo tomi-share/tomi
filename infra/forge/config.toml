@@ -66,3 +66,11 @@ max_relay_bytes = 1073741824
 # (clients catch up at launch through the cursor).
 # Store the file outside the repository, readable by the deploy user only (chmod 0600).
 #fcm_service_account_file = "/home/deploy/.config/tomi/fcm-service-account.json"
+
+# --- iPhone notifications (APNs) ---
+# The `.p8` signing key of the Apple developer account (outside the repository, chmod 0600), its
+# identifier and the team identifier (10 characters each). Leave it commented out until the key
+# exists: APNs disabled, iPhones only receive when the app is opened. Recipe: recipes.md, 5 bis.
+#apns_key_file = "/home/deploy/.config/tomi/apns-key.p8"
+#apns_key_id = "XXXXXXXXXX"
+#apns_team_id = "XXXXXXXXXX"

@@ -51,6 +51,8 @@ targets:
       path: Tomi/Tomi.entitlements
       properties:
         com.apple.security.application-groups: [group.eu.shaffe.tomi]
+        # The push doorbell (spec api-v1.md 6.4). Xcode signs a distribution build with `production` by itself.
+        aps-environment: development
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: eu.shaffe.tomi

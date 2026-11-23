@@ -605,6 +605,16 @@ pub trait RelayTransport: Send + Sync {
     fn keys(&self) -> TResult<KeysInfo>;
     fn devices(&self) -> TResult<Vec<DeviceRecord>>;
     fn rename_device(&self, device_id: &str, name: &str) -> TResult<()>;
+    /// `PUT /v1/me/push`: the push registration of this device (`api-v1.md` §4.5). The token is a
+    /// secret: never logged. A transport without a relay (demo, tests) takes it and does nothing.
+    fn register_push(&self, provider: &str, token: &str) -> TResult<()> {
+        let _ = (provider, token);
+        Ok(())
+    }
+    /// `DELETE /v1/me/push`.
+    fn unregister_push(&self) -> TResult<()> {
+        Ok(())
+    }
     /// `POST /v1/rotations`; returns the `seq` of the `rotation` event.
     fn post_rotation(&self, rotation: &[u8]) -> TResult<u64>;
 

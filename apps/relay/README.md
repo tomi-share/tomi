@@ -85,7 +85,8 @@ Main keys (default values in `src/config.rs`):
 | `max_relay_bytes` | `1 GiB` | total bytes of **all** spaces |
 | `max_space_bytes` | *absent* | default quota of a space: absent or `0` = **no per-space limit**; the web panel, then `admin quota` (per space), override it (see "Per-space quota") |
 | `admin_web` | `false` | serves the web administration panel (see below); requires an https `public_url` on a domain name |
-| `fcm_service_account_file`, `fcm_project_id` | — | FCM service account (otherwise push is disabled) |
+| `fcm_service_account_file`, `fcm_project_id` | — | FCM service account (otherwise Android push is disabled) |
+| `apns_key_file`, `apns_key_id`, `apns_team_id`, `apns_topic` | — | `.p8` key of the Apple developer account, its identifier, the team, the app identifier (default `eu.shaffe.tomi`); otherwise iPhone push is disabled (`docs/push-apns.md`) |
 | `log_format` | `json` | `json` or `text` |
 
 The size limits (§2.8) and the rate-limit buckets (`rl_*`, §8.5) are also
@@ -365,7 +366,7 @@ src/
   install.rs      installation tokens and invitations (§3.1)
   error.rs wire.rs input.rs   error model RFC 9457 (§2.5), encoding, input validation
   gate.rs ratelimit.rs middleware.rs   auth, rate limits (§8.5), X-Request-Id
-  hub.rs push.rs fcm.rs       WebSocket notification hub, ring decision, FCM HTTP v1 (§5, §6)
+  hub.rs push.rs fcm.rs apns.rs   WebSocket notification hub, ring decision, FCM HTTP v1, APNs (§5, §6)
   blobstore.rs disk.rs        blobs on disk, free space
   purge.rs maintenance.rs revoke.rs   purge/compaction/quotas (§8), revocation (§3.4)
   logging.rs      logging policy (§9): no secret, even under RUST_LOG=trace

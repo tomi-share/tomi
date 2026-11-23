@@ -241,6 +241,25 @@ shred -u ~/fcm-service-account.json
 sudo supervisorctl restart tomi-relay: 2>/dev/null || sudo supervisorctl restart tomi-relay
 ```
 
+## 5 bis. iPhone notifications (APNs)
+
+Before: on developer.apple.com, "Certificates, Identifiers & Profiles" › "Keys", create a key with "Apple Push
+Notifications service (APNs)"; note its identifier (10 characters) and download the `AuthKey_<id>.p8` file
+(possible only once). The team identifier (10 characters) is under "Membership".
+
+```bash
+# Drop the key (secret: readable by deploy only).
+install -d -m 0700 /home/deploy/.config/tomi
+install -m 0600 ~/AuthKey_XXXXXXXXXX.p8 /home/deploy/.config/tomi/apns-key.p8
+shred -u ~/AuthKey_XXXXXXXXXX.p8
+
+# Uncomment apns_key_file, apns_key_id and apns_team_id in config.toml, then:
+sudo supervisorctl restart tomi-relay: 2>/dev/null || sudo supervisorctl restart tomi-relay
+```
+
+The relay must be deployed with this support **before** the iOS apps that register an `apns` token (an older
+version refuses this provider: the app keeps working, without push).
+
 ## 6. Logs
 
 ```bash

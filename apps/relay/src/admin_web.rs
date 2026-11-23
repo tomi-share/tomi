@@ -1150,7 +1150,7 @@ fn about(st: &AppState, web: &AdminWeb, headers: &HeaderMap) -> Result<Response,
                 "idle_ttl_secs": IDLE_TTL_MS / 1000,
                 "absolute_ttl_secs": ABSOLUTE_TTL_MS / 1000,
             },
-            "push_configured": c.fcm_service_account_file.is_some(),
+            "push_configured": c.fcm_service_account_file.is_some() || c.apns_key_file.is_some(),
             "limits": {
                 "max_relay_bytes": c.max_relay_bytes,
                 "max_space_bytes": c.configured_space_quota(),
