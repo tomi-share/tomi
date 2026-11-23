@@ -41,6 +41,13 @@ struct FeedScreen: View {
     @FocusState private var searchFocused: Bool
     /// With VoiceOver the copy of the header is never drawn: it would cover cards VoiceOver can still reach.
     @Environment(\.accessibilityVoiceOverEnabled) private var voiceOver
+    #if os(macOS)
+    /// The surface of the Mac app the feed is in (popover or window).
+    @Environment(\.macSurface) private var macSurface
+    @Environment(AppContainer.self) private var container
+    /// The card the keyboard is on (arrows), drawn with a ring.
+    @State private var keyboardSelection: String?
+    #endif
 
     private static let topId = "feed-top"
 
@@ -74,6 +81,21 @@ struct FeedScreen: View {
         }
         .onChange(of: searching) { _, now in searchFocused = now }
         .onChange(of: attended, initial: true) { _, now in reading.setAttended(now) }
+        #if os(macOS)
+        // Command-V on the feed: the send screen opens with what was pasted (the global shortcut, then a paste, then
+        // Command-Return). Never while the search field is typed in, nor with another screen over the feed.
+        .background(MacPasteShortcut {
+            guard isOnTop, !searchFocused, model.viewerRequest == nil, model.fileRequest == nil,
+                  let send = container.send, let picked = container.picked, send.editable else { return false }
+            Task { await MacSendInput.paste(into: send, picked: picked) }
+            onSend()
+            return true
+        })
+        // The arrows move from card to card, Return does what a click on the card does, Space opens what it holds,
+        // Command-C copies it (docs/macos-app.md, 2.7).
+        .background(MacKeys { event in keyPressed(event) })
+        .onChange(of: container.searchRequests) { _, _ in searching = true }
+        #endif
         .departureDialogs(leave, gate: gate ?? BiometricGate())
         .onAppear {
             leave?.onEvent = { [feedback = model.feedback] event in feedback.show(Self.message(event)) }
@@ -83,6 +105,62 @@ struct FeedScreen: View {
             }
         }
     }
+
+    #if os(macOS)
+    private var orderedItems: [TomiItem] {
+        let sections = model.sections
+        return sections.pinned + sections.recent
+    }
+
+    /// True when the key was used here.
+    private func keyPressed(_ event: NSEvent) -> Bool {
+        guard isOnTop, !searchFocused, model.viewerRequest == nil, model.fileRequest == nil else { return false }
+        let items = orderedItems
+        guard !items.isEmpty else { return false }
+        let current = keyboardSelection.flatMap { id in items.firstIndex { $0.id == id } }
+        let command = event.modifierFlags.intersection([.command, .control, .option, .shift])
+        switch (event.keyCode, command) {
+        case (125, []): // down
+            keyboardSelection = items[min((current ?? -1) + 1, items.count - 1)].id
+            return true
+        case (126, []): // up
+            keyboardSelection = items[max((current ?? 1) - 1, 0)].id
+            return true
+        case (36, []), (76, []): // Return, Enter
+            guard let index = current else { return false }
+            activate(items[index])
+            return true
+        case (49, []): // Space
+            guard let index = current else { return false }
+            let item = items[index]
+            if item.attachments.isEmpty { onOpenItem(item.id) } else { activate(item) }
+            return true
+        default:
+            // Command-C by its character (the key is elsewhere on other layouts), when the card has a text or a link.
+            guard command == .command, event.charactersIgnoringModifiers?.lowercased() == "c", let index = current,
+                  items[index].text != nil || items[index].url != nil else { return false }
+            model.copy(items[index])
+            return true
+        }
+    }
+
+    /// What a click on the card does (`CardTap`), from the keyboard, with one difference: only the card knows whether
+    /// its text is cut (a click then opens the detail), so from here a cut text does the action of its kind, and a card
+    /// whose click would do nothing opens its detail.
+    private func activate(_ item: TomiItem) {
+        model.onCardOpened(item)
+        switch CardTap.actionFor(item, revealed: model.isRevealed(item)) {
+        case .openLink:
+            if let url = item.url.flatMap(URL.init(string:)) { SystemActions.open(url) }
+        case .reveal: model.reveal(item)
+        case .hide: model.hide(item.id)
+        case .openImage: model.openViewer(item, attachmentIndex: 0)
+        case .openCodeFile: model.openCode(item, attachmentIndex: 0)
+        case .openAttachment: model.openAttachment(item, index: 0)
+        case .openDetail, .none: onOpenItem(item.id)
+        }
+    }
+    #endif
 
     /// A received card is read when it stays on screen (`SeenReading`): only while the app is active and the feed is the
     /// screen on top (nothing pushed over it, no viewer over the stack). The time spent elsewhere does not count.
@@ -194,6 +272,7 @@ struct FeedScreen: View {
                 Button(L10n.text("ios_debug_simulate_image")) { model.simulateIncoming(.image) }
                 Button(L10n.text("ios_debug_simulate_secret")) { model.simulateIncoming(.secret) }
                 Button(L10n.text("ios_debug_simulate_unreadable")) { model.simulateIncoming(.unreadable) }
+                #if os(iOS)
                 // To see a notification: 5 s to leave the app first.
                 Button(L10n.text("ios_debug_simulate_later")) {
                     let task = UIApplication.shared.beginBackgroundTask()
@@ -205,10 +284,20 @@ struct FeedScreen: View {
                         UIApplication.shared.endBackgroundTask(task)
                     }
                 }
+                #endif
             }
             #endif
             Button(L10n.text("filter_archives")) { model.filter = .archives }
             Button(L10n.text("menu_share_help"), action: onShareHelp)
+            #if os(macOS)
+            if let macSurface {
+                Divider()
+                if macSurface.isPopover {
+                    Button(L10n.text("macos_menu_window"), action: macSurface.openWindow)
+                }
+                Button(L10n.text("macos_menu_settings"), action: macSurface.openSettings)
+            }
+            #endif
             #if DEBUG
             if model.core.isDemo {
                 Menu(L10n.text("ios_debug_departure")) {
@@ -381,6 +470,13 @@ struct FeedScreen: View {
                 guard id != nil, model.filter == .all, model.query.isEmpty, !searching else { return }
                 withAnimation(.easeOut(duration: TomiMotion.medium)) { proxy.scrollTo(Self.topId, anchor: .top) }
             }
+            #if os(macOS)
+            // The card the keyboard moved to comes into view.
+            .onChange(of: keyboardSelection) { _, id in
+                guard let id else { return }
+                withAnimation(.easeOut(duration: TomiMotion.short)) { proxy.scrollTo(id, anchor: .center) }
+            }
+            #endif
             // The search field is at the top of the page: opening the search from the toolbar scrolls back to it.
             .onChange(of: searching) { _, now in
                 if now { withAnimation(.easeOut(duration: TomiMotion.medium)) { proxy.scrollTo(Self.topId, anchor: .top) } }
@@ -402,6 +498,13 @@ struct FeedScreen: View {
     /// The card, and where it is in the scroll view: `SeenReading` reads it once it stayed on screen.
     private func card(_ item: TomiItem, swipe: Bool) -> some View {
         cardContent(item, swipe: swipe)
+            #if os(macOS)
+            .overlay {
+                if keyboardSelection == item.id {
+                    RoundedRectangle(cornerRadius: TomiRadius.medium).strokeBorder(TomiColor.brand, lineWidth: 2)
+                }
+            }
+            #endif
             .onGeometryChange(for: CGRect.self) { $0.frame(in: .scrollView) } action: { frame in
                 reading.setFrame(item.id, minY: Double(frame.minY), height: Double(frame.height))
             }

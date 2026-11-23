@@ -68,18 +68,21 @@ android-test:
 android-lint:
     {{ gradlew }} lintDebug
 
-# --- Apple (iOS; macOS later) ---
-# Prerequisites: rustup with the aarch64-apple-ios, aarch64-apple-ios-sim and x86_64-apple-ios targets, and Xcode.
-# See apps/apple/README.md and docs/archive/apple-spec-implementation.md.
+# --- Apple (iOS, macOS) ---
+# Prerequisites: rustup with the aarch64-apple-ios, aarch64-apple-ios-sim, x86_64-apple-ios, aarch64-apple-darwin and
+# x86_64-apple-darwin targets, and Xcode.
+# See apps/apple/README.md, docs/archive/apple-spec-implementation.md and docs/macos-app.md.
 
-# Builds tomi-core for iOS, generates the Swift bindings and assembles apps/apple/Packages/TomiCore/tomi_coreFFI.xcframework.
+# Builds tomi-core for iOS and macOS (Apple silicon + Intel), generates the Swift bindings and assembles
+# apps/apple/Packages/TomiCore/tomi_coreFFI.xcframework. `--platform=ios` or `--platform=macos`: one platform only.
 # Demo mode is included, also for a TestFlight / App Store archive (the published app offers the demo).
 apple-core *ARGS:
     apps/apple/tools/build-core.sh {{ ARGS }}
 
-# Tests for the TomiCore Swift package (bindings + core) on the iPhone Duo simulator.
+# Tests for the TomiCore Swift package (bindings + core) on the Mac, then on the iPhone Duo simulator.
 [working-directory('apps/apple/Packages/TomiCore')]
 apple-core-test:
+    swift test
     xcodebuild test -scheme TomiCore -destination "platform=iOS Simulator,id=$({{ justfile_directory() }}/apps/apple/tools/simulator-udid.sh)" -quiet
 
 # Regenerates the derived files from their sources of truth (design tokens, Android strings) and the Xcode project.
@@ -89,11 +92,13 @@ apple-project:
     python3 -I tools/strings-from-android.py
     xcodegen generate
 
-# All Apple tests: pure packages on macOS, then runtime and app on the iPhone Duo simulator.
+# All Apple tests: packages on macOS (the runtime too, on the macOS slice of the core), then runtime and app on the
+# iPhone Duo simulator.
 [working-directory('apps/apple')]
 apple-test: apple-project
     swift test --package-path Packages/TomiKit
     swift test --package-path Packages/TomiDesign
+    swift test --package-path Packages/TomiRuntime
     cd Packages/TomiRuntime && xcodebuild test -scheme TomiRuntime -destination "platform=iOS Simulator,id=$(../../tools/simulator-udid.sh)" -quiet
     xcodebuild test -project Tomi.xcodeproj -scheme Tomi -destination "platform=iOS Simulator,id=$(tools/simulator-udid.sh)" -quiet
 

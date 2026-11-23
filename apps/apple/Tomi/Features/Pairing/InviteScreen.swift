@@ -18,7 +18,7 @@ struct InviteScreen: View {
             if let model { content(model) }
         }
         .navigationTitle(Text("invite_title"))
-        .navigationBarTitleDisplayMode(.inline)
+        .inlineNavigationTitle()
         .navigationBarBackButtonHidden(true)
         .toolbar { EntryBackButton(action: back) }
         .onAppear {
@@ -213,13 +213,13 @@ private struct Failed: View {
 /// per content, at a whole number of pixels per module so that every module has the same size.
 private struct QRCodeImage: View {
     let content: String
-    @State private var rendered: (content: String, image: UIImage?)?
+    @State private var rendered: (content: String, image: PlatformImage?)?
 
     var body: some View {
         let image = rendered?.content == content ? rendered?.image : nil
         Group {
             if let image {
-                Image(uiImage: image).interpolation(.none).resizable().scaledToFit()
+                Image(platformImage: image).interpolation(.none).resizable().scaledToFit()
             } else {
                 TomiIcon.scanQR.image.font(.system(size: 96, weight: .ultraLight)).foregroundStyle(TomiColor.textMuted)
             }
@@ -236,7 +236,7 @@ private struct QRCodeImage: View {
         rendered = (content, Self.render(content))
     }
 
-    private static func render(_ content: String) -> UIImage? {
+    private static func render(_ content: String) -> PlatformImage? {
         let filter = CIFilter.qrCodeGenerator()
         filter.message = Data(content.utf8)
         filter.correctionLevel = "M"
@@ -244,6 +244,6 @@ private struct QRCodeImage: View {
         // 10 pixels per module: sharp at any size it is drawn.
         let scaled = output.transformed(by: CGAffineTransform(scaleX: 10, y: 10))
         guard let cgImage = CIContext().createCGImage(scaled, from: scaled.extent) else { return nil }
-        return UIImage(cgImage: cgImage)
+        return PlatformImage(cgImage: cgImage)
     }
 }

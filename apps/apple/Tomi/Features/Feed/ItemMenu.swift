@@ -1,7 +1,6 @@
 import SwiftUI
 import TomiDesign
 import TomiKit
-import UIKit
 
 /// The "⋮" menu of a card (and its long-press menu), in the order of Android: pin, archive, copy, copy the link, open,
 /// share, details, then the two deletions ("Supprimer partout" is destructive and asks for confirmation).
@@ -40,7 +39,7 @@ struct ItemMenu: View {
         if let url = item.url.flatMap(URL.init(string:)), !item.secret || revealed, LinkExtractor.isValidHTTPURL(url.absoluteString) {
             Button {
                 model.onCardOpened(item)
-                UIApplication.shared.open(url)
+                SystemActions.open(url)
             } label: {
                 Label(L10n.text("action_open"), systemImage: TomiIcon.open.systemName)
             }
@@ -122,8 +121,10 @@ struct FileActions: View {
                     Label(L10n.text("viewer_save"), systemImage: "photo.badge.arrow.down")
                 }
             }
-            Button { model.saveAttachmentToFiles(item, index: index) } label: {
-                Label(L10n.text("ios_save_to_files"), systemImage: "folder")
+            if !attachment.isImage || SystemActions.savesImagesInTwoPlaces {
+                Button { model.saveAttachmentToFiles(item, index: index) } label: {
+                    Label(L10n.text("ios_save_to_files"), systemImage: "folder")
+                }
             }
         }
         if let onDeleteLocal {

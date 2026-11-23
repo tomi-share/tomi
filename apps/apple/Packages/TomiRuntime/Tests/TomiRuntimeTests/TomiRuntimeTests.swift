@@ -86,7 +86,12 @@ final class TomiRuntimeTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(core.state.items.filter(\.pinned).count, 2)
         XCTAssertEqual(core.state.devices.count, 3)
         XCTAssertEqual(core.state.localDevice?.name, "iPhone")
+        // The platform announced to the space is the one the test runs on.
+        #if os(macOS)
+        XCTAssertEqual(core.state.localDevice?.platform, .macos)
+        #else
         XCTAssertEqual(core.state.localDevice?.platform, .ios)
+        #endif
         XCTAssertTrue(core.state.items.contains { $0.kind == .unreadable })
 
         let feed = core.state.items.count

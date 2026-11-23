@@ -1,15 +1,20 @@
 import SwiftUI
 import TomiDesign
 import TomiKit
+#if canImport(UIKit)
 import UIKit
+#else
+import AppKit
+#endif
 import WebKit
 
 /// Received HTML in a sandboxed web view (DEV.md invariant 6, Android `SandboxedHtmlView`): sanitised by
 /// `HtmlSanitizer`, wrapped in a document whose CSP forbids every load but inline `data:` images, no JavaScript of the
 /// page, no persistent storage, no navigation (a tapped http / https / mailto / tel link opens outside, nothing else
 /// does anything). A content rule list (`HTMLContentRules`) blocks every network scheme as a further layer, independent
-/// of the sanitiser and the CSP. Reports its content height so the card can cap it and offer "Lire la suite".
-struct SandboxedHTMLView: UIViewRepresentable {
+/// of the sanitiser and the CSP. Reports its content height so the card can cap it and offer "Read more".
+@MainActor
+struct SandboxedHTMLView {
     let html: String
     /// Detail screen: the page may scroll sideways (wide tables). Card: never, so a sideways drag stays the card's.
     var horizontalScroll: Bool
@@ -18,36 +23,30 @@ struct SandboxedHTMLView: UIViewRepresentable {
 
     func makeCoordinator() -> Coordinator { Coordinator(height: $contentHeight) }
 
-    func makeUIView(context: Context) -> WKWebView {
+    /// No storage kept, no JavaScript of the page, no window opened by a script, no media starting by itself.
+    /// The controller is our own, kept by the coordinator: the rule list is added to it, now when it is compiled already,
+    /// else before the first load (`Coordinator.load`).
+    private static func configuration(_ coordinator: Coordinator) -> WKWebViewConfiguration {
         let configuration = WKWebViewConfiguration()
         configuration.websiteDataStore = .nonPersistent()
         configuration.defaultWebpagePreferences.allowsContentJavaScript = false
         configuration.preferences.javaScriptCanOpenWindowsAutomatically = false
+        configuration.mediaTypesRequiringUserActionForPlayback = .all
+        #if os(iOS)
         configuration.dataDetectorTypes = []
         configuration.allowsInlineMediaPlayback = false
-        configuration.mediaTypesRequiringUserActionForPlayback = .all
-        // Our own controller, kept by the coordinator: the rule list is added to it, now when it is compiled already, else
-        // before the first load (`Coordinator.load`).
+        #endif
         let userContent = WKUserContentController()
         configuration.userContentController = userContent
-        context.coordinator.userContent = userContent
+        coordinator.userContent = userContent
         if let rules = HTMLContentRules.compiled {
             userContent.add(rules)
-            context.coordinator.rulesInstalled = true
+            coordinator.rulesInstalled = true
         }
-        let view = WKWebView(frame: .zero, configuration: configuration)
-        view.navigationDelegate = context.coordinator
-        view.isOpaque = false
-        view.backgroundColor = .clear
-        view.scrollView.backgroundColor = .clear
-        view.scrollView.isScrollEnabled = horizontalScroll
-        view.scrollView.bounces = false
-        view.allowsLinkPreview = false
-        view.isInspectable = false
-        return view
+        return configuration
     }
 
-    func updateUIView(_ view: WKWebView, context: Context) {
+    private func load(into view: WKWebView, context: Context) {
         let document = HtmlSanitizer.toDocument(
             html,
             textColorCss: Self.css(TomiColor.text, colorScheme),
@@ -60,10 +59,18 @@ struct SandboxedHTMLView: UIViewRepresentable {
     }
 
     private static func css(_ color: Color, _ scheme: ColorScheme) -> String {
+        #if canImport(UIKit)
         let resolved = UIColor(color).resolvedColor(with: UITraitCollection(userInterfaceStyle: scheme == .dark ? .dark : .light))
         var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
         resolved.getRed(&r, green: &g, blue: &b, alpha: &a)
         return String(format: "#%02X%02X%02X", Int(r * 255), Int(g * 255), Int(b * 255))
+        #else
+        var environment = EnvironmentValues()
+        environment.colorScheme = scheme
+        let resolved = color.resolve(in: environment)
+        let byte = { (component: Float) in Int((min(max(component, 0), 1) * 255).rounded(.down)) }
+        return String(format: "#%02X%02X%02X", byte(resolved.red), byte(resolved.green), byte(resolved.blue))
+        #endif
     }
 
     @MainActor
@@ -113,7 +120,7 @@ struct SandboxedHTMLView: UIViewRepresentable {
                 return
             }
             if action.navigationType == .linkActivated, let url = action.request.url, SafeLinks.isOpenable(url) {
-                UIApplication.shared.open(url)
+                SystemActions.open(url)
             }
             decisionHandler(.cancel)
         }
@@ -126,6 +133,62 @@ struct SandboxedHTMLView: UIViewRepresentable {
         }
     }
 }
+
+#if os(iOS)
+extension SandboxedHTMLView: UIViewRepresentable {
+    func makeUIView(context: Context) -> WKWebView {
+        let view = WKWebView(frame: .zero, configuration: Self.configuration(context.coordinator))
+        view.navigationDelegate = context.coordinator
+        view.isOpaque = false
+        view.backgroundColor = .clear
+        view.scrollView.backgroundColor = .clear
+        view.scrollView.isScrollEnabled = horizontalScroll
+        view.scrollView.bounces = false
+        view.allowsLinkPreview = false
+        view.isInspectable = false
+        return view
+    }
+
+    func updateUIView(_ view: WKWebView, context: Context) {
+        load(into: view, context: context)
+    }
+}
+#else
+extension SandboxedHTMLView: NSViewRepresentable {
+    func makeNSView(context: Context) -> WKWebView {
+        let view = PassThroughWebView(frame: .zero, configuration: Self.configuration(context.coordinator))
+        view.scrollsSideways = horizontalScroll
+        view.navigationDelegate = context.coordinator
+        // Transparent: the card shows through (AppKit has no `isOpaque` to set on a web view).
+        view.underPageBackgroundColor = .clear
+        view.setValue(false, forKey: "drawsBackground")
+        view.allowsLinkPreview = false
+        view.allowsMagnification = false
+        view.allowsBackForwardNavigationGestures = false
+        view.isInspectable = false
+        return view
+    }
+
+    func updateNSView(_ view: WKWebView, context: Context) {
+        load(into: view, context: context)
+    }
+}
+
+/// On the Mac a web view keeps the scroll wheel for itself: the page of the feed would stop scrolling over an HTML
+/// card. On a card (no scroll of its own, as on iOS) the wheel goes to the page around; in the detail the web view
+/// scrolls, as its iOS counterpart does (`isScrollEnabled = horizontalScroll`).
+private final class PassThroughWebView: WKWebView {
+    var scrollsSideways = false
+
+    override func scrollWheel(with event: NSEvent) {
+        if scrollsSideways {
+            super.scrollWheel(with: event)
+        } else {
+            nextResponder?.scrollWheel(with: event)
+        }
+    }
+}
+#endif
 
 /// A WebKit content rule list that blocks every load over the network (http, https, ws, wss, ftp) in the web view of
 /// received HTML: a further layer under the sanitiser, the page's CSP and the navigation policy, so that no network

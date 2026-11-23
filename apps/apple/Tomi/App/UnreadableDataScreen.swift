@@ -59,3 +59,24 @@ struct UnreadableDataScreen: View {
 #Preview {
     UnreadableDataScreen(resetFailed: true, onRetry: {}, onReset: {})
 }
+
+/// The Keychain refuses this build (`AppContainer.Phase.misconfigured`): said plainly, with no way to erase anything.
+/// Seen by whoever builds the app, never by a user of a published build.
+struct MisconfiguredScreen: View {
+    /// The Keychain may only have been out of reach for a moment.
+    let onRetry: () -> Void
+
+    var body: some View {
+        ZStack {
+            TomiColor.bg.ignoresSafeArea()
+            VStack(alignment: .leading, spacing: TomiSpace.s3) {
+                Text("ios_misconfigured_title").tomiText(.title).foregroundStyle(TomiColor.text)
+                    .accessibilityAddTraits(.isHeader)
+                Text("ios_misconfigured_body").tomiText(.body).foregroundStyle(TomiColor.textMuted)
+                Button(L10n.text("unreadable_retry"), action: onRetry).buttonStyle(.tomiPrimary).padding(.top, TomiSpace.s2)
+            }
+            .padding(TomiSpace.s5)
+            .frame(maxWidth: 520)
+        }
+    }
+}

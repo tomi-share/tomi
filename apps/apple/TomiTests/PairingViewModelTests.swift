@@ -71,6 +71,7 @@ final class PairingViewModelTests: XCTestCase {
         XCTAssertEqual(core.calls.last, "confirmPairing:false")
         XCTAssertEqual(model.phase, .waiting, "the other device has not confirmed yet")
         gate.cancel()
+        await gate.value
         await settle()
         XCTAssertEqual(model.phase, .done)
     }
@@ -119,6 +120,7 @@ final class PairingViewModelTests: XCTestCase {
         XCTAssertEqual(core.calls.last, "cancelPairing")
         // The confirmation comes back afterwards: ignored, the screen stays where the user went.
         gate.cancel()
+        await gate.value
         await settle()
         XCTAssertEqual(model.phase, .input)
     }
@@ -207,14 +209,6 @@ final class PairingViewModelTests: XCTestCase {
         XCTAssertNil(model.pendingLink, "a single-use secret, nothing left to use it for")
         XCTAssertEqual(model.code, "")
         XCTAssertEqual(model.relayText, "")
-    }
-
-    func testTheDemoEntryPairsInOneGo() async {
-        let model = await makeModel()
-        core.pairingResult = .awaitingVerification(prompt(history: 23))
-        let entered = await model.enterDemo { self.core }
-        XCTAssertTrue(entered)
-        XCTAssertEqual(core.calls, ["pairWithCode:7-crayon-lune", "confirmPairing:true"])
     }
 
     func testTheDemoEntryJoinsTheDemoInOneStep() async {

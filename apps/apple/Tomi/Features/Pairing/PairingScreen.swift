@@ -12,7 +12,6 @@ struct PairingScreen: View {
     let localDeviceName: String
     let onFinished: () -> Void
     /// Debug builds: opens the demo core and pairs it in one go, then straight to the feed.
-    var openDemo: (() async -> (any TomiCore)?)?
     var onDemoEntered: () -> Void = {}
     @Environment(\.dismiss) private var dismiss
     @State private var scanning = false
@@ -33,7 +32,7 @@ struct PairingScreen: View {
                         scanning = true
                     }
                 } else {
-                    ScanContent(model: model, scanning: $scanning, openDemo: openDemo, onDemoEntered: onDemoEntered)
+                    ScanContent(model: model, scanning: $scanning, onDemoEntered: onDemoEntered)
                 }
             }
         }
@@ -67,7 +66,6 @@ struct PairingScreen: View {
 private struct ScanContent: View {
     let model: PairingViewModel
     @Binding var scanning: Bool
-    let openDemo: (() async -> (any TomiCore)?)?
     let onDemoEntered: () -> Void
     @State private var cameraDenied = false
 
@@ -116,15 +114,6 @@ private struct ScanContent: View {
                 }
                 .buttonStyle(.tomiSecondary)
                 .disabled(working)
-                #if DEBUG
-                if let openDemo, !model.canEnterDemo {
-                    Button(L10n.text("ios_debug_enter_demo")) {
-                        Task { if await model.enterDemo(open: openDemo) { onDemoEntered() } }
-                    }
-                    .buttonStyle(.tomiText)
-                    .disabled(working)
-                }
-                #endif
                 // The demo of the core: made-up data, no network. Small and discreet, under the two real ways in.
                 if model.canEnterDemo {
                     Button(L10n.text("demo_enter")) {
@@ -198,8 +187,8 @@ private struct CodeEntryContent: View {
                         Text("pair_code_label").tomiText(.label).foregroundStyle(TomiColor.text)
                         TextField("", text: Binding(get: { model.code }, set: { model.onCodeChange($0) }))
                             .tomiText(.mono)
-                            .keyboardType(.asciiCapable)
-                            .textInputAutocapitalization(.never)
+                            .asciiKeyboard()
+                            .noAutocapitalization()
                             .autocorrectionDisabled()
                             .textContentType(nil)
                             .submitLabel(.done)

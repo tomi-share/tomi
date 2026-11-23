@@ -1,6 +1,10 @@
 import Foundation
 import TomiKit
+#if canImport(UIKit)
 import UIKit
+#else
+import AppKit
+#endif
 import UniformTypeIdentifiers
 
 /// What the extension received, read from the system types (Android `ShareIntentReader`): the text, link, HTML and title

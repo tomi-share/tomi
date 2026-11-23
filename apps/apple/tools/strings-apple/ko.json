@@ -68,9 +68,119 @@
   "ios_rotation_stalled_body": "제거된 기기가 아직 내 공간의 현재 키를 가지고 있을 수 있어요. Tomi가 자동으로 다시 시도해요. 다른 기기에서 Tomi를 열면 도움이 돼요.",
   "ios_rotation_stalled_title": "기기 제거 진행 중",
   "ios_snackbar_copied": "복사됨",
+  "macos_viewer_previous": "이전 이미지",
+  "macos_viewer_next": "다음 이미지",
+  "macos_pasted_image_name": "붙여넣은-이미지.png",
+  "macos_menu_open": "Tomi 열기",
+  "macos_menu_window": "창에서 열기",
+  "macos_menu_settings": "설정…",
+  "macos_menu_quit": "Tomi 종료",
+  "macos_status_unread": "Tomi, 받은 항목 중 읽지 않은 항목이 있어요",
+  "macos_settings_login": "로그인 시 Tomi 열기",
+  "macos_settings_login_hint": "이 옵션을 끄면 재시동 후 Tomi를 열 때까지 아무것도 받지 않아요.",
+  "macos_settings_version": "버전",
+  "macos_settings_title": "Tomi 설정",
+  "macos_settings_shortcut": "Tomi 열기 단축키",
+  "macos_settings_shortcut_hint": "어떤 앱에서든 Tomi를 열어요. 다시 누르면 닫혀요.",
+  "macos_settings_shortcut_refused": "이 단축키는 이미 사용 중이에요(다른 앱 또는 Tomi의 다른 단축키). 이전 단축키를 유지해요.",
+  "macos_settings_shortcut_change": "변경…",
+  "macos_settings_shortcut_recording": "키를 누르세요",
+  "macos_key_space": "스페이스",
+  "macos_settings_notifications": "알림",
+  "macos_settings_notifications_hint": "항목이 도착했는데 Tomi가 앞에 열려 있지 않을 때.",
+  "macos_settings_notifications_denied": "macOS에서 거부됨: 항목이 도착해도 아무것도 표시되지 않아요. 시스템 설정의 알림에서 Tomi를 허용하세요.",
+  "macos_settings_notifications_on": "허용됨",
+  "macos_settings_notifications_open": "Mac 설정 열기…",
+  "ios_misconfigured_title": "이 버전의 Tomi는 올바르게 서명되지 않았어요",
+  "ios_misconfigured_body": "시스템 키체인 접근이 거부되어 Tomi가 데이터를 열 수 없어요. 손상되거나 지워진 것은 없어요. 앱 식별자로 서명된 버전을 설치하세요.",
+  "macos_saved_to_downloads": "%1$@에 저장했어요",
+  "macos_downloads_default_name": "다운로드 › Tomi",
+  "macos_settings_downloads": "저장 폴더",
+  "macos_settings_downloads_hint": "Tomi에서 저장한 파일이 저장되는 위치예요.",
+  "macos_settings_downloads_choose": "선택…",
+  "macos_settings_downloads_default": "기본값",
+  "macos_menu_new_send": "새로 보내기",
+  "macos_menu_feed": "피드",
+  "_mac_comment": "휴대전화와 공유하는 텍스트의 Mac 표현(strings-from-android.py): _mac_replacements는 모든 텍스트에 적용되고, _mac은 텍스트 전체를 지정해요.",
+  "_mac_replacements": [
+    [
+      "이 휴대전화는",
+      "이 Mac은"
+    ],
+    [
+      "이 휴대전화를",
+      "이 Mac을"
+    ],
+    [
+      "이 휴대전화가",
+      "이 Mac이"
+    ],
+    [
+      "이 휴대전화로",
+      "이 Mac으로"
+    ],
+    [
+      "이 휴대전화",
+      "이 Mac"
+    ],
+    [
+      "휴대전화 복원",
+      "Mac 복원"
+    ],
+    [
+      "휴대전화 설정",
+      "Mac 설정"
+    ]
+  ],
+  "ios_clip_text": "텍스트 복사됨",
+  "ios_clip_link": "링크 복사됨",
+  "ios_clip_image": "이미지 복사됨",
+  "ios_clip_files": "파일 복사됨: %1$@",
+  "ios_clip_hidden": "숨김 콘텐츠 복사됨",
+  "ios_clip_hint": "클립보드 · 탭하여 붙여넣기",
+  "ios_clip_use": "클립보드 사용",
+  "ios_clip_dismiss": "클립보드 무시",
+  "macos_settings_send_shortcut": "선택 항목 보내기 단축키",
+  "macos_settings_send_shortcut_hint": "어떤 앱에서든 선택한 것(텍스트, 파일, 이미지)을 복사하고 Tomi의 보내기 화면을 열어요.",
+  "macos_settings_copy_selection_denied": "선택 항목을 복사하려면 macOS에서 Tomi를 허용해야 해요(시스템 설정, 개인정보 보호 및 보안, 손쉬운 사용). 허용하지 않으면 단축키는 아무것도 복사하지 않고 보내기 화면만 열어요.",
+  "macos_settings_copy_selection_open": "Mac 설정 열기…",
+  "_mac": {
+    "biometric_subtitle_delete_space": "이 작업은 되돌릴 수 없어요. Touch ID 또는 이 Mac의 암호가 필요해요.",
+    "biometric_subtitle_erase": "이 작업은 되돌릴 수 없어요. Touch ID 또는 이 Mac의 암호가 필요해요.",
+    "biometric_subtitle_revoke": "민감한 작업이에요. Touch ID 또는 이 Mac의 암호가 필요해요.",
+    "delete_space_unavailable_biometric": "내 공간을 삭제하려면 Touch ID 또는 이 Mac의 암호가 필요해요. 아무것도 지워지지 않았어요.",
+    "erase_unavailable_biometric": "서버 확인 없이 지우려면 Touch ID 또는 이 Mac의 암호가 필요해요.",
+    "devices_revoke_message": "이 기기는 공간에서 제거되고 공간 키가 갱신돼요. 이 기기는 더 이상 새 항목을 읽을 수 없어요. Touch ID 또는 이 Mac의 암호를 요청해요.",
+    "devices_revoke_unavailable": "Touch ID와 이 Mac의 암호를 모두 사용할 수 없어 해지할 수 없어요.",
+    "detail_masked_hint": "보기, 복사, 공유를 하려면 Touch ID 또는 이 Mac의 암호가 필요해요.",
+    "detail_revealed_hint": "몇 초 후, 그리고 Tomi를 벗어나면 바로 다시 숨겨져요.",
+    "toast_biometric_unavailable": "Touch ID와 이 Mac의 암호를 모두 사용할 수 없어 숨김 콘텐츠를 보거나 복사하거나 공유할 수 없어요.",
+    "feed_empty_archives": "보관된 항목이 없어요. 항목의 ‘⋯’ 메뉴에서 보관하세요.",
+    "invite_verify_hint": "다른 기기에 코드 대신 오류가 표시되면 ‘코드가 달라요’를 클릭하세요.",
+    "pair_link_received_hint": "자동으로 진행되는 것은 없어요. 계속하려면 ‘참여’를 클릭하세요.",
+    "notif_body_secret": "클릭하여 복사(인증 필요)",
+    "source_this_phone": "이 Mac",
+    "snackbar_image_saved": "이미지를 저장 폴더에 저장했어요",
+    "ios_file_hidden": "숨김 파일은 Tomi에 표시되지 않아요. 미리보기가 화면 보호를 벗어날 수 있기 때문이에요. Touch ID 또는 이 Mac의 암호로 인증한 후 다른 앱으로 공유할 수 있어요.",
+    "ios_save_to_files": "저장",
+    "ios_pair_camera_settings": "Mac 설정 열기",
+    "ios_onboarding_headline": "Tomi는 메뉴 막대에 있어요",
+    "ios_onboarding_step_1": "1. 시계 근처의 Tomi 아이콘을 클릭하면 피드가 열려요.",
+    "ios_onboarding_step_2": "2. 어떤 앱에서든 ⌃⇧스페이스를 누르면 Tomi가 열려요. 텍스트나 파일을 선택한 다음 ⌃⇧V를 누르면 선택 항목과 함께 보내기 화면이 열려요. 보내기(⌘↩)를 누르세요.",
+    "ios_onboarding_step_3": "3. Tomi는 로그인 시 열려서 창이 닫혀 있어도 항목을 받아요. 단축키와 이 옵션은 설정에서 변경할 수 있어요.",
+    "onboarding_open_share": "설정 열기",
+    "menu_share_help": "단축키 및 메뉴 막대",
+    "ios_clip_hint": "클립보드 · Tab 키로 사용하거나 바로 보내기",
+    "biometric_subtitle_pair": "새 기기는 숨김 항목을 포함한 전체 기록을 받게 돼요. Touch ID 또는 이 Mac의 암호로 확인하세요.",
+    "invite_auth_required_body": "기기를 추가하려면 Touch ID 또는 이 Mac의 암호로 본인 확인을 하세요."
+  },
   "_system": {
     "NSCameraUsageDescription": "Tomi는 페어링 QR 코드를 스캔할 때만 카메라를 사용해요.",
     "NSFaceIDUsageDescription": "Tomi는 숨김 항목을 표시, 복사 또는 공유하기 전에 Face ID를 요청해요.",
     "NSPhotoLibraryAddUsageDescription": "Tomi는 추가하기로 선택한 이미지를 사진 앱에 저장해요."
+  },
+  "_system_mac": {
+    "NSCameraUsageDescription": "Tomi는 QR 코드를 스캔할 때만 카메라를 사용해요. 참여할 기기의 코드 또는 설치 키의 코드예요.",
+    "Send with Tomi": "Tomi로 보내기"
   }
 }

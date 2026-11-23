@@ -68,9 +68,119 @@
   "ios_rotation_stalled_body": "У исключённого устройства всё ещё может быть текущий ключ вашего пространства. Tomi повторяет попытку автоматически; откройте Tomi на других ваших устройствах, чтобы помочь.",
   "ios_rotation_stalled_title": "Исключение устройства выполняется",
   "ios_snackbar_copied": "Скопировано",
+  "macos_viewer_previous": "Предыдущее изображение",
+  "macos_viewer_next": "Следующее изображение",
+  "macos_pasted_image_name": "pasted-image.png",
+  "macos_menu_open": "Открыть Tomi",
+  "macos_menu_window": "Открыть в окне",
+  "macos_menu_settings": "Настройки…",
+  "macos_menu_quit": "Завершить Tomi",
+  "macos_status_unread": "Tomi, есть непрочитанные полученные элементы",
+  "macos_settings_login": "Открывать Tomi при входе в систему",
+  "macos_settings_login_hint": "Без этого после перезагрузки ничего не будет приходить, пока вы не откроете Tomi.",
+  "macos_settings_version": "Версия",
+  "macos_settings_title": "Настройки Tomi",
+  "macos_settings_shortcut": "Сочетание клавиш для открытия Tomi",
+  "macos_settings_shortcut_hint": "Открывает Tomi из любого приложения; повторное нажатие закрывает его.",
+  "macos_settings_shortcut_refused": "Это сочетание уже занято (другим приложением или другим сочетанием Tomi). Сохранено предыдущее.",
+  "macos_settings_shortcut_change": "Изменить…",
+  "macos_settings_shortcut_recording": "Нажмите клавиши",
+  "macos_key_space": "Пробел",
+  "macos_settings_notifications": "Уведомления",
+  "macos_settings_notifications_hint": "Когда приходит элемент, а Tomi не открыт перед вами.",
+  "macos_settings_notifications_denied": "Запрещено macOS: при получении элемента ничего не показывается. Разрешите Tomi в Системных настройках, раздел «Уведомления».",
+  "macos_settings_notifications_on": "Разрешено",
+  "macos_settings_notifications_open": "Открыть настройки Mac…",
+  "ios_misconfigured_title": "Эта версия Tomi подписана неправильно",
+  "ios_misconfigured_body": "Системная связка ключей ей недоступна, поэтому Tomi не может открыть свои данные. Ничего не повреждено и не стёрто: установите версию, подписанную идентификатором приложения.",
+  "macos_saved_to_downloads": "Сохранено в %1$@",
+  "macos_downloads_default_name": "Загрузки › Tomi",
+  "macos_settings_downloads": "Папка для сохранения",
+  "macos_settings_downloads_hint": "Куда попадают файлы, которые вы сохраняете из Tomi.",
+  "macos_settings_downloads_choose": "Выбрать…",
+  "macos_settings_downloads_default": "По умолчанию",
+  "macos_menu_new_send": "Новая отправка",
+  "macos_menu_feed": "Лента",
+  "_mac_comment": "Формулировки для Mac текстов, общих с телефонами (strings-from-android.py): _mac_replacements применяются к каждому тексту, _mac задаёт текст целиком.",
+  "_mac_replacements": [
+    [
+      "этот телефон",
+      "этот Mac"
+    ],
+    [
+      "Этот телефон",
+      "Этот Mac"
+    ],
+    [
+      "этом телефоне",
+      "этом Mac"
+    ],
+    [
+      "этого телефона",
+      "этого Mac"
+    ],
+    [
+      "этому телефону",
+      "этому Mac"
+    ],
+    [
+      "настройках телефона",
+      "настройках Mac"
+    ],
+    [
+      "восстановление телефона",
+      "восстановление Mac"
+    ]
+  ],
+  "ios_clip_text": "Текст скопирован",
+  "ios_clip_link": "Ссылка скопирована",
+  "ios_clip_image": "Изображение скопировано",
+  "ios_clip_files": "Файлы скопированы: %1$@",
+  "ios_clip_hidden": "Скрытое содержимое скопировано",
+  "ios_clip_hint": "Буфер обмена · нажмите, чтобы вставить",
+  "ios_clip_use": "Использовать буфер обмена",
+  "ios_clip_dismiss": "Игнорировать буфер обмена",
+  "macos_settings_send_shortcut": "Сочетание клавиш для отправки выделенного",
+  "macos_settings_send_shortcut_hint": "Из любого приложения: копирует выделенное там (текст, файлы, изображение) и открывает с ним отправку Tomi.",
+  "macos_settings_copy_selection_denied": "Чтобы копировать выделенное, macOS должна разрешить это Tomi (Системные настройки › Конфиденциальность и безопасность › Универсальный доступ). Без этого сочетание открывает отправку, ничего не копируя.",
+  "macos_settings_copy_selection_open": "Открыть настройки Mac…",
+  "_mac": {
+    "biometric_subtitle_delete_space": "Это действие нельзя отменить: нужен Touch ID или пароль этого Mac.",
+    "biometric_subtitle_erase": "Это действие нельзя отменить: нужен Touch ID или пароль этого Mac.",
+    "biometric_subtitle_revoke": "Важное действие: нужен Touch ID или пароль этого Mac.",
+    "delete_space_unavailable_biometric": "Чтобы удалить пространство, нужен Touch ID или пароль этого Mac. Ничего не стёрто.",
+    "erase_unavailable_biometric": "Чтобы стереть без подтверждения сервера, нужен Touch ID или пароль этого Mac.",
+    "devices_revoke_message": "Это устройство будет исключено из пространства, а ключ пространства будет обновлён. Устройство больше не сможет читать новые элементы. Потребуется Touch ID или пароль этого Mac.",
+    "devices_revoke_unavailable": "Нельзя использовать ни Touch ID, ни пароль этого Mac: отозвать устройство нельзя.",
+    "detail_masked_hint": "Для действий «Показать», «Копировать» и «Поделиться» нужен Touch ID или пароль этого Mac.",
+    "detail_revealed_hint": "Снова скрывается через несколько секунд и сразу, как только вы покидаете Tomi.",
+    "toast_biometric_unavailable": "Нельзя использовать ни Touch ID, ни пароль этого Mac: скрытое содержимое нельзя показывать, копировать или передавать.",
+    "feed_empty_archives": "В архиве пусто. Отправьте элемент в архив через его меню «⋯».",
+    "invite_verify_hint": "Если на другом устройстве вместо кода ошибка, нажмите «Коды разные».",
+    "pair_link_received_hint": "Ничего не происходит автоматически. Нажмите «Присоединиться», чтобы продолжить.",
+    "notif_body_secret": "Нажмите, чтобы скопировать (нужна аутентификация)",
+    "source_this_phone": "Этот Mac",
+    "snackbar_image_saved": "Изображение сохранено в папку для сохранения",
+    "ios_file_hidden": "Скрытый файл не показывается в Tomi: его предпросмотр обошёл бы защиту экрана. Им можно поделиться с другим приложением после Touch ID или ввода пароля этого Mac.",
+    "ios_save_to_files": "Сохранить",
+    "ios_pair_camera_settings": "Открыть настройки Mac",
+    "ios_onboarding_headline": "Tomi живёт в строке меню",
+    "ios_onboarding_step_1": "1. Нажмите значок Tomi рядом с часами: откроется ваша лента.",
+    "ios_onboarding_step_2": "2. Из любого приложения ⌃⇧Пробел открывает Tomi. Выделите текст или файлы, затем нажмите ⌃⇧V: откроется отправка с выделенным. Отправить (⌘↩).",
+    "ios_onboarding_step_3": "3. Tomi открывается при входе в систему, чтобы получать даже с закрытыми окнами. Сочетание клавиш и этот выбор можно изменить в Настройках.",
+    "onboarding_open_share": "Открыть настройки",
+    "menu_share_help": "Сочетание клавиш и строка меню",
+    "ios_clip_hint": "Буфер обмена · Tab, чтобы использовать, или отправьте сразу",
+    "biometric_subtitle_pair": "Новое устройство получит всю историю, включая скрытые элементы. Подтвердите с помощью Touch ID или пароля этого Mac.",
+    "invite_auth_required_body": "Чтобы добавить устройство, подтвердите личность с помощью Touch ID или пароля этого Mac."
+  },
   "_system": {
     "NSCameraUsageDescription": "Tomi использует камеру только для сканирования QR-кода сопряжения.",
     "NSFaceIDUsageDescription": "Tomi запрашивает Face ID перед показом, копированием или отправкой скрытого элемента.",
     "NSPhotoLibraryAddUsageDescription": "Tomi сохраняет в «Фото» изображения, которые вы решили туда добавить."
+  },
+  "_system_mac": {
+    "NSCameraUsageDescription": "Tomi использует камеру только для сканирования QR-кода: устройства, к которому вы присоединяетесь, или ключа установки.",
+    "Send with Tomi": "Отправить через Tomi"
   }
 }

@@ -55,10 +55,11 @@ struct DevicesScreen: View {
             FeedbackHost(center: feedback, bottomPadding: TomiSpace.s4)
         }
         .navigationTitle(Text("devices_title"))
-        .navigationBarTitleDisplayMode(.inline)
+        .inlineNavigationTitle()
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
+            ToolbarItem(placement: .tomiTrailing) {
                 Button(action: addDevice) { Image(systemName: "person.badge.plus") }
+                    .barControl()
                     .accessibilityLabel(Text("devices_add"))
             }
         }
@@ -88,6 +89,16 @@ struct DevicesScreen: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(verbatim: device.name).tomiText(.body).foregroundStyle(TomiColor.text)
                 Text(verbatim: subtitle(device)).tomiText(.caption).foregroundStyle(TomiColor.textMuted)
+                if let days = DeviceInactivity.inactiveDays(device, now: Date()) {
+                    // A hint, never an action taken: the usual confirmation and strong authentication follow.
+                    Text(verbatim: L10n.text("devices_inactive_hint", L10n.plural("devices_inactive_duration", days)))
+                        .tomiText(.caption)
+                        .foregroundStyle(TomiColor.textMuted)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Button(L10n.text("devices_revoke")) { revoking = device }
+                        .buttonStyle(.tomiText)
+                        .disabled(busy)
+                }
             }
             Spacer(minLength: TomiSpace.s2)
             Button {

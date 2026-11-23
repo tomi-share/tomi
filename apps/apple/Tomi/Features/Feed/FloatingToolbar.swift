@@ -33,6 +33,15 @@ struct FloatingToolbar: View {
 
     private var filterMenu: some View {
         Menu {
+            #if os(macOS)
+            // Plain buttons, as in the other menus of the Mac app: a picker in a menu shows there, but its choices do
+            // not answer a click (and, without a style, it becomes an empty submenu).
+            ForEach(FeedFilter.allCases, id: \.self) { filter in
+                Button { model.filter = filter } label: {
+                    Label(L10n.text(filter.labelKey), systemImage: model.filter == filter ? "checkmark" : filter.icon.systemName)
+                }
+            }
+            #else
             Picker(selection: $model.filter) {
                 ForEach(FeedFilter.allCases, id: \.self) { filter in
                     Label(L10n.text(filter.labelKey), systemImage: filter.icon.systemName).tag(filter)
@@ -40,6 +49,7 @@ struct FloatingToolbar: View {
             } label: {
                 EmptyView()
             }
+            #endif
         } label: {
             FloatingBarIcon(icon: .filter, selected: model.filter != .all)
                 .overlay(alignment: .topTrailing) {

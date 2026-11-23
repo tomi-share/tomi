@@ -1,13 +1,14 @@
 import SwiftUI
 import TomiDesign
 import TomiKit
-import UIKit
 
 /// The code file reader (Android `CodeFileScreen`), pushed on a tap on a code file of a card or of the detail.
 ///
 /// - The decrypted copy of the core cache is read into memory only (2 MB at most): the app writes no clear copy.
 /// - Monospace 13/19 with a line-number gutter, vertical scroll and sideways scroll unless "Retour à la ligne" is on
-///   (one remembered choice for every file). No syntax colours in v1 (spec 11).
+///   (one remembered choice for every file).
+/// - Syntax colours of the charter palette (`CodeHighlighter`, same colours as Android). A language without colours,
+///   or a file over 50 KB or 2,000 lines, is shown as plain text, and a line above the code says so.
 /// - Search in the file: occurrences highlighted, the current one stronger, previous / next, "n/m", scroll to it.
 /// - Several code files: tabs on top and "2/3" in the bar.
 /// - Hidden item: nothing is read before the gate, the app switcher shows the privacy cover, the screen closes when the
@@ -64,7 +65,10 @@ struct CodeFileScreen: View {
             }
         }
         .background(TomiColor.bg.ignoresSafeArea())
-        .navigationBarTitleDisplayMode(.inline)
+        .inlineNavigationTitle()
+        // The name of the file is in the middle of the bar, never in the title of the window (a hidden file's name
+        // would show in the Window menu and in Mission Control).
+        .appWindowTitle()
         .toolbar {
             ToolbarItem(placement: .principal) {
                 // A hidden item shows no name before the gate (no current file until then).
@@ -74,7 +78,7 @@ struct CodeFileScreen: View {
                     .lineLimit(1)
                     .truncationMode(.middle)
             }
-            ToolbarItemGroup(placement: .topBarTrailing) {
+            ToolbarItemGroup(placement: .tomiTrailing) {
                 if files.count > 1 {
                     Text(verbatim: CodeFiles.positionLabel(position: position, total: files.count))
                         .tomiText(.label)
@@ -87,6 +91,7 @@ struct CodeFileScreen: View {
                     } label: {
                         TomiIcon.search.image
                     }
+                    .barControl()
                     .accessibilityLabel(Text("code_search"))
                     Menu {
                         Button {
@@ -114,6 +119,7 @@ struct CodeFileScreen: View {
                     } label: {
                         TomiIcon.more.image
                     }
+                    .barControl()
                     .accessibilityLabel(Text("action_more"))
                 }
             }
@@ -181,7 +187,8 @@ private struct CodeBody: View {
     private enum Loaded {
         case loading
         case failed(LocalizedStringKey)
-        case ready(CodeDocument, original: String, maxLineLength: Int)
+        /// `runs`: the colours, by line. `notice`: why there are none (key of the text), nil when coloured.
+        case ready(CodeDocument, original: String, maxLineLength: Int, runs: [Int: [LineRun]], notice: String?)
     }
 
     @State private var loaded = Loaded.loading
@@ -198,9 +205,9 @@ private struct CodeBody: View {
                     .multilineTextAlignment(.center)
                     .padding(TomiSpace.s6)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-            case let .ready(doc, _, maxLineLength):
+            case let .ready(doc, _, maxLineLength, runs, notice):
                 CodeReader(
-                    doc: doc, maxLineLength: maxLineLength, wrap: wrap, protected: item.secret,
+                    doc: doc, maxLineLength: maxLineLength, wrap: wrap, runs: runs, notice: notice, protected: item.secret,
                     searching: $searching, query: $query
                 )
             }
@@ -211,20 +218,27 @@ private struct CodeBody: View {
                 loaded = .failed("code_unavailable")
                 return
             }
+            let name = file.attachment.name
             let next: Loaded = await Task.detached(priority: .userInitiated) {
                 switch FeedViewModel.readCode(url) {
                 case .unavailable: .failed("code_unavailable")
                 case .tooLarge: .failed("code_too_large")
                 case .binary: .failed("code_binary")
                 case let .text(original, display):
-                    // Measured once: the width of the block, not at every row.
-                    { let doc = CodeDocument(display); return .ready(doc, original: original, maxLineLength: doc.maxLineLength) }()
+                    // Measured and coloured once: the width of the block and the colours, not at every row.
+                    {
+                        let doc = CodeDocument(display)
+                        let colours = CodeHighlighter.colours(fileName: name, doc: doc)
+                        return .ready(
+                            doc, original: original, maxLineLength: doc.maxLineLength, runs: colours.runs, notice: colours.noticeKey
+                        )
+                    }()
                 }
             }.value
             // Another tab was chosen meanwhile: its file, not this one, is shown and copied.
             guard !Task.isCancelled else { return }
             loaded = next
-            if case let .ready(_, original, _) = next { onTextReady(original) }
+            if case let .ready(_, original, _, _, _) = next { onTextReady(original) }
         }
     }
 }
@@ -234,6 +248,10 @@ private struct CodeReader: View {
     let doc: CodeDocument
     let maxLineLength: Int
     let wrap: Bool
+    /// The colours of each line (none for a line of plain text).
+    var runs: [Int: [LineRun]] = [:]
+    /// Why the file has no colours (key of the text shown above the code), nil when it has.
+    var notice: String?
     /// A hidden item's file: drawn in the layer that captures leave out.
     var protected = false
     @Binding var searching: Bool
@@ -250,7 +268,7 @@ private struct CodeReader: View {
     private static let maxQuery = 200
     /// Width of one character of the monospace font.
     private static let charWidth: CGFloat = {
-        let font = TomiMonoFont.ctFont(size: fontSize) as UIFont
+        let font = TomiMonoFont.ctFont(size: fontSize) as PlatformFont
         return ("0000000000" as NSString).size(withAttributes: [.font: font]).width / 10
     }()
 
@@ -258,6 +276,14 @@ private struct CodeReader: View {
         VStack(spacing: 0) {
             if searching {
                 searchRow
+            }
+            if let notice {
+                Text(verbatim: L10n.text(notice))
+                    .tomiText(.caption)
+                    .foregroundStyle(TomiColor.textMuted)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, TomiSpace.s4)
+                    .padding(.vertical, TomiSpace.s1)
             }
             ScrollViewReader { proxy in
                 ScrollView(wrap ? .vertical : [.vertical, .horizontal]) {
@@ -324,7 +350,18 @@ private struct CodeReader: View {
         .frame(width: wrap ? nil : contentWidth, alignment: .leading)
     }
 
-    /// One line, the occurrences on top (the text keeps its colour on the highlight).
+    /// The colour of a token: the charter palette (Android `CodePalette`), each readable on `surfaceAlt`.
+    private static func color(_ kind: CodeTokenKind) -> Color {
+        switch kind {
+        case .keyword, .property: TomiColor.brand
+        case .function, .tag: TomiColor.secret
+        case .string: TomiColor.success
+        case .number, .literal, .attribute: TomiColor.secondary
+        case .comment: TomiColor.textMuted
+        }
+    }
+
+    /// One line: its colours, the occurrences on top (the text keeps its colour on the highlight).
     private func lineText(_ line: Int, matches: [LineMatch]?) -> AttributedString {
         let raw = doc.line(line)
         let units = Array(raw.utf16)
@@ -335,13 +372,19 @@ private struct CodeReader: View {
         let shownUnits = Array(units.prefix(limit))
         let shown = (String(utf16CodeUnits: shownUnits, count: shownUnits.count)) + (cut ? "…" : "")
         var text = AttributedString(shown)
-        guard let matches else { return text }
-        for match in matches {
-            let end = min(match.endCol, shownUnits.count)
-            guard match.startCol < end else { continue }
-            let range = NSRange(location: match.startCol, length: end - match.startCol)
-            guard let swiftRange = Range(range, in: shown), let attributed = Range(swiftRange, in: text) else { continue }
-            text[attributed].backgroundColor = match.index == current ? TomiColor.sun.opacity(0.75) : TomiColor.sun.opacity(0.3)
+        // Columns of the line (UTF-16) → a range of the text shown; nil past the cut of a very long line.
+        func range(_ startCol: Int, _ endCol: Int) -> Range<AttributedString.Index>? {
+            let end = min(endCol, shownUnits.count)
+            guard startCol >= 0, startCol < end else { return nil }
+            guard let inString = Range(NSRange(location: startCol, length: end - startCol), in: shown) else { return nil }
+            return Range(inString, in: text)
+        }
+        for run in runs[line] ?? [] {
+            if let range = range(run.startCol, run.endCol) { text[range].foregroundColor = Self.color(run.kind) }
+        }
+        for match in matches ?? [] {
+            guard let range = range(match.startCol, match.endCol) else { continue }
+            text[range].backgroundColor = match.index == current ? TomiColor.codeSearchCurrent : TomiColor.codeSearchMatch
         }
         return text
     }
@@ -354,7 +397,7 @@ private struct CodeReader: View {
                 set: { query = String(($0.split(separator: "\n", omittingEmptySubsequences: false).first ?? "").prefix(Self.maxQuery)) }
             ))
             .tomiText(.body)
-            .textInputAutocapitalization(.never)
+            .noAutocapitalization()
             .autocorrectionDisabled()
             .submitLabel(.search)
             .focused($searchFocused)

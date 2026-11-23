@@ -2,7 +2,11 @@ import CoreText
 import SwiftUI
 import TomiDesign
 import TomiKit
+#if canImport(UIKit)
 import UIKit
+#else
+import AppKit
+#endif
 
 // Attachments of a card (feed and detail). Port of `AttachmentViews.kt`:
 // one attachment = ONE object with ONE touch target, a tile (type badge, name, size, chevron) or an image frame (thumbnail
@@ -93,6 +97,10 @@ struct AttachmentList: View {
         .onTapGesture { open(index) }
         // A long press in the detail; on a card the press stays the card's, whose menu has the same actions.
         .modifier(FileRowMenu(item: item, index: index, model: model, expanded: expanded) { open(index) })
+        #if os(macOS)
+        // Dragged to the Finder or to another app (never a hidden item's file: `dragProvider` gives nothing then).
+        .onDrag { model.dragProvider(item, index: index) ?? NSItemProvider() }
+        #endif
         .accessibilityAddTraits(.isButton)
         .accessibilityHint(Text(clickLabel(for: action)))
     }
@@ -156,7 +164,7 @@ struct AttachmentList: View {
     }
 
     /// Only the thumbnails the plan draws are asked for (a batch of 20 photos must not cost 20 decodes on every redraw).
-    private func thumbnail(_ index: Int) -> UIImage? {
+    private func thumbnail(_ index: Int) -> PlatformImage? {
         item.attachments[index].thumbnail.flatMap { ThumbnailCache.image(itemId: item.id, index: index, data: $0) }
     }
 }
@@ -251,7 +259,7 @@ private enum FileNameFit {
         guard width > 2, width < 10_000 else { return name }
         let key = "\(lines)|\(width)|\(emphasized)|\(dynamicTypeSize)|\(name)"
         if let hit = cache[key] { return hit }
-        let font = uiFont(emphasized: emphasized, dynamicTypeSize: dynamicTypeSize)
+        let font = measuringFont(emphasized: emphasized, dynamicTypeSize: dynamicTypeSize)
         // One point less than the text has: a rounding must never push the extension to a line more.
         let available = width - 1
         let shown = AttachmentLogic.fitFileName(name) { candidate in
@@ -263,8 +271,19 @@ private enum FileNameFit {
     }
 
     /// The font of `.tomiText(.label)` with the weight of the name, scaled for Dynamic Type like `Font.custom(relativeTo:)`.
-    private static func uiFont(emphasized: Bool, dynamicTypeSize: DynamicTypeSize) -> UIFont {
+    private static func measuringFont(emphasized: Bool, dynamicTypeSize: DynamicTypeSize) -> PlatformFont {
         TomiFonts.register()
+        #if os(macOS)
+        // No Dynamic Type on the Mac: the size of the token. Same weight and same `wght` axis as below.
+        let size = TomiTextStyle.label.size
+        let weight: NSFont.Weight = emphasized ? .semibold : .medium
+        let descriptor = NSFontDescriptor(fontAttributes: [
+            .family: TomiTokens.FontFamily.ui,
+            .traits: [NSFontDescriptor.TraitKey.weight: weight],
+            .variation: [NSNumber(value: 0x7767_6874 as UInt32): NSNumber(value: emphasized ? 600 : 500)],
+        ])
+        return NSFont(descriptor: descriptor, size: size) ?? .systemFont(ofSize: size, weight: weight)
+        #else
         let traits = UITraitCollection(preferredContentSizeCategory: UIContentSizeCategory(dynamicTypeSize))
         let size = UIFontMetrics(forTextStyle: .subheadline).scaledValue(for: TomiTextStyle.label.size, compatibleWith: traits)
         let weight: UIFont.Weight = emphasized ? .semibold : .medium
@@ -278,10 +297,11 @@ private enum FileNameFit {
             variation: [NSNumber(value: 0x7767_6874 as UInt32): NSNumber(value: emphasized ? 600 : 500)],
         ])
         return UIFont(descriptor: descriptor, size: size)
+        #endif
     }
 
     /// The number of lines `text` takes in `width` (word wrap, a word longer than the line breaks by characters).
-    private static func lineCount(_ text: String, font: UIFont, width: CGFloat) -> Int {
+    private static func lineCount(_ text: String, font: PlatformFont, width: CGFloat) -> Int {
         let storage = NSTextStorage(string: text, attributes: [.font: font])
         let container = NSTextContainer(size: CGSize(width: width, height: .greatestFiniteMagnitude))
         container.lineFragmentPadding = 0
@@ -325,7 +345,7 @@ private struct RowChevron: View {
 /// File tile: type badge, name (2 lines in the feed, whole in the detail), size below, and the chevron on the right.
 private struct FileTile: View {
     let attachment: Attachment
-    let thumbnail: UIImage?
+    let thumbnail: PlatformImage?
     let tonal: Bool
     let full: Bool
     let emphasized: Bool
@@ -355,7 +375,7 @@ private struct FileTile: View {
 /// for any other file.
 private struct TypeBadge: View {
     let attachment: Attachment
-    let thumbnail: UIImage?
+    let thumbnail: PlatformImage?
     let tonal: Bool
     let onAltBackground: Bool
 
@@ -369,7 +389,7 @@ private struct TypeBadge: View {
     @ViewBuilder
     private var content: some View {
         if let thumbnail {
-            Image(uiImage: thumbnail)
+            Image(platformImage: thumbnail)
                 .resizable()
                 .scaledToFill()
                 .frame(width: AttachmentMetrics.badge, height: AttachmentMetrics.badge)
@@ -438,7 +458,7 @@ private struct TypeBadge: View {
 /// Image: the thumbnail and its caption (name, size, chevron) in one frame, one touch target.
 private struct ImageFrame: View {
     let attachment: Attachment
-    let image: UIImage
+    let image: PlatformImage
     /// Height cap of the picture (cropped at the centre beyond); nil: the picture whole.
     let maxHeight: CGFloat?
     let full: Bool
@@ -447,7 +467,7 @@ private struct ImageFrame: View {
     var body: some View {
         VStack(spacing: 0) {
             CroppedImageLayout(ratio: ratio, maxHeight: maxHeight) {
-                Image(uiImage: image).resizable().scaledToFill()
+                Image(platformImage: image).resizable().scaledToFill()
             }
             .clipped()
             HStack(spacing: TomiSpace.s2) {
@@ -541,7 +561,7 @@ private struct MosaicLayout: Layout {
 }
 
 private struct MosaicCell: View {
-    let image: UIImage?
+    let image: PlatformImage?
     /// "+N" on the veil of the last cell when above 0.
     let more: Int
 
@@ -549,7 +569,7 @@ private struct MosaicCell: View {
         Color.clear
             .overlay {
                 if let image {
-                    Image(uiImage: image).resizable().scaledToFill()
+                    Image(platformImage: image).resizable().scaledToFill()
                 } else {
                     TomiColor.surfaceAlt
                 }
@@ -572,16 +592,16 @@ private struct MosaicCell: View {
 /// hidden item never has any (`showThumbnails` is false for it).
 @MainActor
 private enum ThumbnailCache {
-    private static let cache: NSCache<NSString, UIImage> = {
-        let cache = NSCache<NSString, UIImage>()
+    private static let cache: NSCache<NSString, PlatformImage> = {
+        let cache = NSCache<NSString, PlatformImage>()
         cache.countLimit = 200
         return cache
     }()
 
-    static func image(itemId: String, index: Int, data: Data) -> UIImage? {
+    static func image(itemId: String, index: Int, data: Data) -> PlatformImage? {
         let key = "\(itemId)#\(index)#\(data.count)" as NSString
         if let hit = cache.object(forKey: key) { return hit }
-        guard let decoded = UIImage(data: data) else { return nil }
+        guard let decoded = PlatformImage(data: data) else { return nil }
         cache.setObject(decoded, forKey: key)
         return decoded
     }

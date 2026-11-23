@@ -1,5 +1,9 @@
 import AVKit
 import QuickLook
+#if os(macOS)
+import PDFKit
+import QuickLookUI
+#endif
 import SwiftUI
 import TomiDesign
 import TomiKit
@@ -140,6 +144,14 @@ struct FileViewerScreen: View {
             if axis == .vertical {
                 ViewerBarButton(systemName: TomiIcon.close.systemName, label: "ios_viewer_close", action: onClose)
             }
+            #if os(macOS)
+            // The Mac hands the file to the app it chose for it (the iOS screen has "Ouvrir dans…" in its share sheet).
+            if !item.secret {
+                ViewerBarButton(systemName: "arrow.up.forward.app", label: "action_open") {
+                    model.openAttachmentInDefaultApp(item, index: index)
+                }
+            }
+            #endif
             if !item.secret {
                 ViewerBarButton(systemName: "folder", label: "ios_save_to_files") {
                     model.saveAttachmentToFiles(item, index: index)
@@ -194,7 +206,12 @@ struct FileViewerScreen: View {
             let playable = (try? await AVURLAsset(url: named).load(.isPlayable)) ?? false
             content = playable ? .media(named) : .elsewhere
         default:
+            #if os(iOS)
             content = QLPreviewController.canPreview(named as NSURL) ? .document(named) : .elsewhere
+            #else
+            // The Mac's Quick Look view draws any file, at worst its icon and its type.
+            content = .document(named)
+            #endif
         }
     }
 
@@ -283,6 +300,7 @@ private struct FilePlaceholder: View {
     }
 }
 
+#if os(iOS)
 /// The system player (controls, picture in picture), paused when the viewer goes.
 private struct MediaPlayerView: UIViewControllerRepresentable {
     let url: URL
@@ -337,3 +355,73 @@ private struct QuickLookView: UIViewControllerRepresentable {
         }
     }
 }
+#else
+/// The system player of the Mac, paused when the viewer goes.
+private struct MediaPlayerView: NSViewRepresentable {
+    let url: URL
+
+    func makeNSView(context: Context) -> AVPlayerView {
+        let view = AVPlayerView()
+        view.player = AVPlayer(url: url)
+        view.controlsStyle = .floating
+        return view
+    }
+
+    func updateNSView(_ view: AVPlayerView, context: Context) {}
+
+    static func dismantleNSView(_ view: AVPlayerView, coordinator: ()) {
+        view.player?.pause()
+        view.player = nil
+    }
+}
+
+/// The document inside the screen, one file: a PDF is drawn by PDFKit (in the app itself: scroll, zoom, selection),
+/// anything else by Quick Look.
+private struct QuickLookView: View {
+    let url: URL
+
+    var body: some View {
+        if url.pathExtension.lowercased() == "pdf" {
+            PDFDocumentView(url: url)
+        } else {
+            QuickLookPreview(url: url)
+        }
+    }
+}
+
+private struct PDFDocumentView: NSViewRepresentable {
+    let url: URL
+
+    func makeNSView(context: Context) -> PDFView {
+        let view = PDFView()
+        view.autoScales = true
+        view.displayMode = .singlePageContinuous
+        view.backgroundColor = .clear
+        view.document = PDFDocument(url: url)
+        return view
+    }
+
+    func updateNSView(_ view: PDFView, context: Context) {
+        if view.document?.documentURL != url { view.document = PDFDocument(url: url) }
+    }
+}
+
+private struct QuickLookPreview: NSViewRepresentable {
+    let url: URL
+
+    func makeNSView(context: Context) -> QLPreviewView {
+        let view = QLPreviewView(frame: .zero, style: .normal) ?? QLPreviewView()
+        view.autostarts = false
+        view.previewItem = url as NSURL
+        return view
+    }
+
+    func updateNSView(_ view: QLPreviewView, context: Context) {
+        if (view.previewItem as? NSURL) as URL? != url { view.previewItem = url as NSURL }
+    }
+
+    static func dismantleNSView(_ view: QLPreviewView, coordinator: ()) {
+        view.close()
+    }
+}
+#endif
