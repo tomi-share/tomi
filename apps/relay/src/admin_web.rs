@@ -794,7 +794,7 @@ impl AdminWeb {
 
     /// A step-up challenge: `SHA-256(nonce || action)` for a fresh 32-byte nonce, tied to the
     /// session and to `action` (the hash of the exact action), valid [`STEPUP_TTL_MS`], single
-    /// use. Expired ones stay a few minutes so that "too late" can be told from "never issued".
+    /// use, at most one per session. Expired ones stay a few minutes so that "too late" can be told from "never issued".
     pub(crate) fn issue_stepup(
         &self,
         session: [u8; 32],
@@ -805,6 +805,10 @@ impl AdminWeb {
         let challenge = sha256_parts(&[&nonce, &action]);
         let mut list = lock(&self.stepups);
         list.retain(|p| p.expires_ms + 3 * 60_000 > now);
+        // One pending step-up per session: a new one replaces the one of the same session only,
+        // so a stolen session cannot push out the step-up the owner is validating in another one
+        // (the sessions are few, so the list stays far under the bound that follows).
+        list.retain(|p| !bool::from(p.session.as_slice().ct_eq(session.as_slice())));
         while list.len() >= MAX_PENDING {
             list.remove(0);
         }
@@ -1103,8 +1107,9 @@ async fn handle(
         }
         ("POST", "api/quota") => {
             check_origin(web, req.headers())?;
-            authorize(st, web, req.headers())?;
-            set_default_quota(st, web, req).await
+            let (_, session_key) = crate::admin_actions::identity(st, web, req.headers())?;
+            throttle(st, &req)?;
+            set_default_quota(st, web, req, session_key).await
         }
         ("GET", "api/about") => about(st, web, req.headers()),
         ("GET", "api/journal") => {
@@ -1617,6 +1622,7 @@ async fn set_default_quota(
     st: &AppState,
     web: &AdminWeb,
     req: Request,
+    session_key: i64,
 ) -> Result<Response, ApiError> {
     let body = read_json(req).await?;
     let value = admin::parse_default_quota(&body)?;
@@ -1629,6 +1635,14 @@ async fn set_default_quota(
         Some(Some(b)) => (JournalKind::DefaultQuotaSet, Some(b)),
     };
     web.record(kind, bytes, st.now());
+    // The persistent line carries no value, only that the default changed and through which key.
+    crate::admin_audit::record(
+        st,
+        crate::admin_audit::kind::DEFAULT_QUOTA_SET,
+        None,
+        Some(session_key),
+    )
+    .await;
     Ok(json_response(
         StatusCode::OK,
         &json!({ "default": admin::default_quota_json(st) }),

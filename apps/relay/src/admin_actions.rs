@@ -370,7 +370,7 @@ async fn prepare(st: &AppState, action: &Value) -> Result<Prepared, ApiError> {
 }
 
 /// The live session of a request: its hash and the number of the passkey that opened it.
-fn identity(
+pub(crate) fn identity(
     st: &AppState,
     web: &AdminWeb,
     headers: &HeaderMap,
@@ -460,7 +460,7 @@ async fn refused(st: &AppState, web: &AdminWeb, session: &[u8; 32], why: &str) -
 /// `POST api/actions` `{action, assertion}`.
 pub async fn run_action(st: &AppState, web: &AdminWeb, req: Request) -> Result<Response, ApiError> {
     check_origin(web, req.headers())?;
-    let (session, key_num) = identity(st, web, req.headers())?;
+    let (session, _session_key) = identity(st, web, req.headers())?;
     throttle(st, &req)?;
     let body = read_json(req).await?;
     let action = body.get("action").ok_or_else(|| bad("action"))?;
@@ -524,6 +524,7 @@ pub async fn run_action(st: &AppState, web: &AdminWeb, req: Request) -> Result<R
         Err(why) => return Err(refused(st, web, &session, why.as_str()).await),
     };
     let (num, from) = (cred.num, cred.sign_count);
+    let signed_by = cred.num;
     let advanced = st
         .spaces
         .routing()
@@ -545,7 +546,8 @@ pub async fn run_action(st: &AppState, web: &AdminWeb, req: Request) -> Result<R
         .ceilings
         .reserve(p.kind, p.count, now)
         .map_err(|retry| ceiling_error(p.kind, retry))?;
-    let done = execute(st, web, p.resolved, key_num).await;
+    // The audit names the key that signed this step-up, not the one that opened the session.
+    let done = execute(st, web, p.resolved, signed_by).await;
     if done.is_err() {
         web.ceilings.release(ticket);
     }
@@ -737,7 +739,8 @@ pub async fn set_space_quota(
     req: Request,
 ) -> Result<Response, ApiError> {
     check_origin(web, req.headers())?;
-    authorize(st, web, req.headers())?;
+    let (_, session_key) = identity(st, web, req.headers())?;
+    throttle(st, &req)?;
     let body = read_json(req).await?;
     let space = pick(st, body.get("space_id").and_then(Value::as_str))?;
     let value = body.get("value").cloned().ok_or_else(|| bad("value"))?;
@@ -758,7 +761,13 @@ pub async fn set_space_quota(
         Some(Some(b)) => (JournalKind::SpaceQuotaSet, Some(b)),
     };
     web.record(jk, bytes, now);
-    admin_audit::record(st, audit::QUOTA_SET, Some(space.short_id()), None).await;
+    admin_audit::record(
+        st,
+        audit::QUOTA_SET,
+        Some(space.short_id()),
+        Some(session_key),
+    )
+    .await;
     Ok(json_response(
         StatusCode::OK,
         &json!({
@@ -791,10 +800,11 @@ pub async fn cancel_invitations(
     req: Request,
 ) -> Result<Response, ApiError> {
     check_origin(web, req.headers())?;
-    authorize(st, web, req.headers())?;
+    let (_, session_key) = identity(st, web, req.headers())?;
+    throttle(st, &req)?;
     let n = blocking(st, |st| install::clear(st.spaces.routing())).await?;
     web.record(JournalKind::InvitationsCancelled, None, st.now());
-    admin_audit::record(st, audit::INVITATIONS_CANCELLED, None, None).await;
+    admin_audit::record(st, audit::INVITATIONS_CANCELLED, None, Some(session_key)).await;
     Ok(json_response(
         StatusCode::OK,
         &json!({ "cancelled": n, "invitations": invitations(st).await? }),
@@ -804,10 +814,11 @@ pub async fn cancel_invitations(
 /// `POST api/sessions/close-all`: closes every session, this one included.
 pub async fn close_all(st: &AppState, web: &AdminWeb, req: Request) -> Result<Response, ApiError> {
     check_origin(web, req.headers())?;
-    authorize(st, web, req.headers())?;
+    let (_, session_key) = identity(st, web, req.headers())?;
+    throttle(st, &req)?;
     web.close_all_sessions();
     web.record(JournalKind::SessionsClosed, None, st.now());
-    admin_audit::record(st, audit::SESSIONS_CLOSED, None, None).await;
+    admin_audit::record(st, audit::SESSIONS_CLOSED, None, Some(session_key)).await;
     let mut resp = no_content();
     if let Ok(v) = HeaderValue::from_str(&clear_cookie_value()) {
         resp.headers_mut().append(header::SET_COOKIE, v);
