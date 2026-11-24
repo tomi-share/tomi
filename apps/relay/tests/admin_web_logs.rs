@@ -203,11 +203,25 @@ async fn no_secret_of_the_web_panel_reaches_the_logs_under_trace() {
             get(&env, &seg, "api/spaces", &pair).await.ok(200);
             get(&env, &seg, "api/about", &pair).await.ok(200);
             get(&env, &seg, "api/journal", &pair).await.ok(200);
+            let action = json!({ "type": "create_invitation", "mode": "new" });
+            let options = post(
+                &env,
+                &seg,
+                "api/stepup/options",
+                json!({ "action": action.clone() }),
+                Some(&pair),
+            )
+            .await
+            .ok(200);
+            let challenge = unb64(options["publicKey"]["challenge"].as_str().unwrap());
+            secrets.add_bytes("step-up challenge", &challenge);
+            let a = auth.get(&challenge, &Tweak::default());
+            secrets.add_bytes("step-up signature", &a.signature);
             let created = post(
                 &env,
                 &seg,
-                "api/invitations",
-                json!({ "mode": "new" }),
+                "api/actions",
+                json!({ "action": action, "assertion": a.json() }),
                 Some(&pair),
             )
             .await

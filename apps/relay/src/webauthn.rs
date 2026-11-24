@@ -330,6 +330,9 @@ pub struct Registered {
     /// The public key as an uncompressed SEC1 point (`0x04 || x || y`, 65 bytes).
     pub public_key: Vec<u8>,
     pub sign_count: u32,
+    /// The BE flag (backup eligible): `false` for a key bound to its device. Declared by the
+    /// authenticator, not attested.
+    pub backup_eligible: bool,
 }
 
 /// Looks up the integer-keyed entries of a COSE key; `None` if a key is not an integer or is
@@ -453,6 +456,7 @@ pub fn verify_registration(
         credential_id: credential_id.to_vec(),
         public_key,
         sign_count: auth.sign_count,
+        backup_eligible: auth.flags & FLAG_BE != 0,
     })
 }
 

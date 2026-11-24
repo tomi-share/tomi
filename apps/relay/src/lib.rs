@@ -12,6 +12,7 @@
 #![allow(clippy::result_large_err)]
 
 pub mod admin;
+pub mod admin_actions;
 pub mod admin_audit;
 pub mod admin_web;
 pub mod apns;
