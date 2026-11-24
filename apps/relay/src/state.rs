@@ -163,6 +163,19 @@ impl Inner {
         registry: RegistryGuard,
         receipt: Option<[u8; 32]>,
     ) -> DeleteOutcome {
+        self.delete_space_keep(space, registry, receipt, false)
+            .await
+    }
+
+    /// [`Inner::delete_space`], and with `keep` the deletion of the web panel: the folder goes to
+    /// the trash of the relay for 7 days (`Spaces::delete_keep`) instead of being removed.
+    pub async fn delete_space_keep(
+        &self,
+        space: &Space,
+        registry: RegistryGuard,
+        receipt: Option<[u8; 32]>,
+        keep: bool,
+    ) -> DeleteOutcome {
         let (spaces, hub, clock) = (
             Arc::clone(&self.spaces),
             Arc::clone(&self.hub),
@@ -184,10 +197,11 @@ impl Inner {
             }
             let now = clock.now_ms();
             let blocking = Arc::clone(&spaces);
-            let outcome =
-                tokio::task::spawn_blocking(move || blocking.delete(&space, receipt, now))
-                    .await
-                    .unwrap_or(DeleteOutcome::Unknown);
+            let outcome = tokio::task::spawn_blocking(move || {
+                blocking.delete_keep(&space, receipt, now, keep)
+            })
+            .await
+            .unwrap_or(DeleteOutcome::Unknown);
             // 6. Only a space that is gone for good has its sockets closed.
             if matches!(
                 outcome,

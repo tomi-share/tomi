@@ -12,6 +12,7 @@
 #![allow(clippy::result_large_err)]
 
 pub mod admin;
+pub mod admin_audit;
 pub mod admin_web;
 pub mod apns;
 pub mod app;
@@ -38,5 +39,6 @@ pub mod routes;
 pub mod spaces;
 pub mod state;
 pub mod store;
+pub mod trash;
 pub mod webauthn;
 pub mod wire;

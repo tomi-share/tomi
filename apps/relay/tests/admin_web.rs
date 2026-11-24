@@ -1734,7 +1734,7 @@ async fn the_tables_are_added_to_an_existing_routing_database_without_a_version_
         .unwrap();
     assert_eq!(version, 1);
     assert_eq!(invitations, 1, "what was there is untouched");
-    assert_eq!(tables, 3);
+    assert_eq!(tables, 6);
     assert_eq!(segment(&env).len(), 22);
 }
 
