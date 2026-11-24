@@ -2397,6 +2397,681 @@ dialog.confirm::backdrop {
   line-height: var(--lh-caption);
 }
 
+/* ===== utilitaires (à la place des attributs style="", interdits par la CSP) ===== */
+
+.sprite {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.mt-1 {
+  margin-top: var(--space-1);
+}
+
+.block {
+  display: block;
+}
+
+.desktop-only {
+  display: none !important;
+}
+
+kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.375rem;
+  height: 1.375rem;
+  padding: 0 0.3125rem;
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 2px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: var(--fs-caption);
+  line-height: 1;
+  font-weight: 500;
+}
+
+/* ===== actions : boutons, repli « ligne de commande », mentions « serveur seulement » ===== */
+
+.btn.danger-outline {
+  background: transparent;
+  border-color: var(--error);
+  color: var(--error);
+}
+
+.btn.danger-outline:hover {
+  background: var(--surface-alt);
+}
+
+.btn.danger:hover:not(:disabled),
+.btn:not(.secondary):not(.ghost):not(.tonal):not(.danger-outline):hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.session-actions > * + * {
+  margin-top: var(--space-2);
+}
+
+/* « Clé d'accès demandée » : une ligne discrète sous le bouton qui la déclenche. */
+.pk-line {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+/* Repli discret : la commande équivalente n'occupe pas l'écran. */
+details.fold.cli > summary {
+  justify-content: flex-start;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+details.fold.cli > summary .chev {
+  margin-left: auto;
+}
+
+details.fold.card.cli > summary {
+  font-size: var(--fs-label);
+}
+
+/* Ce que le panneau ne fait pas, et pourquoi : un encadré, jamais un bouton. */
+.cli-only {
+  padding: var(--space-3) var(--space-4) var(--space-1);
+  border-radius: var(--radius-md);
+  background: var(--surface-alt);
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+}
+
+.cli-only-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 600;
+}
+
+.cli-only > p + p,
+.cli-only > p + ul {
+  margin-top: var(--space-2);
+}
+
+.cli-only ul {
+  margin-top: var(--space-2);
+  padding-left: 1.125rem;
+  list-style: disc;
+  color: var(--text-muted);
+}
+
+.cli-only li + li {
+  margin-top: var(--space-2);
+}
+
+.cli-only li strong {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.cli-only > p:not(.cli-only-head) {
+  color: var(--text-muted);
+}
+
+.cli-only .cmd {
+  background: var(--surface);
+}
+
+.cli-only details.fold.cli {
+  margin-top: var(--space-1);
+}
+
+.sub-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.sub-head h3 {
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+}
+
+.rows.keys li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  justify-content: initial;
+}
+
+.rows.keys li > .ico {
+  color: var(--text-muted);
+}
+
+.key-txt strong {
+  display: block;
+  font-weight: 500;
+}
+
+.key-txt .caption {
+  display: block;
+}
+
+/* Bandeau après une suppression : reste jusqu'à « Fermer ». */
+.banner {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: start;
+  padding: var(--space-3) var(--space-1) var(--space-2) var(--space-4);
+  border: 1px solid var(--border-strong);
+  border-left: 3px solid var(--error);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+}
+
+.banner > .ico {
+  margin-top: 0.125rem;
+  color: var(--error);
+}
+
+.banner > .icon-btn {
+  margin-top: calc(-1 * var(--space-2));
+}
+
+.banner-body > * + * {
+  margin-top: var(--space-1);
+}
+
+.banner .cmd {
+  background: var(--surface-alt);
+}
+
+/* Quota d'un espace : ligne d'origine + « Modifier », formulaire déplié dessous. */
+.quota-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+.quota-line .btn {
+  margin-right: calc(-1 * var(--space-3));
+}
+
+.sq-form {
+  margin-top: var(--space-2);
+}
+
+.sq-form .actions.quiet {
+  flex-basis: 100%;
+}
+
+.preview.warn {
+  color: var(--secondary);
+}
+
+/* Appareils : case à cocher devant chaque ligne (cible de 44 px), barre de sélection. */
+.dev {
+  display: grid;
+  grid-template-columns: var(--target) minmax(0, 1fr);
+  align-items: start;
+}
+
+.dev-check {
+  display: grid;
+  place-items: center;
+  width: var(--target);
+  height: 3.5rem;
+  margin-left: var(--space-1);
+  cursor: pointer;
+}
+
+.dev-check input {
+  width: 1.125rem;
+  height: 1.125rem;
+  margin: 0;
+  accent-color: var(--brand);
+  cursor: pointer;
+}
+
+.dev-check:has(input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.devices .dev summary {
+  padding-left: var(--space-1);
+}
+
+.devices .dev .kv,
+.dev-actions {
+  padding-left: calc(var(--space-1) + 1.25rem + var(--space-3));
+  padding-right: var(--space-4);
+}
+
+.dev-actions {
+  padding-bottom: var(--space-3);
+}
+
+.dev-actions .caption {
+  max-width: 28rem;
+}
+
+.dev.selected {
+  background: var(--brand-container);
+}
+
+/* Téléphone : la case prend la place de l'icône de plateforme, déjà nommée dans la sous-ligne. */
+@media (max-width: 29.99rem) {
+  .dev-check {
+    margin-left: 0;
+  }
+
+  .devices .dev summary {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+  }
+
+  .devices .dev summary > .ico:first-child {
+    display: none;
+  }
+
+  .devices .dev .kv,
+  .dev-actions {
+    padding-left: var(--space-1);
+  }
+}
+
+.dev-quick {
+  display: none !important;
+}
+
+.selbar {
+  position: sticky;
+  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom));
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-3) calc(-1 * var(--space-4)) calc(-1 * var(--space-4));
+  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-1);
+  border-top: 1px solid var(--border-strong);
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  background: var(--surface);
+}
+
+.selbar p {
+  flex: 1 1 0;
+  min-width: 0;
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+  font-weight: 500;
+}
+
+.selbar p.bad {
+  color: var(--error);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 400;
+}
+
+/* Les cases visibles prennent la place du bas de la carte : la barre colle à elles. */
+.devices-card:has(.selbar:not([hidden])) .devices {
+  margin-bottom: 0;
+}
+
+.usage-txt.flush {
+  margin-top: 0;
+}
+
+#su-cmd {
+  white-space: pre-wrap;
+}
+
+/* Carte d'espace (téléphone) : les pastilles s'alignent à droite. */
+.c-state .badges {
+  justify-content: flex-end;
+}
+
+/* ===== confirmations : feuille basse (téléphone), boîte centrée (au-delà de 640 px) ===== */
+
+dialog.confirm {
+  max-height: calc(100vh - 2rem);
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+}
+
+.recap-list {
+  margin-top: var(--space-3);
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+}
+
+.recap-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--surface-alt);
+}
+
+.recap-list li + li {
+  margin-top: var(--space-1);
+}
+
+.su-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.su-ico {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: var(--surface-alt);
+  color: var(--error);
+}
+
+.su-ico.brand {
+  color: var(--brand);
+}
+
+.stepup > * + * {
+  margin-top: var(--space-4);
+}
+
+.stepup .actions {
+  margin-top: var(--space-5);
+}
+
+.su-review > * + * {
+  margin-top: var(--space-4);
+}
+
+/* Récapitulatif fourni par le serveur : ce qui est visé, sans ambiguïté. */
+.recap {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.recap li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+}
+
+.recap li + li {
+  border-top: 1px solid var(--border);
+}
+
+.recap li > .ico {
+  color: var(--text-muted);
+}
+
+.recap .r-main {
+  min-width: 0;
+}
+
+.recap .r-main strong {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.recap .r-main .caption {
+  display: block;
+}
+
+.recap .r-id {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+/* Variante « chiffres » (suppression d'un espace) : libellé à gauche, valeur à droite. */
+.recap.facts li {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.recap.facts li > span:first-child {
+  color: var(--text-muted);
+}
+
+.recap.facts li > span:last-child {
+  font-weight: 500;
+  text-align: right;
+}
+
+.conseq {
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+}
+
+.conseq li {
+  position: relative;
+  padding-left: var(--space-5);
+}
+
+.conseq li + li {
+  margin-top: var(--space-2);
+}
+
+.conseq li::before {
+  content: "";
+  position: absolute;
+  left: 0.375rem;
+  top: 0.5rem;
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+.conseq li.strong::before {
+  background: var(--error);
+}
+
+.conseq li.good::before {
+  background: var(--success);
+}
+
+.type-confirm {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.type-confirm label {
+  font-weight: 400;
+}
+
+.type-confirm input {
+  width: 100%;
+  font-family: var(--font-mono);
+  letter-spacing: 0.08em;
+}
+
+.type-confirm input[aria-invalid="true"] {
+  border-color: var(--error);
+}
+
+.type-confirm .ok {
+  color: var(--success);
+}
+
+.su-wait,
+.su-msg,
+.mock-sim {
+  display: none;
+}
+
+.su-wait {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--brand);
+  border-radius: var(--radius-md);
+  background: var(--brand-container);
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+}
+
+.su-wait .loading-bar {
+  margin: calc(-1 * var(--space-3)) calc(-1 * var(--space-4)) var(--space-3);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  background: transparent;
+}
+
+.su-wait p + p {
+  margin-top: var(--space-1);
+}
+
+.su-wait .caption {
+  color: var(--text);
+}
+
+.su-msg {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--error);
+  border-radius: var(--radius-md);
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+}
+
+.su-msg.warn {
+  border-color: var(--secondary);
+}
+
+.su-msg strong {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  color: var(--error);
+}
+
+.su-msg.warn strong {
+  color: var(--secondary);
+}
+
+.su-msg strong .ico {
+  margin-top: 0.0625rem;
+}
+
+.su-msg p {
+  margin-top: var(--space-1);
+  color: var(--text-muted);
+}
+
+.su-msg .tries {
+  display: flex;
+  gap: 0.25rem;
+  margin-top: var(--space-2);
+}
+
+.su-msg .tries span {
+  width: 1.5rem;
+  height: 0.25rem;
+  border-radius: var(--radius-full);
+  background: var(--surface-alt);
+}
+
+.su-msg .tries span.used {
+  background: var(--error);
+}
+
+.mock-sim {
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--space-1);
+  padding-top: var(--space-2);
+  border-top: 1px dashed var(--border-strong);
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.mock-sim > span {
+  flex-basis: 100%;
+}
+
+/* Les états de la confirmation (data-state). */
+.stepup[data-state="pending"] .su-wait,
+.stepup:not([data-state="review"]):not([data-state="pending"]) .su-msg {
+  display: block;
+}
+
+.stepup[data-state="pending"] .mock-sim {
+  display: flex;
+}
+
+.stepup[data-state="pending"] #su-ok,
+.stepup[data-state="pending"] .pk-line,
+.stepup[data-state="limit"] #su-ok,
+.stepup[data-state="limit"] .pk-line,
+.stepup[data-state="limit"] .type-confirm,
+.stepup[data-state="closed"] .su-review,
+.stepup[data-state="closed"] .pk-line,
+.stepup[data-state="closed"] .cli,
+.stepup[data-state="closed"] #su-cancel {
+  display: none;
+}
+
+.stepup[data-state="pending"] .su-review {
+  opacity: 0.75;
+}
+
+/* Aide des raccourcis. */
+.keys-list > div {
+  display: grid;
+  grid-template-columns: 13rem minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-2) 0;
+  border-top: 1px solid var(--border);
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+}
+
+.keys-list > div:first-child {
+  border-top: 0;
+}
+
+.keys-list dt {
+  color: var(--text-muted);
+}
+
+.shortcuts > * + * {
+  margin-top: var(--space-3);
+}
+
+.shortcut-link,
+.nav-key,
+.kbd-hint {
+  display: none;
+}
+
+@media (max-width: 39.99rem) {
+  /* Feuille basse : la boîte suit le contenu et défile si besoin, boutons pleine largeur. */
+  dialog.confirm {
+    max-height: calc(100dvh - var(--space-6));
+  }
+
+  .stepup .mock-sim .btn {
+    min-height: var(--target);
+  }
+}
+
 /* ===== planche d'états (etats.html) : habillage de la maquette, pas du panneau ===== */
 
 .board {
