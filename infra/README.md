@@ -694,9 +694,9 @@ tomi-relay` lets you add `MemoryMax=256M` (indicative value, adjust it to your m
 Known points, **not implemented**:
 
 - **Unsigned relay releases, deployment on a floating tag** (the optional managed-hosting example in `infra/forge/`
-  deploys from `TOMI_RELEASE_TAG`, default `relay-latest`). The `.sha256` comes from the same release as the binary: it
+  deploys from `TOMI_RELEASE_TAG`, default: the newest `relay-v*` release). The `.sha256` comes from the same release as the binary: it
   guarantees the integrity of the transfer, not its authenticity. Whoever can write to the release replaces both the binary and
-  its fingerprint, and `relay-latest` is rewritten at each publication. Options:
+  its fingerprint. Options:
   1. sign the binary with **minisign** (private key outside CI or in a protected secret, public key versioned
      in the repository and copied to the server) and have `minisign -V` checked by `deploy.sh` / `update.sh`
      before installation;

@@ -151,7 +151,7 @@ Where does the very first token come from?
 
 ## 3. Deploy / update the binary
 
-Normal deployment (pull from the GitHub release `relay-latest`): **through the panel**, not by hand —
+Normal deployment (pull from the newest `relay-v*` GitHub release): **through the panel**, not by hand —
 the panel's deploy action, the CI's post-release hook, or the Deploy button of the UI. The script run by
 the panel is the content of `infra/forge/deploy.sh` (pasted into the site's "Deploy Script" field, with
 automatic source deployment disabled); see README §4.

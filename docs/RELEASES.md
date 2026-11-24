@@ -9,7 +9,6 @@ version; there is no global version number. Client/relay compatibility is carrie
 | Product | Tag | GitHub release | Trigger | Status |
 |---|---|---|---|---|
 | Relay | `relay-vX.Y.Z` | Linux binaries | push of the tag (`release-relay.yml`) | **in place** |
-| Relay (moving pointer) | `relay-latest` | same assets as the latest relay release | rewritten by the workflow; do not edit by hand | **in place** |
 | Android, development | `android-dev` | rolling pre-release, release-signed APK `tomi-android-release.apk` (only when the release key is configured, see "Android release signing") | manual run of `build-apps.yml` | **in place** |
 | Windows, development | `windows-dev` | rolling pre-release, `tomi-windows-setup.exe` (unsigned) with `.sha256` and a build provenance attestation | manual run of `build-apps.yml` | **in place** |
 | Android, stable | `android-vX.Y.Z` | non-prerelease: APK signed with the release key, `.sha256`, attestation, notes | push of the tag (`release-apps.yml`) | **in place**, not run yet ("Cutting a stable release") |
@@ -32,7 +31,7 @@ each build. They are always marked as pre-releases and are not stable releases.
    plus `crates/core` for a client. A change in the core therefore shows up in every product it affects.
 4. Each release states the protocol version it speaks and the minimum compatible relay or client version.
 5. Release notes contain no secret and no sensitive detail. For a relay release, keep the original description (binaries,
-   pointer to `infra/`) and append the changelog. Do not edit the description of `relay-latest`.
+   pointer to `infra/`) and append the changelog. There is no moving `relay-latest` pointer: releases are immutable on this repository, so assets of a published release cannot be replaced. The deployment script looks up the newest `relay-v*` release itself.
 6. Relay release: bump the workspace version in `Cargo.toml`, push `relay-vX.Y.Z`, then check the optional deploy hook step
    (see `infra/forge/` and the `FORGE_DEPLOY_URL` secret) without assuming the deployment has finished.
 
@@ -171,7 +170,7 @@ Limits to know about:
 - Attestation says *where the file was built from*, not that the source is free of bugs or that nobody with write access
   changed the workflow. It is evidence for a user, not a substitute for reviewing the repository.
 - The rolling `android-dev` and `windows-dev` pre-releases are **replaced by every run** (`gh release upload --clobber`). That is
-  deliberate and limited to those two tags (the relay workflow does the same for its `relay-latest` pointer): a rolling channel
+  deliberate and limited to those two tags (the relay workflow no longer keeps a rolling pointer: releases are immutable): a rolling channel
   is meant to be overwritten, the workflow refuses to touch a
   release that is not a pre-release, removes stale assets, and states in the release notes which commit and which workflow
   run produced the current files; each replacement has its own checksum and its own attestation. **Stable releases never use

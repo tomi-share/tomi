@@ -7,7 +7,8 @@
 # the panel's "Deploy Script" field, which must be kept identical to this file.
 #
 # What it does on each run (repeatable, without side effects):
-#   1. reads the latest binary published in the GitHub release `relay-latest` (private repository);
+#   1. finds the newest `relay-vX.Y.Z` release (pre-releases included, drafts excluded), or the tag forced
+#      with TOMI_RELEASE_TAG, and reads its binary (the repository may be private);
 #   2. if it differs from the one running, downloads it, checks its SHA-256 digest and that it is
 #      an x86_64 ELF binary;
 #   3. installs it by atomic rename, keeping the previous one (tomi-relay.prev);
@@ -53,7 +54,10 @@ trap 'echo "deploy.sh: error at line ${LINENO} (command: ${BASH_COMMAND})" >&2' 
 # --- Deployment parameters (adjust to your install) --------------------------
 # Required: the GitHub repository that publishes the release, as OWNER/REPO (see the check below).
 REPO="${TOMI_RELEASE_REPO:-}"
-RELEASE_TAG="${TOMI_RELEASE_TAG:-relay-latest}"
+# Empty or `latest`: the newest `relay-v*` release is looked up at each run (see resolve_release_tag). A
+# moving `relay-latest` pointer does not exist any more: GitHub releases are immutable, their assets cannot be
+# replaced. Set TOMI_RELEASE_TAG=relay-vX.Y.Z to pin a version.
+RELEASE_TAG="${TOMI_RELEASE_TAG:-}"
 ASSET="tomi-relay-x86_64-unknown-linux-musl"
 
 SITE_DIR="${TOMI_SITE_DIR:-/home/deploy/relay.example.org}"
@@ -253,6 +257,38 @@ check_binary() {
     [ "$machine" = "3e" ] || die "$f is not x86_64 (ELF machine byte = ${machine})"
 }
 
+# --- Release to deploy -------------------------------------------------------
+# Sets $RELEASE_TAG: the pinned tag, or the newest `relay-v*` release (pre-releases included, drafts
+# excluded; GitHub lists releases newest first).
+resolve_release_tag() {
+    case "$RELEASE_TAG" in
+        "" | latest) RELEASE_TAG="" ;;
+        *)
+            log "Pinned release: ${RELEASE_TAG}"
+            return 0
+            ;;
+    esac
+    local tag=""
+    if command -v gh >/dev/null 2>&1 && GH_TOKEN="$GH_TOKEN" gh auth status >/dev/null 2>&1; then
+        tag="$(GH_TOKEN="$GH_TOKEN" gh release list -R "$REPO" --limit 30 --json tagName,isDraft \
+            --jq '[.[] | select((.isDraft | not) and (.tagName | startswith("relay-v")))][0].tagName // empty')" ||
+            die "could not list the releases of ${REPO} (valid token?)"
+    else
+        command -v jq >/dev/null 2>&1 || die "jq is required to read the GitHub API (apt-get install jq)"
+        local list
+        list="$(gh_curl -fsSL \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${REPO}/releases?per_page=30")" ||
+            die "could not list the releases of ${REPO} (valid token?)"
+        tag="$(printf '%s' "$list" | jq -r \
+            '[.[] | select((.draft | not) and (.tag_name | startswith("relay-v")))][0].tag_name // empty')"
+    fi
+    [ -n "$tag" ] || die "no relay-v* release found in ${REPO}"
+    RELEASE_TAG="$tag"
+    log "Newest release: ${RELEASE_TAG}"
+}
+
 # --- Release download --------------------------------------------------------
 # Fills $DL_DIR with $ASSET and $ASSET.sha256 from the release $RELEASE_TAG.
 download_release() {
@@ -302,6 +338,7 @@ read_token
 resolve_daemon
 log "Supervisor daemon: ${DAEMON}"
 
+resolve_release_tag
 download_release
 
 # Integrity check: the published digest must match the downloaded binary.
