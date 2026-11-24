@@ -2,261 +2,643 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
-<meta name="referrer" content="no-referrer">
 <meta name="color-scheme" content="light dark">
 <title>Administration du relais Tomi</title>
 <link rel="stylesheet" href="app.css">
 <script src="app.js" defer></script>
 </head>
 <body>
+<!-- Page d’administration du relais. Aucun code ni style en ligne (CSP : script-src 'self', style-src 'self'). -->
+
+<!-- Icônes : Material Symbols Outlined (Apache 2.0), en ligne : aucune police, aucun chargement. -->
+<svg class="sprite" aria-hidden="true" focusable="false">
+  <symbol id="i-overview" viewBox="0 0 24 24"><path d="M19 5v2h-4V5h4M9 5v6H5V5h4m10 8v6h-4v-6h4M9 17v2H5v-2h4M21 3h-8v6h8V3zM11 3H3v10h8V3zm10 8h-8v10h8V11zm-10 4H3v6h8v-6z"/></symbol>
+  <symbol id="i-spaces" viewBox="0 0 24 24"><path d="M6 13c-2.2 0-4 1.8-4 4s1.8 4 4 4 4-1.8 4-4-1.8-4-4-4zm0 6c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm6-16C9.8 3 8 4.8 8 7s1.8 4 4 4 4-1.8 4-4-1.8-4-4-4zm0 6c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm6 4c-2.2 0-4 1.8-4 4s1.8 4 4 4 4-1.8 4-4-1.8-4-4-4zm0 6c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></symbol>
+  <symbol id="i-invite" viewBox="0 -960 960 960"><path d="M720-400v-120H600v-80h120v-120h80v120h120v80H800v120h-80Zm-360-80q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 66-47 113t-113 47ZM40-160v-112q0-34 17.5-62.5T104-378q62-31 126-46.5T360-440q66 0 130 15.5T616-378q29 15 46.5 43.5T680-272v112H40Zm80-80h480v-32q0-11-5.5-20T580-306q-54-27-109-40.5T360-360q-56 0-111 13.5T140-306q-9 5-14.5 14t-5.5 20v32Zm240-320q33 0 56.5-23.5T440-640q0-33-23.5-56.5T360-720q-33 0-56.5 23.5T280-640q0 33 23.5 56.5T360-560Zm0-80Zm0 400Z"/></symbol>
+  <symbol id="i-journal" viewBox="0 -960 960 960"><path d="M280-280h280v-80H280v80Zm0-160h400v-80H280v80Zm0-160h400v-80H280v80Zm-80 480q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z"/></symbol>
+  <symbol id="i-settings" viewBox="0 -960 960 960"><path d="M440-120v-240h80v80h320v80H520v80h-80Zm-320-80v-80h240v80H120Zm160-160v-80H120v-80h160v-80h80v240h-80Zm160-80v-80h400v80H440Zm160-160v-240h80v80h160v80H680v80h-80Zm-480-80v-80h400v80H120Z"/></symbol>
+  <symbol id="i-more" viewBox="0 -960 960 960"><path d="M480-160q-33 0-56.5-23.5T400-240q0-33 23.5-56.5T480-320q33 0 56.5 23.5T560-240q0 33-23.5 56.5T480-160Zm0-240q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm0-240q-33 0-56.5-23.5T400-720q0-33 23.5-56.5T480-800q33 0 56.5 23.5T560-720q0 33-23.5 56.5T480-640Z"/></symbol>
+  <symbol id="i-back" viewBox="0 -960 960 960"><path d="m313-440 224 224-57 56-320-320 320-320 57 56-224 224h487v80H313Z"/></symbol>
+  <symbol id="i-chevron" viewBox="0 -960 960 960"><path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z"/></symbol>
+  <symbol id="i-expand" viewBox="0 -960 960 960"><path d="M480-345 240-585l56-56 184 184 184-184 56 56-240 240Z"/></symbol>
+  <symbol id="i-close" viewBox="0 -960 960 960"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"/></symbol>
+  <symbol id="i-logout" viewBox="0 -960 960 960"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h280v80H200v560h280v80H200Zm440-160-55-58 102-102H360v-80h327L585-622l55-58 200 200-200 200Z"/></symbol>
+  <symbol id="i-check" viewBox="0 -960 960 960"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></symbol>
+  <symbol id="i-check-circle" viewBox="0 -960 960 960"><path d="m424-296 282-282-56-56-226 226-114-114-56 56 170 170Zm56 216q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></symbol>
+  <symbol id="i-warning" viewBox="0 0 24 24"><path d="M12 5.99L19.53 19H4.47L12 5.99M12 2L1 21h22L12 2zm1 14h-2v2h2v-2zm0-6h-2v4h2v-4z"/></symbol>
+  <symbol id="i-error" viewBox="0 0 24 24"><path d="M11 15h2v2h-2zm0-8h2v6h-2zm.99-5C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></symbol>
+  <symbol id="i-add" viewBox="0 -960 960 960"><path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z"/></symbol>
+  <symbol id="i-computer" viewBox="0 -960 960 960"><path d="M40-120v-80h880v80H40Zm120-120q-33 0-56.5-23.5T80-320v-440q0-33 23.5-56.5T160-840h640q33 0 56.5 23.5T880-760v440q0 33-23.5 56.5T800-240H160Zm0-80h640v-440H160v440Zm0 0v-440 440Z"/></symbol>
+  <symbol id="i-phone" viewBox="0 -960 960 960"><path d="M280-40q-33 0-56.5-23.5T200-120v-720q0-33 23.5-56.5T280-920h400q33 0 56.5 23.5T760-840v720q0 33-23.5 56.5T680-40H280Zm0-120v40h400v-40H280Zm0-80h400v-480H280v480Zm0-560h400v-40H280v40Zm0 0v-40 40Zm0 640v40-40Z"/></symbol>
+  <symbol id="i-terminal" viewBox="0 0 24 24"><path d="M20 4H4c-1.11 0-2 .9-2 2v12c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8h16v10zm-2-1h-6v-2h6v2zM7.5 17l-1.41-1.41L8.67 13l-2.59-2.59L7.5 9l4 4-4 4z"/></symbol>
+  <symbol id="i-schedule" viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></symbol>
+  <symbol id="i-key" viewBox="0 -960 960 960"><path d="M280-400q-33 0-56.5-23.5T200-480q0-33 23.5-56.5T280-560q33 0 56.5 23.5T360-480q0 33-23.5 56.5T280-400Zm0 160q-100 0-170-70T40-480q0-100 70-170t170-70q67 0 121.5 33t86.5 87h352l120 120-180 180-80-60-80 60-85-60h-47q-32 54-86.5 87T280-240Zm0-80q56 0 98.5-34t56.5-86h125l58 41 82-61 71 55 75-75-40-40H435q-14-52-56.5-86T280-640q-66 0-113 47t-47 113q0 66 47 113t113 47Z"/></symbol>
+  <symbol id="i-delete" viewBox="0 -960 960 960"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/></symbol>
+  <symbol id="i-person-remove" viewBox="0 -960 960 960"><path d="M640-520v-80h240v80H640Zm-280 40q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 66-47 113t-113 47ZM40-160v-112q0-34 17.5-62.5T104-378q62-31 126-46.5T360-440q66 0 130 15.5T616-378q29 15 46.5 43.5T680-272v112H40Zm80-80h480v-32q0-11-5.5-20T580-306q-54-27-109-40.5T360-360q-56 0-111 13.5T140-306q-9 5-14.5 14t-5.5 20v32Zm240-320q33 0 56.5-23.5T440-640q0-33-23.5-56.5T360-720q-33 0-56.5 23.5T280-640q0 33 23.5 56.5T360-560Zm0-80Zm0 400Z"/></symbol>
+  <symbol id="i-lock" viewBox="0 -960 960 960"><path d="M240-80q-33 0-56.5-23.5T160-160v-400q0-33 23.5-56.5T240-640h40v-80q0-83 58.5-141.5T480-920q83 0 141.5 58.5T680-720v80h40q33 0 56.5 23.5T800-560v400q0 33-23.5 56.5T720-80H240Zm0-80h480v-400H240v400Zm240-120q33 0 56.5-23.5T560-360q0-33-23.5-56.5T480-440q-33 0-56.5 23.5T400-360q0 33 23.5 56.5T480-280ZM360-640h240v-80q0-50-35-85t-85-35q-50 0-85 35t-35 85v80ZM240-160v-400 400Z"/></symbol>
+  <symbol id="i-info" viewBox="0 -960 960 960"><path d="M440-280h80v-240h-80v240Zm40-320q17 0 28.5-11.5T520-640q0-17-11.5-28.5T480-680q-17 0-28.5 11.5T440-640q0 17 11.5 28.5T480-600Zm0 520q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></symbol>
+  <symbol id="i-keyboard" viewBox="0 -960 960 960"><path d="M160-200q-33 0-56.5-23.5T80-280v-400q0-33 23.5-56.5T160-760h640q33 0 56.5 23.5T880-680v400q0 33-23.5 56.5T800-200H160Zm0-80h640v-400H160v400Zm160-40h320v-80H320v80ZM200-440h80v-80h-80v80Zm120 0h80v-80h-80v80Zm120 0h80v-80h-80v80Zm120 0h80v-80h-80v80Zm120 0h80v-80h-80v80ZM200-560h80v-80h-80v80Zm120 0h80v-80h-80v80Zm120 0h80v-80h-80v80Zm120 0h80v-80h-80v80Zm120 0h80v-80h-80v80ZM160-280v-400 400Z"/></symbol>
+</svg>
+
 <a class="skip" href="#main">Aller au contenu</a>
-<header class="top">
-  <h1>Administration du relais Tomi</h1>
-  <div class="top-tools">
-    <p id="session-info" class="session-info" hidden></p>
-    <label class="theme-pick" for="theme">Thème
-      <select id="theme" name="theme">
-        <option value="auto">Automatique</option>
-        <option value="light">Clair</option>
-        <option value="dark">Sombre</option>
-      </select>
-    </label>
-    <button id="logout" type="button" class="secondary" hidden>Se déconnecter</button>
+
+<!-- Desktop : barre latérale. Mobile : `display: contents`, la navigation passe en bas,
+     le panneau de session devient une feuille ouverte par le bouton ⋮ de la barre du haut. -->
+<aside class="side" hidden>
+  <div class="brand">
+    <!-- design/tomi/logo-horizontal.svg (logotype dessiné, jamais recomposé dans une police) -->
+    <svg class="logo-lockup" viewBox="0 52 634.4 173.2" role="img" aria-label="Tomi"><g transform="translate(-17.6 47.6) scale(0.8)"><path fill="currentColor" d="M61.93 70.13A94 94 0 1 1 61.93 185.87L80.84 171.1A70 70 0 1 0 80.84 84.9Z"/><path fill="currentColor" d="M22 128A32 32 0 1 0 86 128A32 32 0 1 0 22 128Z"/></g><g transform="translate(222.4 0)"><path fill="currentColor" d="M14 62V100H0V122H14V164A36 36 0 0 0 50 200H66V178H50A14 14 0 0 1 36 164V122H62V100H36V62Z"/><path fill="currentColor" fill-rule="evenodd" d="M86 150A52 52 0 1 0 190 150A52 52 0 1 0 86 150Z M108 150A30 30 0 1 1 168 150A30 30 0 1 1 108 150Z"/><path fill="currentColor" d="M212 200V100H234V105.89A44 44 0 0 1 289 114.9A44 44 0 0 1 366 144V200H344V144A22 22 0 0 0 300 144V200H278V144A22 22 0 0 0 234 144V200Z"/><path fill="currentColor" d="M390 100H412V200H390Z"/><path fill="currentColor" d="M387 66A14 14 0 1 0 415 66A14 14 0 1 0 387 66Z"/></g></svg>
+    <span class="caption">Administration du relais</span>
   </div>
+
+  <nav class="nav" id="nav" aria-label="Sections">
+    <ul>
+      <li><a href="#apercu" data-view="apercu" data-key="a" aria-current="page"><span class="pill"><svg class="ico lg"><use href="#i-overview"/></svg></span><span class="lbl-short">Aperçu</span><span class="lbl-long">Vue d’ensemble</span><kbd class="nav-key" aria-hidden="true">G A</kbd></a></li>
+      <li><a href="#espaces" data-view="espaces" data-key="e"><span class="pill"><svg class="ico lg"><use href="#i-spaces"/></svg></span><span>Espaces</span><kbd class="nav-key" aria-hidden="true">G E</kbd></a></li>
+      <li><a href="#invitations" data-view="invitations" data-key="i"><span class="pill"><svg class="ico lg"><use href="#i-invite"/></svg></span><span>Invitations</span><kbd class="nav-key" aria-hidden="true">G I</kbd></a></li>
+      <li><a href="#journal" data-view="journal" data-key="j"><span class="pill"><svg class="ico lg"><use href="#i-journal"/></svg></span><span>Journal</span><kbd class="nav-key" aria-hidden="true">G J</kbd></a></li>
+      <li><a href="#reglages" data-view="reglages" data-key="r"><span class="pill"><svg class="ico lg"><use href="#i-settings"/></svg></span><span>Réglages</span><kbd class="nav-key" aria-hidden="true">G R</kbd></a></li>
+    </ul>
+  </nav>
+
+  <div class="scrim" id="scrim" hidden></div>
+  <section class="session-panel" id="session-panel" aria-labelledby="h-session">
+    <div class="sheet-head">
+      <h2 id="h-session">Session et thème</h2>
+      <button type="button" class="icon-btn" id="session-close" aria-label="Fermer"><svg class="ico lg"><use href="#i-close"/></svg></button>
+    </div>
+    <div class="session-state" id="session-info">
+      <strong id="session-line"></strong>
+      <span class="caption" id="session-note"></span>
+    </div>
+    <p class="caption mobile-only">Données mises à jour à <span class="updated-time"></span>.</p>
+    <div>
+      <span class="label" id="l-theme">Thème</span>
+      <div class="segmented mt-1" role="radiogroup" aria-labelledby="l-theme">
+        <label><input type="radio" name="theme" value="auto" checked>Auto</label>
+        <label><input type="radio" name="theme" value="light">Clair</label>
+        <label><input type="radio" name="theme" value="dark">Sombre</label>
+      </div>
+    </div>
+    <a class="row-link mobile-only" href="#apercu" id="open-blind">Ce que le relais voit, et ce qu’il ne voit pas<svg class="ico"><use href="#i-chevron"/></svg></a>
+    <div class="session-actions">
+      <button type="button" class="btn secondary block" id="logout"><svg class="ico"><use href="#i-logout"/></svg>Se déconnecter</button>
+      <button type="button" class="btn ghost block" id="close-all" data-close-all>Fermer toutes les sessions</button>
+    </div>
+    <button type="button" class="shortcut-link desktop-only" id="shortcuts-open" aria-haspopup="dialog"><svg class="ico sm"><use href="#i-keyboard"/></svg>Raccourcis clavier<kbd>?</kbd></button>
+  </section>
+</aside>
+
+<header class="appbar" hidden>
+  <button type="button" class="icon-btn back" id="back" aria-label="Retour aux espaces"><svg class="ico lg"><use href="#i-back"/></svg></button>
+  <!-- design/tomi/logo-24.svg : dessin au pixel, à 24 px exactement -->
+  <svg class="logo" viewBox="0 0 24 24" shape-rendering="crispEdges" role="img" aria-label="Tomi"><path fill="currentColor" d="M10 3h6v1h-6zM8 4h10v1h-10zM7 5h3v1h-3zM16 5h3v1h-3zM6 6h3v1h-3zM17 6h3v1h-3zM18 7h3v1h-3zM19 8h2v1h-2zM3 9h4v1h-4zM20 9h2v1h-2zM2 10h6v1h-6zM20 10h2v1h-2zM2 11h6v1h-6zM20 11h2v1h-2zM2 12h6v1h-6zM20 12h2v1h-2zM2 13h6v1h-6zM20 13h2v1h-2zM3 14h4v1h-4zM20 14h2v1h-2zM19 15h2v1h-2zM18 16h3v1h-3zM6 17h3v1h-3zM17 17h3v1h-3zM7 18h3v1h-3zM16 18h3v1h-3zM8 19h10v1h-10zM10 20h6v1h-6z"/></svg>
+  <h1 id="page-title" tabindex="-1"><span class="t-main" id="t-main">Vue d’ensemble</span><span class="t-detail">Espace <span class="mono" id="t-space"></span></span></h1>
+  <span class="caption updated" id="updated-at">Mis à jour à <span class="updated-time"></span></span>
+  <!-- Un libellé, pas d'icône à flèches circulaires (charte 6.3). -->
+  <span class="session-chip" id="session-chip" hidden><svg class="ico sm"><use href="#i-schedule"/></svg><span></span></span>
+  <button type="button" class="btn ghost refresh" id="refresh" title="Actualiser (R)">Actualiser</button>
+  <button type="button" class="icon-btn menu" id="menu" aria-label="Session, thème et déconnexion" aria-haspopup="dialog" aria-expanded="false" aria-controls="session-panel"><svg class="ico lg"><use href="#i-more"/></svg></button>
+  <!-- Actualisation en cours : filet linéaire, jamais de spinner (charte 6.3). -->
+  <div class="loading-bar" id="loading" role="progressbar" aria-label="Actualisation en cours" hidden></div>
 </header>
 
-<nav id="dash-nav" class="dash-nav" aria-label="Sections du tableau de bord" hidden>
-  <ul>
-    <li><a href="#h-status">Vue d’ensemble</a></li>
-    <li><a href="#h-spaces">Espaces</a></li>
-    <li><a href="#h-invitations">Invitations</a></li>
-    <li><a href="#h-quota">Quota</a></li>
-    <li><a href="#h-journal">Journal</a></li>
-    <li><a href="#h-about">Diagnostic</a></li>
-  </ul>
-</nav>
-
 <main id="main" tabindex="-1">
-  <div class="toast-zone">
-    <div id="toast" class="toast" hidden>
-      <p id="message" class="message" role="status" aria-live="polite"></p>
-      <button id="toast-close" type="button" class="ghost" aria-label="Fermer le message">Fermer</button>
-    </div>
-  </div>
 
-  <section id="view-loading" aria-labelledby="h-loading">
-    <h2 id="h-loading" tabindex="-1">Chargement</h2>
-    <p>Un instant…</p>
-  </section>
-
-  <section id="view-nojs" hidden aria-labelledby="h-unsupported">
-    <h2 id="h-unsupported" tabindex="-1">Navigateur non pris en charge</h2>
-    <p>Ce navigateur ne gère pas les clés d’accès (WebAuthn). Utilise un navigateur récent, en
-      HTTPS.</p>
-  </section>
-
-  <section id="view-enroll" class="card narrow" hidden aria-labelledby="h-enroll">
-    <h2 id="h-enroll" tabindex="-1">Créer ma clé d’accès</h2>
-    <p>Aucune clé d’accès n’est enregistrée sur ce relais. Pour la créer, il te faut un code
-      d’enrôlement, valable 15 minutes. Il s’obtient sur le serveur :
-      <code>tomi-relay admin web enroll</code>.</p>
-    <form id="enroll-form" autocomplete="off" novalidate>
-      <p>
-        <label for="code">Code d’enrôlement</label><br>
-        <input id="code" name="code" type="text" required autocomplete="off" autocapitalize="none"
-          autocorrect="off" spellcheck="false" inputmode="text" maxlength="64" size="24"
-          aria-describedby="code-hint">
-      </p>
-      <p id="code-hint" class="hint">Format <code>xxxx-xxxx-xxxx</code> ; majuscules, tirets et
-        espaces n’ont pas d’importance. 5 essais au plus.</p>
-      <p><button id="enroll-submit" type="submit">Créer ma clé d’accès</button></p>
-    </form>
-  </section>
-
-  <section id="view-login" class="card narrow" hidden aria-labelledby="h-login">
-    <h2 id="h-login" tabindex="-1">Connexion</h2>
-    <p>Utilise ta clé d’accès (empreinte, visage, code du téléphone ou de l’ordinateur).</p>
-    <p><button id="login-submit" type="button">Se connecter avec ma clé d’accès</button></p>
-    <p class="hint">La session se ferme après 30 minutes sans activité, et au plus tard 8 heures
-      après la connexion.</p>
-  </section>
-
-  <div id="view-dashboard" hidden>
-    <section aria-labelledby="h-status">
-      <div class="section-head">
-        <h2 id="h-status" tabindex="-1">Vue d’ensemble</h2>
-        <div class="refresh">
-          <span id="updated-at" class="hint" aria-live="off"></span>
-          <button id="refresh" type="button" class="secondary">Actualiser</button>
-        </div>
+  <!-- ===================== Écrans sans navigation ===================== -->
+  <section class="view auth-view" id="view-loading" aria-label="Chargement">
+    <div class="auth">
+      <svg class="logo-lockup" viewBox="0 52 634.4 173.2" role="img" aria-label="Tomi"><g transform="translate(-17.6 47.6) scale(0.8)"><path fill="currentColor" d="M61.93 70.13A94 94 0 1 1 61.93 185.87L80.84 171.1A70 70 0 1 0 80.84 84.9Z"/><path fill="currentColor" d="M22 128A32 32 0 1 0 86 128A32 32 0 1 0 22 128Z"/></g><g transform="translate(222.4 0)"><path fill="currentColor" d="M14 62V100H0V122H14V164A36 36 0 0 0 50 200H66V178H50A14 14 0 0 1 36 164V122H62V100H36V62Z"/><path fill="currentColor" fill-rule="evenodd" d="M86 150A52 52 0 1 0 190 150A52 52 0 1 0 86 150Z M108 150A30 30 0 1 1 168 150A30 30 0 1 1 108 150Z"/><path fill="currentColor" d="M212 200V100H234V105.89A44 44 0 0 1 289 114.9A44 44 0 0 1 366 144V200H344V144A22 22 0 0 0 300 144V200H278V144A22 22 0 0 0 234 144V200Z"/><path fill="currentColor" d="M390 100H412V200H390Z"/><path fill="currentColor" d="M387 66A14 14 0 1 0 415 66A14 14 0 1 0 387 66Z"/></g></svg>
+      <div class="card">
+        <h2 id="h-loading" tabindex="-1">Chargement…</h2>
+        <div class="loading-bar" role="progressbar" aria-label="Chargement en cours"></div>
       </div>
-      <p id="status-error" class="inline-error" role="alert" hidden></p>
-      <ul id="alerts" class="alerts" aria-label="Points d’attention" hidden></ul>
-      <p id="alerts-none" class="ok-line" hidden>Rien à signaler.</p>
-      <dl id="status-list" class="tiles"></dl>
-      <details class="help">
-        <summary>Ce que le relais voit, et ce qu’il ne voit pas</summary>
-        <p>Le relais est <strong>aveugle</strong> : il ne fait que stocker et faire suivre des octets
-          chiffrés sur les appareils. Il ne possède aucune clé d’espace, il ne peut donc lire ni un
-          contenu, ni un titre, ni un nom de fichier, ni un secret.</p>
-        <p>Ce panneau ne montre que ce que le relais sait déjà pour faire son travail : des
-          comptes, des tailles, des dates, des identifiants courts et le nom que chaque appareil
-          a donné en rejoignant son espace. « Éléments » compte des enveloppes chiffrées, sans
-          savoir ce qu’elles contiennent.</p>
-        <p>Retirer un appareil ou supprimer un espace ne se fait pas d’ici : ces actions restent
-          sur le serveur (<code>tomi-relay admin</code>) ou dans l’application, pour qu’une session
-          web volée ne puisse rien détruire.</p>
-      </details>
-    </section>
+    </div>
+  </section>
 
-    <section aria-labelledby="h-spaces">
-      <h2 id="h-spaces" tabindex="-1">Espaces</h2>
-      <p id="spaces-error" class="inline-error" role="alert" hidden></p>
-      <p id="spaces-empty" class="empty" hidden>Aucun espace pour l’instant. Crée une invitation
-        plus bas : la personne invitée créera son espace depuis l’application.</p>
-      <div class="scroll">
-        <table id="spaces-table" class="stack" hidden>
+  <section class="view auth-view" id="view-nojs" aria-label="Navigateur non pris en charge" hidden>
+    <div class="auth">
+      <svg class="logo-lockup" viewBox="0 52 634.4 173.2" role="img" aria-label="Tomi"><g transform="translate(-17.6 47.6) scale(0.8)"><path fill="currentColor" d="M61.93 70.13A94 94 0 1 1 61.93 185.87L80.84 171.1A70 70 0 1 0 80.84 84.9Z"/><path fill="currentColor" d="M22 128A32 32 0 1 0 86 128A32 32 0 1 0 22 128Z"/></g><g transform="translate(222.4 0)"><path fill="currentColor" d="M14 62V100H0V122H14V164A36 36 0 0 0 50 200H66V178H50A14 14 0 0 1 36 164V122H62V100H36V62Z"/><path fill="currentColor" fill-rule="evenodd" d="M86 150A52 52 0 1 0 190 150A52 52 0 1 0 86 150Z M108 150A30 30 0 1 1 168 150A30 30 0 1 1 108 150Z"/><path fill="currentColor" d="M212 200V100H234V105.89A44 44 0 0 1 289 114.9A44 44 0 0 1 366 144V200H344V144A22 22 0 0 0 300 144V200H278V144A22 22 0 0 0 234 144V200Z"/><path fill="currentColor" d="M390 100H412V200H390Z"/><path fill="currentColor" d="M387 66A14 14 0 1 0 415 66A14 14 0 1 0 387 66Z"/></g></svg>
+      <div class="card">
+        <h2 id="h-unsupported" tabindex="-1">Navigateur non pris en charge</h2>
+        <p>Ce navigateur ne gère pas les clés d’accès. Utilise un navigateur récent, en HTTPS.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="view auth-view" id="view-enroll" aria-label="Créer la clé d’accès" hidden>
+    <div class="auth">
+      <svg class="logo-lockup" viewBox="0 52 634.4 173.2" role="img" aria-label="Tomi"><g transform="translate(-17.6 47.6) scale(0.8)"><path fill="currentColor" d="M61.93 70.13A94 94 0 1 1 61.93 185.87L80.84 171.1A70 70 0 1 0 80.84 84.9Z"/><path fill="currentColor" d="M22 128A32 32 0 1 0 86 128A32 32 0 1 0 22 128Z"/></g><g transform="translate(222.4 0)"><path fill="currentColor" d="M14 62V100H0V122H14V164A36 36 0 0 0 50 200H66V178H50A14 14 0 0 1 36 164V122H62V100H36V62Z"/><path fill="currentColor" fill-rule="evenodd" d="M86 150A52 52 0 1 0 190 150A52 52 0 1 0 86 150Z M108 150A30 30 0 1 1 168 150A30 30 0 1 1 108 150Z"/><path fill="currentColor" d="M212 200V100H234V105.89A44 44 0 0 1 289 114.9A44 44 0 0 1 366 144V200H344V144A22 22 0 0 0 300 144V200H278V144A22 22 0 0 0 234 144V200Z"/><path fill="currentColor" d="M390 100H412V200H390Z"/><path fill="currentColor" d="M387 66A14 14 0 1 0 415 66A14 14 0 1 0 387 66Z"/></g></svg>
+      <div class="card">
+        <h2 id="h-enroll" tabindex="-1">Créer ma clé d’accès</h2>
+        <p>Il te faut un code d’enrôlement, valable 15 min. Sur le serveur :</p>
+        <div class="cmd"><code>tomi-relay admin web enroll</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande"><svg class="ico"><use href="#i-copy"/></svg></button></div>
+        <form id="enroll-form" autocomplete="off" novalidate>
+          <label for="code">Code d’enrôlement</label>
+          <input id="code" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="64" placeholder="xxxx-xxxx-xxxx" aria-describedby="code-hint">
+          <p class="caption" id="code-hint">Majuscules, tirets et espaces sans importance · 5 essais au plus</p>
+          <button type="submit" class="btn block" id="enroll-submit">Créer ma clé d’accès</button>
+        </form>
+        <p class="caption" id="enroll-back-line"><button type="button" class="btn ghost sm" id="enroll-back" hidden>Retour à la connexion</button></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="view auth-view" id="view-login" aria-label="Connexion" hidden>
+    <div class="auth">
+      <svg class="logo-lockup" viewBox="0 52 634.4 173.2" role="img" aria-label="Tomi"><g transform="translate(-17.6 47.6) scale(0.8)"><path fill="currentColor" d="M61.93 70.13A94 94 0 1 1 61.93 185.87L80.84 171.1A70 70 0 1 0 80.84 84.9Z"/><path fill="currentColor" d="M22 128A32 32 0 1 0 86 128A32 32 0 1 0 22 128Z"/></g><g transform="translate(222.4 0)"><path fill="currentColor" d="M14 62V100H0V122H14V164A36 36 0 0 0 50 200H66V178H50A14 14 0 0 1 36 164V122H62V100H36V62Z"/><path fill="currentColor" fill-rule="evenodd" d="M86 150A52 52 0 1 0 190 150A52 52 0 1 0 86 150Z M108 150A30 30 0 1 1 168 150A30 30 0 1 1 108 150Z"/><path fill="currentColor" d="M212 200V100H234V105.89A44 44 0 0 1 289 114.9A44 44 0 0 1 366 144V200H344V144A22 22 0 0 0 300 144V200H278V144A22 22 0 0 0 234 144V200Z"/><path fill="currentColor" d="M390 100H412V200H390Z"/><path fill="currentColor" d="M387 66A14 14 0 1 0 415 66A14 14 0 1 0 387 66Z"/></g></svg>
+      <div class="card">
+        <h2 id="h-login" tabindex="-1">Connexion</h2>
+        <p class="note-line warn" id="login-note" hidden><svg class="ico"><use href="#i-lock"/></svg><span id="login-note-text"></span></p>
+        <p>Utilise ta clé d’accès : empreinte, visage ou code de l’appareil.</p>
+        <button type="button" class="btn block" id="login-submit">Se connecter avec ma clé d’accès</button>
+        <p class="caption">La session se ferme après 30 min sans activité, 8 h au plus tard.</p>
+        <p class="caption"><button type="button" class="btn ghost sm" id="enroll-open">Ajouter une clé avec un code d’enrôlement</button></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== Vue d'ensemble ===================== -->
+  <section class="view" id="view-apercu" aria-label="Vue d’ensemble" hidden>
+    <div class="overview">
+      <div class="col">
+        <div class="card">
+          <div class="status" id="status-box">
+            <span class="status-ico"><svg class="ico lg"><use id="status-use" href="#i-check-circle"/></svg></span>
+            <div>
+              <h2 id="h-status" tabindex="-1">Vue d’ensemble</h2>
+              <p class="hint" id="status-sub"></p>
+            </div>
+          </div>
+          <ul class="alerts" id="alerts" aria-label="Points d’attention"></ul>
+        </div>
+        <p class="error-line" id="status-error" role="alert" hidden></p>
+        <div class="tiles" id="status-list"></div>
+      </div>
+
+      <details class="fold card" id="blind">
+        <summary>Ce que le relais voit, et ce qu’il ne voit pas<svg class="ico chev"><use href="#i-expand"/></svg></summary>
+        <div class="fold-body hint">
+          <p>Le relais est <strong>aveugle</strong> : il stocke et fait suivre des octets chiffrés sur les appareils. Il n’a aucune clé d’espace : ni contenu, ni titre, ni nom de fichier, ni secret.</p>
+          <p>Ce panneau montre ce que le relais sait déjà pour faire son travail : des comptes, des tailles, des dates, des identifiants courts et le nom que chaque appareil s’est donné. « Éléments » compte des enveloppes chiffrées.</p>
+          <p>Retirer un appareil, supprimer un espace ou créer une invitation demande ta <strong>clé d’accès à chaque fois</strong> : une session volée ne peut ni retirer, ni supprimer, ni inviter. L’accès au panneau lui-même (clés, adresse) ne se change que sur le serveur.</p>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <!-- ===================== Espaces ===================== -->
+  <section class="view" id="view-espaces" aria-label="Espaces" hidden>
+    <div class="spaces-layout" id="spaces-layout">
+      <div class="spaces-list">
+        <!-- Après une suppression : bandeau en tête de la liste (pas un retour qui s'efface). -->
+        <div class="banner" id="spaces-banner" role="status" hidden>
+          <svg class="ico"><use href="#i-delete"/></svg>
+          <div class="banner-body">
+            <p><strong>Espace <span class="mono" id="banner-id"></span> supprimé.</strong> Ses appareils ne le trouvent plus.</p>
+            <p class="caption">Le dossier chiffré reste dans la corbeille du relais jusqu’au <span id="banner-until"></span> ; seul le serveur peut le restaurer.</p>
+            <details class="fold cli">
+              <summary><svg class="ico sm"><use href="#i-terminal"/></svg>Équivalent en ligne de commande<svg class="ico chev"><use href="#i-expand"/></svg></summary>
+              <div class="cmd"><code id="banner-cmd"></code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande de restauration"><svg class="ico"><use href="#i-copy"/></svg></button></div>
+            </details>
+          </div>
+          <button type="button" class="icon-btn" id="banner-close" aria-label="Fermer le bandeau"><svg class="ico"><use href="#i-close"/></svg></button>
+        </div>
+
+        <div class="list-bar">
+          <p class="hint"><strong id="spaces-count"></strong></p>
+          <button type="button" class="btn ghost sm" id="spaces-retry" hidden>Réessayer</button>
+          <label class="sort-pick">Trier
+            <select id="spaces-sort" aria-label="Trier les espaces">
+              <option value="activity">Dernière activité</option>
+              <option value="created">Création</option>
+              <option value="usage">Utilisation</option>
+              <option value="devices">Appareils</option>
+              <option value="id">Identifiant</option>
+            </select>
+          </label>
+          <span class="kbd-hint desktop-only" aria-hidden="true"><kbd>J</kbd><kbd>K</kbd> pour parcourir · <kbd>Entrée</kbd> pour ouvrir</span>
+        </div>
+        <p class="error-line" id="spaces-error" role="alert" hidden></p>
+        <p class="empty" id="spaces-empty" hidden>Aucun espace sur ce relais. Crée une invitation pour en ouvrir un.</p>
+        <table class="spaces" id="spaces-table">
           <caption class="sr">Espaces hébergés par ce relais. Les en-têtes de colonne permettent de trier.</caption>
           <thead>
             <tr>
-              <th scope="col" data-sort="id">Identifiant</th>
-              <th scope="col" data-sort="created_at">Créé</th>
-              <th scope="col" data-sort="last_activity_at">Dernière activité</th>
-              <th scope="col" data-sort="members">Appareils</th>
-              <th scope="col" data-sort="items">Contenu</th>
-              <th scope="col" data-sort="used_bytes">Utilisation</th>
-              <th scope="col">État</th>
-              <th scope="col"><span class="sr">Actions</span></th>
+              <th scope="col" class="c-id"><button type="button" class="sort" data-sort="id">Identifiant<span class="dir" aria-hidden="true"></span></button></th>
+              <th scope="col" class="c-state">État</th>
+              <th scope="col" class="c-dev"><button type="button" class="sort" data-sort="devices">Appareils<span class="dir" aria-hidden="true"></span></button></th>
+              <th scope="col" class="c-items"><button type="button" class="sort" data-sort="items">Contenu<span class="dir" aria-hidden="true"></span></button></th>
+              <th scope="col" class="c-usage"><button type="button" class="sort" data-sort="usage">Utilisation<span class="dir" aria-hidden="true"></span></button></th>
+              <th scope="col" class="c-act" aria-sort="descending"><button type="button" class="sort" data-sort="activity">Dernière activité<span class="dir" aria-hidden="true">▼</span></button></th>
+              <th scope="col" class="c-crt"><button type="button" class="sort" data-sort="created">Créé<span class="dir" aria-hidden="true"></span></button></th>
+              <th scope="col" class="c-go"><span class="sr">Détail</span></th>
             </tr>
           </thead>
           <tbody id="spaces-body"></tbody>
         </table>
       </div>
-    </section>
 
-    <section id="devices-section" class="card" hidden aria-labelledby="h-devices">
-      <div class="section-head">
-        <h2 id="h-devices" tabindex="-1">Appareils de l’espace <span id="devices-space" class="mono"></span></h2>
-        <button id="devices-close" type="button" class="secondary">Fermer</button>
-      </div>
-      <p class="hint">Métadonnées seulement : jamais de contenu, de clé ni de secret.</p>
-      <dl id="space-facts" class="facts"></dl>
-      <p id="devices-error" class="inline-error" role="alert" hidden></p>
-      <p id="devices-empty" class="empty" hidden>Aucun appareil.</p>
-      <div class="scroll">
-        <table id="devices-table" class="stack" hidden>
-          <caption class="sr">Appareils de l’espace choisi. Les en-têtes de colonne permettent de trier.</caption>
-          <thead>
-            <tr>
-              <th scope="col" data-sort="name">Nom</th>
-              <th scope="col" data-sort="platform">Plateforme</th>
-              <th scope="col" data-sort="app_version">Version</th>
-              <th scope="col" data-sort="registered_at">Ajouté</th>
-              <th scope="col" data-sort="last_seen_at">Dernière activité</th>
-              <th scope="col">État</th>
-              <th scope="col">Empreinte</th>
-            </tr>
-          </thead>
-          <tbody id="devices-body"></tbody>
-        </table>
-      </div>
-      <details class="help">
-        <summary>Agir sur cet espace depuis le serveur</summary>
-        <p>Le panneau ne retire aucun appareil et ne supprime aucun espace. Sur le serveur :</p>
-        <ul id="space-commands" class="commands"></ul>
-        <p class="hint">La suppression demande une confirmation sur le serveur : la commande copiée
-          ne la contient pas.</p>
-      </details>
-    </section>
+      <!-- Détail d'un espace : page dédiée sur mobile (« Retour » dans la barre), panneau à droite sur desktop.
+           Rempli par maquette.js d'après l'espace choisi. -->
+      <section class="detail" id="space-detail" aria-labelledby="h-detail" hidden>
+        <div class="detail-head">
+          <h2 id="h-detail" tabindex="-1">Espace <span class="mono" id="d-id"></span></h2>
+          <div class="badges" id="d-badges"></div>
+          <button type="button" class="btn ghost sm" id="d-copy" data-copy="Identifiant" aria-label="Copier l’identifiant de l’espace"><svg class="ico"><use href="#i-copy"/></svg>Copier</button>
+          <a class="icon-btn close" href="#espaces" aria-label="Fermer le détail (Échap)" title="Fermer (Échap)"><svg class="ico lg"><use href="#i-close"/></svg></a>
+        </div>
 
-    <section aria-labelledby="h-invitations">
-      <h2 id="h-invitations" tabindex="-1">Invitations</h2>
-      <p>Une invitation permet à une personne de créer son espace. Le jeton n’est montré qu’une
-        seule fois, à la création.</p>
-      <p id="invitations-error" class="inline-error" role="alert" hidden></p>
-      <p id="invitations-empty" class="empty" hidden>Aucune invitation en attente.</p>
-      <ul id="invitations-list" class="plain-list"></ul>
-      <p class="actions">
-        <button id="invite-new" type="button">Créer une invitation</button>
-        <button id="invite-rotate" type="button" class="secondary">Remplacer les invitations en attente</button>
-      </p>
-      <div id="token-box" hidden class="token-box" role="group" aria-labelledby="token-title">
-        <p id="token-title" tabindex="-1"><strong>Jeton d’installation (affiché une seule fois)</strong></p>
-        <div class="token-body">
-          <div class="token-text">
-            <p><code id="token"></code></p>
-            <p id="token-link-wrap" hidden>Lien de création : <code id="token-link"></code></p>
-            <p class="actions"><button id="token-copy" type="button">Copier le jeton</button>
-              <button id="token-link-copy" type="button" hidden>Copier le lien</button>
-              <button id="token-hide" type="button" class="secondary">Masquer le jeton</button></p>
-            <p class="hint">Saisis le jeton à la main, ou ouvre le lien (ou scanne le QR code) sur l’appareil où Tomi est installé : le jeton est dans la partie après le « # », que le navigateur n’envoie jamais au serveur.</p>
-            <p class="hint">Le jeton est masqué tout seul après 10 minutes, ou si tu quittes la page.</p>
+        <div class="card">
+          <dl class="stats">
+            <div><dt>Appareils</dt><dd id="d-dev"></dd></div>
+            <div><dt>Contenu</dt><dd id="d-items"></dd></div>
+            <div><dt>Journal de l’espace</dt><dd id="d-events"></dd></div>
+            <div><dt>Créé</dt><dd id="d-created"></dd></div>
+          </dl>
+          <div class="usage-block">
+            <progress id="d-progress" max="100" value="0"></progress>
+            <div class="usage-txt"><span id="d-usage"></span><span id="d-pct"></span></div>
+            <!-- Quota propre à l'espace : session seule (réversible), confirmation si l'espace serait bloqué. -->
+            <div class="quota-line">
+              <p class="caption" id="d-quota"></p>
+              <button type="button" class="btn ghost sm" id="sq-edit" aria-expanded="false" aria-controls="sq-form">Modifier le quota</button>
+            </div>
+            <form class="quota-form sq-form" id="sq-form" autocomplete="off" novalidate hidden>
+              <label for="sq-mib">Quota de cet espace</label>
+              <span class="field-unit">
+                <input id="sq-mib" type="text" inputmode="numeric" autocomplete="off" maxlength="9" aria-describedby="sq-preview">
+                <span class="unit" aria-hidden="true">Mio</span>
+              </span>
+              <button type="submit" class="btn">Enregistrer</button>
+              <span class="caption preview" id="sq-preview" aria-live="polite"></span>
+              <div class="actions quiet">
+                <button type="button" class="btn ghost" id="sq-default">Revenir au quota par défaut</button>
+                <button type="button" class="btn ghost" id="sq-none">Sans limite</button>
+              </div>
+            </form>
           </div>
-          <div id="token-qr-wrap" class="token-qr-wrap" hidden>
-            <div id="token-qr" class="token-qr"></div>
-            <p class="hint">Ou scanne ce code depuis « Créer ton espace » sur l’autre appareil.</p>
+          <p class="note-line" id="d-rotation"></p>
+        </div>
+
+        <div class="card devices-card">
+          <div class="card-head">
+            <h3>Appareils <span class="count" id="d-count"></span></h3>
+            <label class="sort-pick">Trier
+              <select id="devices-sort" aria-label="Trier les appareils">
+                <option value="activity">Dernière activité</option>
+                <option value="name">Nom</option>
+                <option value="platform">Plateforme</option>
+                <option value="added">Ajout</option>
+              </select>
+            </label>
+          </div>
+          <p class="caption" id="d-dev-hint">Coche un ou plusieurs appareils pour les retirer : une seule confirmation avec ta clé d’accès.</p>
+          <p class="error-line" id="devices-error" role="alert" hidden></p>
+          <ul class="devices" id="d-devices"></ul>
+          <!-- Sélection : apparaît dès qu'un appareil est coché, collée au-dessus de la navigation basse. -->
+          <div class="selbar" id="d-selbar" hidden>
+            <button type="button" class="icon-btn" id="d-selclear" aria-label="Tout décocher" title="Tout décocher"><svg class="ico"><use href="#i-close"/></svg></button>
+            <p id="d-selcount" aria-live="polite"></p>
+            <button type="button" class="btn danger sm" id="d-selrevoke"><svg class="ico"><use href="#i-person-remove"/></svg>Retirer</button>
           </div>
         </div>
+
+        <div class="card danger-zone" id="d-danger">
+          <div class="card-head"><h3>Supprimer l’espace</h3></div>
+          <p class="hint">Ses appareils ne le trouvent plus, tout de suite, et ne peuvent plus synchroniser. Rien n’est effacé sur eux. Le relais garde le dossier chiffré 7 jours ; seul le serveur peut le restaurer.</p>
+          <button type="button" class="btn danger-outline" id="d-delete"><svg class="ico"><use href="#i-delete"/></svg>Supprimer l’espace…</button>
+        </div>
+
+        <details class="fold card cli">
+          <summary><svg class="ico sm"><use href="#i-terminal"/></svg>Équivalent en ligne de commande<svg class="ico chev"><use href="#i-expand"/></svg></summary>
+          <div class="fold-body">
+            <ul class="commands" id="d-commands"></ul>
+            <p class="caption">Sur le serveur, <code>reset</code> efface tout de suite, sans corbeille, et demande les 8 caractères.</p>
+          </div>
+        </details>
+
+        <p class="caption">Métadonnées seulement : jamais de contenu, de clé ni de secret.</p>
+      </section>
+    </div>
+  </section>
+
+  <!-- ===================== Invitations ===================== -->
+  <section class="view" id="view-invitations" aria-label="Invitations" hidden>
+    <!-- Affiché une seule fois, juste après « Créer une invitation ». Jeton FICTIF, QR factice. -->
+    <div class="card token-box" id="token-box" role="group" aria-labelledby="token-title" hidden>
+      <div class="card-head">
+        <h2 id="token-title" tabindex="-1">Jeton d’installation</h2>
+        <button type="button" class="btn ghost sm" id="token-hide">Masquer</button>
       </div>
-    </section>
+      <p class="once"><svg class="ico"><use href="#i-warning"/></svg><span>Affiché une seule fois. Copie-le maintenant : il sera masqué dans 10 min, ou si tu quittes la page.</span></p>
+      <div class="token-grid">
+        <div class="token-main">
+          <code class="token-value" id="token"></code>
+          <div class="actions stack">
+            <button type="button" class="btn" id="token-copy"><svg class="ico"><use href="#i-copy"/></svg>Copier le jeton</button>
+            <button type="button" class="btn secondary" id="token-link-copy">Copier le lien</button>
+          </div>
+          <details class="fold" id="token-link-wrap">
+            <summary>Voir le lien de création<svg class="ico chev"><use href="#i-expand"/></svg></summary>
+            <p><code id="token-link"></code></p>
+            <p class="caption">Le jeton est dans la partie après le « # » : le navigateur ne l’envoie jamais au serveur.</p>
+          </details>
+        </div>
+        <div class="token-qr" id="token-qr-wrap" hidden>
+          <div id="token-qr"></div>
+          <p class="caption">Ou scanne ce code depuis « Créer ton espace » sur l’autre appareil.</p>
+        </div>
+      </div>
+    </div>
 
-    <section aria-labelledby="h-quota">
-      <h2 id="h-quota" tabindex="-1">Quota par défaut d’un espace</h2>
-      <p>Plafond de stockage de chaque espace qui n’a pas de quota propre (réglé sur le serveur par
-        <code>tomi-relay admin quota</code>). Tant que rien n’est réglé (ni ici, ni
-        <code>max_space_bytes</code> dans la configuration), un espace n’a aucune limite. Un changement s’applique tout de suite. Rien n’est
-        supprimé : un espace déjà au-dessus du nouveau plafond ne peut plus qu’en libérer.</p>
-      <p id="quota-error" class="inline-error" role="alert" hidden></p>
-      <dl id="quota-facts" class="facts"></dl>
-      <form id="quota-form" autocomplete="off" novalidate>
-        <p>
-          <label for="quota-mib">Nouveau quota par défaut, en Mio (au moins 1)</label><br>
-          <input id="quota-mib" name="quota-mib" type="text" inputmode="numeric" autocomplete="off"
-            maxlength="12" size="12" aria-describedby="quota-preview">
-          <span id="quota-preview" class="hint" aria-live="polite"></span>
-        </p>
-        <p class="actions">
-          <button id="quota-save" type="submit">Enregistrer</button>
-          <button id="quota-unlimited" type="button" class="secondary">Sans limite par espace</button>
-          <button id="quota-reset" type="button" class="secondary">Revenir à la configuration du relais</button>
-        </p>
-      </form>
-    </section>
+    <div class="cols">
+      <div class="card">
+        <div class="lead">
+          <p>Une invitation permet à une personne de créer son espace sur ton relais.</p>
+          <button type="button" class="icon-btn help-btn" aria-expanded="false" aria-controls="help-inv" aria-label="Aide : comment marchent les invitations"><svg class="ico lg"><use href="#i-help"/></svg></button>
+        </div>
+        <div class="help-text" id="help-inv" hidden>
+          <p>Le jeton n’est montré qu’une seule fois, à la création.</p>
+          <p>La personne le saisit à la main, ouvre le lien ou scanne le QR code sur l’appareil où Tomi est installé.</p>
+          <p>Créer ou remplacer une invitation demande ta clé d’accès : un jeton donne le droit d’occuper ton disque. Invalider les invitations en attente ne demande que la session, puisque cela retire un droit.</p>
+          <p>Les espaces existants ne changent jamais.</p>
+        </div>
+        <div class="actions stack">
+          <button type="button" class="btn" id="invite-new"><svg class="ico"><use href="#i-add"/></svg>Créer une invitation</button>
+        </div>
+        <p class="pk-line"><svg class="ico sm"><use href="#i-key"/></svg>Demande ta clé d’accès · <span id="inv-cap">5 par heure au plus</span></p>
+      </div>
 
-    <section aria-labelledby="h-journal">
-      <h2 id="h-journal" tabindex="-1">Journal d’administration</h2>
-      <p class="hint">Ce qui a été fait depuis ce panneau depuis le démarrage du relais (gardé en
-        mémoire seulement, au plus 100 lignes) : jamais de jeton, de code, d’adresse ni de contenu.</p>
-      <p id="journal-error" class="inline-error" role="alert" hidden></p>
-      <p id="journal-empty" class="empty" hidden>Rien pour l’instant.</p>
-      <ol id="journal-list" class="journal"></ol>
-    </section>
+      <div class="card">
+        <div class="card-head"><h2>En attente <span class="count" id="inv-count">0</span></h2></div>
+        <ul class="rows" id="invitations-list"></ul>
+        <p class="error-line" id="invitations-error" role="alert" hidden></p>
+        <p class="empty" id="inv-empty" hidden>Aucune invitation en attente.</p>
+        <div class="actions quiet" id="inv-actions">
+          <button type="button" class="btn ghost" id="invite-rotate">Remplacer…</button>
+          <button type="button" class="btn ghost" id="invite-cancel">Invalider…</button>
+        </div>
+        <details class="fold cli">
+          <summary><svg class="ico sm"><use href="#i-terminal"/></svg>Équivalent en ligne de commande<svg class="ico chev"><use href="#i-expand"/></svg></summary>
+          <ul class="commands">
+            <li><span class="what">Créer une invitation et afficher son jeton</span><div class="cmd"><code>tomi-relay admin invite --new</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande : créer une invitation"><svg class="ico"><use href="#i-copy"/></svg></button></div></li>
+            <li><span class="what">Remplacer les invitations en attente par une nouvelle</span><div class="cmd"><code>tomi-relay admin invite --rotate</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande : remplacer les invitations"><svg class="ico"><use href="#i-copy"/></svg></button></div></li>
+            <li><span class="what">Invalider les invitations en attente, sans en créer</span><div class="cmd"><code>tomi-relay admin invite --cancel</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande : invalider les invitations"><svg class="ico"><use href="#i-copy"/></svg></button></div></li>
+          </ul>
+        </details>
+      </div>
+    </div>
+  </section>
 
-    <section aria-labelledby="h-about">
-      <h2 id="h-about" tabindex="-1">À propos et diagnostic</h2>
-      <p id="about-error" class="inline-error" role="alert" hidden></p>
-      <dl id="about-facts" class="facts"></dl>
-      <details class="help">
-        <summary>Limites de la configuration</summary>
-        <dl id="limits-facts" class="facts"></dl>
-      </details>
-      <p>Pour signaler un problème, copie ce résumé : il ne contient ni identifiant d’espace, ni nom
-        d’appareil, ni jeton.</p>
-      <pre id="diagnostic" class="diagnostic" tabindex="0" aria-label="Résumé de diagnostic"></pre>
-      <p class="actions"><button id="diagnostic-copy" type="button" class="secondary">Copier le diagnostic</button></p>
-    </section>
-  </div>
+  <!-- ===================== Journal ===================== -->
+  <section class="view" id="view-journal" aria-label="Journal d’administration" hidden>
+    <div class="card narrow">
+      <div class="card-head">
+        <h2>Activité du panneau <span class="count" id="journal-count">0</span></h2>
+        <button type="button" class="icon-btn help-btn" aria-expanded="false" aria-controls="help-journal" aria-label="Aide : ce que contient le journal"><svg class="ico lg"><use href="#i-help"/></svg></button>
+      </div>
+      <div class="help-text" id="help-journal" hidden>
+        <p>Les actions sensibles (retraits, suppressions, invitations, accès refusés) sont <strong>gardées 90 jours</strong>, 500 lignes au plus, avec l’identifiant court de la cible et le numéro de la clé d’accès utilisée. Le reste n’est gardé qu’en mémoire, jusqu’au redémarrage du relais.</p>
+        <p>Jamais de nom d’appareil, de jeton, de code, d’adresse ni de contenu.</p>
+      </div>
+      <p class="error-line" id="journal-error" role="alert" hidden></p>
+      <p class="empty" id="journal-empty" hidden>Rien à signaler depuis le démarrage du relais.</p>
+      <ol class="journal" id="journal-list"></ol>
+    </div>
+  </section>
+
+  <!-- ===================== Réglages (quota par défaut, accès, corbeille, à propos, diagnostic) ===================== -->
+  <section class="view" id="view-reglages" aria-label="Réglages et diagnostic" hidden>
+    <div class="cols reorder">
+      <div class="col">
+        <div class="card" id="quota">
+          <div class="card-head">
+            <h2>Quota par défaut d’un espace</h2>
+            <button type="button" class="icon-btn help-btn" aria-expanded="false" aria-controls="help-quota" aria-label="Aide : le quota par défaut"><svg class="ico lg"><use href="#i-help"/></svg></button>
+          </div>
+          <div class="help-text" id="help-quota" hidden>
+            <p>Plafond de stockage de chaque espace qui n’a pas de quota propre (réglé dans le détail de l’espace).</p>
+            <p>Tant que rien n’est réglé, ni ici ni par <code>max_space_bytes</code> dans la configuration, un espace n’a aucune limite.</p>
+            <p>Un changement s’applique tout de suite. Rien n’est supprimé : un espace déjà au-dessus du nouveau plafond ne peut plus qu’en libérer. Si c’est le cas d’un espace, le panneau te le dit avant d’enregistrer.</p>
+          </div>
+          <div>
+            <p class="error-line" id="quota-error" role="alert" hidden></p>
+            <p class="quota-now" id="quota-now"></p>
+            <p class="caption" id="quota-facts"></p>
+          </div>
+          <form class="quota-form" id="quota-form" autocomplete="off" novalidate>
+            <label for="quota-mib">Nouveau quota par défaut</label>
+            <span class="field-unit">
+              <input id="quota-mib" name="quota-mib" type="text" inputmode="numeric" autocomplete="off" maxlength="9" aria-describedby="quota-preview">
+              <span class="unit" aria-hidden="true">Mio</span>
+            </span>
+            <button type="submit" class="btn" id="quota-save">Enregistrer</button>
+            <span class="caption preview" id="quota-preview" aria-live="polite"></span>
+          </form>
+          <div class="actions quiet">
+            <button type="button" class="btn ghost" id="quota-unlimited">Sans limite par espace</button>
+            <button type="button" class="btn ghost" id="quota-reset">Revenir à la configuration</button>
+          </div>
+        </div>
+
+        <!-- Accès au panneau : lecture seule, tout changement se fait sur le serveur. -->
+        <div class="card" id="access">
+          <div class="card-head">
+            <h2>Accès au panneau</h2>
+            <button type="button" class="icon-btn help-btn" aria-expanded="false" aria-controls="help-access" aria-label="Aide : l’accès au panneau"><svg class="ico lg"><use href="#i-help"/></svg></button>
+          </div>
+          <div class="help-text" id="help-access" hidden>
+            <p>Une clé <strong>liée à l’appareil</strong> (clé matérielle) ne quitte jamais son support : elle reste sûre si ton compte iCloud, Google ou ton gestionnaire de mots de passe est pris. Une clé <strong>synchronisée</strong> suit ce compte.</p>
+            <p>En garder deux évite de devoir passer par le serveur si tu en perds une.</p>
+          </div>
+          <div class="sub-head"><h3>Clés d’accès</h3><span class="count" id="keys-count"></span></div>
+          <ul class="rows keys" id="keys-list"></ul>
+          <dl class="kv">
+            <div><dt>Clé exigée pour supprimer un espace</dt><dd id="access-policy"></dd></div>
+            <div><dt>Autres sessions ouvertes</dt><dd id="access-others"></dd></div>
+          </dl>
+          <div class="actions stack">
+            <button type="button" class="btn secondary" data-close-all><svg class="ico"><use href="#i-logout"/></svg>Fermer toutes les sessions</button>
+          </div>
+
+          <div class="cli-only" role="group" aria-labelledby="h-cli-access">
+            <p class="cli-only-head" id="h-cli-access"><svg class="ico sm"><use href="#i-terminal"/></svg>Sur le serveur seulement</p>
+            <ul>
+              <li><strong>Ajouter ou retirer une clé d’accès.</strong> D’ici, une clé volée pourrait s’en ajouter une autre et garder l’accès après que tu as repris la main.</li>
+              <li><strong>Exiger la clé liée à l’appareil</strong> pour supprimer un espace. Pour la même raison : une session ne doit pas pouvoir baisser la garde.</li>
+              <li><strong>Changer l’adresse du panneau.</strong> D’ici, tu risquerais de t’enfermer dehors ; en urgence, « Fermer toutes les sessions » suffit.</li>
+              <li><strong>Réinitialiser l’accès</strong>, si tu as perdu toutes tes clés : sans clé, tu n’es plus connecté ici.</li>
+            </ul>
+            <details class="fold cli">
+              <summary><svg class="ico sm"><use href="#i-terminal"/></svg>Équivalent en ligne de commande<svg class="ico chev"><use href="#i-expand"/></svg></summary>
+              <ul class="commands">
+                <li><span class="what">Lister les clés</span><div class="cmd"><code>tomi-relay admin web keys</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande : lister les clés"><svg class="ico"><use href="#i-copy"/></svg></button></div></li>
+                <li><span class="what">Retirer une clé (jamais la dernière)</span><div class="cmd"><code>tomi-relay admin web keys remove N</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande : retirer une clé"><svg class="ico"><use href="#i-copy"/></svg></button></div></li>
+                <li><span class="what">Ajouter une clé (code valable 15 min)</span><div class="cmd"><code>tomi-relay admin web enroll</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande : ajouter une clé"><svg class="ico"><use href="#i-copy"/></svg></button></div></li>
+                <li><span class="what">Exiger la clé liée à l’appareil pour supprimer</span><div class="cmd"><code>tomi-relay admin web policy --space-deletion device-key</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande : politique de clé"><svg class="ico"><use href="#i-copy"/></svg></button></div></li>
+                <li><span class="what">Changer l’adresse (ferme toutes les sessions)</span><div class="cmd"><code>tomi-relay admin web --rotate-path</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande : changer l’adresse"><svg class="ico"><use href="#i-copy"/></svg></button></div></li>
+                <li><span class="what">Tout réinitialiser (clés et sessions)</span><div class="cmd"><code>tomi-relay admin web reset</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande : réinitialiser l’accès"><svg class="ico"><use href="#i-copy"/></svg></button></div></li>
+              </ul>
+            </details>
+          </div>
+        </div>
+
+        <div class="card last">
+          <div class="card-head"><h2>Diagnostic</h2></div>
+          <p class="hint">Un résumé à joindre pour signaler un problème : ni identifiant d’espace, ni nom d’appareil, ni jeton.</p>
+          <div class="actions stack">
+            <button type="button" class="btn secondary" id="diagnostic-copy"><svg class="ico"><use href="#i-copy"/></svg>Copier le diagnostic</button>
+          </div>
+          <details class="fold">
+            <summary>Voir le résumé<svg class="ico chev"><use href="#i-expand"/></svg></summary>
+            <pre class="diagnostic" id="diagnostic" tabindex="0" aria-label="Résumé de diagnostic"></pre>
+          </details>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="card">
+          <div class="card-head"><h2>À propos</h2></div>
+          <dl class="kv" id="about-facts"></dl>
+        </div>
+
+        <!-- Corbeille : contenu visible, restauration et purge sur le serveur seulement. -->
+        <div class="card" id="trash">
+          <div class="card-head">
+            <h2>Corbeille <span class="count" id="trash-count">0</span></h2>
+            <button type="button" class="icon-btn help-btn" aria-expanded="false" aria-controls="help-trash" aria-label="Aide : la corbeille du relais"><svg class="ico lg"><use href="#i-help"/></svg></button>
+          </div>
+          <div class="help-text" id="help-trash" hidden>
+            <p>Un espace supprimé depuis ce panneau disparaît tout de suite pour ses appareils. Le relais garde son dossier, toujours chiffré, 7 jours, puis l’efface.</p>
+            <p>La corbeille compte dans l’espace disque libre, pas dans le total des espaces.</p>
+          </div>
+          <p class="empty" id="trash-empty" hidden>La corbeille est vide.</p>
+          <ul class="rows" id="trash-list"></ul>
+          <div class="cli-only">
+            <p class="cli-only-head"><svg class="ico sm"><use href="#i-terminal"/></svg>Restaurer ou vider : sur le serveur seulement</p>
+            <p>D’ici, une clé volée pourrait vider la corbeille, qui ne protégerait plus de rien. Le serveur vérifie aussi qu’une restauration n’entre pas en conflit avec un autre espace.</p>
+            <details class="fold cli">
+              <summary><svg class="ico sm"><use href="#i-terminal"/></svg>Équivalent en ligne de commande<svg class="ico chev"><use href="#i-expand"/></svg></summary>
+              <ul class="commands">
+                <li><span class="what">Voir la corbeille</span><div class="cmd"><code>tomi-relay admin trash</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande : voir la corbeille"><svg class="ico"><use href="#i-copy"/></svg></button></div></li>
+                <li><span class="what">Restaurer un espace</span><div class="cmd"><code id="trash-restore-cmd">tomi-relay admin trash restore --space &lt;id&gt;</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande : restaurer"><svg class="ico"><use href="#i-copy"/></svg></button></div></li>
+                <li><span class="what">Effacer un espace de la corbeille tout de suite</span><div class="cmd"><code id="trash-purge-cmd">tomi-relay admin trash purge --space &lt;id&gt;</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande : effacer de la corbeille"><svg class="ico"><use href="#i-copy"/></svg></button></div></li>
+              </ul>
+            </details>
+          </div>
+        </div>
+
+        <details class="fold card">
+          <summary>Limites de la configuration<svg class="ico chev"><use href="#i-expand"/></svg></summary>
+          <dl class="kv" id="limits-facts"></dl>
+        </details>
+      </div>
+    </div>
+  </section>
 </main>
 
+<!-- Retour d'une action : au-dessus de la navigation basse. -->
+<div class="toast-zone">
+  <div class="toast" id="toast" hidden>
+    <svg class="ico" id="toast-ico"><use href="#i-check"/></svg>
+    <p id="message" role="status" aria-live="polite"></p>
+    <button type="button" class="btn ghost sm" id="toast-close" hidden>Fermer</button>
+  </div>
+</div>
+
+<!-- Confirmation simple (session seule) : quotas, invalider les invitations, fermer les sessions. -->
 <dialog id="confirm-dialog" class="confirm" aria-labelledby="confirm-title" aria-describedby="confirm-text">
   <h2 id="confirm-title"></h2>
   <p id="confirm-text"></p>
-  <p class="actions">
-    <button id="confirm-cancel" type="button" class="secondary">Annuler</button>
-    <button id="confirm-ok" type="button" class="danger"></button>
-  </p>
+  <ul class="recap-list" id="confirm-list" hidden></ul>
+  <div class="actions">
+    <span class="esc-hint desktop-only" aria-hidden="true"><kbd>Échap</kbd> pour annuler</span>
+    <button id="confirm-cancel" type="button" class="btn secondary">Annuler</button>
+    <button id="confirm-ok" type="button" class="btn danger"></button>
+  </div>
 </dialog>
+
+<!-- Confirmation avec clé d'accès (step-up) : retirer, supprimer, créer ou remplacer une invitation.
+     Feuille basse sous 640 px, boîte centrée au-delà. Le récapitulatif vient du serveur (api/stepup/options).
+     data-state : review, pending, cancelled, refused, error, expired, limit, closed. -->
+<dialog id="stepup" class="confirm stepup" aria-labelledby="su-title" aria-describedby="su-conseq" data-state="review">
+  <div class="su-head">
+    <span class="su-ico" id="su-ico"><svg class="ico lg"><use href="#i-person-remove"/></svg></span>
+    <h2 id="su-title" tabindex="-1"></h2>
+  </div>
+  <div class="su-review">
+    <ul class="recap" id="su-recap"></ul>
+    <ul class="conseq" id="su-conseq"></ul>
+    <div class="type-confirm" id="su-type" hidden>
+      <label for="su-input">Pour confirmer, saisis les 8 premiers caractères de l’identifiant : <span class="mono" id="su-expect"></span></label>
+      <input id="su-input" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="8" aria-describedby="su-match">
+      <span class="caption" id="su-match" aria-live="polite"></span>
+    </div>
+  </div>
+  <!-- Clé d'accès en attente : filet linéaire, jamais de spinner. -->
+  <div class="su-wait" role="status">
+    <div class="loading-bar"></div>
+    <p><strong>Valide avec ta clé d’accès</strong> : empreinte, visage ou code de l’appareil.</p>
+    <p class="caption">Ta clé d’accès affiche « <span id="su-rp"></span> », jamais l’action : vérifie le récapitulatif ci-dessus. Ce défi reste valable 2 min.</p>
+  </div>
+  <div class="su-msg" id="su-msg" role="alert"></div>
+  <p class="pk-line" id="su-pk"><svg class="ico sm"><use href="#i-key"/></svg><span id="su-pk-text"></span></p>
+  <details class="fold cli" id="su-cli">
+    <summary><svg class="ico sm"><use href="#i-terminal"/></svg>Équivalent en ligne de commande<svg class="ico chev"><use href="#i-expand"/></svg></summary>
+    <div class="cmd"><code id="su-cmd"></code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande équivalente"><svg class="ico"><use href="#i-copy"/></svg></button></div>
+    <p class="caption" id="su-cmd-note"></p>
+  </details>
+  <div class="actions">
+    <span class="esc-hint desktop-only" aria-hidden="true"><kbd>Échap</kbd> pour annuler</span>
+    <button id="su-cancel" type="button" class="btn secondary">Annuler</button>
+    <button id="su-ok" type="button" class="btn danger"><svg class="ico"><use href="#i-key"/></svg><span id="su-ok-label"></span></button>
+  </div>
+</dialog>
+
+<!-- Desktop : aide des raccourcis (touche « ? »). Aucune action destructrice n'a de raccourci. -->
+<dialog id="shortcuts" class="confirm shortcuts" aria-labelledby="sc-title">
+  <div class="su-head"><h2 id="sc-title">Raccourcis clavier</h2></div>
+  <dl class="keys-list">
+    <div><dt><kbd>G</kbd> puis <kbd>A</kbd> <kbd>E</kbd> <kbd>I</kbd> <kbd>J</kbd> <kbd>R</kbd></dt><dd>Aller à Aperçu, Espaces, Invitations, Journal, Réglages</dd></div>
+    <div><dt><kbd>J</kbd> <kbd>K</kbd> ou <kbd>↓</kbd> <kbd>↑</kbd></dt><dd>Espace suivant, précédent</dd></div>
+    <div><dt><kbd>Entrée</kbd></dt><dd>Ouvrir le détail de l’espace</dd></div>
+    <div><dt><kbd>Échap</kbd></dt><dd>Fermer la boîte de dialogue, puis le détail</dd></div>
+    <div><dt><kbd>R</kbd></dt><dd>Actualiser</dd></div>
+    <div><dt><kbd>C</kbd></dt><dd>Copier l’identifiant de l’espace ouvert</dd></div>
+    <div><dt><kbd>?</kbd></dt><dd>Afficher cette aide</dd></div>
+  </dl>
+  <p class="caption">Retirer, supprimer, inviter : jamais de raccourci. Ces actions passent toujours par un bouton et ta clé d’accès.</p>
+  <div class="actions"><button type="button" class="btn secondary" id="sc-close">Fermer</button></div>
+</dialog>
+
+<!-- Ligne d'appareil (gabarit rempli par maquette.js) : case à cocher, ligne dense, le détail se déplie. -->
+<template id="tpl-device">
+  <li class="dev">
+    <label class="dev-check"><input type="checkbox" class="dev-sel"><span class="sr"></span></label>
+    <details>
+      <summary>
+        <svg class="ico"><use href="#i-computer"/></svg>
+        <span><span class="name"></span><span class="sub"></span></span>
+        <span class="badge"></span>
+        <svg class="ico chev"><use href="#i-expand"/></svg>
+      </summary>
+      <dl class="kv">
+        <div><dt>Ajouté</dt><dd class="f-added"></dd></div>
+        <div><dt>Notifications</dt><dd class="f-push"></dd></div>
+        <div><dt>Identifiant</dt><dd><span class="mono f-id"></span></dd></div>
+        <div><dt>Empreinte</dt><dd><span class="mono f-fp"></span><button type="button" class="icon-btn sm" data-copy="Empreinte" aria-label="Copier l’empreinte"><svg class="ico"><use href="#i-copy"/></svg></button></dd></div>
+      </dl>
+      <div class="dev-actions">
+        <button type="button" class="btn danger-outline sm dev-revoke"><svg class="ico"><use href="#i-person-remove"/></svg>Retirer de l’espace…</button>
+        <p class="caption dev-last" hidden>Dernier appareil de l’espace : il ne peut pas être retiré. Pour en finir avec cet espace, supprime-le.</p>
+      </div>
+    </details>
+  </li>
+</template>
 </body>
 </html>
