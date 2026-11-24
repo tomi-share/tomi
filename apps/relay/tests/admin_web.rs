@@ -81,6 +81,48 @@ async fn post(env: &Env, seg: &str, path: &str, body: Value, cookie: Option<&str
     .await
 }
 
+/// A step-up action as the page does it: the options (the challenge tied to the action), then the
+/// assertion of the passkey, then the action. Returns the answer of the options if they are refused.
+async fn act_with(
+    env: &Env,
+    seg: &str,
+    action: Value,
+    cookie: &str,
+    auth: &mut Authenticator,
+    headers: &[(&str, &str)],
+) -> Resp {
+    // Two sensitive requests per action: let the bucket of the address refill.
+    env.clock.advance_secs(20);
+    let mut h: Vec<(&str, &str)> = vec![("origin", ORIGIN), ("x-tomi-admin", "1")];
+    h.extend_from_slice(headers);
+    let opts = post_with(
+        env,
+        seg,
+        "api/stepup/options",
+        json!({ "action": action.clone() }),
+        Some(cookie),
+        &h,
+    )
+    .await;
+    if opts.status != 200 {
+        return opts;
+    }
+    let assertion = auth.get(&challenge_of(&opts.json()), &Tweak::default());
+    post_with(
+        env,
+        seg,
+        "api/actions",
+        json!({ "action": action, "assertion": assertion.json() }),
+        Some(cookie),
+        &h,
+    )
+    .await
+}
+
+async fn act(env: &Env, seg: &str, action: Value, cookie: &str, auth: &mut Authenticator) -> Resp {
+    act_with(env, seg, action, cookie, auth, &[]).await
+}
+
 async fn register_options(env: &Env, seg: &str, code: &str) -> Resp {
     post(
         env,
@@ -725,7 +767,8 @@ async fn the_enrolment_is_closed_for_good_by_the_first_key() {
         .await
         .ok(204);
 
-    // The endpoints of the enrolment are gone: the 404 of an unknown resource.
+    // The endpoints of the enrolment are closed while no code is pending: the 404 of an unknown
+    // resource.
     let other = Authenticator::for_test_relay();
     register_options(&env, &seg, &code)
         .await
@@ -734,9 +777,26 @@ async fn the_enrolment_is_closed_for_good_by_the_first_key() {
     post(&env, &seg, "api/register/finish", reg.json(), None)
         .await
         .err(404, "not_found");
-    // The code was used up; and no new one can be made while a key exists.
+    // The code was used up; a new one (made on the server) opens the enrolment of a second key.
     let out = web(&env, WebAction::Enroll).await;
-    assert_eq!(out.exit, 2, "{}", out.stderr);
+    assert_eq!(out.exit, 0, "{}", out.stderr);
+    let second = Authenticator::for_test_relay();
+    register(&env, &seg, &second, out.stdout.trim())
+        .await
+        .ok(204);
+    let keys: i64 = env
+        .state
+        .spaces
+        .routing()
+        .read_sync(|tx| {
+            Ok(
+                tx.query_row("SELECT count(*) FROM admin_web_credentials", [], |r| {
+                    r.get(0)
+                })?,
+            )
+        })
+        .unwrap();
+    assert_eq!(keys, 2);
     let state = get(&env, &seg, "api/state", None).await.ok(200);
     assert_eq!(state["enrolled"], true);
 }
@@ -969,7 +1029,7 @@ async fn a_signature_counter_that_does_not_increase_is_refused() {
         .routing()
         .read_sync(|tx| {
             Ok(
-                tx.query_row("SELECT sign_count FROM admin_web_credential", [], |r| {
+                tx.query_row("SELECT sign_count FROM admin_web_credentials", [], |r| {
                     r.get(0)
                 })?,
             )
@@ -1111,7 +1171,7 @@ async fn a_post_needs_the_origin_of_the_relay_and_the_custom_header() {
     let seg = segment(&env);
     let mut auth = Authenticator::for_test_relay();
     let cookie = signed_in(&env, &mut auth).await;
-    let body = json!({ "mode": "new" });
+    let body = json!({ "action": { "type": "create_invitation", "mode": "new" } });
     let attempts: Vec<(&str, Vec<(&str, &str)>)> = vec![
         ("no Origin, no header", vec![]),
         ("no Origin", vec![("x-tomi-admin", "1")]),
@@ -1138,20 +1198,14 @@ async fn a_post_needs_the_origin_of_the_relay_and_the_custom_header() {
         ),
     ];
     for (what, headers) in attempts {
-        let r = post_with(
-            &env,
-            &seg,
-            "api/invitations",
-            body.clone(),
-            Some(&cookie),
-            &headers,
-        )
-        .await;
-        assert_eq!(
-            (r.status, r.code()),
-            (403, "forbidden".to_owned()),
-            "{what}"
-        );
+        for path in ["api/stepup/options", "api/actions"] {
+            let r = post_with(&env, &seg, path, body.clone(), Some(&cookie), &headers).await;
+            assert_eq!(
+                (r.status, r.code()),
+                (403, "forbidden".to_owned()),
+                "{what} {path}"
+            );
+        }
     }
     // The same on the other writes.
     for path in [
@@ -1160,6 +1214,9 @@ async fn a_post_needs_the_origin_of_the_relay_and_the_custom_header() {
         "api/login/options",
         "api/login/finish",
         "api/logout",
+        "api/spaces/quota",
+        "api/invitations/cancel",
+        "api/sessions/close-all",
     ] {
         let r = post_with(&env, &seg, path, json!({}), Some(&cookie), &[]).await;
         assert_eq!(r.status, 403, "{path}");
@@ -1173,7 +1230,7 @@ async fn a_post_needs_the_origin_of_the_relay_and_the_custom_header() {
         1,
         "only the install one"
     );
-    post(&env, &seg, "api/invitations", body, Some(&cookie))
+    act(&env, &seg, body["action"].clone(), &cookie, &mut auth)
         .await
         .ok(200);
 }
@@ -1540,7 +1597,7 @@ async fn every_answer_of_the_panel_carries_the_security_headers() {
         get(&env, &seg, "api/status", None).await,
         get(&env, &seg, "api/status", Some(&cookie)).await,
         get(&env, &seg, "api/nothing", Some(&cookie)).await,
-        post_with(&env, &seg, "api/invitations", json!({}), Some(&cookie), &[]).await,
+        post_with(&env, &seg, "api/actions", json!({}), Some(&cookie), &[]).await,
         post(
             &env,
             &seg,
@@ -1852,6 +1909,7 @@ async fn from_the_enrolment_to_an_invitation() {
             "active",
             "app_version",
             "fingerprint",
+            "id",
             "last_seen_at",
             "name",
             "platform",
@@ -1879,12 +1937,12 @@ async fn from_the_enrolment_to_an_invitation() {
         .await
         .ok(200);
     assert_eq!(list["invitations"], json!([]));
-    let created = post(
+    let created = act(
         &env,
         &seg,
-        "api/invitations",
-        json!({ "mode": "new" }),
-        Some(&cookie),
+        json!({ "type": "create_invitation", "mode": "new" }),
+        &cookie,
+        &mut auth,
     )
     .await
     .ok(200);
@@ -1917,36 +1975,36 @@ async fn from_the_enrolment_to_an_invitation() {
     );
 
     // Rotation replaces the pending ones.
-    let first = post(
+    let first = act(
         &env,
         &seg,
-        "api/invitations",
-        json!({ "mode": "new" }),
-        Some(&cookie),
+        json!({ "type": "create_invitation", "mode": "new" }),
+        &cookie,
+        &mut auth,
     )
     .await
     .ok(200)["token"]
         .as_str()
         .unwrap()
         .to_owned();
-    let second = post(
+    let second = act(
         &env,
         &seg,
-        "api/invitations",
-        json!({ "mode": "rotate" }),
-        Some(&cookie),
+        json!({ "type": "create_invitation", "mode": "rotate" }),
+        &cookie,
+        &mut auth,
     )
     .await
     .ok(200);
     assert_ne!(second["token"].as_str().unwrap(), first);
     assert_eq!(second["invitations"].as_array().unwrap().len(), 1);
     assert!(!tomi_relay::install::is_pending(env.state.spaces.routing(), &first).unwrap());
-    post(
+    act(
         &env,
         &seg,
-        "api/invitations",
-        json!({ "mode": "wat" }),
-        Some(&cookie),
+        json!({ "type": "create_invitation", "mode": "wat" }),
+        &cookie,
+        &mut auth,
     )
     .await
     .err(400, "bad_request");
@@ -2214,24 +2272,24 @@ async fn the_journal_says_what_was_done_with_fixed_words_and_nothing_from_a_requ
         .err(401, "unauthorized");
 
     // Invitations and the default quota.
-    let first = post(
+    let first = act(
         &env,
         &seg,
-        "api/invitations",
-        json!({ "mode": "new" }),
-        Some(&cookie),
+        json!({ "type": "create_invitation", "mode": "new" }),
+        &cookie,
+        &mut auth,
     )
     .await
     .ok(200)["token"]
         .as_str()
         .unwrap()
         .to_owned();
-    let second = post(
+    let second = act(
         &env,
         &seg,
-        "api/invitations",
-        json!({ "mode": "rotate" }),
-        Some(&cookie),
+        json!({ "type": "create_invitation", "mode": "rotate" }),
+        &cookie,
+        &mut auth,
     )
     .await
     .ok(200)["token"]
@@ -2424,15 +2482,13 @@ async fn the_creation_link_follows_public_url_never_the_host_header_and_is_shown
     let mut auth = Authenticator::for_test_relay();
     let cookie = signed_in(&env, &mut auth).await;
     // The request claims another host in every way a proxy or a client could: the link does not move.
-    let created = post_with(
+    let created = act_with(
         &env,
         &seg,
-        "api/invitations",
-        json!({ "mode": "new" }),
-        Some(&cookie),
+        json!({ "type": "create_invitation", "mode": "new" }),
+        &cookie,
+        &mut auth,
         &[
-            ("origin", ORIGIN),
-            ("x-tomi-admin", "1"),
             ("host", "evil.example"),
             ("x-forwarded-host", "evil.example"),
             ("forwarded", "host=evil.example"),
@@ -2469,4 +2525,558 @@ async fn the_creation_link_follows_public_url_never_the_host_header_and_is_shown
     }
     assert!(js.contains("showQr(link || r.data.token)"));
     assert!(!js.contains("location.host") && !js.contains("location.origin"));
+}
+
+// ===== the actions: step-up, ceilings, trash ==================================================
+
+fn revoke_action(space: &str, ids: &[&str]) -> Value {
+    json!({ "type": "revoke_devices", "space_id": space, "device_ids": ids })
+}
+
+async fn device_ids(env: &Env, seg: &str, cookie: &str) -> (String, Vec<String>) {
+    let space = env.space_id[..8].to_owned();
+    let list = get(
+        env,
+        seg,
+        &format!("api/devices?space={space}"),
+        Some(cookie),
+    )
+    .await
+    .ok(200);
+    let ids = list["devices"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|d| d["id"].as_str().unwrap().to_owned())
+        .collect();
+    (space, ids)
+}
+
+fn member_count(env: &Env) -> i64 {
+    env.sql_count("SELECT count(*) FROM devices WHERE revoked_at IS NULL")
+}
+
+async fn signed_in_again(env: &Env, seg: &str, auth: &mut Authenticator) -> String {
+    let r = login_raw(env, seg, auth, &Tweak::default()).await;
+    assert_eq!(r.status, 204);
+    cookie_of(&r)
+}
+
+/// Options for `action`, then an assertion signed over them: what a page holds just before it sends
+/// `api/actions`.
+async fn prepared(
+    env: &Env,
+    seg: &str,
+    action: &Value,
+    cookie: &str,
+    auth: &mut Authenticator,
+) -> Value {
+    env.clock.advance_secs(20);
+    let opts = post(
+        env,
+        seg,
+        "api/stepup/options",
+        json!({ "action": action }),
+        Some(cookie),
+    )
+    .await
+    .ok(200);
+    let a = auth.get(&challenge_of(&opts), &Tweak::default());
+    a.json()
+}
+
+#[tokio::test]
+async fn a_stolen_session_without_the_passkey_can_neither_remove_nor_delete_nor_invite() {
+    let env = panel().await;
+    let seg = segment(&env);
+    let (_devs, _) = env.space_of(2).await;
+    let mut auth = Authenticator::for_test_relay();
+    let cookie = signed_in(&env, &mut auth).await;
+    let (space, ids) = device_ids(&env, &seg, &cookie).await;
+    let before = member_count(&env);
+
+    let attempts = [
+        revoke_action(&space, &[&ids[0]]),
+        json!({ "type": "delete_space", "space_id": space, "confirm": space }),
+        json!({ "type": "create_invitation", "mode": "new" }),
+    ];
+    let forged = auth.get(&[1u8; 32], &Tweak::default());
+    for action in attempts {
+        env.clock.advance_secs(20);
+        // No assertion at all, a forged one, and the old route: none does anything.
+        post(
+            &env,
+            &seg,
+            "api/actions",
+            json!({ "action": action }),
+            Some(&cookie),
+        )
+        .await
+        .err(400, "bad_request");
+        env.clock.advance_secs(20);
+        post(
+            &env,
+            &seg,
+            "api/actions",
+            json!({ "action": action, "assertion": forged.json() }),
+            Some(&cookie),
+        )
+        .await
+        .err(401, "unauthorized");
+    }
+    env.clock.advance_secs(20);
+    post(
+        &env,
+        &seg,
+        "api/invitations",
+        json!({ "mode": "new" }),
+        Some(&cookie),
+    )
+    .await
+    .err(404, "not_found");
+    assert_eq!(member_count(&env), before);
+    assert_eq!(env.state.spaces.list().len(), 1);
+    let list = get(&env, &seg, "api/invitations", Some(&cookie))
+        .await
+        .ok(200);
+    assert_eq!(list["invitations"], json!([]));
+}
+
+#[tokio::test]
+async fn a_device_is_removed_with_one_passkey_gesture_and_the_summary_comes_from_the_server() {
+    let env = panel().await;
+    let seg = segment(&env);
+    let (_devs, _) = env.space_of(3).await;
+    let mut auth = Authenticator::for_test_relay();
+    let cookie = signed_in(&env, &mut auth).await;
+    let (space, ids) = device_ids(&env, &seg, &cookie).await;
+    let action = revoke_action(&space, &[&ids[0]]);
+
+    env.clock.advance_secs(20);
+    let opts = post(
+        &env,
+        &seg,
+        "api/stepup/options",
+        json!({ "action": action }),
+        Some(&cookie),
+    )
+    .await
+    .ok(200);
+    assert_eq!(opts["publicKey"]["timeout"], 120_000);
+    assert_eq!(opts["publicKey"]["userVerification"], "required");
+    assert_eq!(opts["summary"]["members_after"], 2);
+    assert_eq!(opts["summary"]["devices"][0]["id"], ids[0]);
+    assert!(opts["summary"]["devices"][0]["name"].is_string());
+    let a = auth.get(&challenge_of(&opts), &Tweak::default());
+    env.clock.advance_secs(20);
+    let done = post(
+        &env,
+        &seg,
+        "api/actions",
+        json!({ "action": action, "assertion": a.json() }),
+        Some(&cookie),
+    )
+    .await
+    .ok(200);
+    assert_eq!(done["members"], 2);
+    assert_eq!(done["rotation_required"], true);
+    assert_eq!(member_count(&env), 2);
+    let spaces = get(&env, &seg, "api/spaces", Some(&cookie)).await.ok(200);
+    assert_eq!(spaces["spaces"][0]["rotation_required"], true);
+    // The audit log has the short id of the device and the number of the key, nothing else.
+    let journal = get(&env, &seg, "api/journal", Some(&cookie)).await.ok(200);
+    let line = journal["audit"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|l| l["kind"] == "device_removed")
+        .expect("an audit line");
+    assert_eq!(line["target"], ids[0]);
+    assert_eq!(line["key"], 1);
+    assert!(!journal.to_string().contains(&env.space_id));
+
+    // The two others cannot both go: a space keeps a member (the last one is the deletion).
+    let rest: Vec<&str> = ids[1..].iter().map(String::as_str).collect();
+    env.clock.advance_secs(20);
+    post(
+        &env,
+        &seg,
+        "api/stepup/options",
+        json!({ "action": revoke_action(&space, &rest) }),
+        Some(&cookie),
+    )
+    .await
+    .err(409, "device_set_mismatch");
+}
+
+#[tokio::test]
+async fn a_challenge_replayed_or_made_for_another_target_session_or_time_is_refused() {
+    let env = panel().await;
+    let seg = segment(&env);
+    let (_devs, _) = env.space_of(3).await;
+    let mut auth = Authenticator::for_test_relay();
+    let cookie = signed_in(&env, &mut auth).await;
+    let (space, ids) = device_ids(&env, &seg, &cookie).await;
+    let a0 = revoke_action(&space, &[&ids[0]]);
+    let a1 = revoke_action(&space, &[&ids[1]]);
+
+    // (1) Made for device 0, presented for device 1: refused, and the challenge is burnt.
+    let assertion = prepared(&env, &seg, &a0, &cookie, &mut auth).await;
+    env.clock.advance_secs(20);
+    post(
+        &env,
+        &seg,
+        "api/actions",
+        json!({ "action": a1, "assertion": assertion.clone() }),
+        Some(&cookie),
+    )
+    .await
+    .err(401, "unauthorized");
+    env.clock.advance_secs(20);
+    post(
+        &env,
+        &seg,
+        "api/actions",
+        json!({ "action": a0, "assertion": assertion }),
+        Some(&cookie),
+    )
+    .await
+    .err(401, "unauthorized");
+    assert_eq!(member_count(&env), 3, "nothing was removed");
+
+    // (2) Replay: the first use works, the second does not.
+    let assertion = prepared(&env, &seg, &a0, &cookie, &mut auth).await;
+    env.clock.advance_secs(20);
+    post(
+        &env,
+        &seg,
+        "api/actions",
+        json!({ "action": a0, "assertion": assertion.clone() }),
+        Some(&cookie),
+    )
+    .await
+    .ok(200);
+    env.clock.advance_secs(20);
+    let again = post(
+        &env,
+        &seg,
+        "api/actions",
+        json!({ "action": a0, "assertion": assertion }),
+        Some(&cookie),
+    )
+    .await;
+    assert_eq!(again.status, 401);
+    assert_eq!(member_count(&env), 2);
+
+    // (3) A challenge of another session.
+    let other_cookie = signed_in_again(&env, &seg, &mut auth).await;
+    let assertion = prepared(&env, &seg, &a1, &cookie, &mut auth).await;
+    env.clock.advance_secs(20);
+    post(
+        &env,
+        &seg,
+        "api/actions",
+        json!({ "action": a1, "assertion": assertion }),
+        Some(&other_cookie),
+    )
+    .await
+    .err(401, "unauthorized");
+    assert_eq!(member_count(&env), 2);
+
+    // (4) Expired: more than 2 minutes. Told apart from a refusal, and not counted.
+    let assertion = prepared(&env, &seg, &a1, &cookie, &mut auth).await;
+    env.clock.advance_secs(125);
+    let late = post(
+        &env,
+        &seg,
+        "api/actions",
+        json!({ "action": a1, "assertion": assertion }),
+        Some(&cookie),
+    )
+    .await;
+    assert_eq!(late.status, 401);
+    assert_eq!(late.json()["reason"], "expired");
+    assert_eq!(member_count(&env), 2);
+}
+
+#[tokio::test]
+async fn five_refused_step_ups_close_the_session_but_not_the_passkey() {
+    let env = panel().await;
+    let seg = segment(&env);
+    let (_devs, _) = env.space_of(2).await;
+    let mut auth = Authenticator::for_test_relay();
+    let cookie = signed_in(&env, &mut auth).await;
+    let (space, ids) = device_ids(&env, &seg, &cookie).await;
+    let action = revoke_action(&space, &[&ids[0]]);
+    let forged = auth.get(&[2u8; 32], &Tweak::default());
+
+    for n in 1..=5u64 {
+        env.clock.advance_secs(20);
+        let r = post(
+            &env,
+            &seg,
+            "api/actions",
+            json!({ "action": action, "assertion": forged.json() }),
+            Some(&cookie),
+        )
+        .await;
+        assert_eq!(r.status, 401, "refusal {n}");
+        let body = r.json();
+        assert_eq!(body["refusals"], n);
+        assert_eq!(body["session_closed"] == json!(true), n == 5);
+    }
+    // The session is gone; the key still signs in.
+    env.clock.advance_secs(20);
+    get(&env, &seg, "api/status", Some(&cookie))
+        .await
+        .err(401, "unauthorized");
+    let again = login_raw(&env, &seg, &mut auth, &Tweak::default()).await;
+    assert_eq!(again.status, 204);
+    assert_eq!(member_count(&env), 2);
+}
+
+#[tokio::test]
+async fn the_ceilings_count_the_successful_actions_only() {
+    let env = panel().await;
+    let seg = segment(&env);
+    let (_devs, _) = env.space_of(2).await;
+    let mut auth = Authenticator::for_test_relay();
+    let cookie = signed_in(&env, &mut auth).await;
+    let (space, ids) = device_ids(&env, &seg, &cookie).await;
+
+    // A refused action (the last member would go): nothing is counted.
+    let both: Vec<&str> = ids.iter().map(String::as_str).collect();
+    act(&env, &seg, revoke_action(&space, &both), &cookie, &mut auth)
+        .await
+        .err(409, "device_set_mismatch");
+    let about = get(&env, &seg, "api/about", Some(&cookie)).await.ok(200);
+    assert_eq!(about["ceilings"]["device_removals"]["used"], 0);
+
+    // 5 invitations an hour, then the sixth is refused before any challenge, with the command.
+    for _ in 0..5 {
+        act(
+            &env,
+            &seg,
+            json!({ "type": "create_invitation", "mode": "new" }),
+            &cookie,
+            &mut auth,
+        )
+        .await
+        .ok(200);
+    }
+    env.clock.advance_secs(20);
+    let sixth = post(
+        &env,
+        &seg,
+        "api/stepup/options",
+        json!({ "action": { "type": "create_invitation", "mode": "new" } }),
+        Some(&cookie),
+    )
+    .await;
+    assert_eq!(sixth.status, 429);
+    let body = sixth.json();
+    assert_eq!(body["reason"], "ceiling");
+    assert_eq!(body["cli"], "tomi-relay admin invite --new");
+    let about = get(&env, &seg, "api/about", Some(&cookie)).await.ok(200);
+    assert_eq!(about["ceilings"]["invitations"]["used"], 5);
+    assert_eq!(about["ceilings"]["invitations"]["max"], 5);
+    assert_eq!(about["ceilings"]["space_deletions"]["max"], 2);
+    assert_eq!(about["ceilings"]["device_removals"]["max"], 10);
+    // An hour later it is allowed again.
+    env.clock.advance_secs(3601);
+    let cookie = signed_in_again(&env, &seg, &mut auth).await;
+    act(
+        &env,
+        &seg,
+        json!({ "type": "create_invitation", "mode": "new" }),
+        &cookie,
+        &mut auth,
+    )
+    .await
+    .ok(200);
+}
+
+#[test]
+fn the_ceiling_of_the_deletion_of_a_space_is_two_a_day_and_a_failure_gives_its_place_back() {
+    use tomi_relay::admin_actions::{Ceilings, Kind};
+    let c = Ceilings::default();
+    let t = 1_000_000;
+    let first = c.reserve(Kind::SpaceDeletion, 1, t).unwrap();
+    c.reserve(Kind::SpaceDeletion, 1, t + 10).unwrap();
+    assert!(c.reserve(Kind::SpaceDeletion, 1, t + 20).is_err());
+    // The failed one is given back; the third then fits.
+    c.release(first);
+    c.reserve(Kind::SpaceDeletion, 1, t + 30).unwrap();
+    // 24 hours later the window is empty.
+    let day = 24 * 3_600_000;
+    assert!(c.check(Kind::SpaceDeletion, 2, t + day + 40).is_ok());
+    // Ten removals an hour, counted by device.
+    assert!(c.reserve(Kind::DeviceRemoval, 10, t).is_ok());
+    let wait = c.reserve(Kind::DeviceRemoval, 1, t + 1000).unwrap_err();
+    assert!(wait > 3000 && wait <= 3600, "{wait}");
+}
+
+#[tokio::test]
+async fn deleting_a_space_asks_its_eight_characters_and_goes_to_the_trash() {
+    let env = panel().await;
+    let seg = segment(&env);
+    let (_devs, _) = env.space_of(2).await;
+    let mut auth = Authenticator::for_test_relay();
+    let cookie = signed_in(&env, &mut auth).await;
+    let space = env.space_id[..8].to_owned();
+
+    // A wrong or missing confirmation: no challenge.
+    for confirm in [json!("00000000"), json!(null), json!(&space[..4])] {
+        act(
+            &env,
+            &seg,
+            json!({ "type": "delete_space", "space_id": space, "confirm": confirm }),
+            &cookie,
+            &mut auth,
+        )
+        .await
+        .err(400, "bad_request");
+    }
+    assert_eq!(env.state.spaces.list().len(), 1);
+
+    let done = act(
+        &env,
+        &seg,
+        json!({ "type": "delete_space", "space_id": space, "confirm": space.to_uppercase() }),
+        &cookie,
+        &mut auth,
+    )
+    .await
+    .ok(200);
+    assert_eq!(done["trash"]["days"], 7);
+    assert_eq!(
+        done["restore"],
+        format!("tomi-relay admin trash restore --space {space}")
+    );
+    assert!(env.state.spaces.is_empty());
+    let trash = get(&env, &seg, "api/trash", Some(&cookie)).await.ok(200);
+    assert_eq!(trash["trash"][0]["space_id"], space);
+    // The trash is shown, never restored or purged from the web.
+    for path in ["api/trash/restore", "api/trash/purge"] {
+        post(&env, &seg, path, json!({}), Some(&cookie))
+            .await
+            .err(404, "not_found");
+    }
+    let journal = get(&env, &seg, "api/journal", Some(&cookie)).await.ok(200);
+    assert!(journal["audit"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|l| l["kind"] == "space_deleted" && l["target"] == space));
+    // And the CLI brings it back.
+    let out = admin::run(
+        &env.state,
+        Cmd::Trash {
+            action: tomi_relay::trash::TrashAction::Restore,
+            space: Some(space.clone()),
+            confirm: None,
+            json: false,
+        },
+    )
+    .await;
+    assert_eq!(out.exit, 0, "{}", out.stderr);
+    assert_eq!(env.state.spaces.list().len(), 1);
+}
+
+#[tokio::test]
+async fn the_quota_of_a_space_the_invitations_and_the_sessions_need_the_session_only() {
+    let env = panel().await;
+    let seg = segment(&env);
+    let (_devs, _) = env.space_of(2).await;
+    let mut auth = Authenticator::for_test_relay();
+    let cookie = signed_in(&env, &mut auth).await;
+    let space = env.space_id[..8].to_owned();
+
+    // A quota above the usage is applied at once; `null` goes back to the default.
+    let set = post(
+        &env,
+        &seg,
+        "api/spaces/quota",
+        json!({ "space_id": space, "value": 50_000_000 }),
+        Some(&cookie),
+    )
+    .await
+    .ok(200);
+    assert_eq!(set["max_bytes"], 50_000_000);
+    assert_eq!(set["quota_source"], "space");
+    let unset = post(
+        &env,
+        &seg,
+        "api/spaces/quota",
+        json!({ "space_id": space, "value": null }),
+        Some(&cookie),
+    )
+    .await
+    .ok(200);
+    assert_eq!(unset["quota_source"], "default");
+    post(
+        &env,
+        &seg,
+        "api/spaces/quota",
+        json!({ "space_id": space, "value": 12 }),
+        Some(&cookie),
+    )
+    .await
+    .err(400, "bad_request");
+    post(
+        &env,
+        &seg,
+        "api/spaces/quota",
+        json!({ "space_id": "ffffffff", "value": null }),
+        Some(&cookie),
+    )
+    .await
+    .err(409, "device_set_mismatch");
+
+    // Invitations: cancelling only removes a right.
+    act(
+        &env,
+        &seg,
+        json!({ "type": "create_invitation", "mode": "new" }),
+        &cookie,
+        &mut auth,
+    )
+    .await
+    .ok(200);
+    let cancelled = post(
+        &env,
+        &seg,
+        "api/invitations/cancel",
+        json!({}),
+        Some(&cookie),
+    )
+    .await
+    .ok(200);
+    assert_eq!(cancelled["cancelled"], 1);
+    assert_eq!(cancelled["invitations"], json!([]));
+
+    // Other sessions, then "close all".
+    let about = get(&env, &seg, "api/about", Some(&cookie)).await.ok(200);
+    assert_eq!(about["sessions"]["others"], 0);
+    let other = signed_in_again(&env, &seg, &mut auth).await;
+    let about = get(&env, &seg, "api/about", Some(&cookie)).await.ok(200);
+    assert_eq!(about["sessions"]["others"], 1);
+    let closed = post(
+        &env,
+        &seg,
+        "api/sessions/close-all",
+        json!({}),
+        Some(&cookie),
+    )
+    .await;
+    assert_eq!(closed.status, 204);
+    for c in [&cookie, &other] {
+        get(&env, &seg, "api/status", Some(c))
+            .await
+            .err(401, "unauthorized");
+    }
+    // Without a session none of it works.
+    post(&env, &seg, "api/invitations/cancel", json!({}), None)
+        .await
+        .err(401, "unauthorized");
 }

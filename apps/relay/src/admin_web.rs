@@ -75,7 +75,7 @@ pub const ENROLL_ATTEMPTS: i64 = 5;
 
 /// How many challenges and sessions are kept at once (the oldest make room).
 const MAX_PENDING: usize = 16;
-const MAX_SESSIONS: usize = 16;
+pub(crate) const MAX_SESSIONS: usize = 16;
 /// Largest body a request of the panel may have.
 const MAX_BODY: usize = 16 * 1024;
 /// How many lines the administration journal keeps (the oldest make room).
@@ -145,24 +145,53 @@ pub fn origin_and_rp_id(public_url: &str) -> Option<(String, String)> {
 
 // ===== what is kept in routing.db =============================================================
 
-/// The registered passkey.
+/// How many passkeys may be enrolled.
+pub const MAX_KEYS: i64 = 5;
+/// Life of a step-up challenge.
+pub const STEPUP_TTL_MS: i64 = 2 * 60_000;
+/// Step-ups refused in one session before that session is closed (never the passkey).
+pub const MAX_REFUSALS: u8 = 5;
+
+/// A registered passkey.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct StoredCredential {
+    /// Its number: never reused, even after the key was removed.
+    pub num: i64,
     pub credential_id: Vec<u8>,
     /// Uncompressed SEC1 point, 65 bytes.
     pub public_key: Vec<u8>,
     pub sign_count: u32,
+    /// The BE flag the authenticator declared at enrolment (no attestation: a declaration).
+    /// `false`: a key bound to its device (a hardware key).
+    pub backup_eligible: bool,
     pub created_at: i64,
+    pub last_used_at: Option<i64>,
+}
+
+impl StoredCredential {
+    /// The generated label (never typed text): `Clé 2 · liée à l'appareil`.
+    pub fn label(&self) -> String {
+        let kind = if self.backup_eligible {
+            "synchronisée"
+        } else {
+            "liée à l'appareil"
+        };
+        format!("Clé {} · {kind}", self.num)
+    }
+}
+
+fn table_exists(tx: &Transaction, name: &str) -> Result<bool, ApiError> {
+    let n: i64 = tx.query_row(
+        "SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = ?1",
+        params![name],
+        |r| r.get(0),
+    )?;
+    Ok(n > 0)
 }
 
 /// Whether the panel tables exist (an older `routing.db` opened read-only may lack them).
 fn tables_exist(tx: &Transaction) -> Result<bool, ApiError> {
-    let n: i64 = tx.query_row(
-        "SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = 'admin_web_path'",
-        [],
-        |r| r.get(0),
-    )?;
-    Ok(n > 0)
+    table_exists(tx, "admin_web_path")
 }
 
 fn stored_segment(tx: &Transaction) -> Result<Option<String>, ApiError> {
@@ -176,33 +205,89 @@ fn stored_segment(tx: &Transaction) -> Result<Option<String>, ApiError> {
         .optional()?)
 }
 
-fn stored_credential(tx: &Transaction) -> Result<Option<StoredCredential>, ApiError> {
+fn to_stored(
+    (num, credential_id, public_key, count, be, created_at, last): (
+        i64,
+        Vec<u8>,
+        Vec<u8>,
+        i64,
+        i64,
+        i64,
+        Option<i64>,
+    ),
+) -> StoredCredential {
+    StoredCredential {
+        num,
+        credential_id,
+        public_key,
+        sign_count: u32::try_from(count).unwrap_or(u32::MAX),
+        backup_eligible: be != 0,
+        created_at,
+        last_used_at: last,
+    }
+}
+
+/// Every passkey, by number. A database that only has the single-key table of the previous
+/// version (opened read-only, so not migrated) shows that key as number 1.
+pub fn stored_credentials(tx: &Transaction) -> Result<Vec<StoredCredential>, ApiError> {
     if !tables_exist(tx)? {
-        return Ok(None);
+        return Ok(Vec::new());
+    }
+    if table_exists(tx, "admin_web_credentials")? {
+        let mut st = tx.prepare(
+            "SELECT num, credential_id, public_key, sign_count, backup_eligible, created_at,
+                    last_used_at
+             FROM admin_web_credentials ORDER BY num",
+        )?;
+        let rows = st
+            .query_map([], |r| {
+                Ok((
+                    r.get(0)?,
+                    r.get(1)?,
+                    r.get(2)?,
+                    r.get(3)?,
+                    r.get(4)?,
+                    r.get(5)?,
+                    r.get(6)?,
+                ))
+            })?
+            .collect::<rusqlite::Result<Vec<_>>>()?;
+        return Ok(rows.into_iter().map(to_stored).collect());
     }
     let row = tx
         .query_row(
-            "SELECT credential_id, public_key, sign_count, created_at
+            "SELECT 1, credential_id, public_key, sign_count, 1, created_at, NULL
              FROM admin_web_credential WHERE id = 1",
             [],
             |r| {
                 Ok((
-                    r.get::<_, Vec<u8>>(0)?,
-                    r.get::<_, Vec<u8>>(1)?,
-                    r.get::<_, i64>(2)?,
-                    r.get::<_, i64>(3)?,
+                    r.get(0)?,
+                    r.get(1)?,
+                    r.get(2)?,
+                    r.get(3)?,
+                    r.get(4)?,
+                    r.get(5)?,
+                    r.get(6)?,
                 ))
             },
         )
         .optional()?;
-    Ok(row.map(
-        |(credential_id, public_key, count, created_at)| StoredCredential {
-            credential_id,
-            public_key,
-            sign_count: u32::try_from(count).unwrap_or(u32::MAX),
-            created_at,
-        },
-    ))
+    Ok(row.map(to_stored).into_iter().collect())
+}
+
+/// Whether deleting a space needs a key bound to its device (the CLI sets it, off by default).
+pub fn device_key_required(tx: &Transaction) -> Result<bool, ApiError> {
+    if !table_exists(tx, "admin_web_policy")? {
+        return Ok(false);
+    }
+    let v: Option<i64> = tx
+        .query_row(
+            "SELECT critical_requires_device_bound FROM admin_web_policy WHERE id = 1",
+            [],
+            |r| r.get(0),
+        )
+        .optional()?;
+    Ok(v.unwrap_or(0) != 0)
 }
 
 /// Whether an enrolment code is pending (not expired, attempts left).
@@ -310,39 +395,80 @@ fn try_enrollment_code(tx: &Transaction, given: &[u8; 32], now: i64) -> Result<b
     Ok(false)
 }
 
-/// Stores the first passkey and closes the enrolment, in one transaction. `false` if a key is
-/// already registered or the enrolment code is gone or expired.
-fn register_credential(tx: &Transaction, now: i64, key: &Registered) -> Result<bool, ApiError> {
-    if stored_credential(tx)?.is_some() || !enrollment_pending(tx, now)? {
-        return Ok(false);
-    }
+/// Keeps `admin_web_credential` (the single-key table of the previous version) equal to the
+/// lowest-numbered passkey, so that the previous binary still starts and still knows a key.
+pub fn sync_legacy(tx: &Transaction) -> Result<(), ApiError> {
+    tx.execute("DELETE FROM admin_web_credential", [])?;
     tx.execute(
         "INSERT INTO admin_web_credential (id, credential_id, public_key, sign_count, created_at)
-         VALUES (1, ?1, ?2, ?3, ?4)",
+         SELECT 1, credential_id, public_key, sign_count, created_at
+         FROM admin_web_credentials ORDER BY num LIMIT 1",
+        [],
+    )?;
+    Ok(())
+}
+
+/// Stores a new passkey and closes the enrolment, in one transaction. `None` if the enrolment
+/// code is gone or expired, or if [`MAX_KEYS`] keys are enrolled already; else the new number.
+fn register_credential(
+    tx: &Transaction,
+    now: i64,
+    key: &Registered,
+) -> Result<Option<i64>, ApiError> {
+    if !enrollment_pending(tx, now)? {
+        return Ok(None);
+    }
+    let count: i64 = tx.query_row("SELECT count(*) FROM admin_web_credentials", [], |r| {
+        r.get(0)
+    })?;
+    if count >= MAX_KEYS {
+        return Ok(None);
+    }
+    tx.execute(
+        "INSERT INTO admin_web_credentials
+         (credential_id, public_key, sign_count, backup_eligible, created_at)
+         VALUES (?1, ?2, ?3, ?4, ?5)",
         params![
             key.credential_id,
             key.public_key,
             i64::from(key.sign_count),
+            i64::from(key.backup_eligible),
             now
         ],
     )?;
+    let num = tx.last_insert_rowid();
     tx.execute("DELETE FROM admin_web_enrollment WHERE id = 1", [])?;
-    Ok(true)
+    sync_legacy(tx)?;
+    crate::admin_audit::record_tx(
+        tx,
+        now,
+        crate::admin_audit::kind::PASSKEY_ADDED,
+        None,
+        Some(num),
+    )?;
+    Ok(Some(num))
 }
 
 /// Moves the signature counter forward, only from the value that was read (two concurrent replays
 /// of one assertion cannot both pass).
-fn advance_counter(tx: &Transaction, id: &[u8], from: u32, to: u32) -> Result<bool, ApiError> {
+fn advance_counter(
+    tx: &Transaction,
+    num: i64,
+    from: u32,
+    to: u32,
+    now: i64,
+) -> Result<bool, ApiError> {
     let n = tx.execute(
-        "UPDATE admin_web_credential SET sign_count = ?1
-         WHERE id = 1 AND credential_id = ?2 AND sign_count = ?3",
-        params![i64::from(to), id, i64::from(from)],
+        "UPDATE admin_web_credentials SET sign_count = ?1, last_used_at = ?2
+         WHERE num = ?3 AND sign_count = ?4",
+        params![i64::from(to), now, num, i64::from(from)],
     )?;
     Ok(n == 1)
 }
 
 // ===== what is kept in memory =================================================================
 
+/// What a pending challenge of the sign-in or of the enrolment is for.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 enum Ceremony {
     Register,
@@ -355,10 +481,31 @@ struct Pending {
     expires_ms: i64,
 }
 
+/// A challenge of a step-up: tied to one session and to the exact hash of one action.
+pub(crate) struct PendingStepUp {
+    pub challenge: [u8; 32],
+    pub action: [u8; 32],
+    pub session: [u8; 32],
+    pub epoch: u64,
+    pub expires_ms: i64,
+}
+
+/// What [`AdminWeb::take_stepup`] found.
+pub(crate) enum Taken {
+    Found(PendingStepUp),
+    /// It was issued, but more than [`STEPUP_TTL_MS`] ago.
+    Expired,
+    Unknown,
+}
+
 struct Session {
     hash: [u8; 32],
     created_ms: i64,
     last_ms: i64,
+    /// The number of the passkey that opened it.
+    key_num: i64,
+    /// Step-ups refused in this session.
+    refusals: u8,
 }
 
 /// What the administration journal records: a fixed word, never a value that came from a request.
@@ -372,22 +519,42 @@ pub enum JournalKind {
     EnrollmentRefused,
     /// The administrator signed out.
     SignedOut,
-    /// The passkey was registered (the enrolment is closed).
+    /// A passkey was registered.
     PasskeyRegistered,
     /// An invitation was created (`new`).
     InvitationCreated,
     /// The pending invitations were replaced by one (`rotate`).
     InvitationsReplaced,
+    /// The pending invitations were invalidated.
+    InvitationsCancelled,
     /// The default quota of a space was set to a number of bytes.
     DefaultQuotaSet,
     /// The default quota of a space became "no limit per space".
     DefaultQuotaUnlimited,
     /// The default quota of a space went back to the configuration.
     DefaultQuotaConfig,
+    /// The quota of one space was set to a number of bytes.
+    SpaceQuotaSet,
+    /// The quota of one space became "no limit".
+    SpaceQuotaUnlimited,
+    /// The quota of one space went back to the default.
+    SpaceQuotaDefault,
     /// `tomi-relay admin web --rotate-path`: every session was closed.
     PathRotated,
-    /// `tomi-relay admin web reset`: the passkey was removed, every session closed.
+    /// `tomi-relay admin web reset`: the passkeys were removed, every session closed.
     PasskeyReset,
+    /// `tomi-relay admin web keys remove`: one passkey was removed.
+    PasskeyRemoved,
+    /// A step-up was refused.
+    StepUpRefused,
+    /// Five step-ups were refused: the session was closed.
+    SessionClosedByRefusals,
+    /// Every session was closed from the panel.
+    SessionsClosed,
+    /// Devices were removed from a space.
+    DevicesRemoved,
+    /// A space was deleted (into the trash).
+    SpaceDeleted,
 }
 
 impl JournalKind {
@@ -400,11 +567,21 @@ impl JournalKind {
             Self::PasskeyRegistered => "passkey_registered",
             Self::InvitationCreated => "invitation_created",
             Self::InvitationsReplaced => "invitations_replaced",
+            Self::InvitationsCancelled => "invitations_cancelled",
             Self::DefaultQuotaSet => "default_quota_set",
             Self::DefaultQuotaUnlimited => "default_quota_unlimited",
             Self::DefaultQuotaConfig => "default_quota_config",
+            Self::SpaceQuotaSet => "space_quota_set",
+            Self::SpaceQuotaUnlimited => "space_quota_unlimited",
+            Self::SpaceQuotaDefault => "space_quota_default",
             Self::PathRotated => "path_rotated",
             Self::PasskeyReset => "passkey_reset",
+            Self::PasskeyRemoved => "passkey_removed",
+            Self::StepUpRefused => "stepup_refused",
+            Self::SessionClosedByRefusals => "session_closed_by_refusals",
+            Self::SessionsClosed => "sessions_closed",
+            Self::DevicesRemoved => "devices_removed",
+            Self::SpaceDeleted => "space_deleted",
         }
     }
 }
@@ -429,7 +606,10 @@ pub struct AdminWeb {
     rp_id: String,
     segment: RwLock<String>,
     challenges: Mutex<Vec<Pending>>,
+    stepups: Mutex<Vec<PendingStepUp>>,
     sessions: Mutex<Vec<Session>>,
+    /// The ceilings of the actions that destroy or create a right.
+    pub(crate) ceilings: crate::admin_actions::Ceilings,
     /// Bumped by every `clear_ephemeral`: a sign-in that began before a reset or a path change
     /// cannot open a session after it.
     epoch: AtomicU64,
@@ -464,7 +644,9 @@ impl AdminWeb {
             rp_id,
             segment: RwLock::new(segment),
             challenges: Mutex::new(Vec::new()),
+            stepups: Mutex::new(Vec::new()),
             sessions: Mutex::new(Vec::new()),
+            ceilings: crate::admin_actions::Ceilings::default(),
             epoch: AtomicU64::new(0),
             started_ms: now,
             journal: Mutex::new(VecDeque::new()),
@@ -557,9 +739,15 @@ impl AdminWeb {
     /// Forgets every pending challenge and every session.
     pub fn clear_ephemeral(&self) {
         lock(&self.challenges).clear();
+        lock(&self.stepups).clear();
         let mut sessions = lock(&self.sessions);
         self.epoch.fetch_add(1, Ordering::SeqCst);
         sessions.clear();
+    }
+
+    /// Closes the sessions that a passkey opened (the passkey was removed).
+    pub fn close_sessions_of_key(&self, num: i64) {
+        lock(&self.sessions).retain(|s| s.key_num != num);
     }
 
     /// The number of live sessions (tests).
@@ -604,6 +792,57 @@ impl AdminWeb {
         hit.map(|i| list.swap_remove(i).challenge)
     }
 
+    /// A step-up challenge: `SHA-256(nonce || action)` for a fresh 32-byte nonce, tied to the
+    /// session and to `action` (the hash of the exact action), valid [`STEPUP_TTL_MS`], single
+    /// use. Expired ones stay a few minutes so that "too late" can be told from "never issued".
+    pub(crate) fn issue_stepup(
+        &self,
+        session: [u8; 32],
+        action: [u8; 32],
+        now: i64,
+    ) -> Result<[u8; 32], ApiError> {
+        let nonce = random_bytes::<32>().map_err(ApiError::internal)?;
+        let challenge = sha256_parts(&[&nonce, &action]);
+        let mut list = lock(&self.stepups);
+        list.retain(|p| p.expires_ms + 3 * 60_000 > now);
+        while list.len() >= MAX_PENDING {
+            list.remove(0);
+        }
+        list.push(PendingStepUp {
+            challenge,
+            action,
+            session,
+            epoch: self.epoch(),
+            expires_ms: now + STEPUP_TTL_MS,
+        });
+        Ok(challenge)
+    }
+
+    /// Takes the step-up challenge `claimed` designates out of the store: it works once, whatever
+    /// the outcome that follows. Every pending one is compared in constant time.
+    pub(crate) fn take_stepup(&self, claimed: &[u8], now: i64) -> Taken {
+        let mut list = lock(&self.stepups);
+        let mut hit = None;
+        for (i, p) in list.iter().enumerate() {
+            let equal = claimed.len() == p.challenge.len()
+                && bool::from(p.challenge.as_slice().ct_eq(claimed));
+            if equal {
+                hit = Some(i);
+            }
+        }
+        match hit {
+            None => Taken::Unknown,
+            Some(i) => {
+                let p = list.swap_remove(i);
+                if p.expires_ms <= now {
+                    Taken::Expired
+                } else {
+                    Taken::Found(p)
+                }
+            }
+        }
+    }
+
     // ----- sessions -----
 
     fn alive(s: &Session, now: i64) -> bool {
@@ -611,12 +850,12 @@ impl AdminWeb {
     }
 
     /// The current epoch: read it BEFORE looking at the stored key, then give it to `open_session`.
-    fn epoch(&self) -> u64 {
+    pub(crate) fn epoch(&self) -> u64 {
         self.epoch.load(Ordering::SeqCst)
     }
 
     /// Opens a session and returns its token (the only time it exists in clear).
-    fn open_session(&self, now: i64, epoch: u64) -> Result<String, ApiError> {
+    fn open_session(&self, now: i64, epoch: u64, key_num: i64) -> Result<String, ApiError> {
         let raw = random_bytes::<32>().map_err(ApiError::internal)?;
         let mut list = lock(&self.sessions);
         // A reset or a path change happened since this sign-in began: it must start again.
@@ -631,6 +870,8 @@ impl AdminWeb {
             hash: sha256(&raw),
             created_ms: now,
             last_ms: now,
+            key_num,
+            refusals: 0,
         });
         Ok(b64_encode(&raw))
     }
@@ -656,6 +897,52 @@ impl AdminWeb {
         let s = &mut list[found?];
         s.last_ms = now;
         Some((now + IDLE_TTL_MS, s.created_ms + ABSOLUTE_TTL_MS))
+    }
+
+    /// The hash that designates a live session, and the number of the passkey that opened it.
+    pub(crate) fn session_identity(&self, token: &str, now: i64) -> Option<([u8; 32], i64)> {
+        let hash = session_hash(token)?;
+        self.session_deadlines(token, now)?;
+        let list = lock(&self.sessions);
+        let s = list
+            .iter()
+            .find(|s| bool::from(s.hash.as_slice().ct_eq(hash.as_slice())))?;
+        Some((s.hash, s.key_num))
+    }
+
+    /// The live sessions other than `hash`.
+    pub(crate) fn other_sessions(&self, hash: &[u8; 32], now: i64) -> usize {
+        let mut list = lock(&self.sessions);
+        list.retain(|s| Self::alive(s, now));
+        list.iter()
+            .filter(|s| !bool::from(s.hash.as_slice().ct_eq(hash.as_slice())))
+            .count()
+    }
+
+    /// Counts a refused step-up in the session. At [`MAX_REFUSALS`] the session is closed (never
+    /// the passkey: a thief of the cookie must not be able to lock the administrator out).
+    /// Returns `(refusals so far, closed)`.
+    pub(crate) fn note_refusal(&self, hash: &[u8; 32]) -> (u8, bool) {
+        let mut list = lock(&self.sessions);
+        let Some(i) = list
+            .iter()
+            .position(|s| bool::from(s.hash.as_slice().ct_eq(hash.as_slice())))
+        else {
+            return (MAX_REFUSALS, true);
+        };
+        list[i].refusals = list[i].refusals.saturating_add(1);
+        let n = list[i].refusals;
+        if n >= MAX_REFUSALS {
+            list.remove(i);
+            return (n, true);
+        }
+        (n, false)
+    }
+
+    /// Closes every session (the panel's "close all sessions").
+    pub(crate) fn close_all_sessions(&self) {
+        lock(&self.sessions).clear();
+        lock(&self.stepups).clear();
     }
 
     fn close_session(&self, token: &str) {
@@ -730,7 +1017,7 @@ fn asset(body: &'static str, content_type: &'static str) -> Response {
     r
 }
 
-fn json_response(status: StatusCode, v: &Value) -> Response {
+pub(crate) fn json_response(status: StatusCode, v: &Value) -> Response {
     let mut r = Response::new(Body::from(serde_json::to_vec(v).unwrap_or_default()));
     *r.status_mut() = status;
     r.headers_mut().insert(
@@ -740,7 +1027,7 @@ fn json_response(status: StatusCode, v: &Value) -> Response {
     r
 }
 
-fn no_content() -> Response {
+pub(crate) fn no_content() -> Response {
     let mut r = Response::new(Body::empty());
     *r.status_mut() = StatusCode::NO_CONTENT;
     r
@@ -794,14 +1081,19 @@ async fn handle(
             authorize(st, web, req.headers())?;
             Ok(json_response(
                 StatusCode::OK,
-                &json!({ "invitations": invitations(st).await? }),
+                &json!({ "invitations": crate::admin_actions::invitations(st).await? }),
             ))
         }
-        ("POST", "api/invitations") => {
-            check_origin(web, req.headers())?;
-            authorize(st, web, req.headers())?;
-            create_invitation(st, web, req).await
+        // Creating or replacing an invitation needs a step-up: `POST api/actions`.
+        ("POST", "api/stepup/options") => crate::admin_actions::stepup_options(st, web, req).await,
+        ("POST", "api/actions") => crate::admin_actions::run_action(st, web, req).await,
+        ("POST", "api/spaces/quota") => crate::admin_actions::set_space_quota(st, web, req).await,
+        ("POST", "api/invitations/cancel") => {
+            crate::admin_actions::cancel_invitations(st, web, req).await
         }
+        ("POST", "api/sessions/close-all") => crate::admin_actions::close_all(st, web, req).await,
+        ("GET", "api/keys") => crate::admin_actions::keys(st, web, req).await,
+        ("GET", "api/trash") => crate::admin_actions::trash(st, web, req).await,
         ("GET", "api/quota") => {
             authorize(st, web, req.headers())?;
             Ok(json_response(
@@ -823,6 +1115,12 @@ async fn handle(
                     "since": crate::wire::ts_format(web.started_ms()),
                     "max_entries": JOURNAL_LEN,
                     "entries": web.journal_json(),
+                    "audit_max_entries": crate::admin_audit::MAX_ROWS,
+                    "audit": st
+                        .spaces
+                        .routing()
+                        .read(|tx| crate::admin_audit::list(tx))
+                        .await?,
                 }),
             ))
         }
@@ -834,7 +1132,7 @@ async fn handle(
 
 /// A write request must come from the page itself: the `Origin` of `public_url` and the header
 /// `X-Tomi-Admin: 1`. (`SameSite=Strict` on the cookie is the other half.)
-fn check_origin(web: &AdminWeb, headers: &HeaderMap) -> Result<(), ApiError> {
+pub(crate) fn check_origin(web: &AdminWeb, headers: &HeaderMap) -> Result<(), ApiError> {
     let origin_ok = headers
         .get(header::ORIGIN)
         .and_then(|v| v.to_str().ok())
@@ -851,7 +1149,7 @@ fn check_origin(web: &AdminWeb, headers: &HeaderMap) -> Result<(), ApiError> {
 }
 
 /// The value of the session cookie, if the request carries it under its exact name.
-fn session_cookie(headers: &HeaderMap) -> Option<String> {
+pub(crate) fn session_cookie(headers: &HeaderMap) -> Option<String> {
     headers
         .get_all(header::COOKIE)
         .iter()
@@ -863,7 +1161,11 @@ fn session_cookie(headers: &HeaderMap) -> Option<String> {
 }
 
 /// The request carries a live session (and its activity is recorded).
-fn authorize(st: &AppState, web: &AdminWeb, headers: &HeaderMap) -> Result<(), ApiError> {
+pub(crate) fn authorize(
+    st: &AppState,
+    web: &AdminWeb,
+    headers: &HeaderMap,
+) -> Result<(), ApiError> {
     let token = session_cookie(headers).ok_or_else(ApiError::unauthorized)?;
     if web.session_valid(&token, st.now()) {
         Ok(())
@@ -872,14 +1174,14 @@ fn authorize(st: &AppState, web: &AdminWeb, headers: &HeaderMap) -> Result<(), A
     }
 }
 
-fn throttle(st: &AppState, req: &Request) -> Result<(), ApiError> {
+pub(crate) fn throttle(st: &AppState, req: &Request) -> Result<(), ApiError> {
     let ip = st.client_ip(req.headers(), req.extensions());
     st.limiter
         .check("admin-web", &crate::ratelimit::ip_key(ip), SENSITIVE)?;
     st.limiter.check("admin-web-all", "*", ALL_CALLERS)
 }
 
-async fn read_json(req: Request) -> Result<Value, ApiError> {
+pub(crate) async fn read_json(req: Request) -> Result<Value, ApiError> {
     let bytes = axum::body::to_bytes(req.into_body(), MAX_BODY)
         .await
         .map_err(|_| ApiError::bad_request("The body is missing or too large."))?;
@@ -887,21 +1189,30 @@ async fn read_json(req: Request) -> Result<Value, ApiError> {
 }
 
 /// A base64url field of a JSON body.
-fn b64_field(body: &Value, name: &str) -> Result<Vec<u8>, ApiError> {
+pub(crate) fn b64_field(body: &Value, name: &str) -> Result<Vec<u8>, ApiError> {
     body.get(name)
         .and_then(Value::as_str)
         .and_then(b64_decode)
         .ok_or_else(|| ApiError::bad_request("A field is missing or not base64url."))
 }
 
-async fn current_credential(st: &AppState) -> Result<Option<StoredCredential>, ApiError> {
-    st.spaces.routing().read(stored_credential).await
+pub(crate) async fn credentials(st: &AppState) -> Result<Vec<StoredCredential>, ApiError> {
+    st.spaces.routing().read(stored_credentials).await
 }
 
+/// Is the enrolment open? Before the first key it always is (a code is still needed); once a
+/// key exists it is only while `admin web enroll` made a code, and answers `404` otherwise.
+async fn enrolling(st: &AppState) -> Result<bool, ApiError> {
+    let now = st.now();
+    st.spaces
+        .routing()
+        .read(move |tx| Ok(stored_credentials(tx)?.is_empty() || enrollment_pending(tx, now)?))
+        .await
+}
 // ----- pages and state ----------------------------------------------------------------------
 
 async fn state(st: &AppState, web: &AdminWeb, headers: &HeaderMap) -> Result<Response, ApiError> {
-    let enrolled = current_credential(st).await?.is_some();
+    let enrolled = !credentials(st).await?.is_empty();
     let authenticated = session_cookie(headers).is_some_and(|t| web.session_valid(&t, st.now()));
     Ok(json_response(
         StatusCode::OK,
@@ -918,8 +1229,8 @@ async fn register_options(
 ) -> Result<Response, ApiError> {
     check_origin(web, req.headers())?;
     throttle(st, &req)?;
-    // Closed for good once a key is registered.
-    if current_credential(st).await?.is_some() {
+    // Open only while `admin web enroll` made a code.
+    if !enrolling(st).await? {
         return Err(ApiError::not_found());
     }
     let body = read_json(req).await?;
@@ -969,7 +1280,7 @@ async fn register_finish(
 ) -> Result<Response, ApiError> {
     check_origin(web, req.headers())?;
     throttle(st, &req)?;
-    if current_credential(st).await?.is_some() {
+    if !enrolling(st).await? {
         return Err(ApiError::not_found());
     }
     let body = read_json(req).await?;
@@ -995,8 +1306,10 @@ async fn register_finish(
         .routing()
         .write(move |tx| register_credential(tx, now, &key))
         .await?;
-    if !stored {
-        return Err(refuse("enrolment closed or expired"));
+    if stored.is_none() {
+        return Err(refuse(
+            "enrolment closed, expired or all the keys are enrolled",
+        ));
     }
     tracing::warn!("admin web: a passkey was registered, the enrolment is closed");
     web.record(JournalKind::PasskeyRegistered, None, now);
@@ -1008,16 +1321,21 @@ async fn register_finish(
 async fn login_options(st: &AppState, web: &AdminWeb, req: Request) -> Result<Response, ApiError> {
     check_origin(web, req.headers())?;
     throttle(st, &req)?;
-    let credential = current_credential(st)
-        .await?
-        .ok_or_else(ApiError::not_found)?;
+    let all = credentials(st).await?;
+    if all.is_empty() {
+        return Err(ApiError::not_found());
+    }
     let challenge = web.issue_challenge(Ceremony::Login, st.now())?;
+    let allowed: Vec<Value> = all
+        .iter()
+        .map(|c| json!({ "type": "public-key", "id": b64_encode(&c.credential_id) }))
+        .collect();
     Ok(json_response(
         StatusCode::OK,
         &json!({ "publicKey": {
             "challenge": b64_encode(&challenge),
             "rpId": web.rp_id,
-            "allowCredentials": [{ "type": "public-key", "id": b64_encode(&credential.credential_id) }],
+            "allowCredentials": allowed,
             "userVerification": "required",
             "timeout": CHALLENGE_TTL_MS,
         }}),
@@ -1028,9 +1346,10 @@ async fn login_finish(st: &AppState, web: &AdminWeb, req: Request) -> Result<Res
     check_origin(web, req.headers())?;
     throttle(st, &req)?;
     let epoch = web.epoch();
-    let credential = current_credential(st)
-        .await?
-        .ok_or_else(ApiError::not_found)?;
+    let all = credentials(st).await?;
+    if all.is_empty() {
+        return Err(ApiError::not_found());
+    }
     let body = read_json(req).await?;
     let id = b64_field(&body, "id")?;
     let client_data = b64_field(&body, "clientDataJSON")?;
@@ -1045,11 +1364,18 @@ async fn login_finish(st: &AppState, web: &AdminWeb, req: Request) -> Result<Res
     let challenge = webauthn::claimed_challenge(&client_data)
         .and_then(|c| web.take_challenge(Ceremony::Login, &c, now))
         .ok_or_else(|| refuse("challenge"))?;
-    if id.len() != credential.credential_id.len()
-        || !bool::from(id.as_slice().ct_eq(credential.credential_id.as_slice()))
-    {
-        return Err(refuse("credential"));
+    // Every stored key is compared, in constant time, whether or not an earlier one matched.
+    let mut found = None;
+    for c in &all {
+        if id.len() == c.credential_id.len()
+            && bool::from(id.as_slice().ct_eq(c.credential_id.as_slice()))
+        {
+            found = Some(c);
+        }
     }
+    let Some(credential) = found else {
+        return Err(refuse("credential"));
+    };
     let expected = Expected {
         origin: web.origin(),
         rp_id: web.rp_id(),
@@ -1064,16 +1390,28 @@ async fn login_finish(st: &AppState, web: &AdminWeb, req: Request) -> Result<Res
         &signature,
     )
     .map_err(|why| refuse(why.as_str()))?;
-    let (cred_id, from) = (credential.credential_id.clone(), credential.sign_count);
+    let (num, from) = (credential.num, credential.sign_count);
     let advanced = st
         .spaces
         .routing()
-        .write(move |tx| advance_counter(tx, &cred_id, from, new_count))
+        .write(move |tx| {
+            let ok = advance_counter(tx, num, from, new_count, now)?;
+            if ok {
+                crate::admin_audit::record_tx(
+                    tx,
+                    now,
+                    crate::admin_audit::kind::SIGNED_IN,
+                    None,
+                    Some(num),
+                )?;
+            }
+            Ok(ok)
+        })
         .await?;
     if !advanced {
         return Err(refuse("counter"));
     }
-    let token = web.open_session(now, epoch)?;
+    let token = web.open_session(now, epoch, num)?;
     tracing::info!("admin web: the administrator signed in");
     web.record(JournalKind::SignedIn, None, now);
     let mut resp = no_content();
@@ -1087,6 +1425,11 @@ async fn login_finish(st: &AppState, web: &AdminWeb, req: Request) -> Result<Res
     Ok(resp)
 }
 
+/// The `Set-Cookie` value that removes the session cookie.
+pub(crate) fn clear_cookie_value() -> String {
+    format!("{COOKIE_NAME}=; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=0")
+}
+
 fn logout(st: &AppState, web: &AdminWeb, req: &Request) -> Result<Response, ApiError> {
     check_origin(web, req.headers())?;
     if let Some(token) = session_cookie(req.headers()) {
@@ -1098,8 +1441,7 @@ fn logout(st: &AppState, web: &AdminWeb, req: &Request) -> Result<Response, ApiE
         web.close_session(&token);
     }
     let mut resp = no_content();
-    let gone = format!("{COOKIE_NAME}=; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=0");
-    if let Ok(v) = HeaderValue::from_str(&gone) {
+    if let Ok(v) = HeaderValue::from_str(&clear_cookie_value()) {
         resp.headers_mut().append(header::SET_COOKIE, v);
     }
     Ok(resp)
@@ -1108,7 +1450,7 @@ fn logout(st: &AppState, web: &AdminWeb, req: &Request) -> Result<Response, ApiE
 // ----- the dashboard ------------------------------------------------------------------------
 
 /// Runs a blocking closure on the blocking pool.
-async fn blocking<T, F>(st: &AppState, f: F) -> Result<T, ApiError>
+pub(crate) async fn blocking<T, F>(st: &AppState, f: F) -> Result<T, ApiError>
 where
     T: Send + 'static,
     F: FnOnce(&AppState) -> Result<T, ApiError> + Send + 'static,
@@ -1120,7 +1462,7 @@ where
 }
 
 /// The first 8 characters of a space id: the only form of it the panel shows.
-fn short(space_id: &str) -> &str {
+pub(crate) fn short(space_id: &str) -> &str {
     &space_id[..space_id.len().min(8)]
 }
 
@@ -1131,8 +1473,12 @@ fn short(space_id: &str) -> &str {
 /// and dates only: no path, no URL, no file name, no FCM project, nothing about a space.
 fn about(st: &AppState, web: &AdminWeb, headers: &HeaderMap) -> Result<Response, ApiError> {
     let now = st.now();
-    let (idle, absolute) = session_cookie(headers)
-        .and_then(|t| web.session_deadlines(&t, now))
+    let token = session_cookie(headers).ok_or_else(ApiError::unauthorized)?;
+    let (idle, absolute) = web
+        .session_deadlines(&token, now)
+        .ok_or_else(ApiError::unauthorized)?;
+    let (hash, _) = web
+        .session_identity(&token, now)
         .ok_or_else(ApiError::unauthorized)?;
     let c = &st.cfg;
     let fmt = crate::wire::ts_format;
@@ -1150,6 +1496,12 @@ fn about(st: &AppState, web: &AdminWeb, headers: &HeaderMap) -> Result<Response,
                 "idle_ttl_secs": IDLE_TTL_MS / 1000,
                 "absolute_ttl_secs": ABSOLUTE_TTL_MS / 1000,
             },
+            // Added later (additive): the other live sessions, for "close all sessions".
+            "sessions": { "others": web.other_sessions(&hash, now) },
+            // Added later (additive): the ceilings of the actions, per relay, and what is used.
+            "ceilings": web.ceilings.json(now),
+            "trash_days": crate::spaces::TRASH_TTL_MS / 86_400_000,
+            "max_keys": MAX_KEYS,
             "push_configured": c.fcm_service_account_file.is_some() || c.apns_key_file.is_some(),
             "limits": {
                 "max_relay_bytes": c.max_relay_bytes,
@@ -1235,49 +1587,17 @@ async fn devices(st: &AppState, query: Option<&str>) -> Result<Response, ApiErro
                 .iter()
                 .filter_map(|k| row.get(*k).map(|v| ((*k).to_owned(), v.clone())))
                 .collect();
+            let mut kept = kept;
+            // The 8 first characters of the device id: how the page designates it in an action.
+            if let Some(id) = row.get("device_id").and_then(Value::as_str) {
+                kept.insert("id".to_owned(), json!(short(id)));
+            }
             Value::Object(kept)
         })
         .collect();
     Ok(json_response(
         StatusCode::OK,
         &json!({ "space": space.short_id(), "devices": rows }),
-    ))
-}
-
-async fn invitations(st: &AppState) -> Result<Vec<Value>, ApiError> {
-    blocking(st, |st| {
-        Ok(install::list(st.spaces.routing())?
-            .iter()
-            .map(|i| json!({ "id": i.short_id(), "created_at": crate::wire::ts_format(i.created_at) }))
-            .collect())
-    })
-    .await
-}
-
-async fn create_invitation(
-    st: &AppState,
-    web: &AdminWeb,
-    req: Request,
-) -> Result<Response, ApiError> {
-    let body = read_json(req).await?;
-    let rotate = match body.get("mode").and_then(Value::as_str) {
-        Some("new") => false,
-        Some("rotate") => true,
-        _ => return Err(ApiError::bad_request("The mode is `new` or `rotate`.")),
-    };
-    let token = blocking(st, move |st| admin::issue_invitation(st, rotate)).await?;
-    let kind = if rotate {
-        JournalKind::InvitationsReplaced
-    } else {
-        JournalKind::InvitationCreated
-    };
-    web.record(kind, None, st.now());
-    let list = invitations(st).await?;
-    // The token (and the link that carries it) is in this answer and nowhere else, ever.
-    let link = creation_link(web.origin(), &token);
-    Ok(json_response(
-        StatusCode::OK,
-        &json!({ "token": token, "link": link, "invitations": list }),
     ))
 }
 
@@ -1300,6 +1620,8 @@ async fn set_default_quota(
 ) -> Result<Response, ApiError> {
     let body = read_json(req).await?;
     let value = admin::parse_default_quota(&body)?;
+    // A default under what a space holds blocks it (its writes are refused): that is confirmed.
+    crate::admin_actions::check_default_quota(st, &body, value).await?;
     blocking(st, move |st| admin::set_default_quota(st, value)).await?;
     let (kind, bytes) = match value {
         None => (JournalKind::DefaultQuotaConfig, None),
@@ -1337,7 +1659,7 @@ pub async fn command(st: &AppState, action: WebAction) -> Output {
         .read(move |tx| {
             Ok((
                 stored_segment(tx)?,
-                stored_credential(tx)?.is_some(),
+                stored_credentials(tx)?.len(),
                 enrollment_pending(tx, now)?,
             ))
         })
@@ -1355,8 +1677,8 @@ pub async fn command(st: &AppState, action: WebAction) -> Output {
                     "no path yet: it is created when the relay starts with `admin_web = true`",
                 );
             };
-            let key = if enrolled {
-                "passkey: registered".to_owned()
+            let key = if enrolled > 0 {
+                format!("passkeys: {enrolled} registered (`tomi-relay admin web keys` lists them)")
             } else if pending {
                 "passkey: not registered; an enrolment code is pending".to_owned()
             } else {
@@ -1397,10 +1719,12 @@ pub async fn command(st: &AppState, action: WebAction) -> Output {
             let Some(segment) = segment else {
                 return Output::fail(1, "no path yet: start the relay with `admin_web = true`");
             };
-            if enrolled {
+            if i64::try_from(enrolled).unwrap_or(i64::MAX) >= MAX_KEYS {
                 return Output::fail(
                     2,
-                    "a passkey is already registered: `tomi-relay admin web reset` removes it first",
+                    format!(
+                        "{MAX_KEYS} passkeys are registered already: `tomi-relay admin web keys remove <N>` removes one first"
+                    ),
                 );
             }
             let code = match new_code() {
@@ -1436,10 +1760,19 @@ pub async fn command(st: &AppState, action: WebAction) -> Output {
                 );
             }
             let done = routing
-                .write(|tx| {
+                .write(move |tx| {
                     if tables_exist(tx)? {
                         tx.execute("DELETE FROM admin_web_credential", [])?;
+                        tx.execute("DELETE FROM admin_web_credentials", [])?;
                         tx.execute("DELETE FROM admin_web_enrollment", [])?;
+                        tx.execute("DELETE FROM admin_web_policy", [])?;
+                        crate::admin_audit::record_tx(
+                            tx,
+                            now,
+                            crate::admin_audit::kind::PASSKEY_RESET,
+                            None,
+                            None,
+                        )?;
                     }
                     Ok(())
                 })
