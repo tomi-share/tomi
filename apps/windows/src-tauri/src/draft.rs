@@ -217,9 +217,17 @@ pub fn build_draft(input: DraftInput, now_ms: i64) -> AppResult<ItemDraft> {
         return Err(AppError::new("error.item_too_large"));
     }
 
+    let mut source_format = text_body.as_ref().and(input.source_format);
+    // Markdown is its own source: an HTML flavour sent next to it would win on the receivers
+    // (Android and Windows preview the HTML first when `markdown` is omitted) and show the raw
+    // `# Title` / `- item` lines laid out as HTML instead of rendering them.
+    if source_format == Some(SourceFormat::Markdown) {
+        if let Some(t) = &mut text_body {
+            t.html = None;
+        }
+    }
     // A hidden item is its plain text: no rich flavour (it would be a second, unmasked
     // copy of the value in the preview of a renderer) and no source format.
-    let mut source_format = text_body.as_ref().and(input.source_format);
     if input.secret {
         if let Some(t) = &mut text_body {
             t.html = None;
@@ -510,6 +518,17 @@ mod tests {
         assert_eq!(t.plain, md);
         assert!(t.markdown.is_none(), "duplicate flavour must be dropped");
         assert_eq!(d.source_format, Some(SourceFormat::Markdown));
+    }
+
+    #[test]
+    fn markdown_drops_the_html_flavour_so_receivers_render_the_markdown() {
+        let md = "# titre\n\n- a\n- b";
+        let mut i = text_input(md.into(), Some(md.into()));
+        i.text.as_mut().unwrap().html = Some("<div># titre</div><div>- a</div>".into());
+        i.source_format = Some(SourceFormat::Markdown);
+        let t = build_draft(i, NOW).unwrap().text.unwrap();
+        assert!(t.html.is_none());
+        assert_eq!(t.plain, md);
     }
 
     #[test]

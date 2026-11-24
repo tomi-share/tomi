@@ -90,9 +90,22 @@ pub fn looks_like_markdown(text: &str) -> bool {
         >= 2
 }
 
-/// True when the HTML carries real formatting. Browsers put an HTML flavour on every
-/// copy, even plain selections (`<meta><span>text</span>`); those stay plain text.
-pub fn html_is_rich(html: &str) -> bool {
+/// How much an HTML clipboard flavour tells about the formatting of the copied text.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum HtmlRichness {
+    /// Nothing but wrappers (`<meta><span>text</span>`): browsers add this to every copy.
+    Plain,
+    /// Only line and paragraph structure (`<div>`, `<p>`, `<br>`), with no formatting tag. Editors,
+    /// terminals and chat windows copy raw Markdown like this: the HTML is the source text laid out
+    /// in lines, not a rendering of it.
+    Layout,
+    /// Real formatting tags (links, emphasis, headings, lists, tables, code...).
+    Formatted,
+}
+
+/// Classifies an HTML clipboard flavour. Browsers put one on every copy, even plain selections
+/// (`<meta><span>text</span>`); those stay plain text.
+pub fn html_richness(html: &str) -> HtmlRichness {
     const RICH: &[&str] = &[
         "a",
         "b",
@@ -126,16 +139,17 @@ pub fn html_is_rich(html: &str) -> bool {
             .take_while(|c| c.is_ascii_alphanumeric())
             .collect();
         if RICH.contains(&name.as_str()) {
-            return true;
+            return HtmlRichness::Formatted;
         }
         if name == "p" || name == "div" || name == "br" {
             paragraphs += 1;
-            if paragraphs >= 3 {
-                return true;
-            }
         }
     }
-    false
+    if paragraphs >= 3 {
+        HtmlRichness::Layout
+    } else {
+        HtmlRichness::Plain
+    }
 }
 
 /// Detects the kind of a pasted or prefilled payload.
@@ -182,7 +196,12 @@ pub fn detect(plain: &str, html: Option<&str>, file_mimes: &[&str]) -> Detection
             title: Some(title),
         };
     }
-    if html.is_some_and(html_is_rich) {
+    let richness = html.map_or(HtmlRichness::Plain, html_richness);
+    // An HTML flavour made only of lines and paragraphs does not outrank Markdown syntax in the
+    // plain text: the receivers would show the raw `# Title` / `- item` laid out as HTML.
+    if richness == HtmlRichness::Formatted
+        || (richness == HtmlRichness::Layout && !looks_like_markdown(plain))
+    {
         return Detection {
             kind: ContentKind::RichText,
             source_format: Some(SourceFormat::Html),
@@ -306,6 +325,22 @@ mod tests {
             ),
             ContentKind::RichText
         );
+    }
+
+    #[test]
+    fn markdown_copied_as_lines_of_html_stays_markdown() {
+        // What an editor, a terminal or a chat window puts next to raw Markdown: one <div> per line.
+        let plain = "# Titre\n\nDécisions : a\n\n## Conclusion";
+        let html = "<div># Titre</div><div><br></div><div>Décisions : a</div><div><br></div><div>## Conclusion</div>";
+        let d = detect(plain, Some(html), &[]);
+        assert_eq!(d.kind, ContentKind::RichText);
+        assert_eq!(d.source_format, Some(SourceFormat::Markdown));
+        // Lines of HTML without Markdown syntax still count as rich text.
+        let d = detect("a\nb\nc", Some("<div>a</div><div>b</div><div>c</div>"), &[]);
+        assert_eq!(d.source_format, Some(SourceFormat::Html));
+        // Real formatting tags win over the syntax of the plain text.
+        let d = detect("# Titre", Some("<h1>Titre</h1>"), &[]);
+        assert_eq!(d.source_format, Some(SourceFormat::Html));
     }
 
     #[test]
