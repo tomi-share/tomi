@@ -1,4 +1,4 @@
-# Panneau d'administration du relais : décisions UI proposées (refonte mobile + desktop)
+# Panneau d'administration du relais : décisions UI (refonte mobile + desktop)
 
 Maquette : `index.html` (prototype navigable, téléphone sous 1024 px et desktop au-delà, actions comprises),
 `etats.html` (planche des états : connexion, chargement, vide, erreur, variantes, et parcours des actions en feuille
@@ -7,8 +7,9 @@ aucune requête réseau, aucune dépendance, aucun attribut `style` ni gestionna
 `index.html` dans un navigateur ; le thème se change dans le pied de la barre latérale (desktop) ou par ⋮
 (téléphone). La clé d'accès est simulée : pendant l'attente, des boutons propres à la maquette choisissent sa
 réponse (valide, annulée, refusée, expirée, réseau coupé).
-Statut : **proposition**, rien n'est porté dans `apps/relay/src/admin_web/`. Les actions suivent
-[DECISION-ACTIONS.md](DECISION-ACTIONS.md), proposition elle aussi.
+Statut : **décidé le 24/11/2026** (le propriétaire a délégué les arbitrages ; voir « Décisions prises » en fin de
+document), rien n'est porté dans `apps/relay/src/admin_web/`. Les actions suivent
+[DECISION-ACTIONS.md](DECISION-ACTIONS.md), décidé le même jour.
 
 Vérifié dans le navigateur de prévisualisation à 390 px, 1280 px et 1440 px, en clair et en sombre, servi avec la
 CSP du panneau (`style-src 'self'`, `script-src 'self'`) : aucune vue ne défile horizontalement, aucun texte coupé,
@@ -27,7 +28,7 @@ de 44). Sur desktop, à la souris, les boutons de second rang descendent à 36 p
 - Quota : 9 lignes d'explication avant le champ, puis trois gros boutons de même poids.
 - Tout a le même poids visuel : titres, valeurs, aides et actions se confondent.
 
-## Décisions proposées
+## Décisions
 
 1. **Navigation à 5 destinations** : Aperçu, Espaces, Invitations, Journal, Réglages. Barre basse sur téléphone
    (64 px, icône + libellé, pastille sur l'entrée courante), barre latérale de 224 px à partir de 1024 px.
@@ -49,7 +50,7 @@ de 44). Sur desktop, à la souris, les boutons de second rang descendent à 36 p
    voit » est replié sur téléphone, ouvert en colonne de droite sur desktop.
 6. **Espaces : un seul `<table>`, mis en cartes par CSS** (requêtes de conteneur sur la largeur de la liste, pas
    de l'écran). Carte : identifiant + copie et pastille d'état en tête, Appareils / Contenu en deux colonnes, jauge
-   d'usage avec valeurs, dernière activité et bouton « Appareils » en bas. Environ 207 px par carte : trois par
+   d'usage avec valeurs, dernière activité et bouton « Détail » en bas. Environ 207 px par carte : trois par
    écran. Tableau complet à partir de 832 px de liste ; tableau resserré (identifiant, état, appareils,
    utilisation) quand le détail est ouvert à côté ; colonne « Créé » à partir de 1056 px.
 7. **Détail d'un espace** : page dédiée sur téléphone (« Retour » remplace le logo, l'identifiant sert de titre),
@@ -70,7 +71,7 @@ de 44). Sur desktop, à la souris, les boutons de second rang descendent à 36 p
     « Sans limite par espace » et « Revenir à la configuration » en actions discrètes (la première confirme).
 12. **Invitations** : le jeton s'affiche **en haut de la vue**, juste après la création, dans un cadre appuyé :
     avertissement « Affiché une seule fois », jeton en mono, « Copier le jeton » en action principale, lien
-    replié, QR, « Masquer ». Jamais affiché autrement, masqué après 10 min ou en quittant la page (inchangé).
+    replié, QR visible d'office (aussi sur téléphone), « Masquer ». Jamais affiché autrement, masqué après 10 min ou en quittant la page (inchangé).
     « Remplacer les invitations en attente » devient une action discrète sous la liste, avec confirmation.
 13. **Retours d'action** : carte encre sombre dans les deux thèmes, au-dessus de la navigation (décision Android
     du 11 nov. 2026) ; un succès s'efface seul, une erreur reste jusqu'à « Fermer ». Confirmation en feuille basse
@@ -95,11 +96,11 @@ de 44). Sur desktop, à la souris, les boutons de second rang descendent à 36 p
 
 | Action | Où | Protection | Parcours |
 |---|---|---|---|
-| Retirer un ou plusieurs appareils | Détail d'un espace : case devant chaque appareil, barre de sélection ; « Retirer de l'espace… » dans la ligne dépliée ; sur desktop, icône au survol de la ligne | Clé d'accès, une seule pour toute la sélection ; plafond 10 / h | Feuille : appareils visés (nom, plateforme, version, activité, identifiant court), conséquences, clé → retour « X retiré », pastille « Clé à renouveler » |
+| Retirer un ou plusieurs appareils | Détail d'un espace : case devant chaque appareil, barre de sélection ; « Retirer de l'espace… » dans la ligne dépliée (pas d'icône au survol) | Clé d'accès, une seule pour toute la sélection ; plafond 10 / h | Feuille : appareils visés (nom, plateforme, version, activité, identifiant court), conséquences, clé → retour « X retiré », pastille « Clé à renouveler » |
 | Supprimer un espace | Détail : carte « Supprimer l'espace », en bas, avant le repli CLI | Saisie des 8 premiers caractères + clé d'accès ; plafond 2 / 24 h ; corbeille 7 j | Feuille : chiffres de l'espace, conséquences, champ, clé → liste des espaces avec bandeau (corbeille, commande de restauration) |
 | Créer une invitation | Invitations | Clé d'accès, sans étape de récapitulatif ; plafond 5 / h | « Créer » → clé → jeton en haut de la vue (inchangé) |
-| Remplacer les invitations | Invitations, « Remplacer… » | Clé d'accès | Feuille : invitations invalidées, conséquences, clé → jeton |
-| Invalider les invitations | Invitations, « Invalider… » | Session + confirmation | Confirmation avec la liste → fait |
+| Remplacer les invitations | Invitations, « Remplacer… » | Clé d'accès | Feuille : invitations invalidées, conséquences, clé → jeton (CLI : `admin invite --rotate`) |
+| Invalider les invitations | Invitations, « Invalider… » | Session + confirmation | Confirmation avec la liste → fait (CLI : `admin invite --cancel`, nouveau) |
 | Quota d'un espace | Détail, « Modifier le quota » sous la jauge | Session ; confirmation si l'espace serait bloqué, et pour « Sans limite » | Champ + aperçu (ocre sous l'usage) → Enregistrer |
 | Quota par défaut | Réglages (inchangé) | Session ; confirmation avec la liste des espaces bloqués | Inchangé, plus la confirmation conditionnelle |
 | Fermer toutes les sessions | ⋮ (téléphone), pied de la barre latérale (desktop), Réglages > Accès | Session (protection) | Confirmation, bouton principal (pas rouge) → connexion |
@@ -115,8 +116,8 @@ de 44). Sur desktop, à la souris, les boutons de second rang descendent à 36 p
 - Le **récapitulatif vient du serveur** (`api/stepup/options`) et reste visible pendant l'attente de la clé :
   l'authentificateur n'affiche que « relais.example », jamais l'action.
 - États (planche `etats.html#actions`) : récapitulatif ; saisie des 8 caractères (bouton inactif tant que la
-  valeur n'est pas exacte, sans tenir compte de la casse) ; **clé en attente** (filet linéaire, décompte des 2 min,
-  seul « Annuler ») ; **annulée sur l'appareil** (ocre, rien n'est compté) ; **refusée par le relais** (rouge,
+  valeur n'est pas exacte, sans tenir compte de la casse) ; **clé en attente** (filet linéaire, « Ce défi reste
+  valable 2 min » sans décompte, seul « Annuler ») ; **annulée sur l'appareil** (ocre, rien n'est compté) ; **refusée par le relais** (rouge,
   « Refus N sur 5 » et cinq traits) ; **délai dépassé** (« Recommencer » demande un défi neuf) ; **le relais n'a
   pas répondu** (issue inconnue : « Actualiser », jamais un faux succès) ; **limite atteinte** (vérifiée avant le
   défi, aucune clé demandée, commande serveur ouverte d'office) ; **cible changée entre-temps** (« Déjà fait
@@ -131,21 +132,11 @@ de 44). Sur desktop, à la souris, les boutons de second rang descendent à 36 p
 
 Même document que le téléphone (le relais sert une seule page), couche ajoutée à partir de 1024 px : tableau des
 espaces plus dense, ligne survolée ou marquée au clavier en surbrillance, copie de l'identifiant au survol, panneau
-de détail de 25 rem (28 rem dès 1440 px) avec « Retirer » rapide au survol d'une ligne d'appareil et barre de
-sélection collée au bas du panneau. Raccourcis : `G` puis `A` `E` `I` `J` `R` (vues), `J` `K` ou flèches (espace
+de détail de 25 rem (28 rem dès 1440 px), ligne d'appareil éclairée au survol (sans bouton) et barre de sélection
+collée au bas du panneau. Raccourcis : `G` puis `A` `E` `I` `J` `R` (vues), `J` `K` ou flèches (espace
 suivant, précédent ; le détail ouvert suit), `Entrée` (ouvrir), `Échap` (fermer la boîte, puis le détail), `R`
 (actualiser), `C` (copier l'identifiant ouvert), `?` (aide). Rappelés au survol de la navigation, au-dessus du
 tableau et dans le pied de la barre latérale.
-
-### Choix pris là où DECISION-ACTIONS.md laissait la main (option recommandée)
-
-1. **Corbeille de 7 jours**, restauration et purge en CLI seulement : appliquée (bandeau, carte Corbeille).
-2. **Politique « suppression = clé liée à l'appareil »** : proposée, **désactivée par défaut** ; Réglages affiche
-   « N'importe laquelle · réglage du serveur », la planche montre la feuille quand elle est active.
-3. **Journal d'audit persistant avec identifiants courts** : appliqué ; les lignes gardées portent « clé N · gardé
-   90 j », jamais un nom d'appareil.
-4. **Plafonds** : 2 suppressions d'espace par 24 h, 10 retraits d'appareil par heure, 5 invitations par heure, par
-   relais ; affichés sous chaque bouton concerné et dans « Limites de la configuration ».
 
 ### Choix d'interface pris dans la maquette
 
@@ -159,23 +150,9 @@ tableau et dans le pied de la barre latérale.
   déjà écrite dans la sous-ligne).
 - **« Sans limite » pour un espace** demande confirmation, comme pour le quota par défaut.
 - **« Fermer toutes les sessions »** est en bouton principal ou discret, jamais rouge : c'est une protection.
-- **Syntaxe des nouvelles commandes CLI** inventée pour la maquette (`admin web keys [--remove N]`,
-  `admin web policy --delete-needs-device-key on`, `admin trash`, `admin trash restore <id>`,
-  `admin trash purge [<id>]`) : à fixer au portage.
 
-### Points à trancher
-
-1. **Un document ou deux** pour le desktop (proposé : un seul, voir plus haut).
-2. **« Retirer » rapide au survol** d'une ligne d'appareil sur desktop : utile pour un retrait isolé, la feuille de
-   confirmation reste. À garder ou à réserver à la ligne dépliée.
-3. **Compteur de refus visible** (« Refus 3 sur 5 ») : proposé, pour qu'une faute de clé ne ferme pas la session
-   par surprise ; il renseigne aussi un voleur de cookie, qui ne gagne rien à le savoir.
-4. **« Sessions ouvertes : 2 »** dans Réglages > Accès : demande au serveur de compter ses sessions (donnée
-   nouvelle). À garder ou à retirer.
-5. **`admin invite --rotate`** : `apps/relay/README.md` dit à un endroit qu'il « remplace », à un autre qu'il
-   « retire seulement » les invitations en attente. La maquette suit la seconde lecture (« Invalider » =
-   `--rotate`, « Remplacer » = `--rotate` puis `--new`). À clarifier dans le README.
-6. **Décompte des 2 min visible** pendant l'attente : proposé ; on peut n'afficher que l'état expiré.
+Les points que cette section laissait ouverts (un document ou deux, « Retirer » au survol, compteur de refus,
+sessions ouvertes, `--rotate`, décompte, syntaxe CLI) sont tranchés dans « Décisions prises », en fin de document.
 
 ### Changements à faire pour porter les actions (non faits)
 
@@ -192,7 +169,9 @@ l'API du panneau**, contrairement à la refonte d'interface ci-dessous. Côté p
 - `app.js` : machine d'états de la feuille (`data-state`) branchée sur les vraies réponses (`NotAllowedError` →
   annulée, `401`/assertion rejetée → refusée, `429` → limite, `409` → cible changée, réseau → issue inconnue,
   session fermée → connexion), `AbortController` sur Échap et « Annuler », plafonds lus dans `api/about`. Le DOM se
-  construit en `textContent` (la maquette utilise `innerHTML` par commodité).
+  construit en `textContent` (la maquette utilise `innerHTML` par commodité). Pas de décompte : l'appel
+  `navigator.credentials.get` reçoit `timeout: 120000` et une minuterie de 2 min passe la feuille à « Délai
+  dépassé ». « Autres sessions ouvertes » lit le nouveau champ `sessions.others` de `api/about`.
 
 ## Ancien → nouveau, section par section
 
@@ -256,7 +235,8 @@ nouvelle, **aucun changement d'API** ni du serveur. La CSP actuelle (`style-src 
 - **`renderAlerts()`** : titre « Rien à signaler » / « N points d'attention » / « N problèmes », icône et classe
   selon la gravité la plus haute ; chaque alerte reçoit un lien (`#espaces/<id>`, `#journal`, `#reglages`).
 - **`renderSpaces()`** : mêmes colonnes dans un autre ordre (identifiant, état, appareils, contenu, utilisation,
-  activité, créé, action), classes `c-*` ; l'identifiant est un lien ; pastille « Quota à N % » quand
+  activité, créé, action), classes `c-*` ; l'identifiant est un lien ; le bouton de la carte s'appelle « Détail »
+  (`aria-label` « Détail de l'espace <id> ») ; pastille « Quota à N % » quand
   `percent(used, max) >= 90` ; libellés courts « Clé à renouveler » et « Inactif » ; tri aussi par la liste
   déroulante (téléphone), reliée à `sorts.spaces`.
 - **`spaceFacts()`** : quatre chiffres + jauge ; **retirer** `(n° … à …)` et ne garder que le compte
@@ -276,24 +256,68 @@ nouvelle, **aucun changement d'API** ni du serveur. La CSP actuelle (`style-src 
 
 ### Tests et documents
 - `apps/relay/tests/admin_web.rs` vérifie le HTML servi : à relire après le portage (identifiants, textes).
-- `docs/FONCTIONNALITES.md` : ligne du panneau d'administration (navigation, détail d'un espace, pastilles).
+- `docs/FEATURES.md` : ligne du panneau d'administration (navigation, détail d'un espace, pastilles, actions).
+- `apps/relay/README.md` : récrire « What the panel does », « Enrolling the key » (plusieurs clés), « Threat
+  model », et corriger la phrase sur `admin invite --rotate` (voir décision A5).
 
-## Points à trancher par le propriétaire
+## Décisions prises (24/11/2026)
 
-1. **5 destinations ou 6** : fusionner Quota et Diagnostic dans « Réglages » (proposé), ou garder 6 entrées avec
-   des libellés plus courts.
-2. **Tri par défaut des espaces** : dernière activité, la plus récente d'abord (proposé) ; aujourd'hui, date de
-   création croissante.
-3. **Abandon des n° de séquence** dans le détail d'un espace (proposé : seulement le compte et la rétention).
-4. **Pastille « Quota à N % »** : seuil à 90 % comme les alertes (proposé) ; et les libellés courts « Clé à
-   renouveler » / « Inactif ».
-5. **Bouton de la carte d'espace** : « Appareils » (libellé actuel, gardé) ou « Détail », puisqu'il ouvre aussi
-   les chiffres et les commandes.
-6. **QR visible d'office sur téléphone** (proposé : oui, 120 px, à côté de sa légende) ou replié comme le lien.
-7. **Thème sur l'écran de connexion** : la maquette n'y met pas de réglage (le choix enregistré s'applique, sinon
-   celui du système). À ajouter si tu changes souvent de thème avant de te connecter.
-8. **Icônes** : tracés Material Symbols recopiés à la main dans la maquette ; au portage, reprendre les tracés
-   officiels (Outlined, 24 px, graisse 400).
+Le propriétaire a délégué les arbitrages encore ouverts. Critères, dans l'ordre : sécurité, ergonomie, simplicité,
+cohérence avec les règles du projet (relais aveugle, mono-utilisateur, changements additifs, charte). Les choix sur
+la protection des actions sont détaillés dans [DECISION-ACTIONS.md](DECISION-ACTIONS.md) (« Décisions prises »).
+
+### Interface
+
+- **I1. 5 destinations** (Aperçu, Espaces, Invitations, Journal, Réglages) : tient sans troncature dans la barre
+  basse dès 360 px ; Quota et Diagnostic sont des réglages rares, une sixième entrée ne se justifie pas.
+- **I2. Tri par défaut des espaces : dernière activité, la plus récente d'abord.** C'est la question que l'on vient
+  poser (qui vit, qui dort) ; tri fait dans la page, aucun changement d'API. Le choix reste en liste et en en-têtes.
+- **I3. Plus de n° de séquence dans le panneau** : « 312 événements · retenus 45 j au plus ». Ils ne servent qu'au
+  diagnostic et restent dans `tomi-relay admin status --space`.
+- **I4. Pastille « Quota à N % » dès 90 %**, même seuil que les points d'attention ; libellés courts « Clé à
+  renouveler » et « Inactif » gardés (phrase complète dans le détail).
+- **I5. Bouton de la carte d'espace : « Détail »** (et non plus « Appareils ») : la page ouverte porte aussi le
+  quota et la suppression, un libellé qui ne parle que des appareils cacherait ces deux actions. Appliqué.
+- **I6. QR visible d'office sur téléphone** (120 px) : le cas courant est de tendre l'écran à l'autre appareil ; le
+  lien, lui, reste replié.
+- **I7. Pas de réglage du thème sur l'écran de connexion** : le choix enregistré s'applique, sinon le système ;
+  cet écran ne doit demander que la clé, et l'usage serait marginal.
+- **I8. Icônes** : au portage, tracés officiels Material Symbols Outlined, 24 px, graisse 400 (licence Apache 2.0,
+  à citer dans `design/`), à la place des tracés recopiés de la maquette. Tâche de portage, pas un choix ouvert.
+- **I9. Un seul document** responsive pour téléphone et desktop : le relais sert une page.
+- **I10. Pas de « Retirer » au survol** d'une ligne d'appareil sur desktop. Un bouton destructeur qui apparaît sous
+  le pointeur invite le mauvais clic, n'existe ni au toucher ni au clavier, et double la case et la ligne dépliée,
+  qui suffisent (deux gestes). Retiré de la maquette.
+- **I11. Compteur « Refus N sur 5 » visible**, avec ses cinq traits : sans lui, le cinquième refus ferme la session
+  par surprise. Il n'apprend rien d'utile à un voleur de cookie, qui n'a pas la clé et voit la session se fermer de
+  toute façon.
+- **I12. « Autres sessions ouvertes : N »** (au lieu de « Sessions ouvertes : 2 ») dans Réglages > Accès, juste
+  au-dessus de « Fermer toutes les sessions » : c'est le chiffre qui dit s'il faut s'en servir. Coût : un champ additif
+  `sessions.others` dans `api/about`, compté sur la liste des sessions vivantes que le serveur garde déjà en
+  mémoire (`admin_web.rs`, `sessions: Mutex<Vec<Session>>`) ; une métadonnée de l'administrateur, rien sur un
+  espace. Appliqué.
+- **I13. Pas de décompte des 2 min** pendant l'attente de la clé : la phrase dit « Ce défi reste valable 2 min » et
+  l'état « Délai dépassé » prend le relais. Pendant l'attente, la fenêtre de l'authentificateur couvre la page (le
+  décompte ne se voit pas), un chiffre qui défile presse un geste destructeur et se lit mal au lecteur d'écran.
+  Au portage, `timeout: 120000` sur `navigator.credentials.get`. Appliqué.
+
+### Actions (détail dans DECISION-ACTIONS.md, « Décisions prises »)
+
+- **A1** corbeille de 7 jours, restauration et purge sur le serveur seulement ; **A2** politique « suppression =
+  clé liée à l'appareil » proposée, désactivée par défaut ; **A3** journal d'audit persistant avec identifiants
+  courts ; **A4** plafonds 2 suppressions / 24 h, 10 retraits / h, 5 invitations / h, par relais.
+- **A5** `admin invite --rotate` remplace (vérifié dans le code) : la maquette est corrigée, « Invalider » devient
+  `admin invite --cancel`.
+- **A6** après une restauration, un appareil reprend à sa prochaine action réseau, pas tout seul (vérifié) ; **A7** aucun parcours ne republie un espace
+  depuis un appareil (vérifié) : la corbeille est le seul recours.
+- **A8** numéros de clé jamais réutilisés ; **A9** syntaxe des commandes `admin invite --cancel`, `admin web keys`,
+  `admin web policy`, `admin trash` fixée.
+
+### Ce qui reste bloquant côté propriétaire
+
+Rien. Restent des **vérifications** sans décision à prendre : rendu sur appareil réel (Galaxy S23 : zone du geste
+système, clavier virtuel au-dessus du champ des 8 caractères), et, au portage, l'accord habituel sur un changement
+d'API du panneau (les actions en ajoutent, voir DECISION-ACTIONS.md).
 
 ## Limites de la maquette
 

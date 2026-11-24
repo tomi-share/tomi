@@ -1,11 +1,11 @@
-# Actions dans l'admin web du relais : proposition sécurité / ergonomie
+# Actions dans l'admin web du relais : décision sécurité / ergonomie
 
-Statut : **proposition**, rien n'est implémenté. Remplace, une fois acceptée, le §16 de `DECISIONS-UI.md`
-(« aucune action destructrice »). Sources lues : `apps/relay/src/admin_web.rs`, `webauthn.rs`, `admin.rs`
+Statut : **décidé le 24/11/2026** (le propriétaire a délégué les arbitrages, voir « Décisions prises » en fin de
+document), rien n'est implémenté. Remplace le §16 de `DECISIONS-UI.md` (« aucune action destructrice »). Sources lues : `apps/relay/src/admin_web.rs`, `webauthn.rs`, `admin.rs`
 (`revoke`, `reset`, `quota`, `issue_invitation`), `revoke.rs`, `state.rs` (`delete_space`), `spec/api-v1.md`
 §1, §5.4, §7.2, §7.6, §7.9.6, §8.7, §8.7.1, `apps/relay/README.md`, `infra/forge/enable-admin-web.md`.
 
-## Recommandation
+## Principe retenu
 
 **Une passkey avec user verification, demandée à chaque action qui détruit ou qui crée un droit**, sous la forme
 d'un *step-up* lié à l'action : défi à usage unique, valable 2 min, attaché à la session et à l'empreinte exacte
@@ -29,7 +29,7 @@ supprime rien et n'obtient aucun jeton d'invitation.
 
 ## Modèle de menace
 
-| Menace | Ce que l'attaquant obtient avec cette proposition | Ce qui le limite | Résiduel assumé |
+| Menace | Ce que l'attaquant obtient avec ces décisions | Ce qui le limite | Résiduel assumé |
 |---|---|---|---|
 | **Cookie de session volé** (logiciel malveillant dans le navigateur, poste partagé) | Lectures (métadonnées), quotas, annulation des invitations, fermeture des sessions | Pas de step-up possible sans passkey ; session 30 min d'inactivité / 8 h ; « Fermer toutes les sessions » ; journal | Déni de service réversible par quota |
 | **XSS** dans la page | Ce que permet la session, et **la substitution de l'action** au prochain step-up que tu lances : l'authentificateur n'affiche jamais l'action, seulement « se connecter à relais.example » | CSP `script-src 'self'` sans inline, zéro code tiers, DOM en `textContent` (XSS très improbable) ; une action par geste ; plafonds ; corbeille ; journal | Aucune solution 100 % WebAuthn n'y échappe ; seul un second canal le ferait (voir appareil couplé, écarté) |
@@ -52,8 +52,8 @@ supprime rien et n'obtient aucun jeton d'invitation.
   perte de service, aucune perte de données.
 - **Supprimer un espace** (`delete_space`, comme `admin reset`) : désinscription, WebSockets en `4004`,
   dossier (base et blobs), routage, quota et invitations consommées effacés. Pas de reçu : les appareils passent
-  NOT_FOUND et **n'effacent rien**, mais je ne connais aucun parcours qui republie un espace depuis un appareil. Aujourd'hui
-  **irréversible côté relais**, hors restauration complète d'une archive `infra/backup.sh` (qui ramène tout
+  NOT_FOUND et **n'effacent rien**, et aucun parcours ne republie un espace depuis un appareil (vérifié, A7).
+  Aujourd'hui **irréversible côté relais**, hors restauration complète d'une archive `infra/backup.sh` (qui ramène tout
   `routing.db`, donc aussi les autres espaces). Gravité haute.
 - **Clé d'espace « à renouveler »** : le relais **ne peut pas** renouveler la clé (elle n'existe que sur les
   appareils, la rotation est un `KeyRotation` signé par un membre). « Valider » en effaçant `rotation_required`
@@ -78,16 +78,19 @@ supprime rien et n'obtient aucun jeton d'invitation.
 | Retirer un ou plusieurs appareils d'un espace | Step-up ; plafond 10 / h ; refus du dernier membre (renvoie vers Supprimer l'espace) | Cocher, « Retirer » → feuille : nom, plateforme, dernière activité, « devra être recouplé » → biométrie → résultat « rotation en attente » |
 | Supprimer un espace | Step-up + saisie des 8 premiers caractères + plafond 2 / 24 h + corbeille ; clé liée à l'appareil si la politique est active ; **pas** d'invitation créée (comme `DELETE /v1/space`) | « Supprimer l'espace » → récapitulatif (appareils, taille, « restaurable 7 jours par le serveur ») → saisir `794e87f1` → biométrie → retour à la liste avec bandeau |
 | Créer une invitation | Step-up ; plafond 5 / h | « Créer » → biométrie → jeton en haut, une fois (inchangé) |
-| Remplacer les invitations en attente | Step-up (crée un jeton) | « Remplacer… » → confirmation « N invitations invalidées » → biométrie → jeton |
-| Annuler les invitations en attente (nouveau) | Session + confirmation (ne fait que retirer un droit) | « Annuler les invitations » → confirmation → fait |
+| Remplacer les invitations en attente (`admin invite --rotate`) | Step-up (crée un jeton) | « Remplacer… » → confirmation « N invitations invalidées » → biométrie → jeton |
+| Invalider les invitations en attente (nouveau, et nouveau en CLI : `admin invite --cancel`) | Session + confirmation (ne fait que retirer un droit) | « Invalider… » → confirmation → fait |
 | Quota d'un espace (nouveau sur le web) | Session + confirmation si la valeur est sous l'usage actuel | Champ + Enregistrer ; si l'espace serait bloqué : « Les envois de 794e87f1 seront refusés » → Confirmer |
 | Quota par défaut | Session (inchangé) + même confirmation, avec la liste des espaces qui seraient bloqués | Inchangé, plus la confirmation conditionnelle |
 | Fermer toutes les sessions (nouveau) | Session (action de protection) | ⋮ → « Fermer toutes les sessions » → retour à la connexion |
 | État de la clé d'espace | Aucune action (lecture) | Pastille « Clé à renouveler » + phrase d'explication |
 | Rotation du chemin, ajout / retrait / réinitialisation de passkey, politique de clé, restauration et purge de la corbeille, désactivation du panneau | **CLI seul** | Le panneau montre l'état (passkeys : type et dernière utilisation ; corbeille : contenu) et la commande à copier |
 
-Plafonds : comptés **par relais**, en mémoire, en plus du seau `SENSITIVE` existant ; un dépassement répond
-`429` avec la commande CLI équivalente. **5 step-up refusés dans une session ferment cette session** (jamais la
+Plafonds : comptés **par relais** (pas par session ni par adresse : ouvrir une autre session n'en donne pas
+d'autres), en mémoire, sur les seules actions **réussies**, en plus du seau `SENSITIVE` existant ; valeurs fixes
+dans le code (pas de clé de configuration, qui ne servirait qu'à baisser la garde : le CLI reste le recours),
+exposées dans `api/about`. Un redémarrage les remet à zéro, ce qu'une session volée ne sait pas provoquer.
+Vérifiés **avant** de fabriquer le défi ; un dépassement répond `429` avec la commande CLI équivalente. **5 step-up refusés dans une session ferment cette session** (jamais la
 passkey : sinon un voleur de cookie pourrait t'enfermer dehors).
 
 ## Pourquoi à chaque action et pas une fenêtre de ré-authentification
@@ -140,13 +143,15 @@ seul** step-up (l'empreinte couvre la liste). La connexion elle-même ne vaut pa
    `delete_space {space_id, confirm}`, `create_invitation {mode}`. `POST api/invitations` exige désormais une
    assertion (la page et le serveur sont dans le même binaire, rien à garder). Routes de session seule :
    `POST api/quota` (inchangée), `POST api/spaces/quota` `{space_id, value}`, `POST api/invitations/cancel`,
-   `POST api/sessions/close-all`.
+   `POST api/sessions/close-all`. Lecture ajoutée : `GET api/about` donne `sessions.others` (sessions vivantes autres
+   que celle qui lit, comptées sur la liste en mémoire), pour « Autres sessions ouvertes ».
 
 **Stockage (`routing.db`, migrations additives, `user_version` inchangé).**
 - `admin_web_credentials` (nouvelle table, plusieurs lignes) : identifiant, clé publique, compteur,
   `backup_eligible` lu à l'enrôlement (le drapeau BE est signé par l'authentificateur ; il le déclare, sans
   attestation), `created_at`, `last_used_at`, libellé **généré** (« Clé 2 · liée à l'appareil »), jamais un
-  texte saisi. La première clé reste aussi dans `admin_web_credential` pour qu'un binaire précédent démarre
+  texte saisi. Le numéro N ne se réutilise jamais (une clé retirée garde le sien), pour que « clé 2 » dans le
+  journal d'audit désigne toujours la même clé ; chaque session retient le numéro de la clé qui l'a ouverte. La première clé reste aussi dans `admin_web_credential` pour qu'un binaire précédent démarre
   encore. L'enrôlement n'est plus « fermé pour toujours » : ses routes répondent 404 sauf code CLI en cours.
 - `admin_web_policy` : `critical_requires_device_bound` (booléen, CLI seulement).
 - `admin_web_audit` : actions destructrices et accès (connexion, step-up refusé, passkey ajoutée ou retirée,
@@ -156,32 +161,85 @@ seul** step-up (l'empreinte couvre la liste). La connexion elle-même ne vaut pa
 - Corbeille : `spaces.trash/<space_id>-<date>/` (renommage, aucun octet copié) et table `space_trash`
   (`space_id`, `deleted_at`, `purge_after`, taille). Purge par la boucle de maintenance ; la corbeille compte
   dans l'espace disque libre (`min_free_disk_bytes`), pas dans `max_relay_bytes`. `admin trash` (liste),
-  `admin trash restore <id>` (refusée si une clé d'appareil de l'espace a fondé un autre espace entre-temps, ou
-  si l'identifiant est repris), `admin trash purge [<id>]`. `admin reset` en CLI garde son effacement immédiat.
+  `admin trash restore [--space <id>]` (refusée si une clé d'appareil de l'espace a fondé un autre espace
+  entre-temps, ou si l'identifiant est repris), `admin trash purge [--space <id>] [--confirm <8 caractères>]`
+  (syntaxe : A9). La restauration remet le dossier en place **et** reconstruit les lignes de routage
+  (`device_id`, clés de signature) depuis la base de l'espace, puisque la suppression les a effacées ; `space_trash`
+  garde aussi le quota propre de l'espace pour le rendre. `admin reset` en CLI garde son effacement immédiat.
 
 **Spec (`api-v1.md`, aucun changement de format ni de vecteur).**
 - §8.7.1 réécrit : liste des actions et de leur protection, step-up et sa liaison, plusieurs passkeys et
   enrôlement rouvert par code CLI, plafonds, journal d'audit, corbeille de la suppression web. L'exception
   reste bornée et désactivée par défaut.
-- §8.7 : `admin trash …`, `admin web policy`, `admin web keys` (lister, retirer une passkey).
+- §8.7 : `admin invite --cancel`, `admin trash …`, `admin web policy`, `admin web keys` (syntaxe : A9).
 - §1 (tableau des menaces) : ligne « session du panneau volée » et ligne « passkey compromise ».
 - §11 : nouveaux tests d'acceptation (défi lié à une autre action ou à une autre session refusé, rejeu refusé,
   dernier membre refusé, plafonds, 5 échecs ferment la session, restauration de corbeille avec et sans conflit).
-- Clients : rien à changer (`4003` et `4004` gardent leur sens). **À vérifier** : un appareil NOT_FOUND reprend
-  bien après restauration (l'état n'est pas conservé, §7.2, donc il devrait).
+- Clients : rien à changer (`4003` et `4004` gardent leur sens). Reprise après restauration **vérifiée** (A6).
 - Aussi à mettre à jour au portage : `apps/relay/README.md` (panneau, modèle de menace),
   `infra/forge/enable-admin-web.md`, `docs/FEATURES.md`, et le §16 de `DECISIONS-UI.md`.
 
-## Points à trancher
+## Décisions prises (24/11/2026)
 
-1. **Corbeille de 7 jours pour la suppression web, restauration CLI seulement.** Recommandé : oui. C'est la
-   seule protection qui couvre à la fois l'erreur de cible et la passkey compromise sans retarder l'action ; le
-   coût est un peu de disque pendant 7 jours (`admin trash purge` le libère tout de suite).
-2. **Politique « suppression d'espace = clé liée à l'appareil »**, activable par CLI quand une telle clé est
-   enrôlée. Recommandé : la proposer, **désactivée par défaut** ; l'activer si tu enrôles une clé matérielle.
-   Automatique, elle t'empêcherait de supprimer en déplacement sans la clé.
-3. **Journal d'audit persistant avec identifiants courts** d'espace et d'appareil (la règle actuelle dit « rien
-   sur un espace »). Recommandé : oui, pour les seules actions destructrices et d'accès ; sans cible, un journal
-   de suppression ne sert à rien.
-4. **Valeurs des plafonds** : recommandé 2 suppressions d'espace par 24 h, 10 retraits d'appareil par heure,
-   5 invitations par heure, par relais.
+Le propriétaire a délégué les arbitrages. Les choix d'interface (I1 à I13) sont dans `DECISIONS-UI.md`.
+
+- **A1. Corbeille de 7 jours** pour la suppression web, restauration et purge sur le serveur seulement. Seule
+  protection qui couvre à la fois l'erreur de cible et la passkey compromise sans retarder l'action ; le coût
+  (du disque pendant 7 jours) se libère par `admin trash purge`. `admin reset` en CLI garde l'effacement immédiat.
+- **A2. Politique « suppression d'espace = clé liée à l'appareil »** : proposée, **désactivée par défaut**,
+  activable par CLI seulement et refusée tant qu'aucune clé liée à l'appareil n'est enrôlée. Automatique, elle
+  t'empêcherait de supprimer en déplacement ; et le drapeau BE n'est qu'une déclaration de l'authentificateur
+  (pas d'attestation), à présenter comme tel.
+- **A3. Journal d'audit persistant** (500 lignes, 90 jours) pour les seules actions destructrices et d'accès, avec
+  l'identifiant court de la cible et le numéro de la clé ; jamais de nom d'appareil, d'adresse, de jeton ni de
+  valeur de requête. Sans cible, un journal de suppression ne sert à rien ; l'exception à « rien sur un espace »
+  est bornée à 8 caractères d'identifiant, que le panneau affiche déjà.
+- **A4. Plafonds** : 2 suppressions d'espace par 24 h, 10 retraits d'appareil par heure, 5 invitations par heure,
+  par relais, comptés sur les réussites, valeurs fixes (voir « Plafonds » plus haut). Au-dessus de l'usage d'une
+  personne (moins de cinq espaces), assez bas pour qu'une session ou une passkey volée ne vide pas le relais avant
+  que le journal et la corbeille servent.
+- **A5. `admin invite --rotate` remplace** les invitations en attente par une nouvelle : vérifié dans le code
+  (`admin.rs`, `issue_invitation` : `install::clear` puis `install::create`, jeton affiché ; `main.rs` :
+  « Replaces every pending invitation by a new one and prints its token » ; `--new` et `--rotate` sont
+  incompatibles). Dans `apps/relay/README.md`, la ligne des commandes (« replaces ») a raison ; la phrase
+  « `admin invite --rotate` only removes pending invitations » (§ Running) veut dire « ne touche pas aux invitations
+  consommées » et sera récrite au portage (« replaces the pending invitations with a new one; consumed ones stay »).
+  Maquette corrigée : « Remplacer » = `admin invite --rotate` seul ; « Invalider » n'avait pas d'équivalent, d'où
+  `admin invite --cancel` (A9).
+- **A6. Reprise des appareils après restauration : vérifiée, elle marche sans rien changer côté client**, à deux
+  réserves. Le core ne persiste jamais NOT_FOUND (`api-v1.md` §7.2 ; `crates/core/src/runtime/engine.rs`,
+  `ensure_session`) et redemande au relais à chaque appel réseau, au plus une fois par minute : après
+  restauration, un appareil reprend avec ses clés et son curseur à sa prochaine action réseau (ouverture de l'app,
+  envoi, actualisation). Mais la sonnette, elle, s'est arrêtée au `4004` (`still_member_after_space_reset`
+  renvoie faux, §5.4) : un appareil qu'on n'ouvre pas ne revient pas tout seul. D'où : (1) `restore` doit
+  reconstruire le routage (`device_id`, clés de signature) que la suppression a effacé (voir « Corbeille » plus
+  haut), sans quoi la session répondrait encore `401` ; (2) sa sortie dit « ouvre Tomi sur chaque appareil de
+  l'espace ».
+- **A7. Aucun parcours ne republie un espace depuis un appareil : vérifié.** `create_space` refuse un appareil déjà
+  provisionné (`crates/core/src/runtime/pairing/founder.rs` : « device already provisioned ») et l'app Android
+  n'offre à un espace NOT_FOUND que « Effacer quand même » (`DepartureBanner.kt`). Les données restent lisibles sur
+  les appareils, mais la corbeille est le **seul** moyen de rendre l'espace : A1 n'est pas un confort. Conséquence
+  pour la feuille de suppression : ne pas laisser croire qu'un appareil pourra « recréer » l'espace (la maquette ne
+  le dit pas).
+- **A8. Clés d'accès** : numéros jamais réutilisés ; `admin web keys remove` ferme les sessions ouvertes avec la
+  clé retirée, refuse la dernière clé (c'est `admin web reset`) et la dernière clé liée à l'appareil tant que A2 est
+  active. Sans ces règles, le journal d'audit et la politique pourraient mentir ou se contourner.
+- **A9. Syntaxe des nouvelles commandes**, calquée sur l'existant (`invite [--new | --rotate]` pour les modes,
+  `--space <id>` pour désigner un espace, sous-commandes sous `web` comme `enroll` et `reset`) :
+  - `tomi-relay admin invite --cancel` : invalide les invitations en attente sans en créer (exclusive de `--new`
+    et `--rotate`).
+  - `tomi-relay admin web keys [--json]` : liste les clés (numéro, type, ajout, dernière utilisation).
+  - `tomi-relay admin web keys remove <N>` : retire la clé N et ferme les sessions ouvertes avec elle ; refuse la
+    dernière clé (c'est `admin web reset`) et la dernière clé liée à l'appareil tant que la politique l'exige.
+  - `tomi-relay admin web policy [--space-deletion <any-key | device-key>]` : sans option, affiche la politique ;
+    `device-key` est refusé (code 2) si aucune clé liée à l'appareil n'est enrôlée.
+  - `tomi-relay admin trash [--json]` : liste la corbeille.
+  - `tomi-relay admin trash restore [--space <id>]` et `tomi-relay admin trash purge [--space <id>] [--confirm
+    <8 caractères>]` : même règle que les autres commandes (préfixe d'au moins 8 caractères ; sans `--space`, une
+    corbeille d'une seule entrée l'utilise, sinon refus et liste) ; `purge` redemande les 8 caractères comme
+    `reset`. Pas de « tout vider » d'un coup : avec moins de cinq espaces, il n'apporte rien et serait la commande
+    la plus destructrice sans cible.
+
+### Ce qui reste bloquant côté propriétaire
+
+Rien.
