@@ -208,3 +208,145 @@ async fn a_plain_deletion_still_removes_the_folder() {
         .unwrap();
     assert!(rows.is_empty());
 }
+
+fn trash_row_count(env: &Env) -> usize {
+    env.state
+        .spaces
+        .routing()
+        .read_sync(|tx| tomi_relay::trash::rows(tx))
+        .unwrap()
+        .len()
+}
+
+#[tokio::test]
+async fn restore_is_refused_when_a_device_founded_another_space_and_nothing_is_moved() {
+    let env = Env::new().await;
+    let (devs, _) = env.space_of(2).await;
+    assert_eq!(delete_to_trash(&env).await, DeleteOutcome::Deleted);
+
+    // The first device of the deleted space founds a different space with the same signing key.
+    let token = tomi_relay::install::create(env.state.spaces.routing(), env.state.now()).unwrap();
+    let other = new_uuid();
+    let cert = devs[0]
+        .keys
+        .sign_device_cert(&other, &devs[0].keys.public(), env.clock.now_ms() as u64)
+        .unwrap()
+        .to_bytes()
+        .unwrap();
+    env.send(
+        "POST",
+        "/v1/space",
+        &[],
+        Some(serde_json::json!({
+            "install_token": token,
+            "space_id": other,
+            "name": "PC",
+            "platform": "windows",
+            "certificate": b64(&cert),
+        })),
+    )
+    .await
+    .ok(201);
+    assert_eq!(env.state.spaces.list().len(), 1);
+
+    let out = trash_cmd(&env, TrashAction::Restore, None, None).await;
+    assert_eq!(out.exit, 2, "{}", out.stderr);
+    assert!(out.stderr.contains("founded or joined"), "{}", out.stderr);
+    // The folder stays in the trash with its row, nothing came back under `spaces/`.
+    assert_eq!(trash_folders(&env).len(), 1);
+    assert_eq!(trash_row_count(&env), 1);
+    assert_eq!(env.state.spaces.list().len(), 1);
+    assert!(!env.data_dir().join("spaces").join(&env.space_id).exists());
+}
+
+#[tokio::test]
+async fn a_trash_row_that_cannot_be_written_puts_the_space_back_instead_of_losing_it() {
+    let env = Env::new().await;
+    let (mut devs, _) = env.space_of(2).await;
+    env.state
+        .spaces
+        .inject_destroy_fault(&[tomi_relay::spaces::DestroyStep::ForgetRouting]);
+    // The deletion is not reported as a success and nothing is orphaned in the trash.
+    assert_eq!(delete_to_trash(&env).await, DeleteOutcome::NotDeleted);
+    assert!(trash_folders(&env).is_empty());
+    assert_eq!(trash_row_count(&env), 0);
+    assert_eq!(env.state.spaces.list().len(), 1);
+    assert!(env.data_dir().join("spaces").join(&env.space_id).exists());
+    env.state.spaces.inject_destroy_fault(&[]);
+    env.login(&mut devs[0], 1, 1).await;
+    // Once the fault is gone the same deletion works.
+    assert_eq!(delete_to_trash(&env).await, DeleteOutcome::Deleted);
+    assert_eq!(trash_row_count(&env), 1);
+}
+
+#[tokio::test]
+async fn a_folder_without_a_row_is_listed_again_by_the_maintenance() {
+    let env = Env::new().await;
+    let (_devs, _) = env.space_of(2).await;
+    assert_eq!(delete_to_trash(&env).await, DeleteOutcome::Deleted);
+    env.state
+        .spaces
+        .routing()
+        .write_sync(|tx| {
+            tx.execute("DELETE FROM space_trash", [])?;
+            Ok(tomi_relay::db::Tx::Commit(()))
+        })
+        .unwrap();
+    assert_eq!(trash_row_count(&env), 0);
+    let now = env.state.now();
+    assert_eq!(tomi_relay::trash::reconcile(&env.state, now).await, 1);
+    assert_eq!(trash_row_count(&env), 1);
+    let out = trash_cmd(&env, TrashAction::Restore, None, None).await;
+    assert_eq!(out.exit, 0, "{}", out.stderr);
+    assert_eq!(env.state.spaces.list().len(), 1);
+}
+
+#[tokio::test]
+async fn a_row_left_after_a_restore_is_not_reported_as_a_purge() {
+    let env = Env::new().await;
+    let (_devs, _) = env.space_of(2).await;
+    let short = env.space_id[..8].to_owned();
+    assert_eq!(delete_to_trash(&env).await, DeleteOutcome::Deleted);
+    let row = env
+        .state
+        .spaces
+        .routing()
+        .read_sync(|tx| tomi_relay::trash::rows(tx))
+        .unwrap()
+        .remove(0);
+    let out = trash_cmd(&env, TrashAction::Restore, None, None).await;
+    assert_eq!(out.exit, 0, "{}", out.stderr);
+    // The row stays by mistake.
+    env.state
+        .spaces
+        .routing()
+        .write_sync(|tx| {
+            tx.execute(
+                "INSERT INTO space_trash
+                 (dir_name, space_id, deleted_at, purge_after, size_bytes, quota_set, quota_bytes)
+                 VALUES (?1, ?2, ?3, ?4, 0, 0, NULL)",
+                rusqlite::params![row.dir_name, row.space_id, row.deleted_at, row.purge_after],
+            )?;
+            Ok(tomi_relay::db::Tx::Commit(()))
+        })
+        .unwrap();
+    let out = trash_cmd(&env, TrashAction::Purge, Some(&short), Some(&short)).await;
+    assert_eq!(out.exit, 0, "{}", out.stderr);
+    assert!(!out.stdout.contains("for good"), "{}", out.stdout);
+    assert!(out.stdout.contains("live"), "{}", out.stdout);
+    assert_eq!(trash_row_count(&env), 0);
+    assert_eq!(env.state.spaces.list().len(), 1, "the live space is intact");
+    let purged = env
+        .state
+        .spaces
+        .routing()
+        .read_sync(|tx| {
+            Ok(tx.query_row(
+                "SELECT count(*) FROM admin_web_audit WHERE kind IN ('trash_purged','trash_expired')",
+                [],
+                |r| r.get::<_, i64>(0),
+            )?)
+        })
+        .unwrap();
+    assert_eq!(purged, 0);
+}
