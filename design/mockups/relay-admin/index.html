@@ -191,7 +191,7 @@
             <p class="caption">Le dossier chiffré reste dans la corbeille du relais jusqu’au <span id="banner-until">18/11</span> ; seul le serveur peut le restaurer.</p>
             <details class="fold cli">
               <summary><svg class="ico sm"><use href="#i-terminal"/></svg>Équivalent en ligne de commande<svg class="ico chev"><use href="#i-expand"/></svg></summary>
-              <div class="cmd"><code id="banner-cmd">tomi-relay admin trash restore 794e87f1</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande de restauration"><svg class="ico"><use href="#i-copy"/></svg></button></div>
+              <div class="cmd"><code id="banner-cmd">tomi-relay admin trash restore --space 794e87f1</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande de restauration"><svg class="ico"><use href="#i-copy"/></svg></button></div>
             </details>
           </div>
           <button type="button" class="icon-btn" id="banner-close" aria-label="Fermer le bandeau"><svg class="ico"><use href="#i-close"/></svg></button>
@@ -233,7 +233,7 @@
               <td class="c-usage"><progress max="100" value="71.5" aria-label="Quota utilisé : 71,5 %">71,5 %</progress><div class="usage-txt"><span><strong>183 Mio</strong> sur 256 Mio</span><span>71,5 %</span></div></td>
               <td class="c-act"><time datetime="2026-11-11T20:00:41Z" title="11/11/2026 20:00:41">il y a 12 min</time></td>
               <td class="c-crt"><time datetime="2026-09-12T00:57:18Z" title="12/09/2026 00:57:18">il y a 2 mois</time></td>
-              <td class="c-go"><a class="btn tonal sm" href="#espaces/794e87f1" aria-label="Appareils de l’espace 794e87f1"><span>Appareils</span><svg class="ico"><use href="#i-chevron"/></svg></a></td>
+              <td class="c-go"><a class="btn tonal sm" href="#espaces/794e87f1" aria-label="Détail de l’espace 794e87f1"><span>Détail</span><svg class="ico"><use href="#i-chevron"/></svg></a></td>
             </tr>
             <tr data-space="2de8c1b2">
               <th scope="row" class="c-id"><a class="space-link mono" href="#espaces/2de8c1b2">2de8c1b2</a><button type="button" class="icon-btn sm" data-copy="Identifiant" aria-label="Copier l’identifiant 2de8c1b2"><svg class="ico"><use href="#i-copy"/></svg></button></th>
@@ -243,7 +243,7 @@
               <td class="c-usage"><progress max="100" value="0.5" aria-label="Quota utilisé : 0,5 %">0,5 %</progress><div class="usage-txt"><span><strong>1,2 Mio</strong> sur 256 Mio</span><span>0,5 %</span></div></td>
               <td class="c-act"><time datetime="2026-11-11T18:10:02Z" title="11/11/2026 18:10:02">il y a 2 h</time></td>
               <td class="c-crt"><time datetime="2026-11-10T09:31:55Z" title="10/11/2026 09:31:55">hier</time></td>
-              <td class="c-go"><a class="btn tonal sm" href="#espaces/2de8c1b2" aria-label="Appareils de l’espace 2de8c1b2"><span>Appareils</span><svg class="ico"><use href="#i-chevron"/></svg></a></td>
+              <td class="c-go"><a class="btn tonal sm" href="#espaces/2de8c1b2" aria-label="Détail de l’espace 2de8c1b2"><span>Détail</span><svg class="ico"><use href="#i-chevron"/></svg></a></td>
             </tr>
             <tr data-space="380a4493">
               <th scope="row" class="c-id"><a class="space-link mono" href="#espaces/380a4493">380a4493</a><button type="button" class="icon-btn sm" data-copy="Identifiant" aria-label="Copier l’identifiant 380a4493"><svg class="ico"><use href="#i-copy"/></svg></button></th>
@@ -253,7 +253,7 @@
               <td class="c-usage"><progress class="warn" max="100" value="94.1" aria-label="Quota utilisé : 94,1 %">94,1 %</progress><div class="usage-txt"><span><strong>241 Mio</strong> sur 256 Mio</span><span>94,1 %</span></div></td>
               <td class="c-act"><time datetime="2026-11-09T21:44:10Z" title="09/11/2026 21:44:10">avant-hier</time></td>
               <td class="c-crt"><time datetime="2026-07-03T14:20:07Z" title="03/07/2026 14:20:07">il y a 4 mois</time></td>
-              <td class="c-go"><a class="btn tonal sm" href="#espaces/380a4493" aria-label="Appareils de l’espace 380a4493"><span>Appareils</span><svg class="ico"><use href="#i-chevron"/></svg></a></td>
+              <td class="c-go"><a class="btn tonal sm" href="#espaces/380a4493" aria-label="Détail de l’espace 380a4493"><span>Détail</span><svg class="ico"><use href="#i-chevron"/></svg></a></td>
             </tr>
           </tbody>
         </table>
@@ -403,7 +403,8 @@
           <summary><svg class="ico sm"><use href="#i-terminal"/></svg>Équivalent en ligne de commande<svg class="ico chev"><use href="#i-expand"/></svg></summary>
           <ul class="commands">
             <li><span class="what">Créer une invitation et afficher son jeton</span><div class="cmd"><code>tomi-relay admin invite --new</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande : créer une invitation"><svg class="ico"><use href="#i-copy"/></svg></button></div></li>
-            <li><span class="what">Invalider les invitations en attente</span><div class="cmd"><code>tomi-relay admin invite --rotate</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande : invalider les invitations"><svg class="ico"><use href="#i-copy"/></svg></button></div></li>
+            <li><span class="what">Remplacer les invitations en attente par une nouvelle</span><div class="cmd"><code>tomi-relay admin invite --rotate</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande : remplacer les invitations"><svg class="ico"><use href="#i-copy"/></svg></button></div></li>
+            <li><span class="what">Invalider les invitations en attente, sans en créer</span><div class="cmd"><code>tomi-relay admin invite --cancel</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande : invalider les invitations"><svg class="ico"><use href="#i-copy"/></svg></button></div></li>
           </ul>
         </details>
       </div>
@@ -483,7 +484,7 @@
           </ul>
           <dl class="kv">
             <div><dt>Clé exigée pour supprimer un espace</dt><dd>N’importe laquelle<span class="caption">réglage du serveur</span></dd></div>
-            <div><dt>Sessions ouvertes</dt><dd>2<span class="caption">dont celle-ci</span></dd></div>
+            <div><dt>Autres sessions ouvertes</dt><dd>1<span class="caption">en plus de celle-ci</span></dd></div>
           </dl>
           <div class="actions stack">
             <button type="button" class="btn secondary" data-close-all><svg class="ico"><use href="#i-logout"/></svg>Fermer toutes les sessions</button>
@@ -500,9 +501,10 @@
             <details class="fold cli">
               <summary><svg class="ico sm"><use href="#i-terminal"/></svg>Équivalent en ligne de commande<svg class="ico chev"><use href="#i-expand"/></svg></summary>
               <ul class="commands">
-                <li><span class="what">Lister les clés, en retirer une</span><div class="cmd"><code>tomi-relay admin web keys [--remove N]</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande : lister les clés"><svg class="ico"><use href="#i-copy"/></svg></button></div></li>
+                <li><span class="what">Lister les clés</span><div class="cmd"><code>tomi-relay admin web keys</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande : lister les clés"><svg class="ico"><use href="#i-copy"/></svg></button></div></li>
+                <li><span class="what">Retirer une clé (jamais la dernière)</span><div class="cmd"><code>tomi-relay admin web keys remove 2</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande : retirer une clé"><svg class="ico"><use href="#i-copy"/></svg></button></div></li>
                 <li><span class="what">Ajouter une clé (code valable 15 min)</span><div class="cmd"><code>tomi-relay admin web enroll</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande : ajouter une clé"><svg class="ico"><use href="#i-copy"/></svg></button></div></li>
-                <li><span class="what">Exiger la clé liée à l’appareil pour supprimer</span><div class="cmd"><code>tomi-relay admin web policy --delete-needs-device-key on</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande : politique de clé"><svg class="ico"><use href="#i-copy"/></svg></button></div></li>
+                <li><span class="what">Exiger la clé liée à l’appareil pour supprimer</span><div class="cmd"><code>tomi-relay admin web policy --space-deletion device-key</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande : politique de clé"><svg class="ico"><use href="#i-copy"/></svg></button></div></li>
                 <li><span class="what">Changer l’adresse (ferme toutes les sessions)</span><div class="cmd"><code>tomi-relay admin web --rotate-path</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande : changer l’adresse"><svg class="ico"><use href="#i-copy"/></svg></button></div></li>
                 <li><span class="what">Tout réinitialiser (clés et sessions)</span><div class="cmd"><code>tomi-relay admin web reset</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande : réinitialiser l’accès"><svg class="ico"><use href="#i-copy"/></svg></button></div></li>
               </ul>
@@ -570,8 +572,8 @@ Connexions refusées au panneau (dans le journal, 100 lignes au plus) : 3</pre>
               <summary><svg class="ico sm"><use href="#i-terminal"/></svg>Équivalent en ligne de commande<svg class="ico chev"><use href="#i-expand"/></svg></summary>
               <ul class="commands">
                 <li><span class="what">Voir la corbeille</span><div class="cmd"><code>tomi-relay admin trash</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande : voir la corbeille"><svg class="ico"><use href="#i-copy"/></svg></button></div></li>
-                <li><span class="what">Restaurer un espace</span><div class="cmd"><code id="trash-restore-cmd">tomi-relay admin trash restore c07d51e9</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande : restaurer"><svg class="ico"><use href="#i-copy"/></svg></button></div></li>
-                <li><span class="what">Vider tout de suite (un espace ou tout)</span><div class="cmd"><code>tomi-relay admin trash purge [ID]</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande : vider"><svg class="ico"><use href="#i-copy"/></svg></button></div></li>
+                <li><span class="what">Restaurer un espace</span><div class="cmd"><code id="trash-restore-cmd">tomi-relay admin trash restore --space c07d51e9</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande : restaurer"><svg class="ico"><use href="#i-copy"/></svg></button></div></li>
+                <li><span class="what">Effacer un espace de la corbeille tout de suite</span><div class="cmd"><code>tomi-relay admin trash purge --space c07d51e9</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande : effacer de la corbeille"><svg class="ico"><use href="#i-copy"/></svg></button></div></li>
               </ul>
             </details>
           </div>
@@ -645,7 +647,7 @@ Connexions refusées au panneau (dans le journal, 100 lignes au plus) : 3</pre>
   <div class="su-wait" role="status">
     <div class="loading-bar"></div>
     <p><strong>Valide avec ta clé d’accès</strong> : empreinte, visage ou code de l’appareil.</p>
-    <p class="caption">Ta clé d’accès affiche « relais.example », jamais l’action : vérifie le récapitulatif ci-dessus. Le défi expire dans <span class="nowrap" id="su-countdown">2:00</span>.</p>
+    <p class="caption">Ta clé d’accès affiche « relais.example », jamais l’action : vérifie le récapitulatif ci-dessus. Ce défi reste valable 2 min.</p>
   </div>
   <div class="su-msg" id="su-msg" role="alert"></div>
   <p class="pk-line" id="su-pk"><svg class="ico sm"><use href="#i-key"/></svg><span id="su-pk-text"></span></p>
@@ -708,7 +710,6 @@ Connexions refusées au panneau (dans le journal, 100 lignes au plus) : 3</pre>
         <p class="caption dev-last" hidden>Dernier appareil de l’espace : il ne peut pas être retiré. Pour en finir avec cet espace, supprime-le.</p>
       </div>
     </details>
-    <button type="button" class="icon-btn sm dev-quick" aria-label="Retirer"><svg class="ico"><use href="#i-person-remove"/></svg></button>
   </li>
 </template>
 </body>

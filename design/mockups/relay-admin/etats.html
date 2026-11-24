@@ -354,7 +354,7 @@
                 <td class="c-items" data-label="Contenu"><span class="v">6 éléments</span><span class="sub">0 fichier chiffré</span></td>
                 <td class="c-usage"><div class="usage-txt flush"><span><strong>180 Kio</strong> · aucune limite</span><span>quota propre</span></div></td>
                 <td class="c-act"><time datetime="2026-09-25T08:02:00Z" title="25/09/2026 08:02:00">il y a 2 mois</time></td>
-                <td class="c-go"><a class="btn tonal sm" href="index.html#espaces/380a4493" aria-label="Appareils de l’espace c07d51e9"><span>Appareils</span><svg class="ico"><use href="#i-chevron"/></svg></a></td>
+                <td class="c-go"><a class="btn tonal sm" href="index.html#espaces/380a4493" aria-label="Détail de l’espace c07d51e9"><span>Détail</span><svg class="ico"><use href="#i-chevron"/></svg></a></td>
               </tr>
             </tbody>
           </table>
@@ -636,7 +636,7 @@
           <div class="su-wait" role="status">
             <div class="loading-bar"></div>
             <p><strong>Valide avec ta clé d’accès</strong> : empreinte, visage ou code de l’appareil.</p>
-            <p class="caption">Ta clé d’accès affiche « relais.example », jamais l’action : vérifie le récapitulatif ci-dessus. Le défi expire dans <span class="nowrap">1:47</span>.</p>
+            <p class="caption">Ta clé d’accès affiche « relais.example », jamais l’action : vérifie le récapitulatif ci-dessus. Ce défi reste valable 2 min.</p>
           </div>
           <div class="actions"><button type="button" class="btn secondary">Annuler</button></div>
         </div>
@@ -654,7 +654,7 @@
           <div class="su-wait" role="status">
             <div class="loading-bar"></div>
             <p><strong>Valide avec ta clé d’accès</strong> : empreinte, visage ou code de l’appareil.</p>
-            <p class="caption">Le défi expire dans <span class="nowrap">1:58</span>.</p>
+            <p class="caption">Ce défi reste valable 2 min.</p>
           </div>
           <div class="actions"><button type="button" class="btn secondary">Annuler</button></div>
         </div>
@@ -887,7 +887,7 @@
             <p class="caption">Le dossier chiffré reste dans la corbeille du relais jusqu’au 18/11 ; seul le serveur peut le restaurer.</p>
             <details class="fold cli">
               <summary><svg class="ico sm"><use href="#i-terminal"/></svg>Équivalent en ligne de commande<svg class="ico chev"><use href="#i-expand"/></svg></summary>
-              <div class="cmd"><code>tomi-relay admin trash restore 794e87f1</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande de restauration"><svg class="ico"><use href="#i-copy"/></svg></button></div>
+              <div class="cmd"><code>tomi-relay admin trash restore --space 794e87f1</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande de restauration"><svg class="ico"><use href="#i-copy"/></svg></button></div>
             </details>
           </div>
           <button type="button" class="icon-btn" aria-label="Fermer le bandeau"><svg class="ico"><use href="#i-close"/></svg></button>
@@ -959,14 +959,14 @@
     </figure>
 
     <figure class="specimen">
-      <figcaption><strong>Panneau de détail : survol et sélection</strong>« Retirer » rapide au survol d’une ligne ; barre de sélection collée au bas du panneau.</figcaption>
+      <figcaption><strong>Panneau de détail : survol et sélection</strong>La ligne survolée s’éclaire, sans bouton ; on retire en cochant (barre collée au bas du panneau) ou depuis la ligne dépliée.</figcaption>
       <div class="frame">
         <div class="desk-panel">
           <div class="card-head"><h3>Appareils <span class="count">4</span></h3></div>
           <ul class="devices">
-            <li class="dev hover"><label class="dev-check"><input type="checkbox"><span class="sr">Sélectionner LAPTOP-XPS</span></label><details><summary><svg class="ico"><use href="#i-computer"/></svg><span><span class="name">LAPTOP-XPS</span><span class="sub">Windows · 0.5.1 · il y a 12 min</span></span><span class="badge good">Présent</span><svg class="ico chev"><use href="#i-expand"/></svg></summary></details><button type="button" class="icon-btn sm dev-quick" aria-label="Retirer LAPTOP-XPS de l’espace"><svg class="ico"><use href="#i-person-remove"/></svg></button></li>
-            <li class="dev selected"><label class="dev-check"><input type="checkbox" checked><span class="sr">Sélectionner Galaxy S23</span></label><details><summary><svg class="ico"><use href="#i-phone"/></svg><span><span class="name">Galaxy S23</span><span class="sub">Android · 0.5.1 · il y a 2 h</span></span><span class="badge">Actif</span><svg class="ico chev"><use href="#i-expand"/></svg></summary></details><span></span></li>
-            <li class="dev selected"><label class="dev-check"><input type="checkbox" checked><span class="sr">Sélectionner PC-Bureau</span></label><details><summary><svg class="ico"><use href="#i-computer"/></svg><span><span class="name">PC-Bureau</span><span class="sub">Windows · 0.4.2 · il y a 2 mois</span></span><span class="badge muted">Inactif</span><svg class="ico chev"><use href="#i-expand"/></svg></summary></details><span></span></li>
+            <li class="dev hover"><label class="dev-check"><input type="checkbox"><span class="sr">Sélectionner LAPTOP-XPS</span></label><details><summary><svg class="ico"><use href="#i-computer"/></svg><span><span class="name">LAPTOP-XPS</span><span class="sub">Windows · 0.5.1 · il y a 12 min</span></span><span class="badge good">Présent</span><svg class="ico chev"><use href="#i-expand"/></svg></summary></details></li>
+            <li class="dev selected"><label class="dev-check"><input type="checkbox" checked><span class="sr">Sélectionner Galaxy S23</span></label><details><summary><svg class="ico"><use href="#i-phone"/></svg><span><span class="name">Galaxy S23</span><span class="sub">Android · 0.5.1 · il y a 2 h</span></span><span class="badge">Actif</span><svg class="ico chev"><use href="#i-expand"/></svg></summary></details></li>
+            <li class="dev selected"><label class="dev-check"><input type="checkbox" checked><span class="sr">Sélectionner PC-Bureau</span></label><details><summary><svg class="ico"><use href="#i-computer"/></svg><span><span class="name">PC-Bureau</span><span class="sub">Windows · 0.4.2 · il y a 2 mois</span></span><span class="badge muted">Inactif</span><svg class="ico chev"><use href="#i-expand"/></svg></summary></details></li>
           </ul>
           <div class="selbar">
             <button type="button" class="icon-btn" aria-label="Tout décocher"><svg class="ico"><use href="#i-close"/></svg></button>
