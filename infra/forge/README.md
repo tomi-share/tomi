@@ -68,14 +68,14 @@ Files in this directory (versioned copies of what lives in the panel or on the s
 
 ```
 tag relay-vX.Y.Z  ──►  GitHub Actions "Release relay"  ──►  release relay-vX.Y.Z
-   (git push)              build musl + windows, checks        + release relay-latest
-                           the digest, publishes                (moving pointer)
+   (git push)              build musl + windows, checks
+                           the digest, publishes
                                                                           │
    panel deploy action  ◄── or the "Trigger deploy hook (optional)" step ─┘
       │                     (POST to FORGE_DEPLOY_URL)
       ▼
    The panel runs deploy.sh on the server:
-   downloads relay-latest (GitHub API + token) ─► checks SHA-256 + ELF x86_64
+   looks up the newest relay-v* release, downloads it (GitHub API + token) ─► checks SHA-256 + ELF x86_64
    ─► replaces the binary (atomic, old one kept) ─► restarts the daemon ─► /healthz
                                                                  └─ automatic rollback if KO
 ```
@@ -110,7 +110,7 @@ Rust toolchain; a Rust build would run out of memory there). The binary therefor
 
 ## 3. The GitHub token (the "key", set by hand, outside the repository)
 
-`deploy.sh` downloads the asset of the `relay-latest` release through the GitHub API. The
+`deploy.sh` looks up the newest `relay-v*` release (pre-releases included; pin one with `TOMI_RELEASE_TAG=relay-vX.Y.Z`) and downloads its asset through the GitHub API. The
 repository that publishes it is private in the original deployment, so a read-only token is needed.
 An SSH deploy key is **not enough**: it grants access to the git repository, not to release assets.
 (For a public repository, release assets can be downloaded without a token; the script as written
@@ -152,9 +152,8 @@ One workflow, **`.github/workflows/release-relay.yml`**, on a `relay-v*` tag:
 
 1. builds (musl + Windows x64), checks the SHA-256 digests;
 2. publishes the release `relay-vX.Y.Z`;
-3. updates `relay-latest` (same assets);
-4. **optional deploy hook**: if the secret `FORGE_DEPLOY_URL` is set, `POST`s to the site's deployment
-   URL → the panel runs `deploy.sh` on the server, which downloads `relay-latest` and restarts the relay.
+3. **optional deploy hook**: if the secret `FORGE_DEPLOY_URL` is set, `POST`s to the site's deployment
+   URL → the panel runs `deploy.sh` on the server, which downloads the newest `relay-v*` release and restarts the relay.
    Without the secret, the release is still published and the deployment can be triggered by hand
    (the panel's deploy action).
 
@@ -210,8 +209,7 @@ therefore does not appear in `ps` and is written to no temporary file).
 that was published (integrity of the transfer), not that it comes from us: whoever can write to the GitHub
 release can replace both the binary *and* its digest. Next step: sign the release (minisign, or GitHub's
 build provenance attestation `gh attestation`) and have `deploy.sh` verify the signature before installing.
-Also deploy a pinned tag (`TOMI_RELEASE_TAG=relay-vX.Y.Z`) rather than `relay-latest`, which is rewritten at
-every publication. Details: the "To do" section of `infra/README.md`.
+Also deploy a pinned tag (`TOMI_RELEASE_TAG=relay-vX.Y.Z`) rather than the newest release looked up at every run. Details: the "To do" section of `infra/README.md`.
 
 **Daemon log.** `/home/deploy/logs/tomi-relay.log` is created by supervisord with its own umask, not the
 relay's, and it contains the `install token:` line of the first start (an invitation that never expires).

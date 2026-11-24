@@ -52,7 +52,7 @@ can read. The details are in [`PROJECT.md`](PROJECT.md) and in the [specificatio
 | Android | [Releases `android-v*`](https://github.com/tomi-share/tomi/releases?q=android-v) (`.apk`) | Signed with the project's release key, never a debug build ([how it is checked](docs/RELEASES.md#android-release-signing)); no release published yet |
 | Windows | [Releases `windows-v*`](https://github.com/tomi-share/tomi/releases?q=windows-v) (`.exe` installer) | Unsigned for now (SmartScreen will warn): [verify the download](docs/RELEASES.md#verifying-a-download); no release published yet |
 | iOS | Build from source (`apps/apple`) | TestFlight / App Store distribution is planned |
-| Relay | [`relay-latest`](https://github.com/tomi-share/tomi/releases/tag/relay-latest) (Linux and Windows binaries) | Deployment guide in [`infra/`](infra/README.md) |
+| Relay | [`relay-vX.Y.Z`](https://github.com/tomi-share/tomi/releases) (Linux and Windows binaries) | Deployment guide in [`infra/`](infra/README.md) |
 
 Tomi needs a relay to talk through. Follow [`infra/README.md`](infra/README.md) to run your own, then create your
 space from the app's first screen and pair your other devices.
