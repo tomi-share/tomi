@@ -1,7 +1,7 @@
 # Actions dans l'admin web du relais : décision sécurité / ergonomie
 
 Statut : **décidé le 24/11/2026, porté dans `apps/relay`** (voir « Portage » en fin de document pour les écarts ; le propriétaire a délégué les arbitrages, voir « Décisions prises » en fin de
-document), rien n'est implémenté. Remplace le §16 de `DECISIONS-UI.md` (« aucune action destructrice »). Sources lues : `apps/relay/src/admin_web.rs`, `webauthn.rs`, `admin.rs`
+document). Remplace le §16 de `DECISIONS-UI.md` (« aucune action destructrice »). Sources lues : `apps/relay/src/admin_web.rs`, `webauthn.rs`, `admin.rs`
 (`revoke`, `reset`, `quota`, `issue_invitation`), `revoke.rs`, `state.rs` (`delete_space`), `spec/api-v1.md`
 §1, §5.4, §7.2, §7.6, §7.9.6, §8.7, §8.7.1, `apps/relay/README.md`, `infra/forge/enable-admin-web.md`.
 
@@ -256,7 +256,11 @@ Porté tel que décidé ; ce qui diffère ou reste à vérifier :
 - **Enrôlement** : tant qu'aucune clé n'existe, les routes d'enrôlement restent ouvertes (un code est de toute façon
   exigé) ; dès qu'une clé existe, elles répondent 404 sauf code en cours.
 - **Appareils** : `api/devices` gagne `id` (8 premiers caractères du `device_id`) pour désigner la cible d'un retrait.
-- **Journal** : `api/journal` ajoute `audit` (persistant) aux `entries` en mémoire ; la page les fusionne.
+- **Journal** : `api/journal` ajoute `audit` (persistant) aux `entries` en mémoire ; la page les fusionne. Revue : la
+  borne de 500 lignes ne s'applique plus qu'aux lignes ordinaires (les lignes destructrices ne sont purgées qu'au bout
+  de 90 jours), les routes de session seule ont la limite de débit des autres routes sensibles, et l'audit nomme la clé
+  qui a signé le step-up.
 - **Page** : la maquette a été reprise par script (`index.html`, `app.css`) ; les icônes sont celles de la maquette
-  (tâche I8, tracés officiels Material Symbols et mention de licence dans `design/`, non faite). Aucune vérification
+  (tâche I8 faite à la revue : tracés officiels Material Symbols Outlined, 24 px, graisse 400, dans le sprite de
+  `index.html`, licence Apache 2.0 dans `design/icons/LICENSE-material-symbols.txt`). Aucune vérification
   dans un vrai navigateur avec une vraie clé d'accès, ni sur appareil (zone du geste, clavier virtuel).

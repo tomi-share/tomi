@@ -82,8 +82,8 @@ de 44). Sur desktop, à la souris, les boutons de second rang descendent à 36 p
     rayons 8 et 12, logo en `currentColor` (nuit sur clair, blanc sur sombre), nuit et soleil nulle part ailleurs,
     assemblage horizontal à 28 px, symbole au pixel à 24 px. Tutoiement, phrases courtes, « : » et « ? » avec
     espace insécable.
-16. **Actions dans le panneau** (remplace « aucune action destructrice ») : d'après
-    [DECISION-ACTIONS.md](DECISION-ACTIONS.md), détaillées dans la section « Actions » ci-dessous. Clé d'accès à
+16. **Actions dans le panneau** (remplace l'ancien « aucune action destructrice », qui n'est plus vrai) : la
+    décision fait foi dans [DECISION-ACTIONS.md](DECISION-ACTIONS.md), détaillée dans la section « Actions » ci-dessous. Clé d'accès à
     **chaque** action qui détruit ou crée un droit (retirer des appareils, supprimer un espace, créer ou remplacer
     une invitation), session seule pour le réversible (quotas, invalider les invitations, fermer les sessions).
     Les commandes `tomi-relay admin …` ne sont plus qu'un repli discret « Équivalent en ligne de commande ».
@@ -154,7 +154,7 @@ tableau et dans le pied de la barre latérale.
 Les points que cette section laissait ouverts (un document ou deux, « Retirer » au survol, compteur de refus,
 sessions ouvertes, `--rotate`, décompte, syntaxe CLI) sont tranchés dans « Décisions prises », en fin de document.
 
-### Changements à faire pour porter les actions (non faits)
+### Changements pour porter les actions (faits dans `apps/relay`, voir « Portage » de DECISION-ACTIONS.md)
 
 Côté serveur, tout est dans DECISION-ACTIONS.md (« Conséquences côté relais ») : routes `api/stepup/options` et
 `api/actions`, routes de session seule (`api/spaces/quota`, `api/invitations/cancel`, `api/sessions/close-all`),
@@ -284,6 +284,8 @@ la protection des actions sont détaillés dans [DECISION-ACTIONS.md](DECISION-A
   cet écran ne doit demander que la clé, et l'usage serait marginal.
 - **I8. Icônes** : au portage, tracés officiels Material Symbols Outlined, 24 px, graisse 400 (licence Apache 2.0,
   à citer dans `design/`), à la place des tracés recopiés de la maquette. Tâche de portage, pas un choix ouvert.
+  **Faite** dans le sprite de `apps/relay/src/admin_web/index.html` ; licence : `design/icons/LICENSE-material-symbols.txt`.
+  Les maquettes de `design/mockups/relay-admin/` gardent leurs tracés d'origine.
 - **I9. Un seul document** responsive pour téléphone et desktop : le relais sert une page.
 - **I10. Pas de « Retirer » au survol** d'une ligne d'appareil sur desktop. Un bouton destructeur qui apparaît sous
   le pointeur invite le mauvais clic, n'existe ni au toucher ni au clavier, et double la case et la ligne dépliée,
