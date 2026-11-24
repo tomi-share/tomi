@@ -100,3 +100,21 @@ Identifiers: application id `eu.shaffe.tomi`, URL scheme `tomi-share://`.
   keys) and never commit a secret.
 - Do not commit code that does not compile or has not been reviewed.
 - Line endings are normalized by `.gitattributes`: do not rewrite files only to change line endings.
+- **Committing a finished feature needs no confirmation.** Once a feature is developed, reviewed, then tested (the
+  checks of "Build and checks" for every platform it touches pass, and it compiles), commit it without asking the user.
+  The review comes before the tests and is what satisfies "has been reviewed" above. This replaces any default "commit
+  only when asked". Commit on the branch currently checked out where you work (the shared checkout or your own worktree):
+  do not switch or create a branch for it. It covers committing only: never push, tag a release or open a PR without being
+  asked.
+- **Commit lock (several agents sharing one checkout).** The index is shared, so two agents staging at once corrupt each
+  other's commits. Before the first `git add`, take the lock by creating the ref `refs/agents/committing`; creating it
+  with an all-zero expected old value fails if it already exists, which makes it atomic:
+  `git update-ref --create-reflog -m "<agent / feature>" refs/agents/committing HEAD 0000000000000000000000000000000000000000`.
+  If it fails, another agent is staging: wait and retry. See who holds it and since when with
+  `git reflog show --date=relative refs/agents/committing`; if it is older than 10 minutes, do not delete it, tell the
+  user. Stage only the files of your own feature, by explicit path (never `git add -A`, `git add .` or `git commit -a`:
+  other agents' unfinished changes are in the same working tree), check with `git diff --cached`, commit, then release with
+  `git update-ref -d refs/agents/committing`, **also when the commit fails** (hook, conflict). The ref is local
+  coordination only: it lives outside `refs/heads` and `refs/tags`, and is never pushed.
+- **Exception: a dedicated worktree** (`git worktree`, own index and own branch) needs no lock. The lock is for agents
+  working in the same checkout.
