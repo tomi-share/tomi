@@ -624,6 +624,9 @@ async fn execute(
                 return Err(target_changed());
             }
             let outcome = st.delete_space_keep(&space, registry, None, true).await;
+            // The folder is in the trash and has its row only for `Deleted`: otherwise the answer
+            // makes no promise of a restore (the maintenance lists the folder again).
+            let recorded = outcome == DeleteOutcome::Deleted;
             match outcome {
                 DeleteOutcome::Deleted | DeleteOutcome::DeletedWithoutReceipt => {}
                 DeleteOutcome::NotRegistered => return Err(target_changed()),
@@ -646,18 +649,29 @@ async fn execute(
                 space = space.short_id(),
                 "admin web: a space was deleted (trash, 7 days)"
             );
+            let (trash, restore) = if recorded {
+                (
+                    json!({
+                        "deleted_at": ts_format(now),
+                        "purge_after": ts_format(now + crate::spaces::TRASH_TTL_MS),
+                        "days": crate::spaces::TRASH_TTL_MS / 86_400_000,
+                    }),
+                    json!(format!(
+                        "tomi-relay admin trash restore --space {}",
+                        space.short_id()
+                    )),
+                )
+            } else {
+                (Value::Null, Value::Null)
+            };
             Ok(json_response(
                 StatusCode::OK,
                 &json!({
                     "ok": true,
                     "type": "delete_space",
                     "space": space.short_id(),
-                    "trash": {
-                        "deleted_at": ts_format(now),
-                        "purge_after": ts_format(now + crate::spaces::TRASH_TTL_MS),
-                        "days": crate::spaces::TRASH_TTL_MS / 86_400_000,
-                    },
-                    "restore": format!("tomi-relay admin trash restore --space {}", space.short_id()),
+                    "trash": trash,
+                    "restore": restore,
                 }),
             ))
         }

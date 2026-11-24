@@ -3017,6 +3017,11 @@ are CLI only. A restore rebuilds the routing (devices, signing keys, sessions an
 database) and gives the quota back; it is refused if the id is used again or if a device or key of the space belongs
 to another space meanwhile. After a restore a device resumes at its next network action (the doorbell stopped at
 `4004`: "open Tomi on each device").
+If `space_trash` cannot be written after the folder was renamed, the folder is renamed back and the space
+registered again (the deletion fails, the answer is `500`); if that is impossible too, the answer promises no trash
+(`trash: null`) and the maintenance gives every folder of `spaces.trash/` without a row its row again (date from its
+name). Purging an entry whose space is live (a restore that left its row) only drops the entry; folders are removed
+off the async workers.
 
 **Audit log.** `admin_web_audit` (`routing.db`): date, a fixed word, the 8-character id of the target (space or
 device) and the number of the key; 90 days at most, and 500 lines for the ordinary kinds. The lines of what

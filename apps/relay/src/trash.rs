@@ -121,12 +121,25 @@ fn pick(all: &[TrashRow], requested: Option<&str>) -> Result<TrashRow, Output> {
     }
 }
 
-fn remove_folder(st: &AppState, dir_name: &str) -> std::io::Result<()> {
+/// Removes the folder of a trash entry. Off the async workers: a space of several GB takes a
+/// while to remove. `Ok(false)`: it was not there.
+async fn remove_folder(st: &AppState, dir_name: &str) -> std::io::Result<bool> {
     let dir = st.spaces.data_dir().join(TRASH_DIR).join(dir_name);
-    match std::fs::remove_dir_all(dir) {
-        Err(e) if e.kind() != std::io::ErrorKind::NotFound => Err(e),
-        _ => Ok(()),
-    }
+    tokio::task::spawn_blocking(move || match std::fs::remove_dir_all(dir) {
+        Ok(()) => Ok(true),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(false),
+        Err(e) => Err(e),
+    })
+    .await
+    .unwrap_or_else(|_| Err(std::io::Error::other("the removal task failed")))
+}
+
+/// Is the space of this row registered (live, or pending)? Then a missing folder means the space
+/// was restored and only its row stayed: dropping the row is all there is to do, and nothing
+/// was "purged".
+fn is_live(st: &AppState, row: &TrashRow) -> bool {
+    crate::wire::uuid_parse(&row.space_id)
+        .is_some_and(|id| !matches!(st.spaces.route_space(&id), crate::spaces::Route::Unknown))
 }
 
 async fn forget_row(st: &AppState, dir_name: String) -> Result<(), ApiError> {
@@ -247,11 +260,23 @@ pub async fn command(
                     ),
                 );
             }
-            if let Err(e) = remove_folder(st, &row.dir_name) {
-                return Output::fail(1, format!("the folder could not be removed ({})", e.kind()));
-            }
+            let removed = match remove_folder(st, &row.dir_name).await {
+                Ok(r) => r,
+                Err(e) => {
+                    return Output::fail(
+                        1,
+                        format!("the folder could not be removed ({})", e.kind()),
+                    )
+                }
+            };
             if let Err(e) = forget_row(st, row.dir_name.clone()).await {
                 return fail(&e);
+            }
+            if !removed && is_live(st, &row) {
+                return Output::ok(format!(
+                    "space {short} is live (it was restored): only the stale entry of the trash was dropped, nothing was purged
+"
+                ));
             }
             admin_audit::record(st, kind::TRASH_PURGED, Some(short.clone()), None).await;
             tracing::warn!(space = short, "a space of the trash was purged");
@@ -262,15 +287,21 @@ pub async fn command(
 
 /// The maintenance: purges what is past its 7 days. Returns how many spaces went.
 pub async fn purge_expired(st: &AppState, now: i64) -> u64 {
+    reconcile(st, now).await;
     let due: Vec<TrashRow> = match st.spaces.routing().read(|tx| rows(tx)).await {
         Ok(v) => v.into_iter().filter(|r| r.purge_after <= now).collect(),
         Err(_) => return 0,
     };
     let mut n = 0;
     for r in due {
-        if remove_folder(st, &r.dir_name).is_ok()
-            && forget_row(st, r.dir_name.clone()).await.is_ok()
-        {
+        let Ok(removed) = remove_folder(st, &r.dir_name).await else {
+            continue;
+        };
+        if forget_row(st, r.dir_name.clone()).await.is_ok() {
+            if !removed && is_live(st, &r) {
+                // A restored space whose row stayed: nothing expired.
+                continue;
+            }
             admin_audit::record(
                 st,
                 kind::TRASH_EXPIRED,
@@ -278,6 +309,79 @@ pub async fn purge_expired(st: &AppState, now: i64) -> u64 {
                 None,
             )
             .await;
+            n += 1;
+        }
+    }
+    n
+}
+
+/// Gives a row to every folder of `spaces.trash/` that has none (a deletion whose row could not
+/// be written and that could not be undone): the name `<uuid>-<unix seconds>` gives the space and
+/// the date, and the 7 days start again from that date. Without it such a folder would be neither
+/// listed, nor restorable, nor ever purged. Runs in every maintenance pass.
+pub async fn reconcile(st: &AppState, now: i64) -> u64 {
+    let known: Vec<String> = match st.spaces.routing().read(|tx| rows(tx)).await {
+        Ok(v) => v.into_iter().map(|r| r.dir_name).collect(),
+        Err(_) => return 0,
+    };
+    let root = st.spaces.data_dir().join(TRASH_DIR);
+    let found = tokio::task::spawn_blocking(move || {
+        let mut out = Vec::new();
+        let Ok(rd) = std::fs::read_dir(&root) else {
+            return out;
+        };
+        for e in rd.flatten() {
+            let name = e.file_name().to_string_lossy().into_owned();
+            if known.contains(&name) || !e.path().join(crate::spaces::SPACE_DB_FILE).is_file() {
+                continue;
+            }
+            let Some((id, secs)) = name.rsplit_once('-') else {
+                continue;
+            };
+            let (Some(_), Ok(secs)) = (crate::wire::uuid_parse(id), secs.parse::<i64>()) else {
+                continue;
+            };
+            let at = secs.saturating_mul(1000).min(now);
+            out.push(TrashRow {
+                dir_name: name.clone(),
+                space_id: id.to_owned(),
+                deleted_at: at,
+                purge_after: at.saturating_add(crate::spaces::TRASH_TTL_MS),
+                size_bytes: crate::spaces::dir_size(&e.path()),
+                quota: None,
+            });
+        }
+        out
+    })
+    .await
+    .unwrap_or_default();
+    let mut n = 0;
+    for row in found {
+        let r = row.clone();
+        let done = st
+            .spaces
+            .routing()
+            .write(move |tx| {
+                tx.execute(
+                    "INSERT OR IGNORE INTO space_trash
+                     (dir_name, space_id, deleted_at, purge_after, size_bytes, quota_set, quota_bytes)
+                     VALUES (?1, ?2, ?3, ?4, ?5, 0, NULL)",
+                    params![
+                        r.dir_name,
+                        r.space_id,
+                        r.deleted_at,
+                        r.purge_after,
+                        i64::try_from(r.size_bytes).unwrap_or(i64::MAX)
+                    ],
+                )?;
+                Ok(())
+            })
+            .await;
+        if done.is_ok() {
+            tracing::warn!(
+                space = row.space_id.chars().take(8).collect::<String>(),
+                "trash: a folder had no row, it is listed again"
+            );
             n += 1;
         }
     }

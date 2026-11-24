@@ -161,7 +161,7 @@ pub enum RestoreError {
     Failed(String),
 }
 
-fn dir_size(dir: &Path) -> u64 {
+pub(crate) fn dir_size(dir: &Path) -> u64 {
     let mut total = 0u64;
     let Ok(rd) = std::fs::read_dir(dir) else {
         return 0;
@@ -1308,6 +1308,28 @@ impl Spaces {
             );
         }
 
+        // A space kept in the trash whose row could not be written is put back where it was: the
+        // answer must never say "restorable" for a folder nothing lists, and nothing is lost. If
+        // it cannot be put back, the maintenance gives the folder its row again
+        // ([`crate::trash::reconcile`]) and the outcome stays "without receipt".
+        if receipted.is_err() {
+            if let Removed::Renamed { trash } = &removed {
+                if keep {
+                    match self.undo_keep(space, trash) {
+                        Some(true) => {
+                            tracing::warn!(
+                                space = space.short_id(),
+                                "the trash could not record the space: it is back where it was"
+                            );
+                            return DeleteOutcome::NotDeleted;
+                        }
+                        Some(false) => return DeleteOutcome::Unknown,
+                        None => {}
+                    }
+                }
+            }
+        }
+
         // 6. Its identifiers are free again.
         {
             let mut pending = plain(self.pending.lock());
@@ -1325,6 +1347,30 @@ impl Spaces {
             DeleteOutcome::Deleted
         } else {
             DeleteOutcome::DeletedWithoutReceipt
+        }
+    }
+
+    /// Puts a folder that [`Spaces::delete_keep`] moved to the trash back in `spaces/` and
+    /// registers the space again: `Some(true)` if both worked, `Some(false)` if the folder is
+    /// back but the space cannot be opened (it stays pending until the next start, which loads
+    /// it), `None` if the folder could not be moved back (it stays in the trash).
+    fn undo_keep(&self, space: &Space, trash: &Path) -> Option<bool> {
+        if std::fs::rename(trash, &space.dir).is_err() {
+            return None;
+        }
+        for d in [space.dir.parent(), trash.parent()].into_iter().flatten() {
+            let _ = sync_dir(d);
+        }
+        match self.reinstate(space) {
+            Ok(()) => Some(true),
+            Err(e) => {
+                tracing::error!(
+                    space = space.short_id(),
+                    "the space is back on the disk but cannot be opened until the next start: {}",
+                    short_error(&e)
+                );
+                Some(false)
+            }
         }
     }
 
