@@ -3513,3 +3513,26 @@ async fn another_session_cannot_push_out_the_pending_step_up_of_the_owner() {
     .await
     .ok(200);
 }
+
+#[tokio::test]
+async fn the_page_tells_a_rate_limit_from_a_ceiling_and_keeps_each_error_in_its_own_card() {
+    let env = panel().await;
+    let seg = segment(&env);
+    let html = String::from_utf8(get(&env, &seg, "", None).await.body.to_vec()).unwrap();
+    let js = String::from_utf8(get(&env, &seg, "app.js", None).await.body.to_vec()).unwrap();
+    // Each card has its own error line, and the keys and the trash do not write in the quota's.
+    for id in ["quota-error", "keys-error", "trash-error"] {
+        assert!(html.contains(&format!("id=\"{id}\"")), "{id}");
+    }
+    assert!(js.contains("'keys-error'") && js.contains("'trash-error'"));
+    assert_eq!(js.matches("'quota-error'").count(), 1);
+    // A 429 is a ceiling only when the server says so; a 409 has its reasons.
+    for needle in [
+        "d.reason === 'ceiling'",
+        "'throttled'",
+        "'last_device'",
+        "'lastdevice'",
+    ] {
+        assert!(js.contains(needle), "{needle}");
+    }
+}

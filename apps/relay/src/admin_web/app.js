@@ -1165,7 +1165,8 @@
   //
   // The sheet shows the summary the SERVER built (`api/stepup/options`): the authenticator shows
   // only the name of the site, never the action. `data-state` of #stepup: review, pending,
-  // cancelled, refused, error, expired, limit, closed (see DECISION-ACTIONS.md).
+  // cancelled, refused, error, expired, limit, throttled, changed, lastdevice, devicekey, closed
+  // (see DECISION-ACTIONS.md).
 
   var su = $('stepup');
   var stepCfg = null;
@@ -1185,7 +1186,13 @@
     closed: ['', 'lock', 'Session fermée par prudence',
       '5 refus de clé d’accès dans cette session. Ta clé d’accès reste valable : reconnecte-toi, puis regarde le journal si ce n’était pas toi.'],
     changed: ['warn', 'info', 'Déjà fait ailleurs',
-      'La cible a changé depuis que tu as ouvert cette fenêtre. Rien n’a été fait : actualise pour voir l’état réel.']
+      'La cible a changé depuis que tu as ouvert cette fenêtre. Rien n’a été fait : actualise pour voir l’état réel.'],
+    lastdevice: ['warn', 'info', 'Dernier appareil de l’espace',
+      'Un espace garde au moins un appareil. Rien n’a été fait. Pour en finir avec cet espace, supprime-le : une clé d’accès te sera demandée.'],
+    devicekey: ['warn', 'lock', 'Clé liée à l’appareil exigée',
+      'La suppression d’un espace demande une clé liée à l’appareil, et aucune n’est enregistrée. Rien n’a été fait. Ajoutes-en une sur le serveur avec « tomi-relay admin web enroll ».'],
+    throttled: ['warn', 'schedule', 'Trop de demandes',
+      'Rien n’a été fait. Ce n’est pas un plafond du relais : la limite de débit se lève en quelques secondes.']
   };
 
   function msgBox(state, extra) {
@@ -1208,6 +1215,9 @@
       }
       box.appendChild(tries);
       box.appendChild(el('p', null, 'Refus ' + refusals + ' sur 5 : au cinquième, cette session se ferme. Ta clé d’accès, elle, reste valable.'));
+    }
+    if (state === 'throttled' && extra && extra.wait) {
+      box.appendChild(el('p', null, 'Réessaie dans ' + fmtDuration(extra.wait) + '.'));
     }
     if (state === 'limit' && extra) {
       var s2 = el('strong');
@@ -1245,13 +1255,13 @@
       return;
     }
     msgBox(state, extra);
-    textOf('su-ok-label', state === 'expired' ? 'Recommencer' : state === 'error' || state === 'changed' ? 'Actualiser' :
+    textOf('su-ok-label', state === 'expired' ? 'Recommencer' : state === 'error' || state === 'changed' || state === 'lastdevice' || state === 'devicekey' ? 'Actualiser' :
       state === 'closed' ? 'Revenir à la connexion' : 'Réessayer');
     ok.disabled = state === 'limit';
     if (state === 'limit') {
       ok.hidden = true;
     }
-    if (state === 'error' || state === 'closed' || state === 'changed') {
+    if (state === 'error' || state === 'closed' || state === 'changed' || state === 'lastdevice' || state === 'devicekey') {
       ok.className = 'btn';
       ok.querySelector('svg').setAttribute('hidden', '');
     }
@@ -1348,11 +1358,8 @@
           aborted = true;
           return null;
         }
-        if (r.status === 429) {
-          throw { limit: r.data || {} };
-        }
-        if (r.status === 409) {
-          throw { changed: true };
+        if (r.status === 429 || r.status === 409) {
+          throw { resp: r };
         }
         if (r.status === 401) {
           throw new Error('session');
@@ -1412,10 +1419,8 @@
           setStep('refused');
         } else if (r.status === 401) {
           throw new Error('session');
-        } else if (r.status === 429) {
-          setStep('limit', limitText(d));
-        } else if (r.status === 409) {
-          setStep('changed');
+        } else if (r.status === 429 || r.status === 409) {
+          stepFromStatus(r);
         } else if (r.status === 400) {
           setStep('error');
         } else {
@@ -1427,10 +1432,8 @@
           return;
         }
         clearTimeout(stepTimer);
-        if (err && err.limit) {
-          setStep('limit', limitText(err.limit));
-        } else if (err && err.changed) {
-          setStep('changed');
+        if (err && err.resp) {
+          stepFromStatus(err.resp);
         } else if (err && err.message === 'session') {
           lostSession();
         } else if (err && (err.name === 'NotAllowedError' || err.name === 'AbortError')) {
@@ -1440,6 +1443,28 @@
           setStep('error');
         }
       });
+  }
+
+  // A 429 is a ceiling of the relay only if the server says so (`ceiling`); otherwise it is the rate
+  // limit of the address, which lifts in seconds. A 409 is "the target changed" unless the server
+  // gives its reason.
+  function stepFromStatus(r) {
+    var d = r.data || {};
+    if (r.status === 429) {
+      if (d.reason === 'ceiling' || d.ceiling) {
+        setStep('limit', limitText(d));
+      } else {
+        setStep('throttled', { wait: Number(d.retry_after) || 0 });
+      }
+      return;
+    }
+    if (d.reason === 'last_device') {
+      setStep('lastdevice');
+    } else if (d.reason === 'device_key_required') {
+      setStep('devicekey');
+    } else {
+      setStep('changed');
+    }
   }
 
   var CAPS = {
@@ -2813,8 +2838,8 @@
           guarded(read('api/invitations').then(function (r) { data.invitations = r.invitations || []; }), 'invitations-error', 'Impossible de lire les invitations.'),
           guarded(read('api/journal').then(function (r) { data.journal = r; }), 'journal-error', 'Impossible de lire le journal.'),
           guarded(read('api/quota').then(function (r) { data.quota = r.default; }), 'quota-error', 'Impossible de lire le quota par défaut.'),
-          guarded(read('api/keys').then(function (r) { data.keys = r; }), 'quota-error', 'Impossible de lire les clés d’accès.'),
-          guarded(read('api/trash').then(function (r) { data.trash = r; }), 'quota-error', 'Impossible de lire la corbeille.')
+          guarded(read('api/keys').then(function (r) { data.keys = r; }), 'keys-error', 'Impossible de lire les clés d’accès.'),
+          guarded(read('api/trash').then(function (r) { data.trash = r; }), 'trash-error', 'Impossible de lire la corbeille.')
         ]);
       })
       .then(function () {
