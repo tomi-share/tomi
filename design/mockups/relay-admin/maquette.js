@@ -765,7 +765,7 @@
   function openStepup(cfg) {
     current = cfg;
     $('su-title').textContent = cfg.title;
-    $('su-ico').className = 'su-ico' + (cfg.tone === '' ? ' brand' : '');
+    $('su-ico').className = 'su-ico' + (cfg.tone === '' ? ' create' : '');
     $('su-ico').innerHTML = icon(cfg.icon, 'lg');
     var recap = $('su-recap');
     recap.className = 'recap' + (cfg.facts ? ' facts' : '');

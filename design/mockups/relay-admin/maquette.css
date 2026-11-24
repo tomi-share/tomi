@@ -2781,7 +2781,7 @@ dialog.confirm {
   color: var(--error);
 }
 
-.su-ico.brand {
+.su-ico.create {
   color: var(--brand);
 }
 
@@ -3368,6 +3368,31 @@ dialog.confirm {
 }
 
 .board .appbar {
+  position: relative;
+}
+
+.board .appbar .back.show {
+  display: inline-grid !important;
+}
+
+.toast-zone.board-toast {
+  bottom: var(--space-4);
+}
+
+/* Gabarits de chargement : largeurs fixes (à la place des attributs style). */
+.sk.w-30 { width: 30%; }
+.sk.w-40 { width: 40%; }
+.sk.w-45 { width: 45%; }
+.sk.w-50 { width: 50%; }
+.sk.w-55 { width: 55%; }
+.sk.w-60 { width: 60%; }
+.sk.w-80 { width: 80%; }
+
+.sk.bar {
+  height: 0.375rem;
+}
+
+.board .appbar {
   height: var(--bar-h);
   padding: 0 var(--space-1) 0 var(--space-4);
   background: var(--surface);
@@ -3454,4 +3479,99 @@ dialog.confirm {
 
 .board .devices {
   margin-bottom: calc(-1 * var(--space-4));
+}
+
+/* Planche des actions : cadre « téléphone » (feuille basse) et cadre « desktop » (boîte centrée). */
+.board .frame.phone {
+  max-width: 24.375rem; /* 390 px */
+}
+
+.board .phone .confirm-static {
+  border-width: 1px 1px 0;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.board .phone .confirm .actions {
+  flex-direction: column-reverse;
+}
+
+.board .phone .confirm .actions .btn {
+  width: 100%;
+}
+
+.board .phone .desktop-only,
+.board .phone .esc-hint {
+  display: none !important;
+}
+
+.board .frame.desk {
+  display: grid;
+  place-items: center;
+  padding: var(--space-6) var(--space-4);
+  background: var(--scrim);
+}
+
+.board .desk .confirm-static {
+  width: min(34rem, 100%);
+}
+
+.board .desk .confirm .actions {
+  align-items: center;
+}
+
+.board .desk .esc-hint {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 0.25rem;
+  margin-right: auto;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+.board .desk-panel {
+  max-width: 28rem;
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+}
+
+.board .desk-panel .devices {
+  margin: var(--space-2) calc(-1 * var(--space-4)) 0;
+}
+
+.board .desk-panel .dev {
+  grid-template-columns: var(--target) minmax(0, 1fr) auto;
+}
+
+.board .desk-panel .dev-quick {
+  display: inline-grid !important;
+  margin: 0.375rem var(--space-1) 0 0;
+  color: var(--error);
+}
+
+.board .desk-panel .dev.hover {
+  background: var(--bg);
+}
+
+.board .desk-panel .selbar {
+  position: static;
+  margin: var(--space-2) calc(-1 * var(--space-4)) calc(-1 * var(--space-4));
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+.board .mock-hint {
+  margin-top: var(--space-2);
+}
+
+.board .selbar {
+  position: static;
+}
+
+.board .keys-list > div {
+  grid-template-columns: 8.5rem minmax(0, 1fr);
+}
+
+.board h2.group + .hint {
+  margin: calc(-1 * var(--space-2)) 0 var(--space-4);
 }
