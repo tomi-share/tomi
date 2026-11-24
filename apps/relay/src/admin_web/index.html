@@ -457,6 +457,7 @@
             <p>En garder deux évite de devoir passer par le serveur si tu en perds une.</p>
           </div>
           <div class="sub-head"><h3>Clés d’accès</h3><span class="count" id="keys-count"></span></div>
+          <p class="error-line" id="keys-error" role="alert" hidden></p>
           <ul class="rows keys" id="keys-list"></ul>
           <dl class="kv">
             <div><dt>Clé exigée pour supprimer un espace</dt><dd id="access-policy"></dd></div>
@@ -517,6 +518,7 @@
             <p>Un espace supprimé depuis ce panneau disparaît tout de suite pour ses appareils. Le relais garde son dossier, toujours chiffré, 7 jours, puis l’efface.</p>
             <p>La corbeille compte dans l’espace disque libre, pas dans le total des espaces.</p>
           </div>
+          <p class="error-line" id="trash-error" role="alert" hidden></p>
           <p class="empty" id="trash-empty" hidden>La corbeille est vide.</p>
           <ul class="rows" id="trash-list"></ul>
           <div class="cli-only">
@@ -565,7 +567,7 @@
 
 <!-- Confirmation avec clé d'accès (step-up) : retirer, supprimer, créer ou remplacer une invitation.
      Feuille basse sous 640 px, boîte centrée au-delà. Le récapitulatif vient du serveur (api/stepup/options).
-     data-state : review, pending, cancelled, refused, error, expired, limit, closed. -->
+     data-state : review, pending, cancelled, refused, error, expired, limit, throttled, changed, lastdevice, devicekey, closed. -->
 <dialog id="stepup" class="confirm stepup" aria-labelledby="su-title" aria-describedby="su-conseq" data-state="review">
   <div class="su-head">
     <span class="su-ico" id="su-ico"><svg class="ico lg"><use href="#i-person-remove"/></svg></span>
