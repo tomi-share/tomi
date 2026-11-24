@@ -3042,7 +3042,10 @@ of the process (`entries`).
 
 **Storage** (`routing.db`, additive migrations, `user_version` unchanged; a relay of the previous version ignores
 these tables): `admin_web_credentials` (replaces the single-key `admin_web_credential`, which keeps the
-lowest-numbered key so that the previous binary still starts), `admin_web_policy`, `admin_web_audit`, `space_trash`.
+lowest-numbered key so that the previous binary still starts), `admin_web_policy`, `admin_web_audit`, `space_trash`. At every writable open the relay compares the single-key table
+with the lowest-numbered key: if the previous binary reset the panel or enrolled another key meanwhile (a rollback,
+then an upgrade), that change wins (the keys and the policy go, the key it enrolled is imported, a higher counter is
+kept) and the audit log says so; a reset is never silently undone.
 
 **Hardening**: a per-address rate limit for every sensitive request (code, challenge, sign-in, step-up: burst of 10,
 then 6 per minute) and a wider global ceiling; a body of 16 KiB at most; page, script and stylesheet embedded in the

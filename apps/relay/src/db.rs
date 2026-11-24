@@ -284,7 +284,9 @@ CREATE TABLE IF NOT EXISTS admin_web_enrollment (
 ///   log always designates the same key. `backup_eligible` is the BE flag the authenticator
 ///   declared at enrolment (no attestation: a declaration, not a proof). The first key also stays
 ///   in `admin_web_credential` (see `sync_legacy` in `admin_web.rs`) so that the previous binary
-///   still starts. A database that only knows `admin_web_credential` gets its key copied here once.
+///   still starts. A database that only knows `admin_web_credential` gets its key copied here once;
+///   after that, every writable open compares the two (`admin_web::reconcile_legacy`) so that what
+///   a previous binary did meanwhile (`admin web reset`, a new key) is not silently undone.
 /// * `admin_web_policy`: at most one row; `critical_requires_device_bound` (set by the CLI only).
 /// * `admin_web_audit`: what was done through the panel or about its access: a date, a fixed word,
 ///   the 8-character id of the target and the number of the passkey. Never a name, an address, a
@@ -438,7 +440,7 @@ impl Db {
 
     /// Opens (and creates) `routing.db` at `path`.
     pub fn open_routing(path: &Path) -> Result<Arc<Db>, rusqlite::Error> {
-        Self::open_with(
+        let db = Self::open_with(
             path,
             ROUTING_SCHEMA,
             ROUTING_SCHEMA_VERSION,
@@ -449,7 +451,14 @@ impl Db {
                 DEFAULT_QUOTA_SCHEMA,
             ],
             true,
-        )
+        )?;
+        // A previous binary may have changed the passkey while this one did not run.
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map_or(0, |d| i64::try_from(d.as_millis()).unwrap_or(i64::MAX));
+        db.write_sync(|tx| crate::admin_web::reconcile_legacy(tx, now).map(Tx::Commit))
+            .map_err(|e| rusqlite::Error::InvalidParameterName(e.code.as_str().to_owned()))?;
+        Ok(db)
     }
 
     /// Opens an existing space database for reading only: no writer, no `journal_mode` change,

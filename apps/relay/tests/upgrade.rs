@@ -420,3 +420,120 @@ async fn a_deleted_space_leaves_nothing_and_an_upload_cannot_bring_it_back() {
     assert!(!debris.exists());
     assert!(a.state.spaces.get(&uuid_bytes(&b_id)).is_some());
 }
+
+// ===== a rollback to the previous binary, then an upgrade again ==============================
+
+/// What the previous binary does to its single-key table (`admin web reset`, or an enrolment).
+fn previous_binary(path: &Path, f: impl FnOnce(&Connection)) {
+    let c = Connection::open(path).unwrap();
+    f(&c);
+}
+
+fn keys_of(db: &tomi_relay::db::Db) -> Vec<(i64, Vec<u8>, i64)> {
+    db.read_sync(|tx| {
+        let mut st = tx.prepare(
+            "SELECT num, credential_id, sign_count FROM admin_web_credentials ORDER BY num",
+        )?;
+        let rows = st
+            .query_map([], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))?
+            .collect::<rusqlite::Result<Vec<_>>>()?;
+        Ok(rows)
+    })
+    .unwrap()
+}
+
+fn audit_kinds(db: &tomi_relay::db::Db) -> Vec<String> {
+    db.read_sync(|tx| {
+        let mut st = tx.prepare("SELECT kind FROM admin_web_audit ORDER BY id")?;
+        let rows = st
+            .query_map([], |r| r.get(0))?
+            .collect::<rusqlite::Result<Vec<String>>>()?;
+        Ok(rows)
+    })
+    .unwrap()
+}
+
+#[test]
+fn a_reset_or_an_enrolment_made_by_the_previous_binary_is_not_undone_by_the_upgrade() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("routing.db");
+    {
+        // The new binary holds keys 1 and 2 (key 1 is suspected).
+        let db = tomi_relay::db::Db::open_routing(&path).unwrap();
+        db.write_sync(|tx| {
+            for (i, n) in [(1u8, 1u8), (2, 2)] {
+                tx.execute(
+                    "INSERT INTO admin_web_credentials
+                     (credential_id, public_key, sign_count, backup_eligible, created_at)
+                     VALUES (?1, ?2, 0, 1, 1)",
+                    rusqlite::params![vec![i; 16], vec![n; 65]],
+                )?;
+            }
+            tomi_relay::admin_web::sync_legacy(tx)?;
+            tx.execute("INSERT INTO admin_web_policy VALUES (1, 0)", [])?;
+            Ok(tomi_relay::db::Tx::Commit(()))
+        })
+        .unwrap();
+        db.close();
+    }
+    // Rollback: the previous binary resets the panel (it only knows the single-key table).
+    previous_binary(&path, |c| {
+        c.execute("DELETE FROM admin_web_credential", []).unwrap();
+    });
+    let db = tomi_relay::db::Db::open_routing(&path).unwrap();
+    assert!(keys_of(&db).is_empty(), "the reset is not undone");
+    let policy: i64 = db
+        .read_sync(
+            |tx| Ok(tx.query_row("SELECT count(*) FROM admin_web_policy", [], |r| r.get(0))?),
+        )
+        .unwrap();
+    assert_eq!(policy, 0);
+    assert!(audit_kinds(&db).contains(&"passkey_reset".to_owned()));
+    db.close();
+
+    // Rollback again: it enrols a new key; the upgrade keeps that one and nothing else.
+    previous_binary(&path, |c| {
+        c.execute(
+            "INSERT INTO admin_web_credential (id, credential_id, public_key, sign_count, created_at)
+             VALUES (1, ?1, ?2, 7, 5)",
+            rusqlite::params![vec![9u8; 16], vec![9u8; 65]],
+        )
+        .unwrap();
+    });
+    let db = tomi_relay::db::Db::open_routing(&path).unwrap();
+    let keys = keys_of(&db);
+    assert_eq!(keys.len(), 1);
+    assert_eq!(keys[0].1, vec![9u8; 16]);
+    assert_eq!(keys[0].2, 7);
+    assert!(keys[0].0 > 2, "numbers are never reused");
+    db.close();
+
+    // Reset then another key, both under the previous binary: the old keys do not come back.
+    previous_binary(&path, |c| {
+        c.execute("DELETE FROM admin_web_credential", []).unwrap();
+        c.execute(
+            "INSERT INTO admin_web_credential (id, credential_id, public_key, sign_count, created_at)
+             VALUES (1, ?1, ?2, 0, 6)",
+            rusqlite::params![vec![8u8; 16], vec![8u8; 65]],
+        )
+        .unwrap();
+    });
+    let db = tomi_relay::db::Db::open_routing(&path).unwrap();
+    let keys = keys_of(&db);
+    assert_eq!(keys.len(), 1);
+    assert_eq!(keys[0].1, vec![8u8; 16]);
+    db.close();
+
+    // The previous binary signs in with the same key: its higher counter is kept.
+    previous_binary(&path, |c| {
+        c.execute("UPDATE admin_web_credential SET sign_count = 40", [])
+            .unwrap();
+    });
+    let db = tomi_relay::db::Db::open_routing(&path).unwrap();
+    assert_eq!(keys_of(&db)[0].2, 40);
+    // And a plain reopening changes nothing.
+    let before = audit_kinds(&db).len();
+    db.close();
+    let db = tomi_relay::db::Db::open_routing(&path).unwrap();
+    assert_eq!(audit_kinds(&db).len(), before);
+}

@@ -408,6 +408,73 @@ pub fn sync_legacy(tx: &Transaction) -> Result<(), ApiError> {
     Ok(())
 }
 
+/// What the previous binary may have done to `admin_web_credential` while this one was not
+/// running (a rollback, then an upgrade again), applied to `admin_web_credentials` at every
+/// writable open of `routing.db`. The invariant of [`sync_legacy`] is that the legacy table holds
+/// the lowest-numbered key (or nothing when there is none), so a difference means the previous
+/// binary acted:
+///
+/// * legacy empty, keys present: it ran `admin web reset`: every key and the policy go;
+/// * another key in legacy: a reset then an enrolment: the keys and the policy go, the key it
+///   enrolled is the only one (its BE flag is unknown: taken as synchronisable, so it never
+///   passes for a device-bound key);
+/// * the same key with a higher counter: the counter follows (no replay of an older assertion).
+///
+/// Each correction leaves a line in the audit log. Returns whether something changed.
+pub fn reconcile_legacy(tx: &Transaction, now: i64) -> Result<bool, ApiError> {
+    use crate::admin_audit::{kind, record_tx};
+    let legacy: Option<(Vec<u8>, Vec<u8>, i64, i64)> = tx
+        .query_row(
+            "SELECT credential_id, public_key, sign_count, created_at
+             FROM admin_web_credential WHERE id = 1",
+            [],
+            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)),
+        )
+        .optional()?;
+    let lowest: Option<(i64, Vec<u8>, i64)> = tx
+        .query_row(
+            "SELECT num, credential_id, sign_count FROM admin_web_credentials ORDER BY num LIMIT 1",
+            [],
+            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+        )
+        .optional()?;
+    match (legacy, lowest) {
+        (None, None) => Ok(false),
+        (Some((id, _, count, _)), Some((num, cid, have))) if id == cid => {
+            if count > have {
+                tx.execute(
+                    "UPDATE admin_web_credentials SET sign_count = ?1 WHERE num = ?2",
+                    params![count, num],
+                )?;
+                return Ok(true);
+            }
+            Ok(false)
+        }
+        (None, Some(_)) => {
+            tx.execute("DELETE FROM admin_web_credentials", [])?;
+            tx.execute("DELETE FROM admin_web_policy", [])?;
+            record_tx(tx, now, kind::PASSKEY_RESET, None, None)?;
+            Ok(true)
+        }
+        (Some((id, public_key, count, created_at)), other) => {
+            if other.is_some() {
+                tx.execute("DELETE FROM admin_web_credentials", [])?;
+                tx.execute("DELETE FROM admin_web_policy", [])?;
+                record_tx(tx, now, kind::PASSKEY_RESET, None, None)?;
+            }
+            tx.execute(
+                "INSERT INTO admin_web_credentials
+                 (credential_id, public_key, sign_count, backup_eligible, created_at)
+                 VALUES (?1, ?2, ?3, 1, ?4)",
+                params![id, public_key, count, created_at],
+            )?;
+            let num = tx.last_insert_rowid();
+            record_tx(tx, now, kind::PASSKEY_ADDED, None, Some(num))?;
+            Ok(true)
+        }
+    }
+}
+
 /// Stores a new passkey and closes the enrolment, in one transaction. `None` if the enrolment
 /// code is gone or expired, or if [`MAX_KEYS`] keys are enrolled already; else the new number.
 fn register_credential(
