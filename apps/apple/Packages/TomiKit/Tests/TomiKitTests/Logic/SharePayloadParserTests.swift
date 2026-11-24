@@ -96,6 +96,36 @@ final class SharePayloadParserTests: XCTestCase {
         XCTAssertEqual(parsed.text?.markdown, "# Titre\n\n- un\n- deux")
     }
 
+    // Same cases as detect.rs (Windows) and SharePayloadParserTest.kt (Android): keep them aligned.
+    func testMarkdownCopiedAsLinesOfHtmlStaysMarkdown() {
+        let plain = "# Titre\n\nDécisions : a\n\n## Conclusion"
+        let html = "<div># Titre</div><div><br></div><div>Décisions : a</div><div><br></div><div>## Conclusion</div>"
+        let parsed = parse(ShareInput(text: plain, htmlText: html))
+        XCTAssertEqual(parsed.text?.markdown, plain)
+        XCTAssertNil(parsed.text?.html)
+    }
+
+    func testAWrapperOnlyHtmlFlavourIsNotKept() {
+        let parsed = parse(ShareInput(text: "# Titre\n- a", htmlText: "<meta charset='utf-8'><span style=\"color: red\"># Titre</span>"))
+        XCTAssertEqual(parsed.text?.markdown, "# Titre\n- a")
+        XCTAssertNil(parsed.text?.html)
+        let plain = parse(ShareInput(text: "bonjour", htmlText: "<meta charset='utf-8'><span>bonjour</span>"))
+        XCTAssertNil(plain.text?.html)
+        XCTAssertNil(plain.text?.markdown)
+    }
+
+    func testLinesOfHtmlWithoutMarkdownAreKeptAsHtml() {
+        let parsed = parse(ShareInput(text: "a\nb\nc", htmlText: "<div>a</div><div>b</div><div>c</div>"))
+        XCTAssertEqual(parsed.text?.html, "<div>a</div><div>b</div><div>c</div>")
+        XCTAssertNil(parsed.text?.markdown)
+    }
+
+    func testFormattingTagsWinOverMarkdownSyntaxInThePlainText() {
+        let parsed = parse(ShareInput(text: "# Titre", htmlText: "<h1>Titre</h1>"))
+        XCTAssertEqual(parsed.text?.html, "<h1>Titre</h1>")
+        XCTAssertNil(parsed.text?.markdown)
+    }
+
     func testPlainSentenceIsNotMarkdown() {
         let parsed = parse(ShareInput(text: "Rendez-vous demain à 14 h."))
         XCTAssertNil(parsed.text?.markdown)
@@ -155,7 +185,7 @@ final class SharePayloadParserTests: XCTestCase {
     }
 
     func testTextAndHtmlAreCapped() {
-        let parsed = parse(ShareInput(text: String(repeating: "a ", count: 60_000), htmlText: String(repeating: "b", count: 600_000)))
+        let parsed = parse(ShareInput(text: String(repeating: "a ", count: 60_000), htmlText: "<b>" + String(repeating: "b", count: 600_000)))
         XCTAssertEqual(parsed.text?.html?.count, SharePayloadParser.maxHTML)
         let textOnly = parse(ShareInput(text: String(repeating: "a ", count: 60_000)))
         XCTAssertLessThanOrEqual(textOnly.text?.plain.count ?? 0, SharePayloadParser.maxText)

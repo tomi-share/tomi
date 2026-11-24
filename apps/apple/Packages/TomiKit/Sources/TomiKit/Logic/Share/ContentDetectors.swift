@@ -22,6 +22,53 @@ public enum MarkdownDetector {
     }
 }
 
+/// Decides whether an HTML flavour (clipboard or share) tells anything the plain text does not. Same rules as
+/// `HtmlFlavour` in ContentDetectors.kt (Android) and `detect.rs` (Windows): keep the three aligned.
+///
+/// Browsers and editors put an HTML flavour on every copy, even a plain selection (`<meta><span>text</span>`), and copy raw
+/// Markdown as one `<div>` per line. Neither is a rendering: only real formatting tags are.
+public enum HtmlFlavour {
+    public enum Richness: Sendable {
+        /// Nothing but wrappers.
+        case plain
+        /// Only lines and paragraphs (`div`, `p`, `br`, at least three of them), no formatting tag.
+        case layout
+        /// Real formatting tags: links, emphasis, headings, lists, tables, code...
+        case formatted
+    }
+
+    private static let formattingTags: Set<String> = [
+        "a", "b", "strong", "i", "em", "u", "ul", "ol", "li", "h1", "h2", "h3", "h4", "h5", "h6",
+        "table", "pre", "code", "blockquote", "img", "hr",
+    ]
+    private static let layoutTags: Set<String> = ["p", "div", "br"]
+    private static let layoutMinTags = 3
+    private static let tagName = try! NSRegularExpression(pattern: "<([a-z0-9]+)")
+
+    public static func richness(_ html: String) -> Richness {
+        let lower = html.lowercased()
+        let ns = lower as NSString
+        var layout = 0
+        for match in tagName.matches(in: lower, range: NSRange(location: 0, length: ns.length)) {
+            let name = ns.substring(with: match.range(at: 1))
+            if formattingTags.contains(name) { return .formatted }
+            if layoutTags.contains(name) { layout += 1 }
+        }
+        return layout >= layoutMinTags ? .layout : .plain
+    }
+
+    /// True when `html` is worth sending next to `plain`. Wrappers are not. Lines of HTML are not either when the plain text is
+    /// Markdown (the receivers would lay the raw `# Title` / `- item` out as HTML instead of rendering them).
+    /// `plain` is nil when the HTML is all there is.
+    public static func isWorthKeeping(_ html: String, plain: String?) -> Bool {
+        switch richness(html) {
+        case .formatted: return true
+        case .layout: return plain.map { !MarkdownDetector.looksLikeMarkdown($0) } ?? true
+        case .plain: return false
+        }
+    }
+}
+
 /// Minimal HTML to plain text conversion used only when an app shares HTML without a plain text version.
 public enum HtmlText {
     private static let blockBreaks = try! NSRegularExpression(

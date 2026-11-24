@@ -15,6 +15,55 @@ object MarkdownDetector {
     fun looksLikeMarkdown(text: String): Boolean = PATTERNS.any { it.containsMatchIn(text) }
 }
 
+/**
+ * Decides whether an HTML flavour (clipboard or share) tells anything the plain text does not. Same rules as
+ * `detect.rs` (Windows) and `HtmlFlavour` (Apple): keep the three aligned.
+ *
+ * Browsers and editors put an HTML flavour on every copy, even a plain selection (`<meta><span>text</span>`), and copy raw
+ * Markdown as one `<div>` per line. Neither is a rendering: only real formatting tags are.
+ */
+object HtmlFlavour {
+    enum class Richness {
+        /** Nothing but wrappers. */
+        Plain,
+
+        /** Only lines and paragraphs (`div`, `p`, `br`, at least three of them), no formatting tag. */
+        Layout,
+
+        /** Real formatting tags: links, emphasis, headings, lists, tables, code... */
+        Formatted,
+    }
+
+    private val FORMATTING_TAGS = setOf(
+        "a", "b", "strong", "i", "em", "u", "ul", "ol", "li", "h1", "h2", "h3", "h4", "h5", "h6",
+        "table", "pre", "code", "blockquote", "img", "hr",
+    )
+    private val LAYOUT_TAGS = setOf("p", "div", "br")
+    private val TAG_NAME = Regex("<([a-z0-9]+)")
+    private const val LAYOUT_MIN_TAGS = 3
+
+    fun richness(html: String): Richness {
+        var layout = 0
+        for (match in TAG_NAME.findAll(html.lowercase(java.util.Locale.ROOT))) {
+            val name = match.groupValues[1]
+            if (name in FORMATTING_TAGS) return Richness.Formatted
+            if (name in LAYOUT_TAGS) layout++
+        }
+        return if (layout >= LAYOUT_MIN_TAGS) Richness.Layout else Richness.Plain
+    }
+
+    /**
+     * True when [html] is worth sending next to [plain]. Wrappers are not. Lines of HTML are not either when the plain text is
+     * Markdown (the receivers would lay the raw `# Title` / `- item` out as HTML instead of rendering them).
+     * [plain] is null when the HTML is all there is.
+     */
+    fun isWorthKeeping(html: String, plain: String?): Boolean = when (richness(html)) {
+        Richness.Formatted -> true
+        Richness.Layout -> plain == null || !MarkdownDetector.looksLikeMarkdown(plain)
+        Richness.Plain -> false
+    }
+}
+
 /** Minimal HTML to plain text conversion used only when an app shares HTML without a plain text version. */
 object HtmlText {
     private val BLOCK_BREAKS = Regex("(?i)<(br\\s*/?|/p|/div|/h[1-6]|/li|/tr)>")

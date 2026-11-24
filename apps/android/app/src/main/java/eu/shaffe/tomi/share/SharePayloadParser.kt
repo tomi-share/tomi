@@ -51,9 +51,12 @@ object SharePayloadParser {
 
     fun parse(input: ShareInput, own: OwnAuthorityCheck): ParsedShare {
         val subject = TextSanitizer.clean(input.subject, MAX_TITLE)
-        val html = input.htmlText?.takeIf { it.isNotBlank() }?.take(MAX_HTML)
+        val sharedHtml = input.htmlText?.takeIf { it.isNotBlank() }?.take(MAX_HTML)
         val rawText = TextSanitizer.clean(input.text, MAX_TEXT)
-            ?: html?.let { TextSanitizer.clean(HtmlText.toPlain(it), MAX_TEXT) }
+            ?: sharedHtml?.let { TextSanitizer.clean(HtmlText.toPlain(it), MAX_TEXT) }
+        // Only an HTML flavour that carries formatting is kept; the text then goes through the same detection as a text
+        // without any (link, Markdown).
+        val html = sharedHtml?.takeIf { HtmlFlavour.isWorthKeeping(it, rawText) }
 
         var title = subject
         var url: String? = null

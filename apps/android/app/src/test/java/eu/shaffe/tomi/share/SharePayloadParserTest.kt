@@ -115,6 +115,40 @@ class SharePayloadParserTest {
         assertEquals("# Titre\n\n- un\n- deux", parsed.text?.markdown)
     }
 
+    // Same cases as detect.rs (Windows) and SharePayloadParserTests.swift (Apple): keep them aligned.
+    @Test
+    fun markdownCopiedAsLinesOfHtmlStaysMarkdown() {
+        val plain = "# Titre\n\nDécisions : a\n\n## Conclusion"
+        val html = "<div># Titre</div><div><br></div><div>Décisions : a</div><div><br></div><div>## Conclusion</div>"
+        val parsed = parse(ShareInput(text = plain, htmlText = html))
+        assertEquals(plain, parsed.text?.markdown)
+        assertNull(parsed.text?.html)
+    }
+
+    @Test
+    fun aWrapperOnlyHtmlFlavourIsNotKept() {
+        val parsed = parse(ShareInput(text = "# Titre\n- a", htmlText = "<meta charset='utf-8'><span style=\"color: red\"># Titre</span>"))
+        assertEquals("# Titre\n- a", parsed.text?.markdown)
+        assertNull(parsed.text?.html)
+        val plain = parse(ShareInput(text = "bonjour", htmlText = "<meta charset='utf-8'><span>bonjour</span>"))
+        assertNull(plain.text?.html)
+        assertNull(plain.text?.markdown)
+    }
+
+    @Test
+    fun linesOfHtmlWithoutMarkdownAreKeptAsHtml() {
+        val parsed = parse(ShareInput(text = "a\nb\nc", htmlText = "<div>a</div><div>b</div><div>c</div>"))
+        assertEquals("<div>a</div><div>b</div><div>c</div>", parsed.text?.html)
+        assertNull(parsed.text?.markdown)
+    }
+
+    @Test
+    fun formattingTagsWinOverMarkdownSyntaxInThePlainText() {
+        val parsed = parse(ShareInput(text = "# Titre", htmlText = "<h1>Titre</h1>"))
+        assertEquals("<h1>Titre</h1>", parsed.text?.html)
+        assertNull(parsed.text?.markdown)
+    }
+
     @Test
     fun plainSentenceIsNotMarkdown() {
         val parsed = parse(ShareInput(text = "Rendez-vous demain à 14 h."))

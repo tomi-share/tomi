@@ -95,9 +95,12 @@ public enum SharePayloadParser {
 
     public static func parse(_ input: ShareInput) -> ParsedShare {
         let subject = TextSanitizer.clean(input.subject, maxLength: maxTitle)
-        let html = input.htmlText.flatMap { $0.isBlank ? nil : String($0.prefix(maxHTML)) }
+        let sharedHTML = input.htmlText.flatMap { $0.isBlank ? nil : String($0.prefix(maxHTML)) }
         let rawText = TextSanitizer.clean(input.text, maxLength: maxText)
-            ?? html.flatMap { TextSanitizer.clean(HtmlText.toPlain($0), maxLength: maxText) }
+            ?? sharedHTML.flatMap { TextSanitizer.clean(HtmlText.toPlain($0), maxLength: maxText) }
+        // Only an HTML flavour that carries formatting is kept; the text then goes through the same detection as a text
+        // without any (link, Markdown).
+        let html = sharedHTML.flatMap { HtmlFlavour.isWorthKeeping($0, plain: rawText) ? $0 : nil }
 
         var title = subject
         var url: String?
