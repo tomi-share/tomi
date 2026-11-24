@@ -65,7 +65,7 @@
   --bar-h: 3.5rem; /* barre du haut, mobile */
   --nav-h: 4rem; /* navigation basse, mobile */
   --side-w: 14rem; /* barre latérale, desktop */
-  --panel-w: 23rem; /* détail d'un espace, desktop */
+  --panel-w: 25rem; /* détail d'un espace, desktop */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -2296,7 +2296,7 @@ dialog.confirm::backdrop {
 @media (min-width: 90rem) {
   :root {
     --side-w: 15rem;
-    --panel-w: 26rem;
+    --panel-w: 28rem;
   }
 
   main,
@@ -2652,7 +2652,7 @@ details.fold.card.cli > summary {
 
 .devices .dev .kv,
 .dev-actions {
-  padding-left: calc(var(--space-1) + 1.25rem + var(--space-3));
+  padding-left: var(--space-1);
   padding-right: var(--space-4);
 }
 
@@ -2668,23 +2668,18 @@ details.fold.card.cli > summary {
   background: var(--brand-container);
 }
 
-/* Téléphone : la case prend la place de l'icône de plateforme, déjà nommée dans la sous-ligne. */
+/* La case prend la place de l'icône de plateforme, déjà nommée dans la sous-ligne. */
+.devices .dev summary {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+}
+
+.devices .dev summary > .ico:first-child {
+  display: none;
+}
+
 @media (max-width: 29.99rem) {
   .dev-check {
     margin-left: 0;
-  }
-
-  .devices .dev summary {
-    grid-template-columns: minmax(0, 1fr) auto auto;
-  }
-
-  .devices .dev summary > .ico:first-child {
-    display: none;
-  }
-
-  .devices .dev .kv,
-  .dev-actions {
-    padding-left: var(--space-1);
   }
 }
 
@@ -2736,8 +2731,10 @@ details.fold.card.cli > summary {
 }
 
 /* Carte d'espace (téléphone) : les pastilles s'alignent à droite. */
-.c-state .badges {
-  justify-content: flex-end;
+@container spaces (max-width: 29.99rem) {
+  .c-state .badges {
+    justify-content: flex-end;
+  }
 }
 
 /* ===== confirmations : feuille basse (téléphone), boîte centrée (au-delà de 640 px) ===== */
@@ -3069,6 +3066,217 @@ dialog.confirm {
 
   .stepup .mock-sim .btn {
     min-height: var(--target);
+  }
+}
+
+/* ===== desktop : densité, survols, raccourcis clavier, boîtes centrées ===== */
+
+@media (min-width: 64rem) {
+  .desktop-only {
+    display: revert !important;
+  }
+
+  /* Raccourcis : rappelés au survol de la navigation et dans le pied de la barre latérale. */
+  .nav a {
+    position: relative;
+  }
+
+  .nav-key {
+    display: inline-grid;
+    width: auto;
+    margin-left: auto;
+    padding: 0 0.25rem;
+    font-size: 0.6875rem;
+    letter-spacing: 0.04em;
+    opacity: 0;
+  }
+
+  .nav a:hover .nav-key,
+  .nav a:focus-visible .nav-key {
+    opacity: 1;
+  }
+
+  .shortcut-link.desktop-only {
+    display: flex !important;
+    align-items: center;
+    gap: var(--space-2);
+    width: 100%;
+    min-height: 2.25rem;
+    padding: 0 var(--space-2);
+    border: 0;
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: var(--fs-caption);
+    cursor: pointer;
+  }
+
+  .shortcut-link kbd {
+    margin-left: auto;
+  }
+
+  .shortcut-link:hover {
+    background: var(--surface-alt);
+    color: var(--text);
+  }
+
+  .session-actions .btn.ghost {
+    min-height: 2.25rem;
+    color: var(--text-muted);
+    font-size: var(--fs-label);
+  }
+
+  .session-actions .btn.ghost:hover {
+    color: var(--text);
+  }
+
+  .kbd-hint.desktop-only {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 0.25rem;
+    margin-left: auto;
+    color: var(--text-muted);
+    font-size: var(--fs-caption);
+  }
+
+  /* Tableau des espaces : dense, la ligne survolée ou choisie au clavier ressort. */
+  .spaces td,
+  .spaces tbody th {
+    padding-top: var(--space-2) !important;
+    padding-bottom: var(--space-2) !important;
+  }
+
+  .spaces tbody tr:hover {
+    background: var(--surface-alt);
+  }
+
+  .spaces tbody tr.kb {
+    box-shadow: inset 3px 0 0 var(--brand);
+    background: var(--surface-alt);
+  }
+
+  .spaces tbody tr.selected.kb,
+  .spaces tbody tr.selected:hover {
+    background: var(--brand-container);
+  }
+
+  .spaces .c-id .icon-btn {
+    opacity: 0;
+  }
+
+  .spaces tr:hover .c-id .icon-btn,
+  .spaces tr.kb .c-id .icon-btn,
+  .spaces .c-id .icon-btn:focus-visible {
+    opacity: 1;
+  }
+
+  .spaces .c-go .btn {
+    background: transparent;
+  }
+
+  .spaces tr:hover .c-go .btn,
+  .spaces tr.selected .c-go .btn {
+    background: var(--brand-container);
+  }
+
+  /* Panneau de détail : appareils en lignes denses, action rapide au survol. */
+  .dev {
+    grid-template-columns: var(--target) minmax(0, 1fr) auto;
+  }
+
+  .dev-check {
+    height: 3rem;
+    margin-left: 0;
+  }
+
+  .devices .dev summary {
+    min-height: 3rem;
+    padding-right: var(--space-1);
+  }
+
+  .dev:hover {
+    background: var(--bg);
+  }
+
+  .dev.selected,
+  .dev.selected:hover {
+    background: var(--brand-container);
+  }
+
+  .dev-quick {
+    display: inline-grid !important;
+    margin: 0.375rem var(--space-1) 0 0;
+    color: var(--error);
+    opacity: 0;
+  }
+
+  .dev-quick[hidden] {
+    display: none !important;
+  }
+
+  .dev:hover .dev-quick,
+  .dev:focus-within .dev-quick {
+    opacity: 1;
+  }
+
+  .detail .devices {
+    margin: var(--space-2) calc(-1 * var(--space-4)) 0;
+  }
+
+  .detail .selbar {
+    bottom: calc(-1 * var(--space-4));
+    margin: var(--space-2) calc(-1 * var(--space-4)) 0;
+    border-radius: 0;
+    box-shadow: 0 -1px 0 var(--border-strong);
+    border-top: 0;
+  }
+
+  .detail .danger-zone {
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--border);
+  }
+
+  .detail .danger-zone > * + * {
+    margin-top: var(--space-2);
+  }
+
+  .detail .quota-line .btn {
+    margin-right: calc(-1 * var(--space-2));
+  }
+
+  .detail-head .btn.ghost {
+    color: var(--text-muted);
+  }
+
+  /* Boîtes centrées : un peu plus larges pour le récapitulatif, Échap rappelé à gauche. */
+  dialog.stepup {
+    width: min(34rem, calc(100vw - 2rem));
+  }
+
+  .confirm .actions {
+    align-items: center;
+  }
+
+  .esc-hint.desktop-only {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 0.25rem;
+    margin-right: auto;
+    color: var(--text-muted);
+    font-size: var(--fs-caption);
+  }
+
+  .stepup[data-state="closed"] .esc-hint {
+    display: none !important;
+  }
+
+  .keys-list kbd {
+    margin: 0 0.0625rem;
+  }
+
+  /* Réglages : la carte d'accès est la plus haute, elle garde sa colonne. */
+  .cli-only ul {
+    max-width: 40rem;
   }
 }
 

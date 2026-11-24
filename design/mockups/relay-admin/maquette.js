@@ -1249,6 +1249,112 @@
     window.location.href = 'etats.html#connexion';
   });
 
+  // =====================================================================================
+  // Desktop : raccourcis clavier. Jamais pour une action qui retire, supprime ou invite :
+  // celles-ci passent toujours par un bouton, un récapitulatif et la clé d'accès.
+  // =====================================================================================
+  var shortcuts = $('shortcuts');
+  var pendingG = null;
+
+  function openShortcuts() {
+    returnFocus = document.activeElement;
+    shortcuts.showModal();
+    $('sc-close').focus();
+  }
+
+  $('shortcuts-open').addEventListener('click', openShortcuts);
+  $('sc-close').addEventListener('click', function () {
+    shortcuts.close();
+  });
+  shortcuts.addEventListener('close', restoreFocus);
+
+  function rows() {
+    return all('#spaces-body tr');
+  }
+
+  function kbRow() {
+    return document.querySelector('#spaces-body tr.kb');
+  }
+
+  function moveRow(step) {
+    var list = rows();
+    if (!list.length) {
+      return;
+    }
+    var from = kbRow() || document.querySelector('#spaces-body tr.selected');
+    var index = from ? list.indexOf(from) + step : (step > 0 ? 0 : list.length - 1);
+    index = Math.max(0, Math.min(list.length - 1, index));
+    list.forEach(function (tr, i) {
+      tr.classList.toggle('kb', i === index);
+    });
+    list[index].scrollIntoView({ block: 'nearest' });
+    // Détail déjà ouvert : il suit la ligne, pour parcourir les espaces sans souris.
+    if (lastSpace) {
+      window.location.hash = '#espaces/' + list[index].getAttribute('data-space');
+    }
+  }
+
+  function typing(target) {
+    return target.closest && target.closest('input, textarea, select, [contenteditable="true"]');
+  }
+
+  document.addEventListener('keydown', function (event) {
+    if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey || typing(event.target)) {
+      return;
+    }
+    if (document.querySelector('dialog[open]') || panel.classList.contains('open')) {
+      return; // Échap et Tab appartiennent à la boîte ouverte.
+    }
+    var key = event.key;
+    if (pendingG) {
+      clearTimeout(pendingG);
+      pendingG = null;
+      var link = document.querySelector('.nav a[data-key="' + key.toLowerCase() + '"]');
+      if (link) {
+        event.preventDefault();
+        window.location.hash = link.getAttribute('href');
+      }
+      return;
+    }
+    var inSpaces = !$('view-espaces').hidden;
+    if (key === '?') {
+      event.preventDefault();
+      openShortcuts();
+    } else if (key === 'g' || key === 'G') {
+      pendingG = setTimeout(function () { pendingG = null; }, 1200);
+    } else if (key === 'r' || key === 'R') {
+      event.preventDefault();
+      refresh();
+    } else if (inSpaces && (key === 'j' || (key === 'ArrowDown' && !event.target.closest('.detail')))) {
+      event.preventDefault();
+      moveRow(1);
+    } else if (inSpaces && (key === 'k' || (key === 'ArrowUp' && !event.target.closest('.detail')))) {
+      event.preventDefault();
+      moveRow(-1);
+    } else if (inSpaces && key === 'Enter' && kbRow() && !event.target.closest('a, button, summary')) {
+      event.preventDefault();
+      window.location.hash = '#espaces/' + kbRow().getAttribute('data-space');
+    } else if ((key === 'c' || key === 'C') && lastSpace) {
+      say('Identifiant ' + lastSpace + ' copié');
+    } else if (key === 'Escape' && lastSpace && desktop.matches) {
+      var was = lastSpace;
+      window.location.hash = '#espaces';
+      var row = document.querySelector('#spaces-body tr[data-space="' + was + '"]');
+      if (row) {
+        row.classList.add('kb');
+        row.querySelector('.space-link').focus();
+      }
+    }
+  });
+
+  // La souris reprend la main : plus de ligne marquée au clavier.
+  $('spaces-body').addEventListener('mousemove', function () {
+    var row = kbRow();
+    if (row) {
+      row.classList.remove('kb');
+    }
+  });
+
   renderSpaces();
   renderInvitations();
   route();
