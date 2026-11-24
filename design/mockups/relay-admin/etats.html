@@ -11,10 +11,11 @@
 </head>
 <body>
 <!-- MAQUETTE statique : planche des états que le prototype navigable (index.html) ne montre pas d'office.
-     Données fictives, aucune requête réseau. Chaque cadre est à la largeur d'un téléphone. -->
+     Données fictives, aucune requête réseau. Les cadres sont à la largeur d'un téléphone, sauf ceux marqués
+     « Desktop ». Compatible CSP : aucun attribut style, aucun gestionnaire en ligne. -->
 
 <!-- Icônes : Material Symbols Outlined, en ligne (aucune police, aucun chargement). -->
-<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+<svg class="sprite" aria-hidden="true" focusable="false">
   <symbol id="i-overview" viewBox="0 0 24 24"><path d="M19 5v2h-4V5h4M9 5v6H5V5h4m10 8v6h-4v-6h4M9 17v2H5v-2h4M21 3h-8v6h8V3zM11 3H3v10h8V3zm10 8h-8v10h8V11zm-10 4H3v6h8v-6z"/></symbol>
   <symbol id="i-spaces" viewBox="0 0 24 24"><path d="M6 13c-2.2 0-4 1.8-4 4s1.8 4 4 4 4-1.8 4-4-1.8-4-4-4zm0 6c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm6-16C9.8 3 8 4.8 8 7s1.8 4 4 4 4-1.8 4-4-1.8-4-4-4zm0 6c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm6 4c-2.2 0-4 1.8-4 4s1.8 4 4 4 4-1.8 4-4-1.8-4-4-4zm0 6c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></symbol>
   <symbol id="i-invite" viewBox="0 -960 960 960"><path d="M720-400v-120H600v-80h120v-120h80v120h120v80H800v120h-80Zm-360-80q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 66-47 113t-113 47ZM40-160v-112q0-34 17.5-62.5T104-378q62-31 126-46.5T360-440q66 0 130 15.5T616-378q29 15 46.5 43.5T680-272v112H40Zm80-80h480v-32q0-11-5.5-20T580-306q-54-27-109-40.5T360-360q-56 0-111 13.5T140-306q-9 5-14.5 14t-5.5 20v32Zm240-320q33 0 56.5-23.5T440-640q0-33-23.5-56.5T360-720q-33 0-56.5 23.5T280-640q0 33 23.5 56.5T360-560Zm0-80Zm0 400Z"/></symbol>
@@ -37,13 +38,19 @@
   <symbol id="i-phone" viewBox="0 -960 960 960"><path d="M280-40q-33 0-56.5-23.5T200-120v-720q0-33 23.5-56.5T280-920h400q33 0 56.5 23.5T760-840v720q0 33-23.5 56.5T680-40H280Zm0-120v40h400v-40H280Zm0-80h400v-480H280v480Zm0-560h400v-40H280v40Zm0 0v-40 40Zm0 640v40-40Z"/></symbol>
   <symbol id="i-terminal" viewBox="0 0 24 24"><path d="M20 4H4c-1.11 0-2 .9-2 2v12c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8h16v10zm-2-1h-6v-2h6v2zM7.5 17l-1.41-1.41L8.67 13l-2.59-2.59L7.5 9l4 4-4 4z"/></symbol>
   <symbol id="i-schedule" viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></symbol>
+  <symbol id="i-key" viewBox="0 -960 960 960"><path d="M280-400q-33 0-56.5-23.5T200-480q0-33 23.5-56.5T280-560q33 0 56.5 23.5T360-480q0 33-23.5 56.5T280-400Zm0 160q-100 0-170-70T40-480q0-100 70-170t170-70q67 0 121.5 33t86.5 87h352l120 120-180 180-80-60-80 60-85-60h-47q-32 54-86.5 87T280-240Zm0-80q56 0 98.5-34t56.5-86h125l58 41 82-61 71 55 75-75-40-40H435q-14-52-56.5-86T280-640q-66 0-113 47t-47 113q0 66 47 113t113 47Z"/></symbol>
+  <symbol id="i-delete" viewBox="0 -960 960 960"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/></symbol>
+  <symbol id="i-person-remove" viewBox="0 -960 960 960"><path d="M640-520v-80h240v80H640Zm-280 40q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 66-47 113t-113 47ZM40-160v-112q0-34 17.5-62.5T104-378q62-31 126-46.5T360-440q66 0 130 15.5T616-378q29 15 46.5 43.5T680-272v112H40Zm80-80h480v-32q0-11-5.5-20T580-306q-54-27-109-40.5T360-360q-56 0-111 13.5T140-306q-9 5-14.5 14t-5.5 20v32Zm240-320q33 0 56.5-23.5T440-640q0-33-23.5-56.5T360-720q-33 0-56.5 23.5T280-640q0 33 23.5 56.5T360-560Zm0-80Zm0 400Z"/></symbol>
+  <symbol id="i-lock" viewBox="0 -960 960 960"><path d="M240-80q-33 0-56.5-23.5T160-160v-400q0-33 23.5-56.5T240-640h40v-80q0-83 58.5-141.5T480-920q83 0 141.5 58.5T680-720v80h40q33 0 56.5 23.5T800-560v400q0 33-23.5 56.5T720-80H240Zm0-80h480v-400H240v400Zm240-120q33 0 56.5-23.5T560-360q0-33-23.5-56.5T480-440q-33 0-56.5 23.5T400-360q0 33 23.5 56.5T480-280ZM360-640h240v-80q0-50-35-85t-85-35q-50 0-85 35t-35 85v80ZM240-160v-400 400Z"/></symbol>
+  <symbol id="i-info" viewBox="0 -960 960 960"><path d="M440-280h80v-240h-80v240Zm40-320q17 0 28.5-11.5T520-640q0-17-11.5-28.5T480-680q-17 0-28.5 11.5T440-640q0 17 11.5 28.5T480-600Zm0 520q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></symbol>
+  <symbol id="i-keyboard" viewBox="0 -960 960 960"><path d="M160-200q-33 0-56.5-23.5T80-280v-400q0-33 23.5-56.5T160-760h640q33 0 56.5 23.5T880-680v400q0 33-23.5 56.5T800-200H160Zm0-80h640v-400H160v400Zm160-40h320v-80H320v80ZM200-440h80v-80h-80v80Zm120 0h80v-80h-80v80Zm120 0h80v-80h-80v80Zm120 0h80v-80h-80v80Zm120 0h80v-80h-80v80ZM200-560h80v-80h-80v80Zm120 0h80v-80h-80v80Zm120 0h80v-80h-80v80Zm120 0h80v-80h-80v80Zm120 0h80v-80h-80v80ZM160-280v-400 400Z"/></symbol>
 </svg>
 
 <div class="board">
   <header class="board-head">
     <div>
       <h1>Planche d’états du panneau</h1>
-      <p class="hint">Connexion, chargement, vide, erreur et variantes. Le parcours normal est dans <a href="index.html">index.html</a>.</p>
+      <p class="hint">Connexion, chargement, vide, erreur, variantes et <a href="#actions">parcours des actions</a> (téléphone et desktop). Le prototype navigable est <a href="index.html">index.html</a>.</p>
     </div>
     <div class="segmented" role="radiogroup" aria-label="Thème">
       <label><input type="radio" name="theme" value="auto" checked>Auto</label>
@@ -78,7 +85,7 @@
             <h2>Créer ma clé d’accès</h2>
             <p>Il te faut un code d’enrôlement, valable 15 min. Sur le serveur :</p>
             <div class="cmd"><code>tomi-relay admin web enroll</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande"><svg class="ico"><use href="#i-copy"/></svg></button></div>
-            <form autocomplete="off" novalidate onsubmit="return false">
+            <form autocomplete="off" novalidate data-inert>
               <label for="code">Code d’enrôlement</label>
               <input id="code" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="64" placeholder="xxxx-xxxx-xxxx" aria-describedby="code-hint">
               <p class="caption" id="code-hint">Majuscules, tirets et espaces sans importance · 5 essais au plus</p>
@@ -109,6 +116,32 @@
             <svg class="ico"><use href="#i-error"/></svg>
             <p>La session a pris fin. Connecte-toi de nouveau.</p>
             <button type="button" class="btn ghost sm">Fermer</button>
+          </div>
+        </div>
+      </div>
+    </figure>
+
+    <figure class="specimen" id="session-fermee">
+      <figcaption><strong>Session fermée après 5 refus de clé d’accès</strong>La session, jamais la clé : un voleur de cookie ne peut pas t’enfermer dehors.</figcaption>
+      <div class="frame">
+        <div class="auth">
+          <div class="card">
+            <h2>Connexion</h2>
+            <p class="note-line warn"><svg class="ico"><use href="#i-lock"/></svg><span>Ta session a été fermée par prudence : 5 confirmations par clé d’accès ont été refusées. Ta clé reste valable. Si ce n’était pas toi, regarde le journal une fois connecté.</span></p>
+            <a class="btn block" href="index.html#journal">Se connecter avec ma clé d’accès</a>
+          </div>
+        </div>
+      </div>
+    </figure>
+
+    <figure class="specimen" id="sessions-fermees">
+      <figcaption><strong>Toutes les sessions fermées</strong>Après « Fermer toutes les sessions » : celle-ci aussi.</figcaption>
+      <div class="frame">
+        <div class="auth">
+          <div class="card">
+            <h2>Connexion</h2>
+            <p class="note-line"><svg class="ico"><use href="#i-check"/></svg><span>Toutes les sessions du panneau sont fermées, celle-ci comprise. Reconnecte-toi avec ta clé d’accès.</span></p>
+            <a class="btn block" href="index.html">Se connecter avec ma clé d’accès</a>
           </div>
         </div>
       </div>
@@ -147,7 +180,7 @@
       <figcaption><strong>Détail d’un espace</strong>« Retour » remplace le logo ; l’identifiant sert de titre.</figcaption>
       <div class="frame flush">
         <div class="appbar">
-          <button type="button" class="icon-btn back" style="display: inline-grid !important" aria-label="Retour aux espaces"><svg class="ico lg"><use href="#i-back"/></svg></button>
+          <button type="button" class="icon-btn back show" aria-label="Retour aux espaces"><svg class="ico lg"><use href="#i-back"/></svg></button>
           <h1>Espace <span class="mono">794e87f1</span></h1>
           <button type="button" class="btn ghost refresh">Actualiser</button>
           <button type="button" class="icon-btn menu" aria-label="Session, thème et déconnexion"><svg class="ico lg"><use href="#i-more"/></svg></button>
@@ -158,7 +191,7 @@
     <figure class="specimen">
       <figcaption><strong>Actualisation en cours</strong>Filet linéaire sous la barre, bouton en attente. Jamais de spinner.</figcaption>
       <div class="frame flush">
-        <div class="appbar" style="position: relative">
+        <div class="appbar">
           <svg class="logo" viewBox="0 0 24 24" shape-rendering="crispEdges" role="img" aria-label="Tomi"><path fill="currentColor" d="M10 3h6v1h-6zM8 4h10v1h-10zM7 5h3v1h-3zM16 5h3v1h-3zM6 6h3v1h-3zM17 6h3v1h-3zM18 7h3v1h-3zM19 8h2v1h-2zM3 9h4v1h-4zM20 9h2v1h-2zM2 10h6v1h-6zM20 10h2v1h-2zM2 11h6v1h-6zM20 11h2v1h-2zM2 12h6v1h-6zM20 12h2v1h-2zM2 13h6v1h-6zM20 13h2v1h-2zM3 14h4v1h-4zM20 14h2v1h-2zM19 15h2v1h-2zM18 16h3v1h-3zM6 17h3v1h-3zM17 17h3v1h-3zM7 18h3v1h-3zM16 18h3v1h-3zM8 19h10v1h-10zM10 20h6v1h-6z"/></svg>
           <h1>Journal</h1>
           <button type="button" class="btn ghost refresh" disabled>Actualisation…</button>
@@ -183,7 +216,7 @@
           <p class="caption mobile-only">Données mises à jour à 20:12.</p>
           <div>
             <span class="label">Thème</span>
-            <div class="segmented" style="margin-top: var(--space-1)" aria-hidden="true">
+            <div class="segmented mt-1" aria-hidden="true">
               <label><input type="radio" name="theme-demo" checked disabled>Auto</label>
               <label><input type="radio" name="theme-demo" disabled>Clair</label>
               <label><input type="radio" name="theme-demo" disabled>Sombre</label>
@@ -271,13 +304,13 @@
       <div class="frame" aria-busy="true">
         <div class="loading-bar"></div>
         <div class="card">
-          <span class="sk lg" style="width: 55%"></span>
-          <span class="sk" style="width: 80%"></span>
+          <span class="sk lg w-55"></span>
+          <span class="sk w-80"></span>
         </div>
         <div class="tiles">
-          <div class="tile wide"><span class="sk" style="width: 45%"></span><span class="sk lg" style="width: 30%"></span><span class="sk" style="height: 0.375rem"></span></div>
-          <div class="tile"><span class="sk" style="width: 50%"></span><span class="sk lg" style="width: 30%"></span></div>
-          <div class="tile"><span class="sk" style="width: 60%"></span><span class="sk lg" style="width: 40%"></span></div>
+          <div class="tile wide"><span class="sk w-45"></span><span class="sk lg w-30"></span><span class="sk bar"></span></div>
+          <div class="tile"><span class="sk w-50"></span><span class="sk lg w-30"></span></div>
+          <div class="tile"><span class="sk w-60"></span><span class="sk lg w-40"></span></div>
         </div>
       </div>
     </figure>
@@ -316,10 +349,10 @@
             <tbody>
               <tr>
                 <th scope="row" class="c-id"><a class="space-link mono" href="index.html#espaces/380a4493">c07d51e9</a><button type="button" class="icon-btn sm" data-copy="Identifiant" aria-label="Copier l’identifiant c07d51e9"><svg class="ico"><use href="#i-copy"/></svg></button></th>
-                <td class="c-state"><span class="badges" style="justify-content: flex-end"><span class="badge warn">Clé à renouveler</span><span class="badge muted">Inactif</span></span></td>
+                <td class="c-state"><span class="badges"><span class="badge warn">Clé à renouveler</span><span class="badge muted">Inactif</span></span></td>
                 <td class="c-dev" data-label="Appareils"><span class="v">0 actif sur 2</span><span class="sub">0 présent</span></td>
                 <td class="c-items" data-label="Contenu"><span class="v">6 éléments</span><span class="sub">0 fichier chiffré</span></td>
-                <td class="c-usage"><div class="usage-txt" style="margin-top: 0"><span><strong>180 Kio</strong> · aucune limite</span><span>quota propre</span></div></td>
+                <td class="c-usage"><div class="usage-txt flush"><span><strong>180 Kio</strong> · aucune limite</span><span>quota propre</span></div></td>
                 <td class="c-act"><time datetime="2026-09-25T08:02:00Z" title="25/09/2026 08:02:00">il y a 2 mois</time></td>
                 <td class="c-go"><a class="btn tonal sm" href="index.html#espaces/380a4493" aria-label="Appareils de l’espace c07d51e9"><span>Appareils</span><svg class="ico"><use href="#i-chevron"/></svg></a></td>
               </tr>
@@ -340,8 +373,8 @@
             <div><dt>Créé</dt><dd>il y a 4 mois<span class="sub">03/07/2026 à 14:20</span></dd></div>
           </dl>
           <div class="usage-block">
-            <div class="usage-txt" style="margin-top: 0"><span><strong>180 Kio</strong> utilisés</span><span>aucune limite</span></div>
-            <p class="caption" style="margin-top: var(--space-1)">Quota propre à l’espace</p>
+            <div class="usage-txt flush"><span><strong>180 Kio</strong> utilisés</span><span>aucune limite</span></div>
+            <p class="caption mt-1">Quota propre à l’espace</p>
           </div>
           <p class="note-line warn"><svg class="ico"><use href="#i-warning"/></svg><span>Changement de clé en attente, après un retrait d’appareil : un appareil membre doit renouveler la clé, depuis l’application.</span></p>
         </div>
@@ -468,7 +501,7 @@
             <p class="quota-now">Aucune limite par espace</p>
             <p class="caption">Rien n’est réglé · total du relais : 1,0 Gio</p>
           </div>
-          <form class="quota-form" autocomplete="off" novalidate onsubmit="return false">
+          <form class="quota-form" autocomplete="off" novalidate data-inert>
             <label for="quota-a">Nouveau quota par défaut</label>
             <span class="field-unit">
               <input id="quota-a" type="text" inputmode="numeric" autocomplete="off" maxlength="9">
@@ -489,7 +522,7 @@
             <p class="quota-now">256 Mio par espace</p>
             <p class="caption">Réglé depuis ce panneau · total du relais : 1,0 Gio</p>
           </div>
-          <form class="quota-form" autocomplete="off" novalidate onsubmit="return false">
+          <form class="quota-form" autocomplete="off" novalidate data-inert>
             <label for="quota-b">Nouveau quota par défaut</label>
             <span class="field-unit">
               <input id="quota-b" type="text" inputmode="numeric" autocomplete="off" maxlength="9" value="0,5" aria-invalid="true" aria-describedby="quota-b-err">
@@ -529,6 +562,449 @@
             <div><dt>Horloge du serveur</dt><dd>20:12:47<span class="caption">3 min d’écart avec cet appareil</span></dd></div>
             <div><dt>Notifications push</dt><dd>Non configurées</dd></div>
           </dl>
+        </div>
+      </div>
+    </figure>
+  </div>
+
+  <!-- ===================== Actions : confirmation par clé d'accès (téléphone) ===================== -->
+  <h2 class="group" id="actions">Actions avec clé d’accès : feuille basse (téléphone)</h2>
+  <p class="hint">Retirer, supprimer, créer ou remplacer une invitation. Un défi par action, valable 2 min ; le récapitulatif vient du serveur. Voir <a href="DECISION-ACTIONS.md">DECISION-ACTIONS.md</a>.</p>
+  <div class="specimens">
+    <figure class="specimen">
+      <figcaption><strong>Retirer : récapitulatif</strong>La cible et la conséquence ; « Annuler » a le focus, le bouton nomme la clé d’accès.</figcaption>
+      <div class="frame phone flush">
+        <div class="confirm confirm-static stepup" data-state="review">
+          <div class="su-head"><span class="su-ico"><svg class="ico lg"><use href="#i-person-remove"/></svg></span><h2>Retirer LAPTOP-XPS de l’espace 794e87f1 ?</h2></div>
+          <div class="su-review">
+            <ul class="recap"><li><svg class="ico"><use href="#i-computer"/></svg><span class="r-main"><strong>LAPTOP-XPS</strong><span class="caption">Windows · 0.5.1 · il y a 12 min</span></span><span class="mono r-id">7c3e91af</span></li></ul>
+            <ul class="conseq">
+              <li class="strong">Il perd l’accès tout de suite. Pour revenir, il devra être recouplé depuis un autre appareil.</li>
+              <li>Ses données restent lisibles sur lui : un retrait n’efface rien.</li>
+              <li class="good">Un appareil restant renouvellera la clé de l’espace à sa prochaine connexion.</li>
+            </ul>
+          </div>
+          <p class="pk-line"><svg class="ico sm"><use href="#i-key"/></svg><span>Ta clé d’accès te sera demandée · 10 retraits par heure au plus sur ce relais</span></p>
+          <details class="fold cli">
+            <summary><svg class="ico sm"><use href="#i-terminal"/></svg>Équivalent en ligne de commande<svg class="ico chev"><use href="#i-expand"/></svg></summary>
+            <div class="cmd"><code>tomi-relay admin revoke --space 794e87f1 7c3e91af</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande"><svg class="ico"><use href="#i-copy"/></svg></button></div>
+          </details>
+          <div class="actions"><button type="button" class="btn secondary">Annuler</button><button type="button" class="btn danger"><svg class="ico"><use href="#i-key"/></svg>Retirer avec ma clé d’accès</button></div>
+        </div>
+      </div>
+    </figure>
+
+    <figure class="specimen">
+      <figcaption><strong>Supprimer : saisie des 8 caractères</strong>Le bouton attend l’identifiant exact ; une erreur se dit sous le champ.</figcaption>
+      <div class="frame phone flush">
+        <div class="confirm confirm-static stepup" data-state="review">
+          <div class="su-head"><span class="su-ico"><svg class="ico lg"><use href="#i-delete"/></svg></span><h2>Supprimer l’espace 794e87f1 ?</h2></div>
+          <div class="su-review">
+            <ul class="recap facts">
+              <li><span>Appareils</span><span>4, dont 3 actifs</span></li>
+              <li><span>Contenu</span><span>128 éléments · 183 Mio</span></li>
+              <li><span>Dernière activité</span><span>il y a 12 min</span></li>
+            </ul>
+            <ul class="conseq">
+              <li class="strong">Ses 4 appareils ne le trouvent plus, tout de suite : plus aucune synchronisation.</li>
+              <li>Rien n’est effacé sur les appareils, et aucune invitation n’est créée à la place.</li>
+              <li class="good">Le relais garde le dossier chiffré 7 jours, jusqu’au 18/11. Seul le serveur peut le restaurer.</li>
+            </ul>
+            <div class="type-confirm">
+              <label for="st-type">Pour confirmer, saisis les 8 premiers caractères de l’identifiant : <span class="mono">794e87f1</span></label>
+              <input id="st-type" type="text" value="794e87f7" autocomplete="off" spellcheck="false" maxlength="8" aria-invalid="true" aria-describedby="st-type-msg">
+              <span class="caption" id="st-type-msg">Ce n’est pas cet espace</span>
+            </div>
+          </div>
+          <p class="pk-line"><svg class="ico sm"><use href="#i-key"/></svg><span>Ta clé d’accès te sera demandée · 2 suppressions par 24 h au plus sur ce relais</span></p>
+          <div class="actions"><button type="button" class="btn secondary">Annuler</button><button type="button" class="btn danger" disabled><svg class="ico"><use href="#i-key"/></svg>Supprimer avec ma clé d’accès</button></div>
+        </div>
+      </div>
+    </figure>
+
+    <figure class="specimen">
+      <figcaption><strong>Clé d’accès en attente</strong>Filet linéaire, jamais de spinner ; le récapitulatif reste visible, car l’authentificateur n’affiche que le domaine.</figcaption>
+      <div class="frame phone flush">
+        <div class="confirm confirm-static stepup" data-state="pending">
+          <div class="su-head"><span class="su-ico"><svg class="ico lg"><use href="#i-delete"/></svg></span><h2>Supprimer l’espace 794e87f1 ?</h2></div>
+          <div class="su-review">
+            <ul class="recap facts">
+              <li><span>Appareils</span><span>4, dont 3 actifs</span></li>
+              <li><span>Contenu</span><span>128 éléments · 183 Mio</span></li>
+            </ul>
+          </div>
+          <div class="su-wait" role="status">
+            <div class="loading-bar"></div>
+            <p><strong>Valide avec ta clé d’accès</strong> : empreinte, visage ou code de l’appareil.</p>
+            <p class="caption">Ta clé d’accès affiche « relais.example », jamais l’action : vérifie le récapitulatif ci-dessus. Le défi expire dans <span class="nowrap">1:47</span>.</p>
+          </div>
+          <div class="actions"><button type="button" class="btn secondary">Annuler</button></div>
+        </div>
+      </div>
+    </figure>
+
+    <figure class="specimen">
+      <figcaption><strong>Créer une invitation : clé d’accès tout de suite</strong>Pas d’étape de récapitulatif : rien n’est détruit, le jeton suit.</figcaption>
+      <div class="frame phone flush">
+        <div class="confirm confirm-static stepup" data-state="pending">
+          <div class="su-head"><span class="su-ico create"><svg class="ico lg"><use href="#i-add"/></svg></span><h2>Créer une invitation</h2></div>
+          <div class="su-review">
+            <ul class="conseq"><li>Son jeton permettra à qui l’a de créer un espace sur ton relais. Il s’affichera une seule fois.</li></ul>
+          </div>
+          <div class="su-wait" role="status">
+            <div class="loading-bar"></div>
+            <p><strong>Valide avec ta clé d’accès</strong> : empreinte, visage ou code de l’appareil.</p>
+            <p class="caption">Le défi expire dans <span class="nowrap">1:58</span>.</p>
+          </div>
+          <div class="actions"><button type="button" class="btn secondary">Annuler</button></div>
+        </div>
+      </div>
+    </figure>
+
+    <figure class="specimen">
+      <figcaption><strong>Annulée sur l’appareil</strong>Rien n’est parti au relais : ce n’est pas un refus, rien n’est compté.</figcaption>
+      <div class="frame phone flush">
+        <div class="confirm confirm-static stepup" data-state="cancelled">
+          <div class="su-head"><span class="su-ico"><svg class="ico lg"><use href="#i-person-remove"/></svg></span><h2>Retirer LAPTOP-XPS de l’espace 794e87f1 ?</h2></div>
+          <div class="su-msg warn" role="alert"><strong><svg class="ico"><use href="#i-warning"/></svg>Annulé sur ton appareil</strong><p>Rien n’a été fait. Tu peux réessayer quand tu veux.</p></div>
+          <div class="actions"><button type="button" class="btn secondary">Fermer</button><button type="button" class="btn danger"><svg class="ico"><use href="#i-key"/></svg>Réessayer</button></div>
+        </div>
+      </div>
+    </figure>
+
+    <figure class="specimen">
+      <figcaption><strong>Refusée par le relais (3 sur 5)</strong>Assertion invalide : comptée. Au cinquième refus, la session se ferme.</figcaption>
+      <div class="frame phone flush">
+        <div class="confirm confirm-static stepup" data-state="refused">
+          <div class="su-head"><span class="su-ico"><svg class="ico lg"><use href="#i-person-remove"/></svg></span><h2>Retirer LAPTOP-XPS de l’espace 794e87f1 ?</h2></div>
+          <div class="su-msg" role="alert">
+            <strong><svg class="ico"><use href="#i-error"/></svg>Clé d’accès refusée par le relais</strong>
+            <p>Cette clé n’est pas enregistrée sur ce relais, ou la vérification (empreinte, visage, code) n’a pas eu lieu. Rien n’a été fait.</p>
+            <div class="tries" aria-hidden="true"><span class="used"></span><span class="used"></span><span class="used"></span><span></span><span></span></div>
+            <p>Refus 3 sur 5 : au cinquième, cette session se ferme. Ta clé d’accès, elle, reste valable.</p>
+          </div>
+          <div class="actions"><button type="button" class="btn secondary">Fermer</button><button type="button" class="btn danger"><svg class="ico"><use href="#i-key"/></svg>Réessayer</button></div>
+        </div>
+      </div>
+    </figure>
+
+    <figure class="specimen">
+      <figcaption><strong>Délai de 2 min dépassé</strong>Le défi est à usage unique : « Recommencer » en demande un neuf.</figcaption>
+      <div class="frame phone flush">
+        <div class="confirm confirm-static stepup" data-state="expired">
+          <div class="su-head"><span class="su-ico"><svg class="ico lg"><use href="#i-delete"/></svg></span><h2>Supprimer l’espace 794e87f1 ?</h2></div>
+          <div class="su-msg warn" role="alert"><strong><svg class="ico"><use href="#i-schedule"/></svg>Délai de 2 min dépassé</strong><p>Ce défi n’est plus valable et rien n’a été fait. Recommence pour en obtenir un nouveau.</p></div>
+          <div class="actions"><button type="button" class="btn secondary">Fermer</button><button type="button" class="btn danger"><svg class="ico"><use href="#i-key"/></svg>Recommencer</button></div>
+        </div>
+      </div>
+    </figure>
+
+    <figure class="specimen">
+      <figcaption><strong>Le relais n’a pas répondu</strong>Issue inconnue : on ne prétend ni succès ni échec, on fait relire l’état.</figcaption>
+      <div class="frame phone flush">
+        <div class="confirm confirm-static stepup" data-state="error">
+          <div class="su-head"><span class="su-ico"><svg class="ico lg"><use href="#i-person-remove"/></svg></span><h2>Retirer 2 appareils de l’espace 794e87f1 ?</h2></div>
+          <div class="su-msg" role="alert"><strong><svg class="ico"><use href="#i-error"/></svg>Le relais n’a pas répondu</strong><p>L’action a pu être faite, ou non. Actualise pour voir l’état réel avant de recommencer.</p></div>
+          <div class="actions"><button type="button" class="btn secondary">Fermer</button><button type="button" class="btn">Actualiser</button></div>
+        </div>
+      </div>
+    </figure>
+
+    <figure class="specimen">
+      <figcaption><strong>Limite atteinte</strong>Vérifiée avant le défi (aucune clé demandée) ; la commande serveur s’ouvre d’office.</figcaption>
+      <div class="frame phone flush">
+        <div class="confirm confirm-static stepup" data-state="limit">
+          <div class="su-head"><span class="su-ico"><svg class="ico lg"><use href="#i-delete"/></svg></span><h2>Supprimer l’espace 380a4493 ?</h2></div>
+          <div class="su-msg warn" role="alert"><strong><svg class="ico"><use href="#i-schedule"/></svg>Limite atteinte : 2 suppressions d’espace par 24 h</strong><p>La prochaine sera possible demain à 20:13. Rien n’a été fait. Si c’est urgent, fais-le sur le serveur :</p></div>
+          <details class="fold cli" open>
+            <summary><svg class="ico sm"><use href="#i-terminal"/></svg>Équivalent en ligne de commande<svg class="ico chev"><use href="#i-expand"/></svg></summary>
+            <div class="cmd"><code>tomi-relay admin reset --space 380a4493 --confirm 380a4493</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande"><svg class="ico"><use href="#i-copy"/></svg></button></div>
+            <p class="caption">Attention : sur le serveur, l’effacement est immédiat, sans corbeille.</p>
+          </details>
+          <div class="actions"><button type="button" class="btn secondary">Fermer</button></div>
+        </div>
+      </div>
+    </figure>
+
+    <figure class="specimen">
+      <figcaption><strong>Cinquième refus : session fermée</strong>Seule issue : la connexion. La clé d’accès n’est jamais bloquée.</figcaption>
+      <div class="frame phone flush">
+        <div class="confirm confirm-static stepup" data-state="closed">
+          <div class="su-head"><span class="su-ico"><svg class="ico lg"><use href="#i-person-remove"/></svg></span><h2>Retirer LAPTOP-XPS de l’espace 794e87f1 ?</h2></div>
+          <div class="su-msg" role="alert">
+            <strong><svg class="ico"><use href="#i-lock"/></svg>Session fermée par prudence</strong>
+            <p>5 refus de clé d’accès dans cette session. Ta clé d’accès reste valable : reconnecte-toi, puis regarde le journal si ce n’était pas toi.</p>
+          </div>
+          <div class="actions"><a class="btn" href="#session-fermee">Revenir à la connexion</a></div>
+        </div>
+      </div>
+    </figure>
+
+    <figure class="specimen">
+      <figcaption><strong>La cible a changé entre-temps</strong>Le serveur revérifie dans la transaction d’écriture ; rien n’est fait à moitié.</figcaption>
+      <div class="frame phone flush">
+        <div class="confirm confirm-static stepup" data-state="error">
+          <div class="su-head"><span class="su-ico"><svg class="ico lg"><use href="#i-person-remove"/></svg></span><h2>Retirer iPhone 15 de l’espace 794e87f1 ?</h2></div>
+          <div class="su-msg warn" role="alert"><strong><svg class="ico"><use href="#i-info"/></svg>Déjà fait ailleurs</strong><p>iPhone 15 n’est plus membre de cet espace : il a été retiré depuis une autre session ou le serveur. Rien n’a été fait de plus.</p></div>
+          <div class="actions"><button type="button" class="btn secondary">Fermer</button><button type="button" class="btn">Actualiser</button></div>
+        </div>
+      </div>
+    </figure>
+
+    <figure class="specimen">
+      <figcaption><strong>Politique « clé liée à l’appareil » active</strong>Réglée sur le serveur ; la feuille dit d’avance quelle clé marchera.</figcaption>
+      <div class="frame phone flush">
+        <div class="confirm confirm-static stepup" data-state="review">
+          <div class="su-head"><span class="su-ico"><svg class="ico lg"><use href="#i-delete"/></svg></span><h2>Supprimer l’espace 2de8c1b2 ?</h2></div>
+          <p class="pk-line"><svg class="ico sm"><use href="#i-key"/></svg><span>Seule ta <strong>clé 2 · liée à l’appareil</strong> est acceptée pour supprimer un espace · 2 par 24 h au plus</span></p>
+          <div class="actions"><button type="button" class="btn secondary">Annuler</button><button type="button" class="btn danger"><svg class="ico"><use href="#i-key"/></svg>Supprimer avec ma clé d’accès</button></div>
+        </div>
+      </div>
+    </figure>
+  </div>
+
+  <!-- ===================== Actions : session seule ===================== -->
+  <h2 class="group">Actions réversibles : session seule, confirmation dans la page</h2>
+  <div class="specimens">
+    <figure class="specimen">
+      <figcaption><strong>Quota d’un espace : sous l’usage actuel</strong>L’aperçu prévient en ocre pendant la frappe.</figcaption>
+      <div class="frame">
+        <div class="card">
+          <div class="usage-block">
+            <progress class="warn" max="100" value="94.1" aria-label="Quota utilisé : 94,1 %">94,1 %</progress>
+            <div class="usage-txt"><span><strong>241 Mio</strong> sur 256 Mio</span><span>94,1 %</span></div>
+            <form class="quota-form sq-form" autocomplete="off" novalidate data-inert>
+              <label for="sq-demo">Quota de cet espace</label>
+              <span class="field-unit"><input id="sq-demo" type="text" inputmode="numeric" maxlength="9" value="200" aria-describedby="sq-demo-p"><span class="unit" aria-hidden="true">Mio</span></span>
+              <button type="submit" class="btn">Enregistrer</button>
+              <span class="caption preview warn" id="sq-demo-p">= 200 Mio · sous l’usage actuel (241 Mio) : ses envois seront refusés</span>
+              <div class="actions quiet"><button type="button" class="btn ghost">Revenir au quota par défaut</button><button type="button" class="btn ghost">Sans limite</button></div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </figure>
+
+    <figure class="specimen">
+      <figcaption><strong>Bloquer les envois d’un espace ?</strong>Seulement si l’espace serait au-dessus ; sinon, enregistré tout de suite.</figcaption>
+      <div class="frame phone flush">
+        <div class="confirm confirm-static">
+          <h2>Bloquer les envois de 380a4493 ?</h2>
+          <p>Il utilise 241 Mio, plus que 200 Mio : ses appareils ne pourront plus rien envoyer tant qu’ils n’auront pas libéré de place. Rien n’est effacé, et tu peux revenir en arrière à tout moment.</p>
+          <div class="actions"><button type="button" class="btn secondary">Annuler</button><button type="button" class="btn danger">Appliquer 200 Mio</button></div>
+        </div>
+      </div>
+    </figure>
+
+    <figure class="specimen">
+      <figcaption><strong>Quota par défaut : les espaces bloqués, nommés</strong>La liste vient des données déjà lues.</figcaption>
+      <div class="frame phone flush">
+        <div class="confirm confirm-static">
+          <h2>Bloquer les envois de 2 espaces ?</h2>
+          <p>Avec 150 Mio par espace, ces espaces dépassent déjà le plafond : leurs appareils ne pourront plus rien envoyer tant qu’ils n’auront pas libéré de place. Rien n’est effacé.</p>
+          <ul class="recap-list"><li><span class="mono">794e87f1</span><span>183 Mio utilisés</span></li><li><span class="mono">380a4493</span><span>241 Mio utilisés</span></li></ul>
+          <div class="actions"><button type="button" class="btn secondary">Annuler</button><button type="button" class="btn danger">Appliquer 150 Mio</button></div>
+        </div>
+      </div>
+    </figure>
+
+    <figure class="specimen">
+      <figcaption><strong>Invalider les invitations en attente</strong>Retire un droit : pas de clé d’accès. « Invalider », pour ne pas confondre avec « Annuler ».</figcaption>
+      <div class="frame phone flush">
+        <div class="confirm confirm-static">
+          <h2>Invalider l’invitation en attente ?</h2>
+          <p>Un jeton déjà donné ne permettra plus de créer d’espace. Aucune invitation n’est créée à la place. Les espaces existants ne changent pas.</p>
+          <ul class="recap-list"><li><span class="mono">c41d09aa</span><span>créée il y a 9 min</span></li></ul>
+          <div class="actions"><button type="button" class="btn secondary">Annuler</button><button type="button" class="btn danger">Invalider</button></div>
+        </div>
+      </div>
+    </figure>
+
+    <figure class="specimen">
+      <figcaption><strong>Fermer toutes les sessions</strong>Action de protection : bouton principal, pas rouge.</figcaption>
+      <div class="frame phone flush">
+        <div class="confirm confirm-static">
+          <h2>Fermer toutes les sessions ?</h2>
+          <p>Toutes les sessions ouvertes sur ce panneau se ferment, celle-ci comprise : tu devras te reconnecter avec ta clé d’accès. À faire si tu as oublié de te déconnecter ailleurs, ou si tu soupçonnes un accès.</p>
+          <div class="actions"><button type="button" class="btn secondary">Annuler</button><button type="button" class="btn">Fermer les sessions</button></div>
+        </div>
+      </div>
+    </figure>
+  </div>
+
+  <!-- ===================== Garde-fous et retours ===================== -->
+  <h2 class="group">Garde-fous, retours et ce qui reste au serveur</h2>
+  <div class="specimens">
+    <figure class="specimen">
+      <figcaption><strong>Dernier appareil d’un espace</strong>Case grisée et phrase : la sortie, c’est « Supprimer l’espace ».</figcaption>
+      <div class="frame">
+        <div class="card devices-card">
+          <div class="card-head"><h3>Appareils <span class="count">1</span></h3></div>
+          <p class="caption">Dernier appareil de l’espace : il ne peut pas être retiré. Pour en finir avec cet espace, supprime-le.</p>
+          <ul class="devices">
+            <li class="dev"><label class="dev-check"><input type="checkbox" disabled><span class="sr">Sélectionner Pixel 8</span></label><details><summary><svg class="ico"><use href="#i-phone"/></svg><span><span class="name">Pixel 8</span><span class="sub">Android · 0.5.1 · il y a 2 h</span></span><span class="badge">Actif</span><svg class="ico chev"><use href="#i-expand"/></svg></summary></details></li>
+          </ul>
+        </div>
+      </div>
+    </figure>
+
+    <figure class="specimen">
+      <figcaption><strong>Tous les appareils cochés</strong>Refusé dans la page, avant même la feuille.</figcaption>
+      <div class="frame">
+        <div class="card devices-card">
+          <ul class="devices">
+            <li class="dev selected"><label class="dev-check"><input type="checkbox" checked><span class="sr">Sélectionner ThinkPad-T14</span></label><details><summary><svg class="ico"><use href="#i-computer"/></svg><span><span class="name">ThinkPad-T14</span><span class="sub">Windows · 0.5.0 · avant-hier</span></span><span class="badge">Actif</span><svg class="ico chev"><use href="#i-expand"/></svg></summary></details></li>
+            <li class="dev selected"><label class="dev-check"><input type="checkbox" checked><span class="sr">Sélectionner iPad</span></label><details><summary><svg class="ico"><use href="#i-phone"/></svg><span><span class="name">iPad</span><span class="sub">iOS · 0.5.0 · il y a 6 j</span></span><span class="badge">Actif</span><svg class="ico chev"><use href="#i-expand"/></svg></summary></details></li>
+          </ul>
+          <div class="selbar static">
+            <button type="button" class="icon-btn" aria-label="Tout décocher"><svg class="ico"><use href="#i-close"/></svg></button>
+            <p class="bad">Il doit rester au moins un appareil pour renouveler la clé. Pour retirer tout le monde, supprime l’espace.</p>
+            <button type="button" class="btn danger sm" disabled><svg class="ico"><use href="#i-person-remove"/></svg>Retirer</button>
+          </div>
+        </div>
+      </div>
+    </figure>
+
+    <figure class="specimen">
+      <figcaption><strong>Après un retrait</strong>Retour qui s’efface seul, et la clé à renouveler expliquée, sans bouton.</figcaption>
+      <div class="frame">
+        <div class="card">
+          <p class="note-line warn"><svg class="ico"><use href="#i-warning"/></svg><span><strong>Clé à renouveler</strong> après un retrait. Un appareil restant le fait tout seul à sa prochaine connexion ; le relais, qui n’a pas la clé, ne peut ni le faire ni le valider à sa place.</span></p>
+        </div>
+        <div class="toast-zone">
+          <div class="toast"><svg class="ico"><use href="#i-check"/></svg><p>LAPTOP-XPS retiré · un appareil restant renouvellera la clé</p></div>
+        </div>
+      </div>
+    </figure>
+
+    <figure class="specimen">
+      <figcaption><strong>Après une suppression</strong>Bandeau en tête de la liste, jusqu’à « Fermer » : la corbeille et la commande de restauration.</figcaption>
+      <div class="frame">
+        <div class="banner" role="status">
+          <svg class="ico"><use href="#i-delete"/></svg>
+          <div class="banner-body">
+            <p><strong>Espace <span class="mono">794e87f1</span> supprimé.</strong> Ses appareils ne le trouvent plus.</p>
+            <p class="caption">Le dossier chiffré reste dans la corbeille du relais jusqu’au 18/11 ; seul le serveur peut le restaurer.</p>
+            <details class="fold cli">
+              <summary><svg class="ico sm"><use href="#i-terminal"/></svg>Équivalent en ligne de commande<svg class="ico chev"><use href="#i-expand"/></svg></summary>
+              <div class="cmd"><code>tomi-relay admin trash restore 794e87f1</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande de restauration"><svg class="ico"><use href="#i-copy"/></svg></button></div>
+            </details>
+          </div>
+          <button type="button" class="icon-btn" aria-label="Fermer le bandeau"><svg class="ico"><use href="#i-close"/></svg></button>
+        </div>
+      </div>
+    </figure>
+
+    <figure class="specimen">
+      <figcaption><strong>Une seule clé d’accès, synchronisée</strong>Le conseil apparaît ; l’ajout reste sur le serveur.</figcaption>
+      <div class="frame">
+        <div class="card">
+          <div class="sub-head"><h3>Clés d’accès</h3><span class="count">1 sur 5</span></div>
+          <ul class="rows keys">
+            <li><svg class="ico"><use href="#i-key"/></svg><span class="key-txt"><strong>Clé 1 · synchronisée</strong><span class="caption">ajoutée le 02/09/2026 · utilisée à l’instant</span></span><span class="badge good">Cette session</span></li>
+          </ul>
+          <p class="note-line warn"><svg class="ico"><use href="#i-warning"/></svg><span>Une seule clé, qui suit ton compte iCloud ou Google. Ajoute une clé liée à l’appareil (clé matérielle) : si tu perds celle-ci, tu ne devras pas passer par le serveur.</span></p>
+          <div class="cmd"><code>tomi-relay admin web enroll</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande"><svg class="ico"><use href="#i-copy"/></svg></button></div>
+        </div>
+      </div>
+    </figure>
+
+    <figure class="specimen">
+      <figcaption><strong>Corbeille vide</strong>La mention « serveur seulement » reste, sans commande à copier.</figcaption>
+      <div class="frame">
+        <div class="card">
+          <div class="card-head"><h2>Corbeille <span class="count">0</span></h2></div>
+          <p class="empty">Aucun espace supprimé depuis ce panneau ces 7 derniers jours.</p>
+        </div>
+      </div>
+    </figure>
+
+    <figure class="specimen">
+      <figcaption><strong>Journal : actions gardées 90 jours</strong>Identifiant court et numéro de clé, jamais un nom d’appareil.</figcaption>
+      <div class="frame">
+        <div class="card">
+          <ol class="journal">
+            <li class="kept"><time datetime="2026-11-11T20:13:00Z">à l’instant</time><span class="what">Appareil <span class="mono">7c3e91af</span> retiré de l’espace <span class="mono">794e87f1</span><small>clé 1 · gardé 90 j</small></span></li>
+            <li class="warn"><time datetime="2026-11-11T20:11:00Z">il y a 2 min</time><span class="what"><span><svg class="ico sm"><use href="#i-warning"/></svg>Clé d’accès refusée pour une action</span><small>3 fois dans la session · gardé 90 j</small></span><span class="advice">Pas toi ? Ferme toutes les sessions depuis Réglages, puis change l’adresse du panneau, sur le serveur : <code>tomi-relay admin web --rotate-path</code></span></li>
+          </ol>
+        </div>
+      </div>
+    </figure>
+  </div>
+
+  <!-- ===================== Desktop ===================== -->
+  <h2 class="group">Desktop (1024 px et plus) : boîte centrée, panneau, clavier</h2>
+  <p class="hint">Mêmes contenus que la feuille basse ; boutons côte à côte, « Annuler » a le focus, Échap ferme. Le prototype complet est <a href="index.html#espaces/794e87f1">index.html</a> à 1024 px ou plus.</p>
+  <div class="specimens">
+    <figure class="specimen span2">
+      <figcaption><strong>Retirer deux appareils : boîte centrée</strong>Une seule clé d’accès pour toute la sélection ; l’empreinte de l’action couvre la liste.</figcaption>
+      <div class="frame desk">
+        <div class="confirm confirm-static stepup" data-state="review">
+          <div class="su-head"><span class="su-ico"><svg class="ico lg"><use href="#i-person-remove"/></svg></span><h2>Retirer 2 appareils de l’espace 794e87f1 ?</h2></div>
+          <div class="su-review">
+            <ul class="recap">
+              <li><svg class="ico"><use href="#i-phone"/></svg><span class="r-main"><strong>Galaxy S23</strong><span class="caption">Android · 0.5.1 · il y a 2 h</span></span><span class="mono r-id">a10b44f2</span></li>
+              <li><svg class="ico"><use href="#i-computer"/></svg><span class="r-main"><strong>PC-Bureau</strong><span class="caption">Windows · 0.4.2 · il y a 2 mois</span></span><span class="mono r-id">e4f012cd</span></li>
+            </ul>
+            <ul class="conseq">
+              <li class="strong">Ils perdent l’accès tout de suite. Pour revenir, ils devront être recouplés depuis un autre appareil.</li>
+              <li>Leurs données restent lisibles sur eux : un retrait n’efface rien.</li>
+              <li class="good">Un appareil restant renouvellera la clé de l’espace à sa prochaine connexion.</li>
+            </ul>
+          </div>
+          <p class="pk-line"><svg class="ico sm"><use href="#i-key"/></svg><span>Ta clé d’accès te sera demandée · 10 retraits par heure au plus sur ce relais</span></p>
+          <div class="actions"><span class="esc-hint" aria-hidden="true"><kbd>Échap</kbd> pour annuler</span><button type="button" class="btn secondary">Annuler</button><button type="button" class="btn danger"><svg class="ico"><use href="#i-key"/></svg>Retirer avec ma clé d’accès</button></div>
+        </div>
+      </div>
+    </figure>
+
+    <figure class="specimen">
+      <figcaption><strong>Panneau de détail : survol et sélection</strong>« Retirer » rapide au survol d’une ligne ; barre de sélection collée au bas du panneau.</figcaption>
+      <div class="frame">
+        <div class="desk-panel">
+          <div class="card-head"><h3>Appareils <span class="count">4</span></h3></div>
+          <ul class="devices">
+            <li class="dev hover"><label class="dev-check"><input type="checkbox"><span class="sr">Sélectionner LAPTOP-XPS</span></label><details><summary><svg class="ico"><use href="#i-computer"/></svg><span><span class="name">LAPTOP-XPS</span><span class="sub">Windows · 0.5.1 · il y a 12 min</span></span><span class="badge good">Présent</span><svg class="ico chev"><use href="#i-expand"/></svg></summary></details><button type="button" class="icon-btn sm dev-quick" aria-label="Retirer LAPTOP-XPS de l’espace"><svg class="ico"><use href="#i-person-remove"/></svg></button></li>
+            <li class="dev selected"><label class="dev-check"><input type="checkbox" checked><span class="sr">Sélectionner Galaxy S23</span></label><details><summary><svg class="ico"><use href="#i-phone"/></svg><span><span class="name">Galaxy S23</span><span class="sub">Android · 0.5.1 · il y a 2 h</span></span><span class="badge">Actif</span><svg class="ico chev"><use href="#i-expand"/></svg></summary></details><span></span></li>
+            <li class="dev selected"><label class="dev-check"><input type="checkbox" checked><span class="sr">Sélectionner PC-Bureau</span></label><details><summary><svg class="ico"><use href="#i-computer"/></svg><span><span class="name">PC-Bureau</span><span class="sub">Windows · 0.4.2 · il y a 2 mois</span></span><span class="badge muted">Inactif</span><svg class="ico chev"><use href="#i-expand"/></svg></summary></details><span></span></li>
+          </ul>
+          <div class="selbar">
+            <button type="button" class="icon-btn" aria-label="Tout décocher"><svg class="ico"><use href="#i-close"/></svg></button>
+            <p>2 appareils cochés</p>
+            <button type="button" class="btn danger sm"><svg class="ico"><use href="#i-person-remove"/></svg>Retirer</button>
+          </div>
+        </div>
+      </div>
+    </figure>
+
+    <figure class="specimen span2">
+      <figcaption><strong>Refus, boîte centrée</strong>Même message que sur téléphone ; « Fermer » a le focus.</figcaption>
+      <div class="frame desk">
+        <div class="confirm confirm-static stepup" data-state="refused">
+          <div class="su-head"><span class="su-ico"><svg class="ico lg"><use href="#i-delete"/></svg></span><h2>Supprimer l’espace 794e87f1 ?</h2></div>
+          <div class="su-msg" role="alert">
+            <strong><svg class="ico"><use href="#i-error"/></svg>Clé d’accès refusée par le relais</strong>
+            <p>Cette clé n’est pas enregistrée sur ce relais, ou la vérification (empreinte, visage, code) n’a pas eu lieu. Rien n’a été fait.</p>
+            <div class="tries" aria-hidden="true"><span class="used"></span><span></span><span></span><span></span><span></span></div>
+            <p>Refus 1 sur 5 : au cinquième, cette session se ferme. Ta clé d’accès, elle, reste valable.</p>
+          </div>
+          <div class="actions"><span class="esc-hint" aria-hidden="true"><kbd>Échap</kbd> pour fermer</span><button type="button" class="btn secondary">Fermer</button><button type="button" class="btn danger"><svg class="ico"><use href="#i-key"/></svg>Réessayer</button></div>
+        </div>
+      </div>
+    </figure>
+
+    <figure class="specimen">
+      <figcaption><strong>Aide des raccourcis (touche « ? »)</strong>Aucune action destructrice n’a de raccourci.</figcaption>
+      <div class="frame">
+        <div class="confirm confirm-static shortcuts">
+          <div class="su-head"><h2>Raccourcis clavier</h2></div>
+          <dl class="keys-list">
+            <div><dt><kbd>G</kbd> puis <kbd>E</kbd></dt><dd>Aller aux espaces (A, I, J, R pour les autres vues)</dd></div>
+            <div><dt><kbd>J</kbd> <kbd>K</kbd></dt><dd>Espace suivant, précédent</dd></div>
+            <div><dt><kbd>Entrée</kbd> · <kbd>Échap</kbd></dt><dd>Ouvrir, fermer le détail</dd></div>
+            <div><dt><kbd>R</kbd> · <kbd>C</kbd></dt><dd>Actualiser · copier l’identifiant</dd></div>
+          </dl>
+          <p class="caption">Retirer, supprimer, inviter : jamais de raccourci.</p>
         </div>
       </div>
     </figure>
@@ -581,7 +1057,7 @@
 </div>
 
 <!-- Retour des boutons « Copier » de la planche (le seul élément vivant de cette page). -->
-<div class="toast-zone" style="bottom: var(--space-4)">
+<div class="toast-zone board-toast">
   <div class="toast" id="toast" hidden>
     <svg class="ico"><use href="#i-check"/></svg>
     <p id="message" role="status" aria-live="polite"></p>
