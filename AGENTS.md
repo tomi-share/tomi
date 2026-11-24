@@ -54,6 +54,33 @@ Identifiers: application id `eu.shaffe.tomi`, URL scheme `tomi-share://`.
 - **Pin**: part of the protocol, shared, encrypted (the relay only sees a random `event_id`), last-writer-wins, does not
   prevent relay purge, bounded by `at_ms <= 2^53-1`.
 - **Hidden title**; no multi-person ACLs in v1 (future direction: one space per person + groups).
+- **Format detection (Markdown vs HTML).** Each platform detects the format of pasted or shared text itself
+  (`apps/windows/src-tauri/src/detect.rs`, `ContentDetectors.kt`, `ContentDetectors.swift`): keep the three aligned, and
+  mirror any new case in the three test suites. An HTML flavour (clipboard or share) is kept only if it carries formatting
+  tags (links, emphasis, headings, lists, tables, code...); wrappers (`<meta><span>`) are dropped, and layout-only HTML
+  (`div`/`p`/`br`) never outranks Markdown syntax in the plain text. An item declared Markdown is sent without its HTML
+  flavour: receivers preview the HTML first and would show the raw `# Title` / `- item` laid out as HTML.
+
+## What goes in the core, what stays in the apps
+
+- **In `tomi-core`: whatever must behave bit for bit the same on every device, or whose disagreement would lose, corrupt
+  or leak data.** The protocol and the wire format (`format.rs`, `envelope.rs`, `spec/`), crypto and keys, pairing,
+  persistence and sync (SQLite, relay client, outbox), and the semantics of the stored state (pin, archive, tombstones,
+  expiry as enforced, read policy, history transfer). Validation of what is stored or sent (limits, signatures) belongs
+  here too: an app must not be the only thing refusing an invalid item.
+- **In the apps: everything that depends on the OS or the screen, or that is only a hint.** UI, rendering (three engines,
+  same rules), system integration (clipboard, share sheet and intents, notifications, biometrics, file pickers), and the
+  heuristics on what the user brings in: content detection (link, Markdown, HTML flavour), "looks like a secret", the expiry
+  choices offered, title-and-link splitting. These are display or input suggestions (`source_format` is a hint, the secret
+  box is pre-checked and editable), never a restriction, and each platform reads different system inputs.
+- **Duplicated on purpose, so kept aligned.** The app-side heuristics exist once per platform (Rust in `apps/windows`,
+  Kotlin in `apps/android`, Swift in `apps/apple/Packages/TomiKit`). A change to one is made in the three in the same
+  commit (or the commit says which platform is left, and why), with the same cases in the three test suites. Do not
+  extract one into the core without a decision of the owner: it costs UniFFI bindings and a validation on all three
+  platforms. If you do, the function must stay pure, and the new dependencies (e.g. `regex`, `url`) go behind a feature so
+  that the relay, which uses `tomi-core` with `default-features = false`, does not pull them.
+- **When in doubt, ask where a bug would be worst.** If two devices disagreeing makes an item unreadable, wrong or
+  unsafe, it is core. If it only changes how something is shown or suggested, it is app-side.
 
 ## UI conventions
 
