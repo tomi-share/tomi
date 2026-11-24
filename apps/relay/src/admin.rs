@@ -66,6 +66,16 @@ pub enum Cmd {
     },
     /// The web administration panel (`admin_web.rs`): its URL, its enrolment, its passkey.
     Web { action: WebAction },
+    /// The trash of the spaces deleted from the web panel (`trash.rs`): list, restore, purge.
+    Trash {
+        action: crate::trash::TrashAction,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        space: Option<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        confirm: Option<String>,
+        #[serde(default)]
+        json: bool,
+    },
 }
 
 /// What `tomi-relay admin web ...` asks for.
@@ -116,6 +126,7 @@ pub fn needs_exclusive_access(cmd: &Cmd) -> bool {
         Cmd::Status { .. } | Cmd::Devices { .. } | Cmd::Spaces { .. } => false,
         Cmd::Invite { rotate, new } => *rotate || *new,
         Cmd::Web { action } => !matches!(action, WebAction::Show),
+        Cmd::Trash { action, .. } => !matches!(action, crate::trash::TrashAction::List),
         Cmd::Quota { .. } | Cmd::Revoke { .. } | Cmd::Reset { .. } => true,
     }
 }
@@ -137,6 +148,12 @@ pub async fn run(st: &AppState, cmd: Cmd) -> Output {
         Cmd::Revoke { target, space } => revoke(st, space.as_deref(), &target).await,
         Cmd::Reset { confirm, space } => reset(st, space.as_deref(), confirm.as_deref()).await,
         Cmd::Web { action } => crate::admin_web::command(st, action).await,
+        Cmd::Trash {
+            action,
+            space,
+            confirm,
+            json,
+        } => crate::trash::command(st, action, space.as_deref(), confirm.as_deref(), json).await,
     }
 }
 

@@ -275,6 +275,62 @@ CREATE TABLE IF NOT EXISTS admin_web_enrollment (
 );
 ";
 
+/// The actions of the web panel (`admin_web.rs`, `admin_actions.rs`, `trash.rs`), in `routing.db`.
+/// An **additive** migration like [`ADMIN_WEB_SCHEMA`] (`CREATE ... IF NOT EXISTS`, `user_version`
+/// stays at 1; a relay of the previous version ignores these tables).
+///
+/// * `admin_web_credentials`: the passkeys, up to 5. `num` is an `AUTOINCREMENT`: a number is
+///   never reused, even after a key was removed or `admin web reset`, so that "key 2" in the audit
+///   log always designates the same key. `backup_eligible` is the BE flag the authenticator
+///   declared at enrolment (no attestation: a declaration, not a proof). The first key also stays
+///   in `admin_web_credential` (see `sync_legacy` in `admin_web.rs`) so that the previous binary
+///   still starts. A database that only knows `admin_web_credential` gets its key copied here once.
+/// * `admin_web_policy`: at most one row; `critical_requires_device_bound` (set by the CLI only).
+/// * `admin_web_audit`: what was done through the panel or about its access: a date, a fixed word,
+///   the 8-character id of the target and the number of the passkey. Never a name, an address, a
+///   token or a value of a request. Bounded by `admin_web::AUDIT_MAX_ROWS` and `AUDIT_MAX_AGE_MS`.
+/// * `space_trash`: the spaces deleted from the panel, kept 7 days in `spaces.trash/<dir_name>/`
+///   (renamed, not copied) so that the CLI can restore them. `quota_set`/`quota_bytes` keep the
+///   quota of the space itself (`quota_bytes` NULL: no limit).
+pub const ADMIN_ACTIONS_SCHEMA: &str = r"
+CREATE TABLE IF NOT EXISTS admin_web_credentials (
+  num              INTEGER PRIMARY KEY AUTOINCREMENT,
+  credential_id    BLOB NOT NULL UNIQUE,
+  public_key       BLOB NOT NULL,
+  sign_count       INTEGER NOT NULL,
+  backup_eligible  INTEGER NOT NULL DEFAULT 1,
+  created_at       INTEGER NOT NULL,
+  last_used_at     INTEGER
+);
+
+INSERT INTO admin_web_credentials (credential_id, public_key, sign_count, backup_eligible, created_at)
+SELECT credential_id, public_key, sign_count, 1, created_at FROM admin_web_credential
+WHERE NOT EXISTS (SELECT 1 FROM sqlite_sequence WHERE name = 'admin_web_credentials');
+
+CREATE TABLE IF NOT EXISTS admin_web_policy (
+  id                             INTEGER PRIMARY KEY CHECK (id = 1),
+  critical_requires_device_bound INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS admin_web_audit (
+  id      INTEGER PRIMARY KEY AUTOINCREMENT,
+  at      INTEGER NOT NULL,
+  kind    TEXT NOT NULL,
+  target  TEXT,
+  key_num INTEGER
+);
+
+CREATE TABLE IF NOT EXISTS space_trash (
+  dir_name     TEXT PRIMARY KEY,
+  space_id     TEXT NOT NULL,
+  deleted_at   INTEGER NOT NULL,
+  purge_after  INTEGER NOT NULL,
+  size_bytes   INTEGER NOT NULL,
+  quota_set    INTEGER NOT NULL DEFAULT 0,
+  quota_bytes  INTEGER
+);
+";
+
 /// The receipts of the deletions of spaces (`api-v1.md` §4.4.2, §10.2), in `routing.db`. An
 /// **additive** migration like [`ADMIN_WEB_SCHEMA`]: `user_version` stays at 1, and a database
 /// opened read-only that lacks the table is simply one without receipts. A row holds
@@ -386,7 +442,12 @@ impl Db {
             path,
             ROUTING_SCHEMA,
             ROUTING_SCHEMA_VERSION,
-            &[ADMIN_WEB_SCHEMA, DELETIONS_SCHEMA, DEFAULT_QUOTA_SCHEMA],
+            &[
+                ADMIN_WEB_SCHEMA,
+                ADMIN_ACTIONS_SCHEMA,
+                DELETIONS_SCHEMA,
+                DEFAULT_QUOTA_SCHEMA,
+            ],
             true,
         )
     }
@@ -439,6 +500,7 @@ impl Db {
             let r = Connection::open_in_memory()?;
             r.execute_batch(ROUTING_SCHEMA)?;
             r.execute_batch(ADMIN_WEB_SCHEMA)?;
+            r.execute_batch(ADMIN_ACTIONS_SCHEMA)?;
             r.execute_batch(DELETIONS_SCHEMA)?;
             r.execute_batch(DEFAULT_QUOTA_SCHEMA)?;
             readers.push(Mutex::new(Some(r)));

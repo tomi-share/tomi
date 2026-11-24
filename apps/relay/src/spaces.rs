@@ -131,6 +131,50 @@ pub const SPACE_DB_FILE: &str = "relay.db";
 /// removed (`<data_dir>/spaces.deleted-<space_id>-<random>`). One left by a crash is removed at
 /// the next start.
 const TRASH_PREFIX: &str = "spaces.deleted-";
+/// `<data_dir>/spaces.trash/`: where a space deleted from the web panel waits to be restored or
+/// purged (`<space_id>-<unix seconds>/`). Not `spaces.deleted-*`: the start never removes it.
+pub const TRASH_DIR: &str = "spaces.trash";
+/// How long a space stays in the trash.
+pub const TRASH_TTL_MS: i64 = 7 * 86_400_000;
+
+/// A space deleted from the web panel, as `space_trash` keeps it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TrashRow {
+    pub dir_name: String,
+    pub space_id: String,
+    pub deleted_at: i64,
+    pub purge_after: i64,
+    pub size_bytes: u64,
+    /// `Some(q)`: the space had a quota of its own (`q` `None`: no limit).
+    pub quota: Option<Option<u64>>,
+}
+
+/// Why a restore was refused.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum RestoreError {
+    /// The id is used by a space (or a pending one) again.
+    IdTaken,
+    /// A device, key, session or channel of the space belongs to another space now.
+    Conflict(String),
+    /// The folder is not in the trash any more.
+    Missing,
+    Failed(String),
+}
+
+fn dir_size(dir: &Path) -> u64 {
+    let mut total = 0u64;
+    let Ok(rd) = std::fs::read_dir(dir) else {
+        return 0;
+    };
+    for e in rd.flatten() {
+        match e.metadata() {
+            Ok(m) if m.is_dir() => total = total.saturating_add(dir_size(&e.path())),
+            Ok(m) => total = total.saturating_add(m.len()),
+            Err(_) => {}
+        }
+    }
+    total
+}
 
 /// Flushes a directory to disk, so that a rename or a removal in it survives a crash. Only Unix
 /// can open a directory to sync it; elsewhere this does nothing.
@@ -1164,13 +1208,33 @@ impl Spaces {
     /// its keys and retries or uses "delete anyway" (§4.4.2, §7.9); the quota or invitation rows
     /// stay as orphans (§10.1).
     pub fn delete(&self, space: &Space, receipt: Option<[u8; 32]>, now_ms: i64) -> DeleteOutcome {
-        let destroyed =
-            std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| self.destroy(space)))
-                .unwrap_or_else(|_| {
-                    Err(DestroyFail::Unknown(anyhow::anyhow!(
-                        "the deletion of the space panicked"
-                    )))
-                });
+        self.delete_keep(space, receipt, now_ms, false)
+    }
+
+    /// [`Spaces::delete`], or with `keep` the deletion of the web panel: the folder is renamed
+    /// into `spaces.trash/` (no byte copied, no in-place removal as a fallback) and recorded in
+    /// `space_trash` in the same transaction of `routing.db` as the receipt; the space is gone for
+    /// every device exactly as for a plain deletion.
+    pub fn delete_keep(
+        &self,
+        space: &Space,
+        receipt: Option<[u8; 32]>,
+        now_ms: i64,
+        keep: bool,
+    ) -> DeleteOutcome {
+        let keep_dir = keep.then(|| {
+            self.data_dir
+                .join(TRASH_DIR)
+                .join(format!("{}-{}", space.text_id(), now_ms / 1000))
+        });
+        let destroyed = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            self.destroy(space, keep_dir.as_deref())
+        }))
+        .unwrap_or_else(|_| {
+            Err(DestroyFail::Unknown(anyhow::anyhow!(
+                "the deletion of the space panicked"
+            )))
+        });
         let removed = match destroyed {
             Ok(removed) => removed,
             Err(DestroyFail::NothingDeleted(e)) => {
@@ -1222,7 +1286,21 @@ impl Spaces {
 
         // 5. The space cannot come back: one transaction of routing.db forgets its quota and
         // the invitation it consumed, and records the receipt.
-        let receipted = self.forget_in_routing(space, receipt, now_ms);
+        let trash_row = match (&removed, keep) {
+            (Removed::Renamed { trash }, true) => Some(TrashRow {
+                dir_name: trash
+                    .file_name()
+                    .map(|n| n.to_string_lossy().into_owned())
+                    .unwrap_or_default(),
+                space_id: space.text_id(),
+                deleted_at: now_ms,
+                purge_after: now_ms.saturating_add(TRASH_TTL_MS),
+                size_bytes: dir_size(trash),
+                quota: self.quota_override(&space.id),
+            }),
+            _ => None,
+        };
+        let receipted = self.forget_in_routing(space, receipt, now_ms, trash_row.as_ref());
         if let Err(why) = &receipted {
             tracing::error!(
                 space = space.short_id(),
@@ -1238,8 +1316,10 @@ impl Spaces {
         }
         plain(self.overrides.lock()).remove(&space.id);
 
-        // 7. What is left on the disk, at best.
-        self.remove_leftovers(space, &removed);
+        // 7. What is left on the disk, at best (a space kept in the trash stays where it is).
+        if !keep {
+            self.remove_leftovers(space, &removed);
+        }
 
         if receipted.is_ok() {
             DeleteOutcome::Deleted
@@ -1254,6 +1334,7 @@ impl Spaces {
         space: &Space,
         receipt: Option<[u8; 32]>,
         now_ms: i64,
+        trash: Option<&TrashRow>,
     ) -> Result<(), String> {
         self.destroy_fault(DestroyStep::ForgetRouting)
             .map_err(|e| e.kind().to_string())?;
@@ -1270,6 +1351,22 @@ impl Spaces {
                     tx.execute(
                         "INSERT OR IGNORE INTO space_deletions (receipt_hash, deleted_at) VALUES (?1, ?2)",
                         params![h.to_vec(), now_ms],
+                    )?;
+                }
+                if let Some(t) = trash {
+                    tx.execute(
+                        "INSERT OR REPLACE INTO space_trash
+                         (dir_name, space_id, deleted_at, purge_after, size_bytes, quota_set, quota_bytes)
+                         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+                        params![
+                            t.dir_name,
+                            t.space_id,
+                            t.deleted_at,
+                            t.purge_after,
+                            i64::try_from(t.size_bytes).unwrap_or(i64::MAX),
+                            i64::from(t.quota.is_some()),
+                            t.quota.flatten().and_then(|q| i64::try_from(q).ok()),
+                        ],
                     )?;
                 }
                 Ok(Tx::Commit(()))
@@ -1364,7 +1461,7 @@ impl Spaces {
     ///    two system calls counts**: `ENOENT` is never a success, it is an unknown state;
     /// 4. the directories whose entries changed are synced (Unix), so that a crash right after
     ///    cannot bring the folder back while `routing.db` has recorded the deletion.
-    fn destroy(&self, space: &Space) -> Result<Removed, DestroyFail> {
+    fn destroy(&self, space: &Space, keep_dir: Option<&Path>) -> Result<Removed, DestroyFail> {
         use std::io::ErrorKind::NotFound;
         space.db.close();
 
@@ -1412,15 +1509,28 @@ impl Spaces {
         let random = crate::wire::random_bytes::<4>()
             .map(hex::encode)
             .unwrap_or_default();
-        let trash = self.data_dir.join(format!("{TRASH_PREFIX}{text}-{random}"));
-        let renamed = self
-            .destroy_fault(DestroyStep::Rename)
-            .and_then(|()| std::fs::rename(&space.dir, &trash));
+        let trash = match keep_dir {
+            Some(dir) => dir.to_path_buf(),
+            None => self.data_dir.join(format!("{TRASH_PREFIX}{text}-{random}")),
+        };
+        let renamed = self.destroy_fault(DestroyStep::Rename).and_then(|()| {
+            if let Some(parent) = trash.parent().filter(|_| keep_dir.is_some()) {
+                std::fs::create_dir_all(parent)?;
+            }
+            std::fs::rename(&space.dir, &trash)
+        });
         let removed = match renamed {
             Ok(()) => Removed::Renamed { trash },
             Err(e) if e.kind() == NotFound => {
                 return Err(DestroyFail::Unknown(anyhow::anyhow!(
                     "the space folder vanished during the rename"
+                )))
+            }
+            // A space kept in the trash is renamed or not deleted: no in-place removal.
+            Err(refused) if keep_dir.is_some() => {
+                return Err(DestroyFail::NothingDeleted(anyhow::anyhow!(
+                    "rename into the trash refused ({})",
+                    refused.kind()
                 )))
             }
             Err(refused) => {
@@ -1454,7 +1564,13 @@ impl Spaces {
 
         // 4. Durability.
         let changed: Vec<PathBuf> = match &removed {
-            Removed::Renamed { .. } => vec![self.data_dir.clone(), self.data_dir.join(SPACES_DIR)],
+            Removed::Renamed { trash } => {
+                let mut v = vec![self.data_dir.clone(), self.data_dir.join(SPACES_DIR)];
+                if keep_dir.is_some() {
+                    v.extend(trash.parent().map(Path::to_path_buf));
+                }
+                v
+            }
             Removed::InPlace => vec![space.dir.clone()],
         };
         for dir in &changed {
@@ -1463,6 +1579,85 @@ impl Spaces {
                 .map_err(|e| DestroyFail::NotDurable(anyhow::anyhow!("fsync: {}", e.kind())))?;
         }
         Ok(removed)
+    }
+
+    /// Brings a space of the trash back (`admin trash restore`): the folder goes back to
+    /// `spaces/<id>/`, the space is loaded and registered, which rebuilds its routing (devices,
+    /// signing keys, sessions and channels are read from its database), and its own quota is given
+    /// back. Refused, nothing changed, if the id is taken or if something of the space belongs to
+    /// another space now. Blocking; the caller holds the registry lock and deletes the row of
+    /// `space_trash`.
+    pub fn restore_from_trash(&self, row: &TrashRow) -> Result<Arc<Space>, RestoreError> {
+        let fail = |e: &dyn std::fmt::Display| RestoreError::Failed(e.to_string());
+        let id = uuid_parse(&row.space_id).ok_or(RestoreError::Missing)?;
+        if !matches!(self.route_space(&id), Route::Unknown) {
+            return Err(RestoreError::IdTaken);
+        }
+        let src = self.data_dir.join(TRASH_DIR).join(&row.dir_name);
+        if !src.join(SPACE_DB_FILE).is_file() {
+            return Err(RestoreError::Missing);
+        }
+        let dst = space_dir(&self.data_dir, &id);
+        self.clear_unloaded_folder(&dst).map_err(|e| match e.code {
+            Code::SpaceExists => RestoreError::IdTaken,
+            _ => RestoreError::Failed(e.code.as_str().to_owned()),
+        })?;
+        if let Some(parent) = dst.parent() {
+            std::fs::create_dir_all(parent).map_err(|e| fail(&e.kind()))?;
+        }
+        std::fs::rename(&src, &dst).map_err(|e| fail(&e.kind()))?;
+        let back = |db: Option<&Arc<Db>>| {
+            if let Some(db) = db {
+                db.close();
+            }
+            let _ = std::fs::rename(&dst, &src);
+        };
+        let file = dst.join(SPACE_DB_FILE);
+        let db = match Db::open_existing(&file) {
+            Ok(db) => db,
+            Err(e) => {
+                back(None);
+                return Err(fail(&sqlite_reason(&e)));
+            }
+        };
+        let space_row = match db.read_sync(|tx| store::space_row(tx)) {
+            Ok(Some(r)) if r.space_id == id => r,
+            _ => {
+                back(Some(&db));
+                return Err(RestoreError::Missing);
+            }
+        };
+        let identity = match Identity::read(&dst) {
+            Ok(i) => i,
+            Err(e) => {
+                back(Some(&db));
+                return Err(fail(&e.kind()));
+            }
+        };
+        let space = Arc::new(Space {
+            id,
+            created_at: space_row.created_at,
+            dir: dst.clone(),
+            db: db.clone(),
+            identity,
+        });
+        if let Err(why) = self.attach(&space) {
+            back(Some(&db));
+            return Err(RestoreError::Conflict(why));
+        }
+        plain(self.map.write()).insert(id, space.clone());
+        if let Some(q) = row.quota {
+            if let Err(e) = self.set_quota_override(&id, Some(q)) {
+                tracing::warn!(
+                    "restore: the quota of the space could not be given back ({})",
+                    e.code.as_str()
+                );
+            }
+        }
+        for d in [dst.parent(), src.parent()].into_iter().flatten() {
+            let _ = sync_dir(d);
+        }
+        Ok(space)
     }
 
     /// Before a space is created in `dir`, which no registered or pending space owns: a folder

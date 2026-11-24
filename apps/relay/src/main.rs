@@ -10,6 +10,7 @@ use tomi_relay::admin::{self, Cmd, WebAction};
 use tomi_relay::app::{self, Options, PushChoice};
 use tomi_relay::config::Config;
 use tomi_relay::logging;
+use tomi_relay::trash::TrashAction;
 
 #[derive(Parser)]
 #[command(
@@ -103,6 +104,34 @@ enum AdminCommand {
         rotate_path: bool,
         #[command(subcommand)]
         action: Option<WebSub>,
+    },
+    /// The spaces deleted from the web panel, kept 7 days: lists them (`restore` brings one back,
+    /// `purge` deletes one for good). Never reachable from the web.
+    #[command(args_conflicts_with_subcommands = true)]
+    Trash {
+        #[arg(long)]
+        json: bool,
+        #[command(subcommand)]
+        action: Option<TrashSub>,
+    },
+}
+
+#[derive(Subcommand)]
+enum TrashSub {
+    /// Brings a space of the trash back (its devices resume when Tomi is opened on them).
+    Restore {
+        /// The space (its id or the first 8 characters); optional if the trash holds only one.
+        #[arg(long, value_name = "ID")]
+        space: Option<String>,
+    },
+    /// Deletes a space of the trash for good (no "empty it all": one space at a time).
+    Purge {
+        /// The space (its id or the first 8 characters); optional if the trash holds only one.
+        #[arg(long, value_name = "ID")]
+        space: Option<String>,
+        /// The first 8 characters of the space id (otherwise asked on the terminal).
+        #[arg(long)]
+        confirm: Option<String>,
     },
 }
 
@@ -221,6 +250,26 @@ async fn administer(config: Option<PathBuf>, cmd: AdminCommand) -> u8 {
             confirm: confirm.or_else(ask_confirmation),
             space,
         },
+        AdminCommand::Trash { json, action } => match action {
+            None => Cmd::Trash {
+                action: TrashAction::List,
+                space: None,
+                confirm: None,
+                json,
+            },
+            Some(TrashSub::Restore { space }) => Cmd::Trash {
+                action: TrashAction::Restore,
+                space,
+                confirm: None,
+                json: false,
+            },
+            Some(TrashSub::Purge { space, confirm }) => Cmd::Trash {
+                action: TrashAction::Purge,
+                space,
+                confirm: confirm.or_else(ask_purge_confirmation),
+                json: false,
+            },
+        },
         AdminCommand::Web {
             rotate_path,
             action,
@@ -272,6 +321,15 @@ async fn administer(config: Option<PathBuf>, cmd: AdminCommand) -> u8 {
 
 fn ask_confirmation() -> Option<String> {
     eprint!("This deletes a whole space. Retype the first 8 characters of its id (see `admin spaces`): ");
+    let _ = std::io::stderr().flush();
+    let mut line = String::new();
+    std::io::stdin().lock().read_line(&mut line).ok()?;
+    let t = line.trim().to_owned();
+    (!t.is_empty()).then_some(t)
+}
+
+fn ask_purge_confirmation() -> Option<String> {
+    eprint!("This deletes a space of the trash for good. Retype the first 8 characters of its id (see `admin trash`): ");
     let _ = std::io::stderr().flush();
     let mut line = String::new();
     std::io::stdin().lock().read_line(&mut line).ok()?;

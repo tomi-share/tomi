@@ -128,6 +128,7 @@ pub async fn run_once(st: &AppState) -> Report {
         report.add(&purge_space(st, &space, now).await);
     }
     report.receipts_expired = purge_receipts(st, now).await;
+    crate::trash::purge_expired(st, now).await;
     warn_if_nearly_full(st, now).await;
     if report.items_purged + report.transfers_closed + report.blobs_collected > 0 {
         tracing::info!(
