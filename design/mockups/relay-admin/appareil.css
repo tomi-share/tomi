@@ -1,0 +1,191 @@
+/* Mock-up only: device switcher (see appareil.js). Uses the tokens of maquette.css, no inline style. */
+
+.ap-launch {
+  position: fixed;
+  right: 12px;
+  bottom: calc(var(--nav-h, 64px) + 12px);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+@media (min-width: 64rem) {
+  .ap-launch {
+    bottom: 16px;
+  }
+}
+
+.ap-fab {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: 22px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}
+
+.ap-fab:focus-visible,
+.ap-opt input:focus-visible + span {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.ap-pop {
+  width: min(372px, calc(100vw - 24px));
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
+}
+
+.ap-pop[hidden],
+.ap-launch[hidden],
+.ap-stage[hidden] {
+  display: none;
+}
+
+.ap-pop-t {
+  margin: 0 0 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.ap-pop-h {
+  margin: 8px 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+/* segmented control */
+.ap-seg {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 10px;
+  background: var(--surface-alt);
+}
+
+.ap-opt {
+  position: relative;
+  flex: 1 1 auto;
+}
+
+.ap-opt input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.ap-opt span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 8px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.ap-opt input:checked + span {
+  background: var(--brand);
+  color: var(--on-brand);
+  font-weight: 600;
+}
+
+/* forced device: the stage replaces the page */
+html.ap-forced body > :not(.ap-stage) {
+  display: none;
+}
+
+.ap-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-alt);
+  color: var(--text);
+}
+
+.ap-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.ap-title {
+  font-size: 0.9375rem;
+}
+
+.ap-note {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.ap-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  overflow: auto;
+  padding: 16px;
+}
+
+.ap-shell {
+  --ap-w: 390px;
+  --ap-h: 844px;
+  --ap-s: 1;
+  flex: none;
+  width: calc(var(--ap-w) * var(--ap-s));
+  height: calc(var(--ap-h) * var(--ap-s));
+  box-sizing: content-box;
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--bg);
+}
+
+.ap-shell.ap-phone,
+.ap-shell.ap-tablet {
+  border: 12px solid #1b2130;
+  border-radius: 36px;
+}
+
+.ap-shell.ap-tablet {
+  border-radius: 24px;
+}
+
+.ap-scaler {
+  width: var(--ap-w);
+  height: var(--ap-h);
+  transform: scale(var(--ap-s));
+  transform-origin: top left;
+}
+
+.ap-frame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: var(--bg);
+}
