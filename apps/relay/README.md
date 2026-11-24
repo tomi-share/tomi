@@ -260,7 +260,7 @@ The BE flag that tells the two apart is declared by the authenticator, not attes
 
 The step-up challenge is `SHA-256(nonce || hash of the exact action)`, single use, 2 minutes, tied to the session;
 the server resolves the target again when it writes. Ceilings are per relay and count successful actions only;
-five refused step-ups close the session (never the key). A persistent audit log (500 lines, 90 days) keeps the
+five refused step-ups close the session (never the key). A persistent audit log (90 days; 500 lines for the ordinary kinds, never a bound for the destructive ones) keeps the
 8-character id of the target and the number of the key, never a name, address or token. Spec: `spec/api-v1.md`
 §8.7.1.
 

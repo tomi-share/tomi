@@ -5,7 +5,10 @@
 //! changed, the trash restored or purged. A line is a date, a **fixed word**, the 8-character id
 //! of the target (a space or a device: the only exception to "nothing about a space", bounded to
 //! what the panel already shows) and the number of the passkey. Never a device name, an address,
-//! a token, a code or a value of a request. Bounded: [`MAX_ROWS`] lines and [`MAX_AGE_MS`].
+//! a token, a code or a value of a request. Bounded by age ([`MAX_AGE_MS`]); the lines of the
+//! ordinary kinds are also bounded by number ([`MAX_ROWS`]), but the lines of the
+//! **destructive or rights-changing kinds** ([`PROTECTED`]) are only ever purged by age: what a
+//! session alone can write at will (a quota, a sign-in) can never push them out.
 
 use rusqlite::{params, Connection, Transaction};
 use serde_json::{json, Value};
@@ -16,6 +19,9 @@ use crate::wire::ts_format;
 
 /// How many lines are kept.
 pub const MAX_ROWS: i64 = 500;
+/// How many lines [`list`] returns at most (the protected ones are not bounded by number, but by
+/// the ceilings of the actions that write them).
+pub const LIST_ROWS: i64 = 2000;
 /// How long a line is kept (90 days).
 pub const MAX_AGE_MS: i64 = 90 * 86_400_000;
 
@@ -42,6 +48,23 @@ pub mod kind {
     pub const TRASH_EXPIRED: &str = "trash_expired";
 }
 
+/// The kinds that are never purged by number: they record what destroys data or changes who can
+/// get in, which is what the owner needs after a compromise.
+pub const PROTECTED: [&str; 12] = [
+    kind::PATH_ROTATED,
+    kind::DEVICE_REMOVED,
+    kind::SPACE_DELETED,
+    kind::INVITATION_CREATED,
+    kind::INVITATIONS_REPLACED,
+    kind::PASSKEY_ADDED,
+    kind::PASSKEY_REMOVED,
+    kind::PASSKEY_RESET,
+    kind::POLICY_CHANGED,
+    kind::TRASH_RESTORED,
+    kind::TRASH_PURGED,
+    kind::TRASH_EXPIRED,
+];
+
 fn short(target: &str) -> String {
     target.chars().take(8).collect()
 }
@@ -58,9 +81,18 @@ pub fn record_tx(
         "INSERT INTO admin_web_audit (at, kind, target, key_num) VALUES (?1, ?2, ?3, ?4)",
         params![now, kind, target.map(short), key],
     )?;
+    let protected = PROTECTED
+        .iter()
+        .map(|k| format!("'{k}'"))
+        .collect::<Vec<_>>()
+        .join(",");
     tx.execute(
-        "DELETE FROM admin_web_audit
-         WHERE at < ?1 OR id <= (SELECT max(id) FROM admin_web_audit) - ?2",
+        &format!(
+            "DELETE FROM admin_web_audit
+             WHERE at < ?1
+                OR id IN (SELECT id FROM admin_web_audit WHERE kind NOT IN ({protected})
+                          ORDER BY id DESC LIMIT -1 OFFSET ?2)"
+        ),
         params![now - MAX_AGE_MS, MAX_ROWS],
     )?;
     Ok(())
@@ -97,7 +129,7 @@ pub fn list(conn: &Connection) -> Result<Vec<Value>, ApiError> {
         "SELECT at, kind, target, key_num FROM admin_web_audit ORDER BY id DESC LIMIT ?1",
     )?;
     let rows = st
-        .query_map(params![MAX_ROWS], |r| {
+        .query_map(params![LIST_ROWS], |r| {
             Ok((
                 r.get::<_, i64>(0)?,
                 r.get::<_, String>(1)?,

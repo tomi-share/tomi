@@ -1384,6 +1384,7 @@ async fn the_default_quota_refuses_what_is_not_a_sensible_number() {
         ("a boolean", json!({ "default_bytes": true })),
         ("a list", json!({ "default_bytes": [5_000_000] })),
     ] {
+        env.clock.advance_secs(11);
         let r = post(&env, &seg, "api/quota", body, Some(&cookie)).await;
         assert_eq!(
             (r.status, r.code()),
@@ -1396,6 +1397,7 @@ async fn the_default_quota_refuses_what_is_not_a_sensible_number() {
         );
     }
     // Not JSON at all.
+    env.clock.advance_secs(11);
     let r = env
         .send(
             "POST",
@@ -1412,6 +1414,7 @@ async fn the_default_quota_refuses_what_is_not_a_sensible_number() {
     assert_eq!(r.status, 400);
     // The bounds themselves are accepted.
     for ok in [1_048_576u64, 9_007_199_254_740_991u64, 0] {
+        env.clock.advance_secs(11);
         post(
             &env,
             &seg,
@@ -2297,6 +2300,7 @@ async fn the_journal_says_what_was_done_with_fixed_words_and_nothing_from_a_requ
         .unwrap()
         .to_owned();
     for value in [json!(5_242_880), json!(0), Value::Null] {
+        env.clock.advance_secs(11);
         post(
             &env,
             &seg,
@@ -2308,6 +2312,7 @@ async fn the_journal_says_what_was_done_with_fixed_words_and_nothing_from_a_requ
         .ok(200);
     }
     // A refused value is not an action.
+    env.clock.advance_secs(11);
     post(
         &env,
         &seg,
@@ -2561,6 +2566,7 @@ fn member_count(env: &Env) -> i64 {
 }
 
 async fn signed_in_again(env: &Env, seg: &str, auth: &mut Authenticator) -> String {
+    env.clock.advance_secs(11);
     let r = login_raw(env, seg, auth, &Tweak::default()).await;
     assert_eq!(r.status, 204);
     cookie_of(&r)
@@ -2997,6 +3003,7 @@ async fn the_quota_of_a_space_the_invitations_and_the_sessions_need_the_session_
     let space = env.space_id[..8].to_owned();
 
     // A quota above the usage is applied at once; `null` goes back to the default.
+    env.clock.advance_secs(11);
     let set = post(
         &env,
         &seg,
@@ -3008,6 +3015,7 @@ async fn the_quota_of_a_space_the_invitations_and_the_sessions_need_the_session_
     .ok(200);
     assert_eq!(set["max_bytes"], 50_000_000);
     assert_eq!(set["quota_source"], "space");
+    env.clock.advance_secs(11);
     let unset = post(
         &env,
         &seg,
@@ -3018,6 +3026,8 @@ async fn the_quota_of_a_space_the_invitations_and_the_sessions_need_the_session_
     .await
     .ok(200);
     assert_eq!(unset["quota_source"], "default");
+    env.clock.advance_secs(11);
+    env.clock.advance_secs(11);
     post(
         &env,
         &seg,
@@ -3027,6 +3037,8 @@ async fn the_quota_of_a_space_the_invitations_and_the_sessions_need_the_session_
     )
     .await
     .err(400, "bad_request");
+    env.clock.advance_secs(11);
+    env.clock.advance_secs(11);
     post(
         &env,
         &seg,
@@ -3047,6 +3059,7 @@ async fn the_quota_of_a_space_the_invitations_and_the_sessions_need_the_session_
     )
     .await
     .ok(200);
+    env.clock.advance_secs(11);
     let cancelled = post(
         &env,
         &seg,
@@ -3065,6 +3078,7 @@ async fn the_quota_of_a_space_the_invitations_and_the_sessions_need_the_session_
     let other = signed_in_again(&env, &seg, &mut auth).await;
     let about = get(&env, &seg, "api/about", Some(&cookie)).await.ok(200);
     assert_eq!(about["sessions"]["others"], 1);
+    env.clock.advance_secs(11);
     let closed = post(
         &env,
         &seg,
@@ -3318,4 +3332,184 @@ async fn the_invitations_are_invalidated_from_the_cli_without_making_another() {
     assert!(admin::needs_exclusive_access(&new(false, false, true)));
     // --cancel does not mix with the other two.
     assert_eq!(admin::run(&env.state, new(true, false, true)).await.exit, 2);
+}
+
+// ===== the review: audit trail integrity ======================================================
+
+fn audit_count(env: &Env, kind: &str) -> i64 {
+    let kind = kind.to_owned();
+    env.state
+        .spaces
+        .routing()
+        .read_sync(move |tx| {
+            Ok(tx.query_row(
+                "SELECT count(*) FROM admin_web_audit WHERE kind = ?1",
+                [&kind],
+                |r| r.get(0),
+            )?)
+        })
+        .unwrap()
+}
+
+#[tokio::test]
+async fn a_session_alone_cannot_push_the_destructive_lines_out_of_the_audit_log() {
+    let env = panel().await;
+    let seg = segment(&env);
+    let (_devs, _) = env.space_of(3).await;
+    let mut auth = Authenticator::for_test_relay();
+    let cookie = signed_in(&env, &mut auth).await;
+    let (space, ids) = device_ids(&env, &seg, &cookie).await;
+    act(
+        &env,
+        &seg,
+        revoke_action(&space, &[&ids[0]]),
+        &cookie,
+        &mut auth,
+    )
+    .await
+    .ok(200);
+
+    // A flood of session-only writes is limited in rate (the burst, then 6 a minute)...
+    let quota = |v: Value| json!({ "space_id": space, "value": v });
+    let mut limited = 0;
+    for _ in 0..30 {
+        let r = post(
+            &env,
+            &seg,
+            "api/spaces/quota",
+            quota(Value::Null),
+            Some(&cookie),
+        )
+        .await;
+        if r.status == 429 {
+            limited += 1;
+        }
+    }
+    assert!(limited >= 15, "the flood is throttled ({limited})");
+
+    // ...and even a patient one, 600 changes spread over time, leaves the removal in place.
+    for _ in 0..600 {
+        env.clock.advance_secs(11);
+        post(
+            &env,
+            &seg,
+            "api/spaces/quota",
+            quota(Value::Null),
+            Some(&cookie),
+        )
+        .await
+        .ok(200);
+    }
+    assert!(audit_count(&env, "quota_set") <= tomi_relay::admin_audit::MAX_ROWS);
+    assert_eq!(audit_count(&env, "device_removed"), 1);
+    let journal = get(&env, &seg, "api/journal", Some(&cookie)).await.ok(200);
+    assert!(journal["audit"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|l| l["kind"] == "device_removed" && l["target"] == ids[0]));
+    // The other session-only routes are limited too.
+    for path in ["api/invitations/cancel", "api/quota"] {
+        let mut limited = false;
+        for _ in 0..30 {
+            let body = if path == "api/quota" {
+                json!({ "default_bytes": null })
+            } else {
+                json!({})
+            };
+            limited |= post(&env, &seg, path, body, Some(&cookie)).await.status == 429;
+        }
+        assert!(limited, "{path} is rate limited");
+    }
+}
+
+#[tokio::test]
+async fn the_audit_names_the_key_that_signed_the_step_up_not_the_one_of_the_session() {
+    let env = panel().await;
+    let seg = segment(&env);
+    let (_devs, _) = env.space_of(3).await;
+    let mut synced = Authenticator::for_test_relay();
+    register_flags(
+        &env,
+        &seg,
+        &synced,
+        Some(FLAG_UP | FLAG_UV | FLAG_AT | FLAG_BE),
+    )
+    .await;
+    let mut bound = Authenticator::for_test_relay();
+    register_flags(&env, &seg, &bound, None).await;
+    // The session is opened by key 1, the removal is signed by key 2.
+    let cookie = signed_in_again(&env, &seg, &mut synced).await;
+    let (space, ids) = device_ids(&env, &seg, &cookie).await;
+    act(
+        &env,
+        &seg,
+        revoke_action(&space, &[&ids[0]]),
+        &cookie,
+        &mut bound,
+    )
+    .await
+    .ok(200);
+    let journal = get(&env, &seg, "api/journal", Some(&cookie)).await.ok(200);
+    let line = journal["audit"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|l| l["kind"] == "device_removed")
+        .expect("an audit line");
+    assert_eq!(line["key"], 2);
+    // A session-only action names the key of the session; the default quota is in the log too.
+    env.clock.advance_secs(20);
+    post(
+        &env,
+        &seg,
+        "api/quota",
+        json!({ "default_bytes": null }),
+        Some(&cookie),
+    )
+    .await
+    .ok(200);
+    let journal = get(&env, &seg, "api/journal", Some(&cookie)).await.ok(200);
+    let line = journal["audit"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|l| l["kind"] == "default_quota_set")
+        .expect("the default quota is audited");
+    assert_eq!(line["key"], 1);
+}
+
+#[tokio::test]
+async fn another_session_cannot_push_out_the_pending_step_up_of_the_owner() {
+    let env = panel().await;
+    let seg = segment(&env);
+    let (_devs, _) = env.space_of(3).await;
+    let mut auth = Authenticator::for_test_relay();
+    let owner = signed_in(&env, &mut auth).await;
+    let thief = signed_in_again(&env, &seg, &mut auth).await;
+    let (space, ids) = device_ids(&env, &seg, &owner).await;
+    let action = revoke_action(&space, &[&ids[0]]);
+    let signed = prepared(&env, &seg, &action, &owner, &mut auth).await;
+    // The other session asks for challenges again and again (what its burst allows).
+    env.clock.advance_secs(30);
+    for _ in 0..5 {
+        post(
+            &env,
+            &seg,
+            "api/stepup/options",
+            json!({ "action": revoke_action(&space, &[&ids[1]]) }),
+            Some(&thief),
+        )
+        .await
+        .ok(200);
+    }
+    post(
+        &env,
+        &seg,
+        "api/actions",
+        json!({ "action": action, "assertion": signed }),
+        Some(&owner),
+    )
+    .await
+    .ok(200);
 }

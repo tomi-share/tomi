@@ -3019,7 +3019,12 @@ to another space meanwhile. After a restore a device resumes at its next network
 `4004`: "open Tomi on each device").
 
 **Audit log.** `admin_web_audit` (`routing.db`): date, a fixed word, the 8-character id of the target (space or
-device) and the number of the key; 500 lines and 90 days at most. Never a device name, an address, a token, a code or a
+device) and the number of the key; 90 days at most, and 500 lines for the ordinary kinds. The lines of what
+destroys data or changes who can get in (devices removed, spaces deleted, invitations, keys, policy, path, trash) are
+only purged by age, so that a session alone, which can write quota and sign-in lines, never pushes them out. The
+session-only routes (`api/spaces/quota`, `api/quota`, `api/invitations/cancel`, `api/sessions/close-all`) share the
+rate limit of the other sensitive routes. The number of the key is the one that signed the step-up (for a
+session-only action: the key that opened the session). Never a device name, an address, a token, a code or a
 value of a request. It records sign-ins, refused step-ups, the actions above, the keys added or removed, the path
 changed and the trash restored, purged or expired. `GET api/journal` returns it (`audit`) with the in-memory journal
 of the process (`entries`).
