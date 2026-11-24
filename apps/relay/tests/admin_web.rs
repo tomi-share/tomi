@@ -2438,10 +2438,10 @@ async fn the_page_offers_the_new_views_without_inline_code_or_a_secret_in_storag
     for id in [
         "refresh",
         "alerts",
-        "theme",
+        "stepup",
         "session-info",
-        "devices-close",
-        "space-commands",
+        "spaces-body",
+        "d-commands",
         "journal-list",
         "about-facts",
         "limits-facts",
@@ -2461,6 +2461,10 @@ async fn the_page_offers_the_new_views_without_inline_code_or_a_secret_in_storag
     assert!(js.contains("localStorage.setItem(THEME_KEY"));
     assert!(!js.contains("sessionStorage") && !js.contains("indexedDB"));
     assert!(!js.contains("document.cookie"));
+    // The page styles nothing by hand (style-src 'self'): no style attribute written by the script.
+    assert!(
+        !js.contains(".style.") && !js.contains("cssText") && !js.contains("setAttribute('style'")
+    );
     // The dialog does not submit a form (form-action 'none').
     assert!(!html.contains("method=\"dialog\""));
     // Both themes, with a manual choice that wins over the system.
@@ -2523,7 +2527,7 @@ async fn the_creation_link_follows_public_url_never_the_host_header_and_is_shown
     ] {
         assert!(html.contains(id), "{id}");
     }
-    assert!(js.contains("showQr(link || r.data.token)"));
+    assert!(js.contains("showQr(link || r.token)"));
     assert!(!js.contains("location.host") && !js.contains("location.origin"));
 }
 

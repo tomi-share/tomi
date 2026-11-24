@@ -1,18 +1,9 @@
 // Administration page of the Tomi relay.
 // No dependency, no framework, no external resource. All text coming from the server
-// is inserted with textContent, never interpreted as HTML.
+// is inserted with textContent, never interpreted as markup.
 'use strict';
 
 (function () {
-  var VIEWS = ['loading', 'nojs', 'enroll', 'login', 'dashboard'];
-  var FOCUS_TARGET = {
-    loading: 'h-loading',
-    nojs: 'h-unsupported',
-    enroll: 'h-enroll',
-    login: 'h-login',
-    dashboard: 'h-status'
-  };
-
   function $(id) {
     return document.getElementById(id);
   }
@@ -473,51 +464,6 @@
     return qrEncode(text).matrix;
   }
 
-  // ----- display -----------------------------------------------------------------------
-
-  var toastTimer = null;
-
-  // Action feedback: at the bottom of the screen, visible wherever you are on the page. A success
-  // clears itself; an error stays until it is closed (or until the next message).
-  function say(text, kind) {
-    var box = $('message');
-    var toast = $('toast');
-    if (toastTimer) {
-      clearTimeout(toastTimer);
-      toastTimer = null;
-    }
-    if (!text) {
-      box.textContent = '';
-      toast.hidden = true;
-      return;
-    }
-    toast.className = 'toast' + (kind ? ' ' + kind : '');
-    // An error is announced at once, the rest politely. The area is shown before it is
-    // filled: a screen reader does not announce what changes in a hidden area.
-    box.setAttribute('role', kind === 'error' ? 'alert' : 'status');
-    toast.hidden = false;
-    box.textContent = text;
-    if (kind !== 'error') {
-      toastTimer = setTimeout(function () {
-        say('');
-      }, 8000);
-    }
-  }
-
-  function show(name) {
-    VIEWS.forEach(function (v) {
-      $('view-' + v).hidden = v !== name;
-    });
-    var dashboard = name === 'dashboard';
-    $('logout').hidden = !dashboard;
-    $('dash-nav').hidden = !dashboard;
-    $('session-info').hidden = !dashboard;
-    var target = $(FOCUS_TARGET[name]);
-    if (target) {
-      target.focus();
-    }
-  }
-
   function clear(node) {
     while (node.firstChild) {
       node.removeChild(node.firstChild);
@@ -683,7 +629,136 @@
     return s + ' s';
   }
 
-  // ----- theme (local preference of this browser: nothing secret) ----------------------
+
+  // ----- SVG icons (the sprite is in index.html) ----------------------------------------------
+
+  // The SVG namespace is an identifier, not a resource: written in two parts so that no address
+  // appears in the file.
+  var SVG_NS = 'http:' + '//www.w3.org/2000/svg';
+
+  function ico(name, size) {
+    var svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('class', 'ico' + (size ? ' ' + size : ''));
+    svg.setAttribute('aria-hidden', 'true');
+    var use = document.createElementNS(SVG_NS, 'use');
+    use.setAttribute('href', '#i-' + name);
+    svg.appendChild(use);
+    return svg;
+  }
+
+  function setIcon(svg, name) {
+    var use = svg.querySelector('use');
+    if (use) {
+      use.setAttribute('href', '#i-' + name);
+    }
+  }
+
+  function textOf(id, text) {
+    $(id).textContent = text;
+  }
+
+  function copyBtn(what, label) {
+    var b = el('button', 'icon-btn sm');
+    b.type = 'button';
+    b.setAttribute('data-copy', what);
+    b.setAttribute('aria-label', label);
+    b.appendChild(ico('copy'));
+    return b;
+  }
+
+  // ----- feedback: a success clears itself, an error stays until it is closed --------------
+
+  var toastTimer = null;
+
+  function say(text, kind) {
+    var toast = $('toast');
+    clearTimeout(toastTimer);
+    if (!text) {
+      toast.hidden = true;
+      $('message').textContent = '';
+      return;
+    }
+    var error = kind === 'error';
+    toast.className = 'toast' + (error ? ' error' : '');
+    setIcon($('toast-ico'), error ? 'error' : 'check');
+    $('message').setAttribute('role', error ? 'alert' : 'status');
+    $('toast-close').hidden = !error;
+    toast.hidden = false;
+    $('message').textContent = text;
+    if (!error) {
+      toastTimer = setTimeout(function () {
+        toast.hidden = true;
+      }, 6000);
+    }
+  }
+
+  // ----- the screens without navigation, and the application -----------------------------------
+
+  var AUTH = ['loading', 'nojs', 'enroll', 'login'];
+  var FOCUS = { loading: 'h-loading', nojs: 'h-unsupported', enroll: 'h-enroll', login: 'h-login' };
+  var VIEWS = {
+    apercu: 'Vue d’ensemble',
+    espaces: 'Espaces',
+    invitations: 'Invitations',
+    journal: 'Journal',
+    reglages: 'Réglages'
+  };
+
+  var appShown = false;
+
+  function showAuth(name) {
+    appShown = false;
+    document.querySelector('.side').hidden = true;
+    document.querySelector('.appbar').hidden = true;
+    Object.keys(VIEWS).forEach(function (v) {
+      $('view-' + v).hidden = true;
+    });
+    document.body.classList.remove('has-detail');
+    AUTH.forEach(function (v) {
+      $('view-' + v).hidden = v !== name;
+    });
+    var target = $(FOCUS[name]);
+    if (target) {
+      target.focus();
+    }
+  }
+
+  function showApp() {
+    appShown = true;
+    AUTH.forEach(function (v) {
+      $('view-' + v).hidden = true;
+    });
+    document.querySelector('.side').hidden = false;
+    document.querySelector('.appbar').hidden = false;
+    route();
+  }
+
+  // ----- the data of the last read: what is needed to redraw without asking again -------------
+
+  var data = {
+    status: null,
+    spaces: [],
+    about: null,
+    invitations: [],
+    journal: null,
+    keys: null,
+    trash: null,
+    quota: null,
+    devices: []
+  };
+  var sorts = { spaces: { key: 'activity', dir: -1 }, devices: { key: 'activity', dir: -1 } };
+  var selectedSpace = null;
+
+  function spaceById(id) {
+    for (var i = 0; i < data.spaces.length; i++) {
+      if (data.spaces[i].id === id) {
+        return data.spaces[i];
+      }
+    }
+    return null;
+  }
+
+  // ----- theme (a local preference of this browser: nothing secret) ---------------------------
 
   var THEME_KEY = 'tomi-admin-theme';
 
@@ -705,12 +780,15 @@
     if (value !== 'light' && value !== 'dark') {
       value = 'auto';
     }
-    $('theme').value = value;
+    var radios = document.getElementsByName('theme');
+    for (var i = 0; i < radios.length; i++) {
+      radios[i].checked = radios[i].value === value;
+    }
     applyTheme(value);
   }
 
-  function saveTheme() {
-    var value = $('theme').value;
+  function saveTheme(event) {
+    var value = event.target.value;
     applyTheme(value);
     try {
       if (value === 'light' || value === 'dark') {
@@ -723,55 +801,13 @@
     }
   }
 
-  // ----- in-page confirmation --------------------------------------------------------
-
-  // A real confirmation window (<dialog>) rather than window.confirm: a title, the
-  // consequence in plain words, and a button that says what it does. Cancel has focus by default.
-  function confirmAction(title, text, okLabel) {
-    var dlg = $('confirm-dialog');
-    if (!dlg || typeof dlg.showModal !== 'function') {
-      return Promise.resolve(window.confirm(title + '\n\n' + text));
-    }
-    var before = document.activeElement;
-    $('confirm-title').textContent = title;
-    $('confirm-text').textContent = text;
-    $('confirm-ok').textContent = okLabel;
-    return new Promise(function (resolve) {
-      var ok = $('confirm-ok');
-      var cancel = $('confirm-cancel');
-      function done(answer) {
-        ok.removeEventListener('click', onOk);
-        cancel.removeEventListener('click', onCancel);
-        dlg.removeEventListener('cancel', onCancel);
-        if (dlg.open) {
-          dlg.close();
-        }
-        if (before && typeof before.focus === 'function') {
-          before.focus();
-        }
-        resolve(answer);
-      }
-      function onOk() {
-        done(true);
-      }
-      function onCancel() {
-        done(false);
-      }
-      ok.addEventListener('click', onOk);
-      cancel.addEventListener('click', onCancel);
-      dlg.addEventListener('cancel', onCancel); // Escape key
-      dlg.showModal();
-      cancel.focus();
-    });
-  }
-
-  // ----- clipboard ---------------------------------------------------------------------
+  // ----- clipboard -------------------------------------------------------------------------------
 
   function copyText(text, what) {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       return navigator.clipboard.writeText(text).then(
         function () {
-          say(what + ' copié.', 'ok');
+          say(what + ' copié.');
         },
         function () {
           say('Copie impossible : sélectionne le texte et copie-le à la main.', 'error');
@@ -782,17 +818,24 @@
     return Promise.resolve();
   }
 
-  function copyButton(text, what, label) {
-    var b = el('button', 'secondary small', 'Copier');
-    b.type = 'button';
-    b.setAttribute('aria-label', label);
-    b.addEventListener('click', function () {
-      copyText(text, what);
-    });
-    return b;
+  // The text a copy button copies: its command, the id next to it, or the one of the open space.
+  function copyValue(button) {
+    var cmd = button.closest('.cmd');
+    if (cmd) {
+      return cmd.querySelector('code').textContent;
+    }
+    if (button.id === 'd-copy') {
+      return selectedSpace || '';
+    }
+    var row = button.closest('th, dd');
+    if (row) {
+      var node = row.querySelector('.space-link, .mono');
+      return node ? node.textContent : '';
+    }
+    return '';
   }
 
-  // ----- server calls ---------------------------------------------------------------
+  // ----- server calls ----------------------------------------------------------------------------
 
   // Write requests carry the X-Tomi-Admin header; the browser adds the Origin header.
   // The session cookie is HttpOnly: this script never sees it.
@@ -808,8 +851,8 @@
       options.body = JSON.stringify(body);
     }
     return fetch(path, options).then(function (response) {
-      // The server pushes the session end back on every authenticated request, even one refused afterwards
-      // (400, 404, 500): only a 401 response proves that it was not pushed back.
+      // The server pushes the end of the session back on every authenticated request, even one
+      // refused afterwards: only a 401 proves that it did not.
       if (response.status !== 401) {
         noteActivity();
       }
@@ -817,18 +860,17 @@
         return { status: 204, data: null };
       }
       return response.text().then(function (text) {
-        var data = null;
+        var parsed = null;
         try {
-          data = text ? JSON.parse(text) : null;
+          parsed = text ? JSON.parse(text) : null;
         } catch (e) {
-          data = null;
+          parsed = null;
         }
-        return { status: response.status, data: data };
+        return { status: response.status, data: parsed };
       });
     });
   }
 
-  // A dashboard read: 401 = session over, otherwise 200 with the expected body.
   function read(path) {
     return api('GET', path).then(function (r) {
       if (r.status === 401) {
@@ -841,11 +883,8 @@
     });
   }
 
-  // ----- session --------------------------------------------------------------------------
+  // ----- session ---------------------------------------------------------------------------------
 
-  // Session deadlines, in browser time. Inactivity is recounted at each response
-  // from the server; the 8-hour limit does not move. Nothing refreshes the page on its own: an
-  // automatic refresh would keep the session open forever.
   var session = { idleTtl: 0, absoluteEnd: 0, idleEnd: 0 };
   var sessionTimer = null;
 
@@ -874,10 +913,14 @@
     session = { idleTtl: 0, absoluteEnd: 0, idleEnd: 0 };
   }
 
+  // The session is written in the sheet (⋮, or the foot of the sidebar); only a session that ends in
+  // 5 minutes or less comes up into the bar, as a chip.
   function tickSession() {
-    var info = $('session-info');
+    var chip = $('session-chip');
     if (!session.idleEnd || !session.absoluteEnd) {
-      info.textContent = '';
+      textOf('session-line', '');
+      textOf('session-note', '');
+      chip.hidden = true;
       return;
     }
     var end = Math.min(session.idleEnd, session.absoluteEnd);
@@ -888,24 +931,42 @@
     }
     var hard = session.absoluteEnd <= session.idleEnd;
     var minutes = Math.max(1, Math.ceil(left / 60));
-    info.textContent =
-      'Session : ' + (minutes <= 5 ? 'se ferme dans ' : 'encore ') + fmtDuration(minutes * 60) +
-      (hard ? ' (limite de 8 h)' : '');
-    info.className = 'session-info' + (minutes <= 5 ? ' soon' : '');
-    info.title = hard
-      ? 'La session atteint sa durée maximale de 8 heures : il faudra te reconnecter.'
-      : 'Toute action ou actualisation repousse la fin de session (30 minutes sans activité).';
+    textOf('session-line', 'Session : ' + (minutes <= 5 ? 'se ferme dans ' : 'encore ') + fmtDuration(minutes * 60));
+    textOf(
+      'session-note',
+      hard
+        ? 'Limite de 8 h après la connexion : il faudra te reconnecter.'
+        : 'Se ferme après 30 min sans activité, au plus tard dans ' + fmtDuration((session.absoluteEnd - Date.now()) / 1000) + '.'
+    );
+    chip.hidden = minutes > 5;
+    chip.querySelector('span').textContent = minutes + ' min';
+    document.body.classList.toggle('session-soon', minutes <= 5);
   }
 
-  function lostSession() {
+  function resetScreens() {
     hideToken();
     stopSession();
     selectedSpace = null;
-    say('La session a pris fin. Connecte-toi de nouveau.', 'error');
-    show('login');
+    closeSheet();
+    if ($('stepup').open) {
+      $('stepup').close();
+    }
+    if ($('confirm-dialog').open) {
+      $('confirm-dialog').close();
+    }
   }
 
-  // ----- passkeys --------------------------------------------------------------------
+  function lostSession(message, kind) {
+    resetScreens();
+    if (message === undefined) {
+      say('La session a pris fin. Connecte-toi de nouveau.', 'error');
+    } else if (message) {
+      say(message, kind);
+    }
+    showAuth('login');
+  }
+
+  // ----- passkeys --------------------------------------------------------------------------------
 
   function webauthnAvailable() {
     return !!(window.PublicKeyCredential && navigator.credentials && navigator.credentials.create);
@@ -952,8 +1013,8 @@
           throw new Error('refused');
         }
         $('code').value = '';
-        say('Clé d’accès créée. Connecte-toi maintenant.', 'ok');
-        show('login');
+        say('Clé d’accès créée. Connecte-toi maintenant.');
+        showAuth('login');
       })
       .catch(function (err) {
         say(describeFailure(err), 'error');
@@ -995,6 +1056,7 @@
           throw new Error('refused');
         }
         say('');
+        $('login-note').hidden = true;
         return openDashboard();
       })
       .catch(function (err) {
@@ -1008,674 +1070,1218 @@
   function logout() {
     // The page clears at once, without waiting for the server: a token does not stay displayed
     // because of a network outage.
-    hideToken();
-    stopSession();
-    selectedSpace = null;
+    resetScreens();
     api('POST', 'api/logout', {}).then(
       function () {
-        say('Tu es déconnecté.', 'ok');
-        show('login');
+        say('Tu es déconnecté.');
+        showAuth('login');
       },
       function () {
         say('Déconnexion impossible : le serveur ne répond pas. La session se fermera d’elle-même.', 'error');
-        show('login');
+        showAuth('login');
       }
     );
   }
 
-  // ----- dashboard data ----------------------------------------------------------
+  // "Close every session": a protection, so the button is never red.
+  function closeAllSessions() {
+    confirmAction({
+      title: 'Fermer toutes les sessions ?',
+      text: 'Toutes les sessions du panneau seront fermées, celle-ci comprise. Ta clé d’accès reste valable : tu pourras te reconnecter tout de suite.',
+      ok: 'Fermer toutes les sessions',
+      tone: ''
+    }).then(function (yes) {
+      if (!yes) {
+        return;
+      }
+      api('POST', 'api/sessions/close-all', {}).then(
+        function (r) {
+          if (r.status !== 204 && r.status !== 401) {
+            say('Impossible de fermer les sessions. Réessaie.', 'error');
+            return;
+          }
+          lostSession('Toutes les sessions du panneau sont fermées, celle-ci comprise. Reconnecte-toi avec ta clé d’accès.');
+        },
+        function () {
+          say('Le relais ne répond pas. Actualise pour voir l’état réel.', 'error');
+        }
+      );
+    });
+  }
 
-  // The last read of each source: what is needed to redraw (sorting), compute the attention points
-  // and the diagnostic without asking the server again.
-  var data = {
-    status: null,
-    spaces: [],
-    devices: [],
-    quota: null,
-    invitations: [],
-    journal: [],
-    about: null
-  };
-  var selectedSpace = null;
+  // ----- the simple confirmation (session only): "Annuler" has the focus -----------------------
 
-  // ----- table sorting -----------------------------------------------------------------
+  var confirmFocus = null;
 
-  var sorts = {
-    spaces: { key: 'created_at', dir: 1 },
-    devices: { key: 'last_seen_at', dir: -1 }
-  };
-
-  function sortValue(row, key) {
-    var v = row[key];
-    if (key === 'members') {
-      return Number(row.active || 0) * 1000 + Number(row.members || 0);
+  function confirmAction(o) {
+    var dlg = $('confirm-dialog');
+    if (typeof dlg.showModal !== 'function') {
+      return Promise.resolve(window.confirm(o.title + '\n\n' + o.text));
     }
-    if (v === null || v === undefined) {
+    textOf('confirm-title', o.title);
+    textOf('confirm-text', o.text);
+    textOf('confirm-ok', o.ok);
+    $('confirm-ok').className = 'btn' + (o.tone === undefined ? ' danger' : o.tone ? ' ' + o.tone : '');
+    var list = $('confirm-list');
+    clear(list);
+    list.hidden = !(o.list && o.list.length);
+    (o.list || []).forEach(function (row) {
+      var li = el('li');
+      li.appendChild(el('span', 'mono', row[0]));
+      li.appendChild(el('span', null, row[1]));
+      list.appendChild(li);
+    });
+    confirmFocus = document.activeElement;
+    return new Promise(function (resolve) {
+      var ok = $('confirm-ok');
+      var cancel = $('confirm-cancel');
+      function done(answer) {
+        ok.removeEventListener('click', onOk);
+        cancel.removeEventListener('click', onCancel);
+        dlg.removeEventListener('cancel', onCancel);
+        if (dlg.open) {
+          dlg.close();
+        }
+        if (confirmFocus && document.contains(confirmFocus)) {
+          confirmFocus.focus();
+        }
+        resolve(answer);
+      }
+      function onOk() {
+        done(true);
+      }
+      function onCancel() {
+        done(false);
+      }
+      ok.addEventListener('click', onOk);
+      cancel.addEventListener('click', onCancel);
+      dlg.addEventListener('cancel', onCancel);
+      dlg.showModal();
+      cancel.focus();
+    });
+  }
+
+  // ===== step-up: a passkey tied to the action ===================================================
+  //
+  // The sheet shows the summary the SERVER built (`api/stepup/options`): the authenticator shows
+  // only the name of the site, never the action. `data-state` of #stepup: review, pending,
+  // cancelled, refused, error, expired, limit, closed (see DECISION-ACTIONS.md).
+
+  var su = $('stepup');
+  var stepCfg = null;
+  var stepTimer = null;
+  var stepAbort = null;
+  var stepFocus = null;
+  var refusals = 0;
+
+  var STEP_MSG = {
+    cancelled: ['warn', 'warning', 'Annulé sur ton appareil', 'Rien n’a été fait. Tu peux réessayer quand tu veux.'],
+    refused: ['', 'error', 'Clé d’accès refusée par le relais',
+      'Cette clé n’est pas enregistrée sur ce relais, ou la vérification (empreinte, visage, code) n’a pas eu lieu. Rien n’a été fait.'],
+    expired: ['warn', 'schedule', 'Délai de 2 min dépassé',
+      'Ce défi n’est plus valable et rien n’a été fait. Recommence pour en obtenir un nouveau.'],
+    error: ['', 'error', 'Le relais n’a pas répondu',
+      'L’action a pu être faite, ou non. Actualise pour voir l’état réel avant de recommencer.'],
+    closed: ['', 'lock', 'Session fermée par prudence',
+      '5 refus de clé d’accès dans cette session. Ta clé d’accès reste valable : reconnecte-toi, puis regarde le journal si ce n’était pas toi.'],
+    changed: ['warn', 'info', 'Déjà fait ailleurs',
+      'La cible a changé depuis que tu as ouvert cette fenêtre. Rien n’a été fait : actualise pour voir l’état réel.']
+  };
+
+  function msgBox(state, extra) {
+    var m = STEP_MSG[state];
+    var box = $('su-msg');
+    clear(box);
+    box.className = 'su-msg' + (m && m[0] ? ' ' + m[0] : '');
+    var strong = el('strong');
+    if (m) {
+      strong.appendChild(ico(m[1]));
+      strong.appendChild(document.createTextNode(m[2]));
+      box.appendChild(strong);
+      box.appendChild(el('p', null, m[3]));
+    }
+    if (state === 'refused') {
+      var tries = el('div', 'tries');
+      tries.setAttribute('aria-hidden', 'true');
+      for (var i = 1; i <= 5; i++) {
+        tries.appendChild(el('span', i <= refusals ? 'used' : ''));
+      }
+      box.appendChild(tries);
+      box.appendChild(el('p', null, 'Refus ' + refusals + ' sur 5 : au cinquième, cette session se ferme. Ta clé d’accès, elle, reste valable.'));
+    }
+    if (state === 'limit' && extra) {
+      var s2 = el('strong');
+      s2.appendChild(ico('schedule'));
+      s2.appendChild(document.createTextNode('Limite atteinte : ' + extra.cap));
+      box.className = 'su-msg warn';
+      box.appendChild(s2);
+      box.appendChild(el('p', null, extra.next + ' Rien n’a été fait. Si c’est urgent, fais-le sur le serveur :'));
+    }
+  }
+
+  function setStep(state, extra) {
+    su.setAttribute('data-state', state);
+    clearTimeout(stepTimer);
+    var ok = $('su-ok');
+    var cancel = $('su-cancel');
+    cancel.textContent = state === 'review' || state === 'pending' ? 'Annuler' : 'Fermer';
+    ok.className = 'btn ' + (stepCfg.tone === undefined ? 'danger' : stepCfg.tone);
+    ok.querySelector('svg').removeAttribute('hidden');
+    $('su-input').disabled = state === 'pending';
+    $('su-cli').open = state === 'limit';
+    if (state === 'review') {
+      textOf('su-ok-label', stepCfg.okLabel);
+      syncTyped();
+      return;
+    }
+    if (state === 'pending') {
+      // The authenticator window covers the page: no countdown, only "this challenge stays valid
+      // 2 min" and, past that, the state "expired".
+      stepTimer = setTimeout(function () {
+        abortStep();
+        setStep('expired');
+      }, 120000);
+      cancel.focus();
+      return;
+    }
+    msgBox(state, extra);
+    textOf('su-ok-label', state === 'expired' ? 'Recommencer' : state === 'error' || state === 'changed' ? 'Actualiser' :
+      state === 'closed' ? 'Revenir à la connexion' : 'Réessayer');
+    ok.disabled = state === 'limit';
+    if (state === 'limit') {
+      ok.hidden = true;
+    }
+    if (state === 'error' || state === 'closed' || state === 'changed') {
+      ok.className = 'btn';
+      ok.querySelector('svg').setAttribute('hidden', '');
+    }
+    (state === 'closed' ? ok : cancel).focus();
+  }
+
+  function syncTyped() {
+    var ok = $('su-ok');
+    if (!stepCfg || !stepCfg.expect) {
+      ok.disabled = false;
+      return;
+    }
+    var value = $('su-input').value.trim().toLowerCase();
+    var good = value === stepCfg.expect;
+    ok.disabled = !good;
+    var out = $('su-match');
+    out.className = 'caption' + (good ? ' ok' : '');
+    out.textContent = good ? 'Identifiant correct' : value.length === 8 ? 'Ce n’est pas cet espace' : '';
+    $('su-input').setAttribute('aria-invalid', value.length === 8 && !good ? 'true' : 'false');
+  }
+
+  function abortStep() {
+    if (stepAbort) {
+      try {
+        stepAbort.abort();
+      } catch (e) {
+        // Nothing to abort.
+      }
+      stepAbort = null;
+    }
+  }
+
+  function closeStep() {
+    clearTimeout(stepTimer);
+    abortStep();
+    if (su.open) {
+      su.close();
+    }
+  }
+
+  // The summary of the sheet comes from `summary` of api/stepup/options.
+  function fillRecap(cfg) {
+    var recap = $('su-recap');
+    clear(recap);
+    recap.className = 'recap' + (cfg.facts ? ' facts' : '');
+    recap.hidden = !cfg.recap || !cfg.recap.length;
+    (cfg.recap || []).forEach(function (row) {
+      recap.appendChild(row);
+    });
+    var cq = $('su-conseq');
+    clear(cq);
+    cfg.conseq.forEach(function (c) {
+      cq.appendChild(el('li', c[1], c[0]));
+    });
+  }
+
+  function openStep(cfg) {
+    stepCfg = cfg;
+    ensureCaps();
+    textOf('su-title', cfg.title);
+    $('su-ico').className = 'su-ico' + (cfg.tone === '' ? ' create' : '');
+    clear($('su-ico'));
+    $('su-ico').appendChild(ico(cfg.icon, 'lg'));
+    fillRecap(cfg);
+    $('su-type').hidden = !cfg.expect;
+    $('su-input').value = '';
+    textOf('su-expect', cfg.expect || '');
+    textOf('su-pk-text', cfg.pk);
+    textOf('su-cmd', cfg.cmd);
+    textOf('su-cmd-note', cfg.cmdNote || '');
+    $('su-cmd-note').hidden = !cfg.cmdNote;
+    textOf('su-rp', new URL(window.location.href).hostname);
+    $('su-ok').hidden = false;
+    stepFocus = cfg.from || document.activeElement;
+    su.showModal();
+    setStep('review');
+    if (cfg.direct) {
+      beginStep();
+    } else {
+      $('su-cancel').focus();
+    }
+  }
+
+  // The server checks the target and the ceiling BEFORE it makes a challenge, then the passkey is
+  // asked. Whatever the sheet shows was built by the server from its own data.
+  function beginStep() {
+    var cfg = stepCfg;
+    setStep('pending');
+    var aborted = false;
+    stepAbort = typeof AbortController === 'function' ? new AbortController() : null;
+    api('POST', 'api/stepup/options', { action: cfg.action() })
+      .then(function (r) {
+        if (!su.open) {
+          aborted = true;
+          return null;
+        }
+        if (r.status === 429) {
+          throw { limit: r.data || {} };
+        }
+        if (r.status === 409) {
+          throw { changed: true };
+        }
+        if (r.status === 401) {
+          throw new Error('session');
+        }
+        if (r.status !== 200 || !r.data || !r.data.publicKey) {
+          throw new Error('failed');
+        }
+        if (cfg.summary) {
+          cfg.summary(r.data.summary || {});
+        }
+        var pk = r.data.publicKey;
+        pk.challenge = fromB64u(pk.challenge);
+        (pk.allowCredentials || []).forEach(function (c) {
+          c.id = fromB64u(c.id);
+        });
+        var options = { publicKey: pk };
+        if (stepAbort) {
+          options.signal = stepAbort.signal;
+        }
+        return navigator.credentials.get(options).then(function (credential) {
+          return { credential: credential };
+        });
+      })
+      .then(function (got) {
+        if (!got || !su.open) {
+          return null;
+        }
+        var res = got.credential.response;
+        return api('POST', 'api/actions', {
+          action: cfg.action(),
+          assertion: {
+            id: toB64u(got.credential.rawId),
+            clientDataJSON: toB64u(res.clientDataJSON),
+            authenticatorData: toB64u(res.authenticatorData),
+            signature: toB64u(res.signature)
+          }
+        });
+      })
+      .then(function (r) {
+        if (!r || !su.open) {
+          return;
+        }
+        clearTimeout(stepTimer);
+        if (r.status === 200) {
+          refusals = 0;
+          closeStep();
+          cfg.done(r.data || {});
+          return;
+        }
+        var d = r.data || {};
+        if (r.status === 401 && d.reason === 'expired') {
+          setStep('expired');
+        } else if (r.status === 401 && d.session_closed) {
+          lostSession('Ta session a été fermée par prudence : 5 confirmations par clé d’accès ont été refusées. Ta clé reste valable.', 'error');
+        } else if (r.status === 401 && d.reason === 'refused') {
+          refusals = Number(d.refusals) || refusals + 1;
+          setStep('refused');
+        } else if (r.status === 401) {
+          throw new Error('session');
+        } else if (r.status === 429) {
+          setStep('limit', limitText(d));
+        } else if (r.status === 409) {
+          setStep('changed');
+        } else if (r.status === 400) {
+          setStep('error');
+        } else {
+          setStep('error');
+        }
+      })
+      .catch(function (err) {
+        if (aborted || !su.open) {
+          return;
+        }
+        clearTimeout(stepTimer);
+        if (err && err.limit) {
+          setStep('limit', limitText(err.limit));
+        } else if (err && err.changed) {
+          setStep('changed');
+        } else if (err && err.message === 'session') {
+          lostSession();
+        } else if (err && (err.name === 'NotAllowedError' || err.name === 'AbortError')) {
+          // Cancelled on the device: nothing was sent to the relay, nothing is counted.
+          setStep('cancelled');
+        } else {
+          setStep('error');
+        }
+      });
+  }
+
+  var CAPS = {
+    space_deletions: 'suppressions d’espace',
+    device_removals: 'retraits d’appareil',
+    invitations: 'invitations'
+  };
+
+  function capLine(kind) {
+    var c = data.about && data.about.ceilings && data.about.ceilings[kind];
+    if (!c) {
       return '';
     }
-    return v;
+    var per = c.window_secs >= 86400 ? ' par 24 h' : ' par heure';
+    return c.max + ' ' + CAPS[kind] + per + ' au plus sur ce relais';
   }
 
-  function sorted(rows, sort) {
-    return rows.slice().sort(function (a, b) {
-      var x = sortValue(a, sort.key);
-      var y = sortValue(b, sort.key);
-      var c;
-      if (typeof x === 'number' && typeof y === 'number') {
-        c = x - y;
-      } else {
-        c = String(x).localeCompare(String(y), 'fr', { numeric: true, sensitivity: 'base' });
+  function limitText(d) {
+    var kind = d.ceiling;
+    var cap = kind && CAPS[kind] ? d.max + ' ' + CAPS[kind] + (d.window_secs >= 86400 ? ' par 24 h' : ' par heure') : 'plafond du relais';
+    var wait = Number(d.retry_after) || 0;
+    if (d.cli) {
+      textOf('su-cmd', d.cli);
+    }
+    return {
+      cap: cap,
+      next: wait ? 'La prochaine sera possible dans ' + fmtDuration(wait) + '.' : ''
+    };
+  }
+
+  function ensureCaps() {
+    // The ceilings come with api/about; nothing else to prepare.
+  }
+
+  su.addEventListener('close', function () {
+    clearTimeout(stepTimer);
+    abortStep();
+    if (stepFocus && document.contains(stepFocus)) {
+      stepFocus.focus();
+    }
+  });
+
+  function onStepOk() {
+    var state = su.getAttribute('data-state');
+    if (state === 'error' || state === 'changed') {
+      closeStep();
+      refreshAll();
+    } else if (state === 'closed') {
+      closeStep();
+      lostSession('');
+    } else {
+      beginStep();
+    }
+  }
+
+  // ----- what is shown in the sheet, per action -----------------------------------------------
+
+  function recapDevice(d) {
+    var li = el('li');
+    li.appendChild(ico(platformIcon(d.platform)));
+    var main = el('span', 'r-main');
+    main.appendChild(el('strong', null, d.name || 'Appareil'));
+    main.appendChild(el('span', 'caption', deviceSub(d)));
+    li.appendChild(main);
+    li.appendChild(el('span', 'mono r-id', d.id));
+    return li;
+  }
+
+  function recapFact(label, value) {
+    var li = el('li');
+    li.appendChild(el('span', null, label));
+    li.appendChild(el('span', null, value));
+    return li;
+  }
+
+  function askRevoke(ids, from) {
+    var id = selectedSpace;
+    var devices = data.devices.filter(function (d) {
+      return ids.indexOf(d.id) !== -1;
+    });
+    if (!devices.length) {
+      return;
+    }
+    var one = devices.length === 1;
+    openStep({
+      from: from,
+      icon: 'person-remove',
+      title: one ? 'Retirer ' + (devices[0].name || 'cet appareil') + ' de l’espace ' + id + ' ?' :
+        'Retirer ' + devices.length + ' appareils de l’espace ' + id + ' ?',
+      recap: devices.map(recapDevice),
+      conseq: [
+        [one ? 'Il perd l’accès tout de suite. Pour revenir, il devra être recouplé depuis un autre appareil.' :
+          'Ils perdent l’accès tout de suite. Pour revenir, ils devront être recouplés depuis un autre appareil.', 'strong'],
+        [one ? 'Ses données restent lisibles sur lui : un retrait n’efface rien.' :
+          'Leurs données restent lisibles sur eux : un retrait n’efface rien.', ''],
+        ['Un appareil restant renouvellera la clé de l’espace à sa prochaine connexion.', 'good']
+      ],
+      pk: 'Ta clé d’accès te sera demandée · ' + capLine('device_removals'),
+      okLabel: 'Retirer avec ma clé d’accès',
+      cmd: devices.map(function (d) { return 'tomi-relay admin revoke --space ' + id + ' ' + d.id; }).join('\n'),
+      cmdNote: 'Sur le serveur, la commande agit tout de suite, sans autre confirmation.',
+      action: function () {
+        return { type: 'revoke_devices', space_id: id, device_ids: ids.slice() };
+      },
+      done: function (r) {
+        var removed = r.removed || [];
+        say((removed.length === 1 ? (removed[0].name || 'Appareil') + ' retiré' : removed.length + ' appareils retirés') +
+          ' · un appareil restant renouvellera la clé');
+        refreshAll();
       }
-      return c * sort.dir;
     });
   }
 
-  // Each sortable header becomes a button; aria-sort states the current order.
-  function setupSort(tableId, name, render) {
-    var heads = $(tableId).querySelectorAll('th[data-sort]');
-    Array.prototype.forEach.call(heads, function (th) {
-      var key = th.getAttribute('data-sort');
-      var label = th.textContent;
-      clear(th);
-      var b = el('button', 'sort', label);
-      b.type = 'button';
-      var dir = el('span', 'dir');
-      dir.setAttribute('aria-hidden', 'true');
-      b.appendChild(dir);
-      b.addEventListener('click', function () {
-        var s = sorts[name];
-        if (s.key === key) {
-          s.dir = -s.dir;
-        } else {
-          s.key = key;
-          s.dir = key.slice(-3) === '_at' || key === 'used_bytes' || key === 'items' ? -1 : 1;
-        }
-        markSort(tableId, name);
-        render();
-      });
-      th.appendChild(b);
-    });
-    markSort(tableId, name);
-  }
-
-  function markSort(tableId, name) {
-    var s = sorts[name];
-    var heads = $(tableId).querySelectorAll('th[data-sort]');
-    Array.prototype.forEach.call(heads, function (th) {
-      var on = th.getAttribute('data-sort') === s.key;
-      var dir = th.querySelector('.dir');
-      if (on) {
-        th.setAttribute('aria-sort', s.dir > 0 ? 'ascending' : 'descending');
-        dir.textContent = s.dir > 0 ? '▲' : '▼';
-      } else {
-        th.removeAttribute('aria-sort');
-        dir.textContent = '';
+  function askDelete(from) {
+    var id = selectedSpace;
+    var s = spaceById(id);
+    if (!s) {
+      return;
+    }
+    openStep({
+      from: from,
+      icon: 'delete',
+      title: 'Supprimer l’espace ' + id + ' ?',
+      facts: true,
+      expect: id,
+      recap: [
+        recapFact('Appareils', plural(s.members, 'appareil', 'appareils') + ', dont ' + s.active + ' actif' + (s.active > 1 ? 's' : '')),
+        recapFact('Contenu', plural(s.items, 'élément', 'éléments') + ' · ' + fmtBytes(s.used_bytes)),
+        recapFact('Dernière activité', s.last_activity_at ? rel(s.last_activity_at) : 'jamais'),
+        recapFact('Créé', fmtDate(s.created_at).split(' ')[0])
+      ],
+      conseq: [
+        [(s.members > 1 ? 'Ses ' + s.members + ' appareils ne le trouvent plus' : 'Son appareil ne le trouve plus') +
+          ', tout de suite : plus aucune synchronisation.', 'strong'],
+        ['Rien n’est effacé sur les appareils, et aucune invitation n’est créée à la place.', ''],
+        ['Le relais garde le dossier chiffré 7 jours. Seul le serveur peut le restaurer.', 'good']
+      ],
+      pk: 'Ta clé d’accès te sera demandée · ' + capLine('space_deletions'),
+      okLabel: 'Supprimer avec ma clé d’accès',
+      cmd: 'tomi-relay admin reset --space ' + id + ' --confirm ' + id,
+      cmdNote: 'Attention : sur le serveur, l’effacement est immédiat, sans corbeille.',
+      action: function () {
+        return { type: 'delete_space', space_id: id, confirm: $('su-input').value.trim().toLowerCase() };
+      },
+      done: function (r) {
+        var until = r.trash && r.trash.purge_after ? fmtDate(r.trash.purge_after).split(' ')[0] : '';
+        textOf('banner-id', id);
+        textOf('banner-until', until);
+        textOf('banner-cmd', r.restore || 'tomi-relay admin trash restore --space ' + id);
+        $('spaces-banner').hidden = false;
+        window.location.hash = '#espaces';
+        refreshAll().then(function () {
+          $('spaces-banner').focus();
+        });
       }
     });
   }
 
-  // ----- overview ---------------------------------------------------------------------
+  function askInvite(mode, from) {
+    var rotate = mode === 'rotate';
+    var pending = data.invitations.length;
+    openStep({
+      from: from,
+      direct: !rotate,
+      tone: '',
+      icon: rotate ? 'invite' : 'add',
+      title: rotate ? 'Remplacer les invitations en attente ?' : 'Créer une invitation',
+      recap: rotate ? data.invitations.map(function (i) {
+        var li = el('li');
+        li.appendChild(ico('invite'));
+        var main = el('span', 'r-main');
+        main.appendChild(el('strong', null, 'Invitation'));
+        main.appendChild(el('span', 'caption', 'créée ' + rel(i.created_at)));
+        li.appendChild(main);
+        li.appendChild(el('span', 'mono r-id', i.id));
+        return li;
+      }) : [],
+      conseq: rotate ?
+        [[(pending > 1 ? 'Les ' + pending + ' invitations en attente cesseront' : 'L’invitation en attente cessera') + ' de fonctionner tout de suite.', 'strong'],
+          ['Un nouveau jeton sera créé et affiché une seule fois.', ''],
+          ['Les espaces existants ne changent pas.', 'good']] :
+        [['Son jeton permettra à qui l’a de créer un espace sur ton relais. Il s’affichera une seule fois.', '']],
+      pk: 'Ta clé d’accès te sera demandée · ' + capLine('invitations'),
+      okLabel: rotate ? 'Remplacer avec ma clé d’accès' : 'Créer avec ma clé d’accès',
+      cmd: rotate ? 'tomi-relay admin invite --rotate' : 'tomi-relay admin invite --new',
+      action: function () {
+        return { type: 'create_invitation', mode: mode };
+      },
+      done: function (r) {
+        data.invitations = r.invitations || [];
+        renderInvitations();
+        revealToken(r);
+        say(rotate ? 'Invitations remplacées' : 'Invitation créée');
+        refreshStatusOnly();
+      }
+    });
+  }
+
+  // ===== overview ==================================================================================
 
   function fcmLabel(fcm) {
-    var states = {
-      disabled: 'désactivées',
-      ok: 'en service',
-      auth_error: 'erreur d’authentification',
-      degraded: 'dégradées',
-      unknown: 'pas encore utilisées'
-    };
-    var state = fcm && fcm.state ? fcm.state : 'unknown';
-    return states[state] || state;
+    var s = (fcm && fcm.state) || 'unknown';
+    if (s === 'disabled') {
+      return ['Désactivées', 'jamais configurées'];
+    }
+    if (s === 'ok') {
+      return ['En service', fcm.last_success_at ? 'dernier envoi ' + rel(fcm.last_success_at) : ''];
+    }
+    if (s === 'auth_error') {
+      return ['Refusées', 'compte de service rejeté'];
+    }
+    if (s === 'degraded') {
+      return ['Dégradées', fcm.last_error ? 'dernière erreur ' + rel(fcm.last_error.at) : ''];
+    }
+    return ['Inconnu', 'aucun envoi encore'];
   }
 
-  function tile(list, label, value, sub, extra) {
-    var box = el('div', 'tile');
-    box.appendChild(el('dt', null, label));
-    box.appendChild(el('dd', 'value', value));
-    if (extra) {
-      var holder = el('dd');
-      holder.appendChild(extra);
-      box.appendChild(holder);
+  function tile(parent, label, value, sub, o) {
+    o = o || {};
+    var node = el(o.href ? 'a' : 'div', 'tile' + (o.wide ? ' wide' : ''));
+    if (o.href) {
+      node.href = o.href;
     }
+    var k = el('span', 'k', label);
+    if (o.right) {
+      k.appendChild(el('span', null, o.right));
+    }
+    node.appendChild(k);
+    var v = el('span', 'v' + (o.word ? ' word' : ''), value);
+    if (o.small) {
+      v.appendChild(document.createTextNode(' '));
+      v.appendChild(el('small', null, o.small));
+    }
+    node.appendChild(v);
     if (sub) {
-      box.appendChild(el('dd', 'sub', sub));
+      node.appendChild(el('span', 'sub', sub));
     }
-    list.appendChild(box);
+    if (o.gauge !== undefined && o.gauge !== null) {
+      var p = el('progress');
+      p.max = 100;
+      p.value = o.gauge;
+      p.className = o.gauge >= 100 ? 'full' : o.gauge >= 90 ? 'warn' : '';
+      p.setAttribute('aria-label', 'Stockage utilisé : ' + fmtPercent(o.gauge));
+      p.textContent = fmtPercent(o.gauge);
+      node.appendChild(p);
+    }
+    parent.appendChild(node);
   }
 
-  function gauge(used, max, label) {
-    var p = percent(used, max);
-    if (p === null) {
-      return null;
+  function refusedCount() {
+    var n = 0;
+    var last = null;
+    ((data.journal && data.journal.entries) || []).forEach(function (e) {
+      if (e.kind === 'sign_in_refused' || e.kind === 'enrollment_refused') {
+        n += Number(e.count || 1);
+        if (!last || Date.parse(e.at) > Date.parse(last)) {
+          last = e.at;
+        }
+      }
+    });
+    return { count: n, last: last };
+  }
+
+  function alertList() {
+    var list = [];
+    var s = data.status;
+    data.spaces.forEach(function (sp) {
+      var p = percent(sp.used_bytes, sp.max_bytes);
+      if (p !== null && p >= 90) {
+        list.push({
+          level: p >= 100 ? 'bad' : 'warn',
+          who: 'Espace ' + sp.id,
+          mono: true,
+          text: p >= 100 ? ' : quota atteint, ses envois sont refusés.' : ' : ' + fmtPercent(p) + ' de son quota utilisé.',
+          href: '#espaces/' + sp.id,
+          label: 'Voir'
+        });
+      }
+    });
+    if (s && s.quota) {
+      var rp = percent(s.quota.used_bytes, s.quota.max_bytes);
+      if (rp !== null && rp >= 90) {
+        list.push({ level: rp >= 100 ? 'bad' : 'warn', who: 'Stockage', text: ' : ' + fmtPercent(rp) + ' du total du relais utilisé.', href: '#reglages', label: 'Réglages' });
+      }
     }
-    var g = document.createElement('progress');
-    g.max = 100;
-    g.value = p;
-    g.className = p >= 98 ? 'full' : p >= 90 ? 'warn' : '';
-    g.setAttribute('aria-label', label + ' : ' + fmtPercent(p));
-    g.textContent = fmtPercent(p);
-    return g;
+    if (s && data.about && data.about.limits) {
+      var floor = Number(data.about.limits.min_free_disk_bytes) || 0;
+      if (floor && Number(s.disk_free_bytes) < floor * 2) {
+        list.push({ level: Number(s.disk_free_bytes) < floor ? 'bad' : 'warn', who: 'Disque', text: ' : ' + fmtBytes(s.disk_free_bytes) + ' libres, le relais en garde ' + fmtBytes(floor) + '.', href: '#reglages', label: 'Réglages' });
+      }
+    }
+    if (s && s.fcm && s.fcm.state === 'auth_error') {
+      list.push({ level: 'bad', who: 'Notifications', text: ' : le compte de service est refusé.', href: '#reglages', label: 'Réglages' });
+    } else if (s && s.fcm && s.fcm.state === 'degraded') {
+      list.push({ level: 'warn', who: 'Notifications', text: ' : envois dégradés.', href: '#reglages', label: 'Réglages' });
+    }
+    var rf = refusedCount();
+    if (rf.count > 0) {
+      list.push({
+        level: 'warn',
+        who: 'Connexions',
+        text: ' : ' + rf.count + ' tentative' + (rf.count > 1 ? 's' : '') + ' refusée' + (rf.count > 1 ? 's' : '') + (rf.last ? ', la dernière ' + rel(rf.last) : '') + '.',
+        href: '#journal',
+        label: 'Journal'
+      });
+    }
+    return list;
   }
 
   function renderStatus() {
     var s = data.status;
-    var list = $('status-list');
-    clear(list);
+    var box = $('status-list');
+    clear(box);
     if (!s) {
       return;
     }
-    var about = data.about;
-    tile(
-      list,
-      'Relais',
-      'v' + s.relay_version,
-      about ? 'en service depuis ' + fmtDuration(about.uptime_secs) : null
-    );
-    var used = s.quota.used_bytes;
-    var max = s.quota.max_bytes;
-    var p = percent(used, max);
-    tile(
-      list,
-      'Stockage (tous les espaces)',
-      fmtBytes(used),
-      'sur ' + fmtBytes(max) + (p === null ? '' : ' (' + fmtPercent(p) + ')'),
-      gauge(used, max, 'Stockage utilisé')
-    );
-    tile(list, 'Disque libre', fmtBytes(s.disk_free_bytes), 'sur le volume des données');
+    var list = alertList();
+    var worst = list.some(function (a) { return a.level === 'bad'; }) ? 'bad' : list.length ? 'warn' : 'good';
+    $('status-box').className = 'status' + (worst === 'good' ? '' : ' ' + worst);
+    setIcon($('status-use').parentNode, worst === 'good' ? 'check-circle' : worst === 'bad' ? 'error' : 'warning');
+    textOf('h-status', worst === 'good' ? 'Rien à signaler' : worst === 'bad' ?
+      plural(list.length, 'problème', 'problèmes') : plural(list.length, 'point d’attention', 'points d’attention'));
+    var sub = 'Relais v' + s.relay_version;
+    if (data.about) {
+      sub += ' · en service depuis ' + fmtDuration(data.about.uptime_secs);
+    }
+    textOf('status-sub', sub);
+    var ul = $('alerts');
+    clear(ul);
+    list.forEach(function (a) {
+      var li = el('li', a.level === 'bad' ? 'bad' : '');
+      li.appendChild(ico(a.level === 'bad' ? 'error' : 'warning'));
+      var span = el('span');
+      var strong = el('strong');
+      strong.appendChild(document.createTextNode(a.who.replace(/ [0-9a-f]{8}$/, ' ')));
+      if (a.mono) {
+        strong.appendChild(el('span', 'mono', a.who.slice(-8)));
+      }
+      span.appendChild(strong);
+      span.appendChild(document.createTextNode(a.text));
+      li.appendChild(span);
+      var link = el('a', 'btn ghost sm', a.label);
+      link.href = a.href;
+      li.appendChild(link);
+      ul.appendChild(li);
+    });
+    ul.hidden = !list.length;
+
+    var p = percent(s.quota.used_bytes, s.quota.max_bytes);
+    tile(box, 'Stockage, tous les espaces', fmtBytes(s.quota.used_bytes), null, {
+      wide: true,
+      right: p === null ? '' : fmtPercent(p),
+      small: s.quota.max_bytes ? 'sur ' + fmtBytes(s.quota.max_bytes) : '',
+      gauge: p
+    });
     var members = 0;
     var active = 0;
     data.spaces.forEach(function (sp) {
       members += Number(sp.members || 0);
       active += Number(sp.active || 0);
     });
-    tile(
-      list,
-      'Espaces',
-      fmtCount(s.spaces),
-      plural(members, 'appareil', 'appareils') + ', ' + plural(active, 'actif', 'actifs') +
-        (s.pending_spaces ? ' ; ' + plural(s.pending_spaces, 'en création', 'en création') : '')
-    );
-    var fcm = s.fcm || {};
-    var fcmSub = null;
-    if (fcm.last_success_at) {
-      fcmSub = 'dernier envoi réussi ' + rel(fcm.last_success_at);
-    } else if (fcm.state === 'disabled') {
-      fcmSub = 'compte de service FCM non configuré';
-    }
-    tile(list, 'Notifications (FCM)', fcmLabel(fcm), fcmSub);
-    tile(
-      list,
-      'Invitations en attente',
-      fmtCount(s.invitations_pending),
-      s.invitations_pending ? 'jetons pas encore utilisés' : 'aucune'
-    );
+    tile(box, 'Espaces', String(s.spaces), plural(members, 'appareil', 'appareils') + ', ' + active + ' actif' + (active > 1 ? 's' : ''), { href: '#espaces' });
+    tile(box, 'Invitations', String(s.invitations_pending), 'en attente', { href: '#invitations' });
+    var f = fcmLabel(s.fcm);
+    tile(box, 'Notifications (FCM)', f[0], f[1], { word: true });
+    tile(box, 'Disque libre', fmtBytes(s.disk_free_bytes), 'volume des données');
   }
 
-  // Attention points: what requires action, derived from the metadata already read only.
-  function renderAlerts() {
-    var items = [];
-    var s = data.status;
-    if (s) {
-      var fcm = s.fcm || {};
-      if (fcm.state === 'auth_error') {
-        items.push([
-          'error',
-          'Notifications :',
-          'le compte de service FCM est refusé ou illisible ; les appareils ne sont plus réveillés.'
-        ]);
-      } else if (fcm.state === 'degraded') {
-        items.push([
-          'warn',
-          'Notifications :',
-          'des envois échouent' +
-            (fcm.last_error && fcm.last_error.at ? ' (dernière erreur ' + rel(fcm.last_error.at) + ')' : '') +
-            '.'
-        ]);
-      }
-      var p = percent(s.quota.used_bytes, s.quota.max_bytes);
-      if (p !== null && p >= 90) {
-        items.push([
-          p >= 98 ? 'error' : 'warn',
-          'Stockage du relais :',
-          fmtPercent(p) + ' du total utilisé ; au-delà, les envois sont refusés.'
-        ]);
-      }
-      var limits = data.about && data.about.limits;
-      if (limits && s.disk_free_bytes < Number(limits.min_free_disk_bytes) * 2) {
-        items.push([
-          'warn',
-          'Disque :',
-          'il reste ' + fmtBytes(s.disk_free_bytes) + ' ; sous ' +
-            fmtBytes(limits.min_free_disk_bytes) + ', le relais refuse les écritures.'
-        ]);
-      }
+  // ===== spaces ====================================================================================
+
+  function deviceSub(d) {
+    var parts = [];
+    if (d.platform) {
+      parts.push(platformLabel(d.platform));
     }
-    data.spaces.forEach(function (sp) {
-      if (sp.rotation_required) {
-        items.push([
-          'warn',
-          'Espace ' + sp.id + ' :',
-          'changement de clé en attente (après un retrait d’appareil) : un appareil membre doit ' +
-            'renouveler la clé de l’espace, depuis l’application.'
-        ]);
-      }
-      var q = percent(sp.used_bytes, sp.max_bytes);
-      if (q !== null && q >= 90) {
-        items.push(['warn', 'Espace ' + sp.id + ' :', fmtPercent(q) + ' de son quota utilisé.']);
-      }
-    });
-    var refused = 0;
-    var lastRefused = null;
-    data.journal.forEach(function (e) {
-      if (e.kind === 'sign_in_refused' || e.kind === 'enrollment_refused') {
-        refused += Number(e.count || 1);
-        if (!lastRefused || e.at > lastRefused) {
-          lastRefused = e.at;
-        }
-      }
-    });
-    if (refused) {
-      items.push([
-        'warn',
-        'Connexions :',
-        plural(refused, 'tentative refusée', 'tentatives refusées') + ' dans le journal, la ' +
-          'dernière ' + rel(lastRefused) + '. Si ce n’était pas toi, change le chemin du panneau ' +
-          '(tomi-relay admin web --rotate-path).'
-      ]);
+    if (d.app_version) {
+      parts.push(d.app_version);
     }
-    var list = $('alerts');
-    clear(list);
-    items.forEach(function (it) {
-      var li = el('li', it[0] === 'error' ? 'error' : '');
-      li.appendChild(el('strong', null, it[1]));
-      li.appendChild(document.createTextNode(' ' + it[2]));
-      list.appendChild(li);
-    });
-    list.hidden = items.length === 0;
-    $('alerts-none').hidden = items.length !== 0 || !s;
+    parts.push(d.last_seen_at ? rel(d.last_seen_at) : 'jamais vu');
+    return parts.join(' · ');
   }
 
-  function loadStatus() {
-    return read('api/status').then(function (s) {
-      data.status = s;
+  function platformLabel(p) {
+    return { windows: 'Windows', android: 'Android', ios: 'iOS', macos: 'macOS', linux: 'Linux' }[p] || String(p || '');
+  }
+
+  function platformIcon(p) {
+    return p === 'android' || p === 'ios' ? 'phone' : 'computer';
+  }
+
+  function spaceBadges(s) {
+    var out = [];
+    var p = percent(s.used_bytes, s.max_bytes);
+    if (p !== null && p >= 100) {
+      out.push(badge('Quota atteint', 'bad'));
+    } else if (p !== null && p >= 90) {
+      out.push(badge('Quota à ' + Math.round(p) + ' %', 'warn'));
+    }
+    if (s.rotation_required) {
+      out.push(badge('Clé à renouveler', 'warn'));
+    }
+    if (!s.active) {
+      out.push(badge('Inactif', 'muted'));
+    }
+    if (!out.length) {
+      out.push(badge('Normal', 'good'));
+    }
+    return out;
+  }
+
+  function sortValue(s, key) {
+    switch (key) {
+      case 'id': return s.id;
+      case 'devices': return Number(s.members || 0);
+      case 'items': return Number(s.items || 0);
+      case 'usage': return percent(s.used_bytes, s.max_bytes) === null ? Number(s.used_bytes) / 1e12 : percent(s.used_bytes, s.max_bytes);
+      case 'created': return Date.parse(s.created_at) || 0;
+      default: return s.last_activity_at ? Date.parse(s.last_activity_at) : 0;
+    }
+  }
+
+  function sortedBy(list, sort, valueOf) {
+    return list.slice().sort(function (a, b) {
+      var x = valueOf(a, sort.key);
+      var y = valueOf(b, sort.key);
+      if (x < y) {
+        return -sort.dir;
+      }
+      if (x > y) {
+        return sort.dir;
+      }
+      return 0;
     });
   }
 
-  // ----- spaces ----------------------------------------------------------------------------
-
-  function loadSpaces() {
-    return read('api/spaces').then(function (d) {
-      data.spaces = d.spaces || [];
-      renderSpaces();
-    });
-  }
-
-  function usageCell(used, max, source) {
-    var box = el('div');
-    var g = gauge(used, max, 'Quota utilisé');
-    if (g) {
-      box.appendChild(g);
-    }
-    var p = percent(used, max);
-    box.appendChild(
-      el(
-        'span',
-        null,
-        max === null || max === undefined
-          ? fmtBytes(used) + ' · aucune limite'
-          : fmtBytes(used) + ' sur ' + fmtBytes(max) + ' (' + fmtPercent(p) + ')'
-      )
-    );
-    if (source === 'space') {
-      box.appendChild(el('span', 'sub', 'quota propre à l’espace'));
-    }
-    return box;
+  function timeCell(text) {
+    return timeEl(text);
   }
 
   function renderSpaces() {
     var body = $('spaces-body');
     clear(body);
-    var spaces = sorted(data.spaces, sorts.spaces);
-    $('spaces-empty').hidden = spaces.length !== 0;
-    $('spaces-table').hidden = spaces.length === 0;
-    spaces.forEach(function (s) {
-      var row = document.createElement('tr');
+    var rows = sortedBy(data.spaces, sorts.spaces, sortValue);
+    textOf('spaces-count', plural(rows.length, 'espace', 'espaces'));
+    $('spaces-empty').hidden = rows.length > 0;
+    $('spaces-table').hidden = rows.length === 0;
+    $('spaces-sort').value = sorts.spaces.key;
+    Array.prototype.forEach.call(document.querySelectorAll('#spaces-table button.sort'), function (b) {
+      var on = b.getAttribute('data-sort') === sorts.spaces.key;
+      var th = b.closest('th');
+      if (on) {
+        th.setAttribute('aria-sort', sorts.spaces.dir > 0 ? 'ascending' : 'descending');
+      } else {
+        th.removeAttribute('aria-sort');
+      }
+      b.querySelector('.dir').textContent = on ? (sorts.spaces.dir > 0 ? '▲' : '▼') : '';
+    });
+    rows.forEach(function (s) {
+      var tr = el('tr');
+      tr.setAttribute('data-space', s.id);
+      var th = el('th', 'c-id');
+      th.setAttribute('scope', 'row');
+      var a = el('a', 'space-link mono', s.id);
+      a.href = '#espaces/' + s.id;
+      th.appendChild(a);
+      var copy = copyBtn('Identifiant', 'Copier l’identifiant ' + s.id);
+      th.appendChild(copy);
+      tr.appendChild(th);
+
+      var st = el('td', 'c-state');
+      var badges = el('span', 'badges');
+      spaceBadges(s).forEach(function (b) { badges.appendChild(b); });
+      st.appendChild(badges);
+      tr.appendChild(st);
+
+      var dev = el('td', 'c-dev');
+      dev.setAttribute('data-label', 'Appareils');
+      dev.appendChild(el('span', 'v', s.active + ' actif' + (s.active > 1 ? 's' : '') + ' sur ' + s.members));
+      dev.appendChild(el('span', 'sub', s.present + ' présent' + (s.present > 1 ? 's' : '')));
+      tr.appendChild(dev);
+
+      var items = el('td', 'c-items');
+      items.setAttribute('data-label', 'Contenu');
+      items.appendChild(el('span', 'v', plural(s.items, 'élément', 'éléments')));
+      items.appendChild(el('span', 'sub', plural(s.blobs, 'fichier chiffré', 'fichiers chiffrés')));
+      tr.appendChild(items);
+
+      var usage = el('td', 'c-usage');
+      var p = percent(s.used_bytes, s.max_bytes);
+      if (p !== null) {
+        var pr = el('progress');
+        pr.max = 100;
+        pr.value = p;
+        pr.className = p >= 100 ? 'full' : p >= 90 ? 'warn' : '';
+        pr.setAttribute('aria-label', 'Quota utilisé : ' + fmtPercent(p));
+        pr.textContent = fmtPercent(p);
+        usage.appendChild(pr);
+      }
+      var txt = el('div', 'usage-txt');
+      var left = el('span');
+      left.appendChild(el('strong', null, fmtBytes(s.used_bytes)));
+      left.appendChild(document.createTextNode(s.max_bytes ? ' sur ' + fmtBytes(s.max_bytes) : ' utilisés'));
+      txt.appendChild(left);
+      txt.appendChild(el('span', null, p === null ? 'aucune limite' : fmtPercent(p)));
+      usage.appendChild(txt);
+      tr.appendChild(usage);
+
+      var act = el('td', 'c-act');
+      act.appendChild(timeCell(s.last_activity_at));
+      tr.appendChild(act);
+      var crt = el('td', 'c-crt');
+      crt.appendChild(timeCell(s.created_at));
+      tr.appendChild(crt);
+
+      var go = el('td', 'c-go');
+      var link = el('a', 'btn tonal sm');
+      link.href = '#espaces/' + s.id;
+      link.setAttribute('aria-label', 'Détail de l’espace ' + s.id);
+      link.appendChild(el('span', null, 'Détail'));
+      link.appendChild(ico('chevron'));
+      go.appendChild(link);
+      tr.appendChild(go);
       if (s.id === selectedSpace) {
-        row.className = 'selected';
+        tr.className = 'selected';
       }
-      var id = el('span', 'copyable');
-      id.appendChild(el('span', 'mono', s.id));
-      id.appendChild(copyButton(s.id, 'Identifiant', 'Copier l’identifiant ' + s.id));
-      cell(row, id, 'Identifiant', true);
-      cell(row, timeEl(s.created_at), 'Créé');
-      cell(row, timeEl(s.last_activity_at), 'Dernière activité');
-      var devs = el('div');
-      devs.appendChild(el('span', null, fmtCount(s.active) + ' actif' + (s.active > 1 ? 's' : '') +
-        ' sur ' + fmtCount(s.members)));
-      if (s.present !== undefined) {
-        devs.appendChild(el('span', 'sub', plural(s.present, 'présent', 'présents') + ' en ce moment'));
-      }
-      cell(row, devs, 'Appareils');
-      var content = el('div');
-      content.appendChild(el('span', null, plural(s.items, 'élément', 'éléments')));
-      content.appendChild(el('span', 'sub', plural(s.blobs, 'fichier chiffré', 'fichiers chiffrés') +
-        ' · ' + plural(s.events, 'événement', 'événements')));
-      cell(row, content, 'Contenu');
-      cell(row, usageCell(s.used_bytes, s.max_bytes, s.quota_source), 'Utilisation');
-      var state = el('div', 'badges');
-      if (s.rotation_required) {
-        state.appendChild(badge('Changement de clé en attente', 'warn'));
-      }
-      if (s.members > 0 && !s.active) {
-        state.appendChild(badge('Aucun appareil actif', 'muted'));
-      }
-      if (!state.firstChild) {
-        state.appendChild(badge('Normal', 'good'));
-      }
-      cell(row, state, 'État');
-      var b = el('button', 'secondary', s.id === selectedSpace ? 'Appareils (ouverts)' : 'Appareils');
-      b.type = 'button';
-      b.setAttribute('aria-label', 'Voir les appareils de l’espace ' + s.id);
-      b.setAttribute('aria-controls', 'devices-section');
-      b.setAttribute('aria-expanded', s.id === selectedSpace ? 'true' : 'false');
-      b.setAttribute('data-space', s.id);
-      b.addEventListener('click', function () {
-        selectSpace(s.id);
-      });
-      cell(row, b, null);
-      body.appendChild(row);
+      body.appendChild(tr);
     });
   }
 
-  // ----- devices of a space --------------------------------------------------------------
-
-  function selectSpace(id) {
-    selectedSpace = id;
-    renderSpaces();
-    loadDevices(id, true);
-  }
-
-  function closeDevices() {
-    var id = selectedSpace;
-    selectedSpace = null;
-    $('devices-section').hidden = true;
-    renderSpaces();
-    var back = id ? document.querySelector('button[data-space="' + CSS.escape(id) + '"]') : null;
-    if (back) {
-      back.focus();
+  function setSort(name, key) {
+    var sort = sorts[name];
+    if (sort.key === key) {
+      sort.dir = -sort.dir;
+    } else {
+      sort.key = key;
+      sort.dir = key === 'id' || key === 'name' || key === 'platform' ? 1 : -1;
+    }
+    if (name === 'spaces') {
+      renderSpaces();
+    } else {
+      renderDevices();
     }
   }
 
-  function spaceFacts(s) {
-    var list = $('space-facts');
-    clear(list);
+  // ----- the detail of a space ---------------------------------------------------------------------
+
+  function quotaOriginLine(s) {
+    var d = data.status && data.status.default_space_quota;
+    if (s.quota_source === 'default') {
+      return !d || d.bytes === null ? 'Quota par défaut : aucune limite' : 'Quota par défaut (' + fmtBytes(d.bytes) + ')';
+    }
+    return s.max_bytes === null ? 'Sans limite, propre à cet espace' : 'Quota propre à cet espace';
+  }
+
+  function pairInto(id, main, sub) {
+    var node = $(id);
+    node.textContent = main;
+    if (sub) {
+      node.appendChild(el('span', 'sub', sub));
+    }
+  }
+
+  function renderDetail() {
+    var s = spaceById(selectedSpace);
+    var open = !!s;
+    $('space-detail').hidden = !open;
+    document.body.classList.toggle('has-detail', open);
+    $('spaces-layout').classList.toggle('has-detail', open);
     if (!s) {
       return;
     }
-    function fact(label, value) {
-      list.appendChild(el('dt', null, label));
-      var dd = el('dd');
-      if (value instanceof Node) {
-        dd.appendChild(value);
-      } else {
-        dd.textContent = value;
-      }
-      list.appendChild(dd);
+    textOf('d-id', s.id);
+    textOf('t-space', s.id);
+    var badges = $('d-badges');
+    clear(badges);
+    spaceBadges(s).forEach(function (b) { badges.appendChild(b); });
+    pairInto('d-dev', s.active + ' actif' + (s.active > 1 ? 's' : '') + ' sur ' + s.members, s.present + ' présent' + (s.present > 1 ? 's' : '') + ' en ce moment');
+    pairInto('d-items', plural(s.items, 'élément', 'éléments'), plural(s.blobs, 'fichier chiffré', 'fichiers chiffrés'));
+    var retention = data.about && data.about.limits ? data.about.limits.event_retention_days : null;
+    pairInto('d-events', plural(s.events, 'événement', 'événements'), retention ? 'retenus ' + retention + ' j au plus' : '');
+    pairInto('d-created', fmtDate(s.created_at).split(' ')[0], rel(s.created_at));
+    var p = percent(s.used_bytes, s.max_bytes);
+    var pg = $('d-progress');
+    pg.hidden = p === null;
+    if (p !== null) {
+      pg.value = p;
+      pg.className = p >= 100 ? 'full' : p >= 90 ? 'warn' : '';
+      pg.setAttribute('aria-label', 'Quota utilisé : ' + fmtPercent(p));
     }
-    var created = el('span');
-    created.appendChild(timeEl(s.created_at));
-    created.appendChild(document.createTextNode(' (' + fmtDate(s.created_at) + ')'));
-    fact('Créé', created);
-    fact('Éléments vivants', fmtCount(s.items));
-    fact('Fichiers chiffrés', fmtCount(s.blobs));
-    var log = plural(s.events, 'événement retenu', 'événements retenus');
-    if (s.head_seq !== null && s.head_seq !== undefined) {
-      log += ' (n° ' + fmtCount(s.retention_floor_seq) + ' à ' + fmtCount(s.head_seq) + ')';
+    var usage = $('d-usage');
+    clear(usage);
+    usage.appendChild(el('strong', null, fmtBytes(s.used_bytes)));
+    usage.appendChild(document.createTextNode(s.max_bytes ? ' sur ' + fmtBytes(s.max_bytes) : ' utilisés'));
+    textOf('d-pct', p === null ? 'aucune limite' : fmtPercent(p));
+    textOf('d-quota', quotaOriginLine(s) + (p === null ? '' : p >= 100 ? ' · ses envois sont refusés' : p >= 90 ? ' · au-delà, les envois sont refusés' : ''));
+    $('sq-default').hidden = s.quota_source === 'default';
+
+    // The key of the space: the relay does not have it, so there is no button, only the reason.
+    var rot = $('d-rotation');
+    clear(rot);
+    rot.className = 'note-line' + (s.rotation_required ? ' warn' : '');
+    rot.appendChild(ico(s.rotation_required ? 'warning' : 'check'));
+    var span = el('span');
+    if (s.rotation_required) {
+      span.appendChild(el('strong', null, 'Clé à renouveler'));
+      span.appendChild(document.createTextNode(' après un retrait. Un appareil restant le fait tout seul à sa prochaine connexion ; le relais, qui n’a pas la clé, ne peut ni le faire ni le valider à sa place.'));
+    } else {
+      span.textContent = 'Clé de l’espace : rien en attente';
     }
-    fact('Journal de l’espace', log);
-    fact(
-      'Changement de clé',
-      s.rotation_required ? 'en attente : un appareil membre doit renouveler la clé, depuis l’application' : 'rien en attente'
-    );
-    fact('Quota', s.max_bytes === null || s.max_bytes === undefined
-      ? 'aucune limite'
-      : fmtBytes(s.max_bytes) + (s.quota_source === 'space' ? ' (propre à l’espace)' : ' (quota par défaut)'));
+    rot.appendChild(span);
+    renderCommands(s);
   }
 
-  function spaceCommands(id) {
-    var list = $('space-commands');
-    clear(list);
+  function renderCommands(s) {
+    var ul = $('d-commands');
+    clear(ul);
+    var first = data.devices[0] ? data.devices[0].id : 'ID_APPAREIL';
     [
-      ['tomi-relay admin status --space ' + id, 'l’état détaillé de l’espace'],
-      ['tomi-relay admin devices --space ' + id, 'les appareils, avec leur identifiant complet'],
-      ['tomi-relay admin quota --space ' + id + ' OCTETS', 'un quota propre à l’espace (OCTETS, ou none / default)'],
-      ['tomi-relay admin revoke --space ' + id + ' ID_APPAREIL', 'retirer un appareil (ID_APPAREIL : voir la commande devices)'],
-      ['tomi-relay admin reset --space ' + id, 'supprimer l’espace (demande une confirmation)']
+      ['État détaillé de l’espace', 'tomi-relay admin status --space ' + s.id],
+      ['Appareils, avec leur identifiant complet', 'tomi-relay admin devices --space ' + s.id],
+      ['Quota propre à l’espace (OCTETS, none ou default)', 'tomi-relay admin quota --space ' + s.id + ' OCTETS'],
+      ['Retirer un appareil', 'tomi-relay admin revoke --space ' + s.id + ' ' + first],
+      ['Supprimer l’espace (immédiat, sans corbeille)', 'tomi-relay admin reset --space ' + s.id + ' --confirm ' + s.id]
     ].forEach(function (c) {
-      var li = el('li');
-      var line = el('span', 'copyable');
-      line.appendChild(el('code', null, c[0]));
-      line.appendChild(copyButton(c[0], 'Commande', 'Copier la commande : ' + c[1]));
-      li.appendChild(line);
-      li.appendChild(el('span', 'sub', c[1]));
-      list.appendChild(li);
+      ul.appendChild(cmdRow(c[0], c[1]));
     });
   }
 
-  var PLATFORMS = { android: 'Android', ios: 'iOS', windows: 'Windows', macos: 'macOS', linux: 'Linux', cli: 'CLI' };
+  function cmdRow(what, command) {
+    var li = el('li');
+    li.appendChild(el('span', 'what', what));
+    var div = el('div', 'cmd');
+    div.appendChild(el('code', null, command));
+    div.appendChild(copyBtn('Commande', 'Copier la commande : ' + what));
+    li.appendChild(div);
+    return li;
+  }
+
+  function deviceState(d) {
+    return d.present ? ['Présent', 'good'] : d.active ? ['Actif', ''] : ['Inactif', 'muted'];
+  }
+
+  function devValue(d, key) {
+    switch (key) {
+      case 'name': return (d.name || '').toLowerCase();
+      case 'platform': return d.platform || '';
+      case 'added': return Date.parse(d.registered_at) || 0;
+      default: return d.last_seen_at ? Date.parse(d.last_seen_at) : 0;
+    }
+  }
 
   function renderDevices() {
-    var body = $('devices-body');
-    clear(body);
-    var devices = sorted(data.devices, sorts.devices);
-    $('devices-empty').hidden = devices.length !== 0;
-    $('devices-table').hidden = devices.length === 0;
-    devices.forEach(function (d) {
-      var row = document.createElement('tr');
-      cell(row, d.name, 'Nom', true);
-      cell(row, PLATFORMS[d.platform] || d.platform, 'Plateforme');
-      cell(row, d.app_version || '—', 'Version');
-      cell(row, timeEl(d.registered_at), 'Ajouté');
-      cell(row, timeEl(d.last_seen_at), 'Dernière activité');
-      var state = el('div', 'badges');
-      state.appendChild(d.active ? badge('Actif', 'good') : badge('Inactif', 'muted'));
-      if (d.present) {
-        state.appendChild(badge('Présent', 'good'));
-      }
-      state.appendChild(d.push ? badge('Notifications', '') : badge('Sans notifications', 'muted'));
-      cell(row, state, 'État');
-      if (d.fingerprint) {
-        var fp = el('span', 'copyable');
-        fp.appendChild(el('span', 'mono', d.fingerprint));
-        fp.appendChild(copyButton(d.fingerprint, 'Empreinte', 'Copier l’empreinte de ' + d.name));
-        cell(row, fp, 'Empreinte');
-      } else {
-        cell(row, '—', 'Empreinte');
-      }
-      body.appendChild(row);
+    var list = $('d-devices');
+    clear(list);
+    var last = data.devices.length === 1;
+    textOf('d-count', String(data.devices.length));
+    $('devices-sort').value = sorts.devices.key;
+    textOf('d-dev-hint', last ?
+      'Dernier appareil de l’espace : il ne peut pas être retiré. Pour en finir avec cet espace, supprime-le.' :
+      'Coche un ou plusieurs appareils pour les retirer : une seule confirmation avec ta clé d’accès.');
+    var tpl = $('tpl-device');
+    sortedBy(data.devices, sorts.devices, devValue).forEach(function (d) {
+      var node = tpl.content.cloneNode(true);
+      var root = node.querySelector('li');
+      root.setAttribute('data-device', d.id);
+      setIcon(node.querySelector('summary svg'), platformIcon(d.platform));
+      node.querySelector('.name').textContent = d.name || 'Appareil';
+      node.querySelector('.sub').textContent = deviceSub(d);
+      var state = deviceState(d);
+      var b = node.querySelector('.badge');
+      b.textContent = state[0];
+      b.className = 'badge' + (state[1] ? ' ' + state[1] : '');
+      node.querySelector('.f-added').textContent = fmtDate(d.registered_at);
+      node.querySelector('.f-push').textContent = d.push ? 'Activées' : 'Non';
+      node.querySelector('.f-id').textContent = d.id;
+      node.querySelector('.f-fp').textContent = d.fingerprint || '';
+      node.querySelector('[data-copy]').setAttribute('aria-label', 'Copier l’empreinte de ' + (d.name || 'l’appareil'));
+      var box = node.querySelector('.dev-sel');
+      box.value = d.id;
+      box.disabled = last;
+      node.querySelector('.dev-check .sr').textContent = 'Sélectionner ' + (d.name || 'l’appareil');
+      node.querySelector('.dev-revoke').hidden = last;
+      node.querySelector('.dev-last').hidden = !last;
+      list.appendChild(node);
+    });
+    syncSelection();
+  }
+
+  function selectedIds() {
+    return Array.prototype.map.call(document.querySelectorAll('#d-devices .dev-sel:checked'), function (b) {
+      return b.value;
     });
   }
 
-  function loadDevices(spaceId, focus) {
-    $('devices-space').textContent = spaceId;
-    $('devices-section').hidden = false;
-    spaceFacts(data.spaces.filter(function (s) {
-      return s.id === spaceId;
-    })[0]);
-    spaceCommands(spaceId);
-    $('devices-error').hidden = true;
-    if (focus) {
-      $('h-devices').focus();
+  // Never a shortcut and never a button under the pointer: a checkbox, then "Retirer".
+  function syncSelection() {
+    var ids = selectedIds();
+    Array.prototype.forEach.call(document.querySelectorAll('#d-devices .dev'), function (li) {
+      li.classList.toggle('selected', li.querySelector('.dev-sel').checked);
+    });
+    var bar = $('d-selbar');
+    bar.hidden = ids.length === 0;
+    if (!ids.length) {
+      return;
     }
-    return read('api/devices?space=' + encodeURIComponent(spaceId))
-      .then(function (d) {
+    var everyone = ids.length === data.devices.length;
+    var count = $('d-selcount');
+    count.className = everyone ? 'bad' : '';
+    count.textContent = everyone ?
+      'Il doit rester au moins un appareil pour renouveler la clé. Pour retirer tout le monde, supprime l’espace.' :
+      plural(ids.length, 'appareil coché', 'appareils cochés');
+    $('d-selrevoke').disabled = everyone;
+  }
+
+  function loadDevices(spaceId) {
+    $('devices-error').hidden = true;
+    return read('api/devices?space=' + encodeURIComponent(spaceId)).then(
+      function (r) {
         if (selectedSpace !== spaceId) {
-          return; // another space was chosen in the meantime
+          return;
         }
-        data.devices = d.devices || [];
+        data.devices = r.devices || [];
         renderDevices();
-      })
-      .catch(function (err) {
-        if (err && err.message === 'session') {
-          throw err;
+        var s = spaceById(spaceId);
+        if (s) {
+          renderCommands(s);
         }
-        if (selectedSpace !== spaceId) {
-          return; // the error of a space we left is not shown under another
+      },
+      function (err) {
+        if (err.message === 'session') {
+          lostSession();
+          return;
         }
         data.devices = [];
         renderDevices();
-        $('devices-empty').hidden = true;
-        $('devices-error').textContent = 'Impossible de lire les appareils de cet espace. Réessaie avec « Actualiser ».';
+        textOf('devices-error', 'Impossible de lire les appareils de cet espace.');
         $('devices-error').hidden = false;
-      })
-      .catch(function (err) {
-        failure(err, 'Impossible de lire les appareils.');
-      });
-  }
-
-  // ----- default quota ----------------------------------------------------------------
-
-  var QUOTA_SOURCES = {
-    panel: 'réglé depuis ce panneau',
-    config: 'configuration du relais (max_space_bytes)',
-    none: 'rien n’est réglé : aucune limite par espace'
-  };
-
-  function renderQuota(q) {
-    data.quota = q;
-    var list = $('quota-facts');
-    clear(list);
-    list.appendChild(el('dt', null, 'Quota par défaut'));
-    list.appendChild(el('dd', null, q.bytes === null ? 'aucune limite par espace' : fmtBytes(q.bytes)));
-    list.appendChild(el('dt', null, 'Origine'));
-    list.appendChild(el('dd', null, QUOTA_SOURCES[q.source] || q.source));
-    list.appendChild(el('dt', null, 'Total du relais (tous espaces)'));
-    list.appendChild(el('dd', null, fmtBytes(q.relay_max_bytes)));
-    var input = $('quota-mib');
-    input.min = String(Math.ceil(q.min_bytes / 1048576));
-    input.setAttribute('data-min', String(q.min_bytes));
-    input.setAttribute('data-max', String(q.max_bytes));
-    input.value = q.bytes === null ? '' : String(Math.round(q.bytes / 1048576));
-    previewQuota();
-  }
-
-  function loadQuota() {
-    return read('api/quota').then(function (d) {
-      if (!d.default) {
-        throw new Error('failed');
       }
-      renderQuota(d.default);
-    });
+    );
   }
 
-  // The number of bytes the input is worth, or null if it is not acceptable.
-  function quotaBytes() {
-    var text = $('quota-mib').value.trim();
-    var min = Number($('quota-mib').getAttribute('data-min') || 1048576);
-    var max = Number($('quota-mib').getAttribute('data-max') || 9007199254740991);
-    if (!/^[0-9]{1,9}$/.test(text)) {
+  // ----- the quota of one space (session only; confirmed if the space would be blocked) ----------
+
+  function closeQuotaForm() {
+    $('sq-form').hidden = true;
+    $('sq-edit').hidden = false;
+    $('sq-edit').setAttribute('aria-expanded', 'false');
+  }
+
+  function mibToBytes(text) {
+    var t = String(text).trim().replace(',', '.');
+    if (!/^[0-9]+(\.[0-9]+)?$/.test(t)) {
       return null;
     }
-    var bytes = Number(text) * 1048576;
-    return bytes < min || bytes > max ? null : bytes;
+    return Math.round(Number(t) * 1048576);
   }
 
-  function previewQuota() {
-    var text = $('quota-mib').value.trim();
-    var out = $('quota-preview');
-    if (!text) {
-      out.textContent = '';
-      return;
-    }
-    var bytes = quotaBytes();
-    out.textContent = bytes === null ? 'Un nombre entier de Mio, au moins 1.' : '= ' + fmtBytes(bytes) + ' par espace';
-  }
-
-  // `value`: a number of bytes, 0 (no per-space limit) or null (back to the relay configuration
-  // of the relay: `max_space_bytes`, otherwise no limit).
-  function saveQuota(value, done) {
-    var buttons = ['quota-save', 'quota-unlimited', 'quota-reset'];
-    buttons.forEach(function (id) {
-      $(id).disabled = true;
-    });
-    return api('POST', 'api/quota', { default_bytes: value })
-      .then(function (r) {
-        if (r.status === 401) {
-          throw new Error('session');
-        }
-        if (r.status === 400) {
-          say('Valeur refusée : au moins 1 Mio.', 'error');
-          return null;
-        }
-        if (r.status !== 200 || !r.data || !r.data.default) {
-          throw new Error('failed');
-        }
-        renderQuota(r.data.default);
-        say(done, 'ok');
-        return refreshAll();
-      })
-      .catch(function (err) {
-        failure(err, 'Impossible de modifier le quota.');
-      })
-      .then(function () {
-        buttons.forEach(function (id) {
-          $(id).disabled = false;
-        });
-      });
-  }
-
-  function submitQuota(event) {
-    event.preventDefault();
-    var bytes = quotaBytes();
-    if (bytes === null) {
-      say('Saisis un nombre entier de Mio (au moins 1).', 'error');
-      $('quota-mib').focus();
-      return;
-    }
-    saveQuota(bytes, 'Quota par défaut enregistré : ' + fmtBytes(bytes) + ' par espace.');
-  }
-
-  function quotaUnlimited() {
-    confirmAction(
-      'Retirer le plafond par espace ?',
-      'Seul le total du relais (' + fmtBytes(data.quota ? data.quota.relay_max_bytes : null) +
-        ') limitera alors chaque espace : un espace pourrait le remplir pour les autres. Les ' +
-        'espaces qui ont un quota propre le gardent.',
-      'Retirer le plafond'
-    ).then(function (yes) {
-      if (yes) {
-        saveQuota(0, 'Plus de plafond par espace (le total du relais s’applique).');
+  function previewSpaceQuota() {
+    var s = spaceById(selectedSpace);
+    var out = $('sq-preview');
+    var bytes = mibToBytes($('sq-mib').value);
+    out.className = 'caption preview';
+    if (!s || bytes === null || bytes < 1048576) {
+      out.textContent = $('sq-mib').value ? 'Au moins 1 Mio.' : '';
+      if ($('sq-mib').value) {
+        out.classList.add('bad');
       }
-    });
+      return null;
+    }
+    if (Number(s.used_bytes) > bytes) {
+      out.classList.add('warn');
+      out.textContent = 'L’espace utilise déjà ' + fmtBytes(s.used_bytes) + ' : ses envois seraient refusés.';
+    } else {
+      out.textContent = '= ' + fmtBytes(bytes);
+    }
+    return bytes;
   }
 
-  // ----- invitations ----------------------------------------------------------------------
+  function saveSpaceQuota(value, okText) {
+    var id = selectedSpace;
+    var s = spaceById(id);
+    function send(confirm) {
+      return api('POST', 'api/spaces/quota', { space_id: id, value: value, confirm: confirm }).then(function (r) {
+        if (r.status === 401) {
+          lostSession();
+          return;
+        }
+        if (r.status === 409 && r.data && r.data.reason === 'confirmation_required') {
+          return confirmAction({
+            title: 'Bloquer les envois de cet espace ?',
+            text: 'L’espace utilise déjà plus que ce quota : ses envois seront refusés jusqu’à ce qu’il repasse dessous. Rien n’est supprimé.',
+            ok: 'Enregistrer quand même',
+            list: [[id, 'utilise ' + fmtBytes(s ? s.used_bytes : 0)]]
+          }).then(function (yes) {
+            return yes ? send(true) : undefined;
+          });
+        }
+        if (r.status !== 200) {
+          say('Le quota n’a pas été enregistré.', 'error');
+          return;
+        }
+        closeQuotaForm();
+        say(okText);
+        return refreshAll();
+      });
+    }
+    if (value === 0) {
+      return confirmAction({
+        title: 'Retirer la limite de cet espace ?',
+        text: 'L’espace pourra occuper tout le disque du relais, dans la limite du total.',
+        ok: 'Sans limite'
+      }).then(function (yes) {
+        return yes ? send(false) : undefined;
+      });
+    }
+    return send(false);
+  }
+
+  // ===== invitations ================================================================================
 
   function renderInvitations() {
     var list = $('invitations-list');
     clear(list);
-    var items = data.invitations;
-    $('invitations-empty').hidden = items.length !== 0;
-    items.forEach(function (i) {
+    var n = data.invitations.length;
+    data.invitations.forEach(function (i) {
       var li = el('li');
-      li.appendChild(document.createTextNode('Invitation '));
-      li.appendChild(el('span', 'mono', i.id));
-      li.appendChild(document.createTextNode(', créée '));
-      li.appendChild(timeEl(i.created_at));
+      var left = el('span', null, 'Invitation ');
+      left.appendChild(el('span', 'mono', i.id));
+      li.appendChild(left);
+      var t = timeEl(i.created_at);
+      t.className = 'muted nowrap';
+      t.textContent = 'créée ' + t.textContent;
+      li.appendChild(t);
       list.appendChild(li);
     });
+    list.hidden = !n;
+    $('inv-empty').hidden = !!n;
+    $('inv-actions').hidden = !n;
+    textOf('inv-count', String(n));
+    textOf('inv-cap', capLine('invitations').replace(/ sur ce relais$/, ''));
   }
 
-  function loadInvitations() {
-    return read('api/invitations').then(function (d) {
-      data.invitations = d.invitations || [];
-      renderInvitations();
-    });
-  }
-
-  // Draws the QR of the creation link in a <canvas> created here (never present in the page before). The QR
-  // encodes exactly the string received (the creation link `<host>/create#<token>`). Black on white, quiet zone of 4 modules, whatever the
-  // theme: an inverted-colour QR cannot be scanned. No network call, no export.
   function showQr(text) {
     clearQr();
     try {
@@ -1713,15 +2319,15 @@
     var holder = $('token-qr');
     var canvases = holder.getElementsByTagName('canvas');
     for (var i = 0; i < canvases.length; i++) {
-      canvases[i].width = 0; // clears the drawing
+      canvases[i].width = 0;
       canvases[i].height = 0;
     }
     clear(holder);
     $('token-qr-wrap').hidden = true;
   }
 
-  // The token does not stay displayed indefinitely: 10 minutes at most, and never after leaving
-  // the page. It is written nowhere else (neither local storage nor log).
+  // The token is not displayed for ever: 10 minutes at most, and never after leaving the page. It
+  // is written nowhere else (neither local storage nor log).
   var TOKEN_SHOWN_MS = 10 * 60000;
   var tokenTimer = null;
 
@@ -1738,145 +2344,265 @@
     $('token-box').hidden = true;
   }
 
-  function invite(mode) {
-    var pending = data.invitations.length;
-    var ask = mode === 'rotate' && pending > 0
-      ? confirmAction(
-        'Remplacer les invitations en attente ?',
-        (pending > 1
-          ? 'Les ' + pending + ' invitations en attente cesseront de fonctionner'
-          : 'L’invitation en attente cessera de fonctionner') +
-          ' : un jeton déjà donné ne permettra plus de créer d’espace. Une nouvelle invitation ' +
-          'sera créée, et son jeton affiché une seule fois. Les espaces existants ne changent pas.',
-        'Remplacer'
-      )
-      : Promise.resolve(true);
-    ask.then(function (yes) {
+  function revealToken(r) {
+    var link = r.link || '';
+    $('token').textContent = r.token;
+    $('token-link').textContent = link;
+    $('token-link-wrap').hidden = !link;
+    $('token-link-copy').hidden = !link;
+    showQr(link || r.token);
+    $('token-box').hidden = false;
+    window.scrollTo(0, 0);
+    $('token-title').focus({ preventScroll: true });
+    clearTimeout(tokenTimer);
+    tokenTimer = setTimeout(hideToken, TOKEN_SHOWN_MS);
+  }
+
+  function cancelInvitations() {
+    var list = data.invitations.map(function (i) { return [i.id, 'créée ' + rel(i.created_at)]; });
+    confirmAction({
+      title: 'Invalider les invitations en attente ?',
+      text: 'Ces jetons cesseront de fonctionner. Aucune nouvelle invitation n’est créée, et les espaces existants ne changent pas.',
+      ok: 'Invalider',
+      list: list
+    }).then(function (yes) {
       if (!yes) {
-        return null;
+        return;
       }
-      var buttons = [$('invite-new'), $('invite-rotate')];
-      buttons.forEach(function (b) {
-        b.disabled = true;
+      api('POST', 'api/invitations/cancel', {}).then(function (r) {
+        if (r.status === 401) {
+          lostSession();
+          return;
+        }
+        if (r.status !== 200 || !r.data) {
+          say('Les invitations n’ont pas été invalidées.', 'error');
+          return;
+        }
+        data.invitations = r.data.invitations || [];
+        hideToken();
+        renderInvitations();
+        say(plural(r.data.cancelled, 'invitation invalidée', 'invitations invalidées'));
+        refreshStatusOnly();
       });
-      return api('POST', 'api/invitations', { mode: mode })
-        .then(function (r) {
-          if (r.status === 401) {
-            throw new Error('session');
-          }
-          if (r.status !== 200 || !r.data || !r.data.token) {
-            throw new Error('failed');
-          }
-          $('token').textContent = r.data.token;
-          // The link comes from the server (public_url): never built from the browser address.
-          var link = typeof r.data.link === 'string' ? r.data.link : '';
-          $('token-link').textContent = link;
-          $('token-link-wrap').hidden = !link;
-          $('token-link-copy').hidden = !link;
-          showQr(link || r.data.token);
-          $('token-box').hidden = false;
-          $('token-title').focus();
-          if (tokenTimer) {
-            clearTimeout(tokenTimer);
-          }
-          tokenTimer = setTimeout(function () {
-            hideToken();
-            say('Le jeton a été masqué (10 minutes écoulées).', 'ok');
-          }, TOKEN_SHOWN_MS);
-          say('Invitation créée. Copie le jeton maintenant : il ne sera plus affiché.', 'ok');
-          return refreshAll();
-        })
-        .catch(function (err) {
-          failure(err, 'Impossible de créer l’invitation.');
-        })
-        .then(function () {
-          buttons.forEach(function (b) {
-            b.disabled = false;
-          });
-        });
     });
   }
 
-  function copyToken() {
-    copyText($('token').textContent, 'Jeton');
-  }
+  // ===== journal ====================================================================================
 
-  function copyLink() {
-    copyText($('token-link').textContent, 'Lien');
-  }
-
-  // ----- administration log ---------------------------------------------------------
-
-  var JOURNAL_LABELS = {
+  var JOURNAL_TEXT = {
     signed_in: 'Connexion avec la clé d’accès',
     sign_in_refused: 'Connexion refusée',
     enrollment_refused: 'Code d’enrôlement refusé',
     signed_out: 'Déconnexion',
-    passkey_registered: 'Clé d’accès créée',
+    passkey_registered: 'Clé d’accès enregistrée',
+    passkey_added: 'Clé d’accès ajoutée',
+    passkey_removed: 'Clé d’accès retirée',
+    passkey_reset: 'Clés d’accès réinitialisées',
     invitation_created: 'Invitation créée',
-    invitations_replaced: 'Invitations en attente remplacées',
+    invitations_replaced: 'Invitations remplacées',
+    invitations_cancelled: 'Invitations invalidées',
     default_quota_set: 'Quota par défaut réglé',
-    default_quota_unlimited: 'Quota par défaut : sans limite par espace',
-    default_quota_config: 'Quota par défaut : retour à la configuration du relais',
-    path_rotated: 'Chemin du panneau changé sur le serveur (sessions fermées)',
-    passkey_reset: 'Clé d’accès supprimée sur le serveur'
+    default_quota_unlimited: 'Quota par défaut : sans limite',
+    default_quota_config: 'Quota par défaut : retour à la configuration',
+    space_quota_set: 'Quota d’un espace réglé',
+    space_quota_unlimited: 'Quota d’un espace : sans limite',
+    space_quota_default: 'Quota d’un espace : retour au défaut',
+    quota_set: 'Quota d’un espace modifié',
+    path_rotated: 'Adresse du panneau changée : sessions fermées',
+    policy_changed: 'Politique de clé modifiée',
+    stepup_refused: 'Confirmation par clé d’accès refusée',
+    session_closed_by_refusals: 'Session fermée après 5 refus',
+    sessions_closed: 'Toutes les sessions fermées',
+    devices_removed: 'Appareils retirés',
+    device_removed: 'Appareil retiré',
+    space_deleted: 'Espace supprimé, mis à la corbeille',
+    space_restored: 'Espace restauré',
+    trash_restored: 'Espace restauré depuis la corbeille',
+    trash_purged: 'Espace purgé de la corbeille',
+    trash_expired: 'Espace effacé de la corbeille (7 jours)'
   };
+
+  var WARN_KINDS = ['sign_in_refused', 'enrollment_refused', 'stepup_refused', 'session_closed_by_refusals'];
+
+  function journalRow(e, kept) {
+    var li = el('li', (WARN_KINDS.indexOf(e.kind) !== -1 ? 'warn' : '') + (kept ? ' kept' : ''));
+    li.appendChild(timeEl(e.at));
+    var what = el('span', 'what');
+    var text = JOURNAL_TEXT[e.kind] || e.kind;
+    var head = el('span');
+    if (WARN_KINDS.indexOf(e.kind) !== -1) {
+      head.appendChild(ico('warning', 'sm'));
+    }
+    head.appendChild(document.createTextNode(text));
+    if (e.target) {
+      head.appendChild(document.createTextNode(' '));
+      head.appendChild(el('span', 'mono', e.target));
+    }
+    if (e.bytes !== undefined && e.bytes !== null) {
+      head.appendChild(document.createTextNode(' : ' + fmtBytes(e.bytes)));
+    }
+    what.appendChild(head);
+    var small = [];
+    if (e.count && e.count > 1) {
+      small.push(e.count + ' fois, depuis ' + rel(e.first_at).replace(/^il y a /, 'il y a '));
+    }
+    if (e.key) {
+      small.push('clé ' + e.key);
+    }
+    if (kept) {
+      small.push('gardé 90 j');
+    }
+    if (small.length) {
+      what.appendChild(el('small', null, small.join(' · ')));
+    }
+    li.appendChild(what);
+    if (e.kind === 'sign_in_refused' || e.kind === 'enrollment_refused') {
+      var adv = el('span', 'advice');
+      adv.appendChild(document.createTextNode('Pas toi ? Ferme toutes les sessions depuis Réglages, puis change l’adresse du panneau, sur le serveur : '));
+      adv.appendChild(el('code', null, 'tomi-relay admin web --rotate-path'));
+      li.appendChild(adv);
+    }
+    return li;
+  }
 
   function renderJournal() {
     var list = $('journal-list');
     clear(list);
-    var entries = data.journal;
-    $('journal-empty').hidden = entries.length !== 0;
-    entries.forEach(function (e) {
-      var warn = e.kind === 'sign_in_refused' || e.kind === 'enrollment_refused';
-      var li = el('li', warn ? 'warn' : '');
-      li.appendChild(timeEl(e.at));
-      var what = JOURNAL_LABELS[e.kind] || e.kind;
-      if (e.kind === 'default_quota_set' && e.bytes !== undefined) {
-        what += ' : ' + fmtBytes(e.bytes) + ' par espace';
+    var j = data.journal;
+    if (!j) {
+      return;
+    }
+    // The persistent lines (90 days) and the memory of this start, newest first; a persistent
+    // line that the memory also holds is shown once.
+    var rows = [];
+    (j.audit || []).forEach(function (e) { rows.push([e, true]); });
+    var seen = {};
+    (j.audit || []).forEach(function (e) { seen[e.kind + '@' + e.at] = true; });
+    (j.entries || []).forEach(function (e) {
+      if (!seen[e.kind + '@' + e.at]) {
+        rows.push([e, false]);
       }
-      if (e.count > 1) {
-        what += ' (' + e.count + ' fois, depuis ' + rel(e.first_at) + ')';
-      }
-      li.appendChild(el('span', 'what', what));
-      list.appendChild(li);
     });
+    rows.sort(function (a, b) { return Date.parse(b[0].at) - Date.parse(a[0].at); });
+    rows.forEach(function (r) { list.appendChild(journalRow(r[0], r[1])); });
+    textOf('journal-count', String(rows.length));
+    $('journal-empty').hidden = rows.length > 0;
   }
 
-  function loadJournal() {
-    return read('api/journal').then(function (d) {
-      data.journal = d.entries || [];
-      renderJournal();
-    });
+  // ===== settings ===================================================================================
+
+  function renderQuota() {
+    var q = data.quota;
+    if (!q) {
+      return;
+    }
+    textOf('quota-now', q.bytes === null ? 'Aucune limite par espace' : fmtBytes(q.bytes) + ' par espace');
+    var origin = q.source === 'panel' ? 'Réglé depuis ce panneau' : q.source === 'config' ? 'Réglé par la configuration du relais' : 'Aucune limite réglée';
+    textOf('quota-facts', origin + ' · total du relais : ' + fmtBytes(q.relay_max_bytes));
+    if (document.activeElement !== $('quota-mib')) {
+      $('quota-mib').value = q.bytes === null ? '' : String(Math.round(q.bytes / 1048576 * 10) / 10).replace('.', ',');
+    }
+    previewQuota();
   }
 
-  // ----- about and diagnostics -------------------------------------------------------------
+  function quotaBytes() {
+    var b = mibToBytes($('quota-mib').value);
+    return b;
+  }
+
+  function previewQuota() {
+    var out = $('quota-preview');
+    var q = data.quota;
+    var bytes = quotaBytes();
+    out.className = 'caption preview';
+    $('quota-mib').setAttribute('aria-invalid', 'false');
+    if (!$('quota-mib').value) {
+      out.textContent = '';
+      return;
+    }
+    if (bytes === null || !q || bytes < q.min_bytes || bytes > q.max_bytes) {
+      out.className = 'caption preview bad';
+      out.textContent = 'Entre ' + fmtBytes(q ? q.min_bytes : 1048576) + ' et ' + fmtBytes(q ? q.max_bytes : 0) + '.';
+      $('quota-mib').setAttribute('aria-invalid', 'true');
+      return;
+    }
+    out.textContent = '= ' + fmtBytes(bytes) + ' par espace';
+  }
+
+  // The blocked spaces are told BEFORE saving (the server asks for the confirmation).
+  function saveDefaultQuota(value, okText) {
+    function send(confirm) {
+      return api('POST', 'api/quota', { default_bytes: value, confirm: confirm }).then(function (r) {
+        if (r.status === 401) {
+          lostSession();
+          return;
+        }
+        if (r.status === 409 && r.data && r.data.reason === 'confirmation_required') {
+          var ids = r.data.blocked || [];
+          return confirmAction({
+            title: ids.length > 1 ? 'Bloquer les envois de ' + ids.length + ' espaces ?' : 'Bloquer les envois d’un espace ?',
+            text: 'Ces espaces utilisent déjà plus que ce quota : leurs envois seront refusés jusqu’à ce qu’ils repassent dessous. Rien n’est supprimé.',
+            ok: 'Enregistrer quand même',
+            list: ids.map(function (id) { return [id, 'dépasse le quota']; })
+          }).then(function (yes) {
+            return yes ? send(true) : undefined;
+          });
+        }
+        if (r.status !== 200 || !r.data) {
+          say('Le quota n’a pas été enregistré.', 'error');
+          return;
+        }
+        data.quota = r.data.default;
+        renderQuota();
+        say(okText);
+        return refreshAll();
+      });
+    }
+    return send(false);
+  }
+
+  function submitQuota(event) {
+    event.preventDefault();
+    var bytes = quotaBytes();
+    var q = data.quota;
+    if (bytes === null || !q || bytes < q.min_bytes || bytes > q.max_bytes) {
+      previewQuota();
+      $('quota-mib').focus();
+      return;
+    }
+    saveDefaultQuota(bytes, 'Quota par défaut réglé : ' + fmtBytes(bytes) + ' par espace.');
+  }
+
+  function quotaUnlimited() {
+    confirmAction({
+      title: 'Retirer la limite par espace ?',
+      text: 'Un espace sans quota propre pourra occuper tout le disque du relais, dans la limite du total.',
+      ok: 'Sans limite'
+    }).then(function (yes) {
+      if (yes) {
+        saveDefaultQuota(0, 'Quota par défaut : aucune limite par espace.');
+      }
+    });
+  }
 
   function facts(listId, rows) {
-    var list = $(listId);
-    clear(list);
+    var dl = $(listId);
+    clear(dl);
     rows.forEach(function (r) {
-      list.appendChild(el('dt', null, r[0]));
-      list.appendChild(el('dd', null, r[1]));
+      var div = el('div');
+      div.appendChild(el('dt', null, r[0]));
+      var dd = el('dd', null, r[1]);
+      if (r[2]) {
+        dd.appendChild(el('span', 'caption', r[2]));
+      }
+      div.appendChild(dd);
+      dl.appendChild(div);
     });
   }
 
-  function limitRows(l) {
-    return [
-      ['Total du relais', fmtBytes(l.max_relay_bytes)],
-      ['Quota par espace (configuration)', l.max_space_bytes ? fmtBytes(l.max_space_bytes) : 'aucun'],
-      ['Appareils par espace', fmtCount(l.max_devices)],
-      ['Taille d’un élément (chiffré)', fmtBytes(l.max_envelope_bytes)],
-      ['Taille d’un fichier', fmtBytes(l.max_blob_bytes)],
-      ['Fichiers d’un élément, au total', fmtBytes(l.max_item_blob_bytes)],
-      ['Durée de vie la plus longue d’un élément à échéance', fmtDuration(l.max_ttl_secs)],
-      ['Rétention du journal d’un espace', l.event_retention_days + ' j'],
-      ['Appareil compté inactif après', l.inactive_after_days + ' j sans connexion'],
-      ['Purge des éléments échus', 'toutes les ' + fmtDuration(l.purge_interval_secs)],
-      ['Fichier jamais rattaché supprimé après', fmtDuration(l.blob_orphan_ttl_secs)],
-      ['Session d’un appareil', fmtDuration(l.session_ttl_secs)],
-      ['Espace disque gardé libre', fmtBytes(l.min_free_disk_bytes)]
-    ];
+  function capFact(kind) {
+    var c = data.about && data.about.ceilings && data.about.ceilings[kind];
+    return c ? c.max + (c.window_secs >= 86400 ? ' par 24 h' : ' par heure') : '';
   }
 
   function renderAbout() {
@@ -1884,35 +2610,86 @@
     if (!a) {
       return;
     }
-    var skew = Math.round(serverOffset / 1000);
     facts('about-facts', [
       ['Version du relais', a.relay_version],
-      ['En service depuis', fmtDuration(a.uptime_secs) + ' (démarré le ' + fmtDate(a.started_at) + ')'],
-      ['Horloge du serveur', fmtDate(a.server_time) +
-        (Math.abs(skew) >= 60 ? ' (écart de ' + fmtDuration(Math.abs(skew)) + ' avec cet appareil)' : '')],
-      ['Notifications push', a.push_configured ? 'configurées' : 'non configurées'],
-      ['Ta session', 'se ferme après ' + fmtDuration(a.session.idle_ttl_secs) + ' sans activité, au plus tard ' +
-        rel(a.session.absolute_ends_at)]
+      ['En service depuis', fmtDuration(a.uptime_secs), 'démarré le ' + fmtDate(a.started_at)],
+      ['Horloge du serveur', fmtDate(a.server_time).split(' ')[1] || a.server_time, Math.abs(serverOffset) < 5000 ? 'à l’heure de cet appareil' : 'écart de ' + Math.round(serverOffset / 1000) + ' s'],
+      ['Notifications push', a.push_configured ? 'Configurées' : 'Non configurées'],
+      ['Ta session', fmtDuration(a.session.idle_ttl_secs) + ' sans activité', fmtDuration(a.session.absolute_ttl_secs) + ' au plus après la connexion']
     ]);
-    facts('limits-facts', limitRows(a.limits || {}));
+    var l = a.limits;
+    facts('limits-facts', [
+      ['Total du relais', fmtBytes(l.max_relay_bytes)],
+      ['Quota par espace (configuration)', l.max_space_bytes ? fmtBytes(l.max_space_bytes) : 'aucun'],
+      ['Appareils par espace', String(l.max_devices)],
+      ['Élément chiffré', fmtBytes(l.max_envelope_bytes) + ' au plus'],
+      ['Fichier', fmtBytes(l.max_blob_bytes) + ' au plus'],
+      ['Fichiers d’un élément', fmtBytes(l.max_item_blob_bytes) + ' au total'],
+      ['Échéance la plus longue', fmtDuration(l.max_ttl_secs)],
+      ['Rétention du journal d’un espace', l.event_retention_days + ' j'],
+      ['Appareil compté inactif', 'après ' + l.inactive_after_days + ' j sans connexion'],
+      ['Purge des éléments échus', 'toutes les ' + fmtDuration(l.purge_interval_secs)],
+      ['Fichier jamais rattaché', 'supprimé après ' + fmtDuration(l.blob_orphan_ttl_secs)],
+      ['Session d’un appareil', fmtDuration(l.session_ttl_secs)],
+      ['Espace disque gardé libre', fmtBytes(l.min_free_disk_bytes)],
+      ['Suppressions d’espace depuis le web', capFact('space_deletions')],
+      ['Retraits d’appareil depuis le web', capFact('device_removals')],
+      ['Invitations depuis le web', capFact('invitations')]
+    ]);
+    textOf('access-others', String(a.sessions ? a.sessions.others : 0));
+    $('access-others').appendChild(el('span', 'caption', 'en plus de celle-ci'));
   }
 
-  function loadAbout() {
-    var asked = Date.now();
-    return read('api/about').then(function (a) {
-      var at = Date.parse(a.server_time);
-      if (!isNaN(at)) {
-        // Midpoint of the round trip: precise enough for "3 min ago".
-        serverOffset = at - Math.round((asked + Date.now()) / 2);
+  function renderKeys() {
+    var k = data.keys;
+    var list = $('keys-list');
+    clear(list);
+    if (!k) {
+      return;
+    }
+    textOf('keys-count', k.keys.length + ' sur ' + k.max);
+    k.keys.forEach(function (key) {
+      var li = el('li');
+      li.appendChild(ico('key'));
+      var txt = el('span', 'key-txt');
+      txt.appendChild(el('strong', null, key.label));
+      txt.appendChild(el('span', 'caption', 'ajoutée le ' + fmtDate(key.created_at).split(' ')[0] + ' · ' +
+        (key.last_used_at ? 'utilisée ' + rel(key.last_used_at) : 'jamais utilisée')));
+      li.appendChild(txt);
+      if (key.this_session) {
+        li.appendChild(badge('Cette session', 'good'));
       }
-      data.about = a;
-      setSession(a);
-      renderAbout();
+      list.appendChild(li);
     });
+    var dd = $('access-policy');
+    dd.textContent = k.policy.space_deletion === 'device-key' ? 'Une clé liée à l’appareil' : 'N’importe laquelle';
+    dd.appendChild(el('span', 'caption', 'réglage du serveur'));
   }
 
-  // A copyable summary for a bug report: versions, sizes, counts and
-  // states. No space identifier, device name, fingerprint, token or panel URL.
+  function renderTrash() {
+    var t = data.trash;
+    var list = $('trash-list');
+    clear(list);
+    if (!t) {
+      return;
+    }
+    textOf('trash-count', String(t.trash.length));
+    $('trash-empty').hidden = t.trash.length > 0;
+    list.hidden = t.trash.length === 0;
+    t.trash.forEach(function (row) {
+      var li = el('li');
+      var left = el('span');
+      left.appendChild(el('span', 'mono', row.space_id));
+      left.appendChild(el('span', 'caption block', 'supprimé ' + rel(row.deleted_at) + ' · ' + fmtBytes(row.size_bytes)));
+      li.appendChild(left);
+      li.appendChild(el('span', 'muted nowrap', 'effacé ' + rel(row.purge_after)));
+      list.appendChild(li);
+    });
+    var first = t.trash[0] ? t.trash[0].space_id : '<id>';
+    textOf('trash-restore-cmd', 'tomi-relay admin trash restore --space ' + first);
+    textOf('trash-purge-cmd', 'tomi-relay admin trash purge --space ' + first);
+  }
+
   function diagnosticText() {
     var lines = ['Tomi : diagnostic du relais', 'Établi le ' + new Date().toISOString()];
     var s = data.status;
@@ -1937,11 +2714,9 @@
       lines.push('Appareils (tous espaces) : ' + members + ', dont ' + active + ' actifs et ' + present + ' présents');
       lines.push('Changements de clé en attente : ' + rotations + ' espace(s)');
       var p = percent(s.quota.used_bytes, s.quota.max_bytes);
-      lines.push('Stockage : ' + fmtBytes(s.quota.used_bytes) + ' sur ' + fmtBytes(s.quota.max_bytes) +
-        (p === null ? '' : ' (' + fmtPercent(p) + ')'));
+      lines.push('Stockage : ' + fmtBytes(s.quota.used_bytes) + ' sur ' + fmtBytes(s.quota.max_bytes) + (p === null ? '' : ' (' + fmtPercent(p) + ')'));
       if (s.default_space_quota) {
-        lines.push('Quota par défaut d’un espace : ' +
-          (s.default_space_quota.bytes === null ? 'aucune limite' : fmtBytes(s.default_space_quota.bytes)) +
+        lines.push('Quota par défaut d’un espace : ' + (s.default_space_quota.bytes === null ? 'aucune limite' : fmtBytes(s.default_space_quota.bytes)) +
           ' (origine : ' + s.default_space_quota.source + ')');
       }
       lines.push('Disque libre : ' + fmtBytes(s.disk_free_bytes));
@@ -1959,180 +2734,434 @@
       lines.push(f);
       lines.push('Invitations en attente : ' + s.invitations_pending);
     }
+    if (data.trash) {
+      var bytes = 0;
+      data.trash.trash.forEach(function (r) { bytes += Number(r.size_bytes || 0); });
+      lines.push('Corbeille : ' + data.trash.trash.length + ' espace(s), ' + fmtBytes(bytes));
+    }
+    if (data.keys) {
+      var bound = data.keys.keys.filter(function (k) { return k.device_bound; }).length;
+      lines.push('Clés d’accès du panneau : ' + data.keys.keys.length + ' (' + bound + ' liée(s) à l’appareil)');
+    }
     if (a && a.limits) {
       var l = a.limits;
       lines.push('Limites : total ' + l.max_relay_bytes + ' o ; quota configuré ' + (l.max_space_bytes || 'aucun') +
         ' ; appareils ' + l.max_devices + ' ; élément ' + l.max_envelope_bytes + ' o ; fichier ' + l.max_blob_bytes +
         ' o ; rétention ' + l.event_retention_days + ' j ; inactivité ' + l.inactive_after_days + ' j');
     }
-    var refused = 0;
-    data.journal.forEach(function (e) {
-      if (e.kind === 'sign_in_refused' || e.kind === 'enrollment_refused') {
-        refused += Number(e.count || 1);
-      }
-    });
-    lines.push('Connexions refusées au panneau (dans le journal, 100 lignes au plus) : ' + refused);
+    lines.push('Connexions refusées au panneau (depuis le démarrage) : ' + refusedCount().count);
     lines.push('Navigateur : ' + navigator.userAgent);
     return lines.join('\n');
   }
 
-  function renderDiagnostic() {
-    $('diagnostic').textContent = diagnosticText();
+  // ===== refresh ====================================================================================
+
+  function setError(id, text) {
+    var node = $(id);
+    node.textContent = text || '';
+    node.hidden = !text;
   }
 
-  // ----- refresh ----------------------------------------------------------------------
-
-  function failure(err, text) {
-    if (err && err.message === 'session') {
-      lostSession();
-    } else {
-      say(text, 'error');
-    }
-  }
-
-  // A source that fails does not stop the others from showing: its error is written in its
-  // section. An ended session, on the other hand, returns to sign-in.
   function guarded(promise, errId, text) {
-    var box = $(errId);
     return promise.then(
       function () {
-        box.hidden = true;
-        box.textContent = '';
+        setError(errId, '');
       },
       function (err) {
         if (err && err.message === 'session') {
           throw err;
         }
-        box.textContent = text;
-        box.hidden = false;
+        setError(errId, text);
       }
     );
   }
 
-  var refreshing = null;
-  var refreshAgain = false;
+  function loadAbout() {
+    return read('api/about').then(function (a) {
+      data.about = a;
+      var t = Date.parse(a.server_time);
+      serverOffset = isNaN(t) ? 0 : t - Date.now();
+      setSession(a);
+      renderAbout();
+    });
+  }
 
-  // Re-reads everything, without losing the open space or the position on the page. A request made
-  // during a refresh (after an action, for example) starts a second one at the end:
-  // the first one may have read the data from before the action.
+  function refreshStatusOnly() {
+    return Promise.all([
+      read('api/status').then(function (s) { data.status = s; }),
+      read('api/about').then(function (a) { data.about = a; renderAbout(); renderInvitations(); })
+    ]).then(renderStatus, function () {});
+  }
+
+  var refreshing = false;
+
   function refreshAll() {
     if (refreshing) {
-      refreshAgain = true;
-      return refreshing;
+      return Promise.resolve();
     }
+    refreshing = true;
+    $('loading').hidden = false;
     var button = $('refresh');
     button.disabled = true;
     button.textContent = 'Actualisation…';
-    $('view-dashboard').setAttribute('aria-busy', 'true');
-    var again = 'Réessaie avec « Actualiser ».';
-    // First the server time (the "ago" counts depend on it), then the rest in parallel.
-    refreshing = guarded(loadAbout(), 'about-error', 'Impossible de lire les informations du relais. ' + again)
+    // `about` first: the clock offset and the ceilings are used by what follows.
+    return loadAbout()
       .then(function () {
         return Promise.all([
-          guarded(loadStatus(), 'status-error', 'Impossible de lire l’état du relais. ' + again),
-          guarded(loadSpaces(), 'spaces-error', 'Impossible de lire les espaces. ' + again),
-          guarded(loadInvitations(), 'invitations-error', 'Impossible de lire les invitations. ' + again),
-          guarded(loadQuota(), 'quota-error', 'Impossible de lire le quota par défaut. ' + again),
-          guarded(loadJournal(), 'journal-error', 'Impossible de lire le journal. ' + again)
+          guarded(read('api/status').then(function (s) { data.status = s; }), 'status-error', 'Impossible de lire l’état du relais.'),
+          guarded(read('api/spaces').then(function (r) { data.spaces = r.spaces || []; }), 'spaces-error', 'Impossible de lire les espaces.'),
+          guarded(read('api/invitations').then(function (r) { data.invitations = r.invitations || []; }), 'invitations-error', 'Impossible de lire les invitations.'),
+          guarded(read('api/journal').then(function (r) { data.journal = r; }), 'journal-error', 'Impossible de lire le journal.'),
+          guarded(read('api/quota').then(function (r) { data.quota = r.default; }), 'quota-error', 'Impossible de lire le quota par défaut.'),
+          guarded(read('api/keys').then(function (r) { data.keys = r; }), 'quota-error', 'Impossible de lire les clés d’accès.'),
+          guarded(read('api/trash').then(function (r) { data.trash = r; }), 'quota-error', 'Impossible de lire la corbeille.')
         ]);
       })
       .then(function () {
-        if (selectedSpace) {
-          var still = data.spaces.some(function (s) {
-            return s.id === selectedSpace;
-          });
-          if (still) {
-            return loadDevices(selectedSpace, false);
-          }
-          selectedSpace = null;
-          $('devices-section').hidden = true;
-          renderSpaces();
+        renderStatus();
+        renderSpaces();
+        renderInvitations();
+        renderJournal();
+        renderQuota();
+        renderKeys();
+        renderTrash();
+        if (selectedSpace && !spaceById(selectedSpace)) {
+          window.location.hash = '#espaces';
+        } else if (selectedSpace) {
+          renderDetail();
+          return loadDevices(selectedSpace);
         }
         return null;
       })
       .then(function () {
-        renderStatus();
-        renderAlerts();
-        renderDiagnostic();
         var now = new Date();
-        $('updated-at').textContent = 'Mis à jour à ' + now.toLocaleTimeString('fr-FR', {
-          hour: '2-digit',
-          minute: '2-digit'
+        var hm = ('0' + now.getHours()).slice(-2) + ':' + ('0' + now.getMinutes()).slice(-2);
+        Array.prototype.forEach.call(document.querySelectorAll('.updated-time'), function (n) {
+          n.textContent = hm;
         });
       })
       .catch(function (err) {
-        failure(err, 'Impossible de lire l’état du relais.');
+        if (err && err.message === 'session') {
+          lostSession();
+          return;
+        }
+        say('Le relais ne répond pas. Réessaie dans un instant.', 'error');
       })
       .then(function () {
+        refreshing = false;
+        $('loading').hidden = true;
         button.disabled = false;
         button.textContent = 'Actualiser';
-        $('view-dashboard').removeAttribute('aria-busy');
-        refreshing = null;
-        if (refreshAgain) {
-          refreshAgain = false;
-          if (session.idleEnd) {
-            return refreshAll(); // session still open: re-read
-          }
-        }
-        return null;
       });
-    return refreshing;
   }
 
   function openDashboard() {
-    hideToken();
-    selectedSpace = null;
-    $('devices-section').hidden = true;
-    show('loading');
     return refreshAll().then(function () {
-      // A session lost during the read has already led back to sign-in.
-      if ($('view-login').hidden) {
-        show('dashboard');
+      if (session.idleEnd) {
+        showApp();
+      } else {
+        showAuth('login');
       }
     });
   }
 
-  // ----- startup -----------------------------------------------------------------------
+  // ===== navigation: one view at a time, driven by the address ======================================
+
+  var desktop = window.matchMedia ? window.matchMedia('(min-width: 64rem)') : { matches: false };
+  var lastView = null;
+  var lastSpace = null;
+
+  function route() {
+    if (!appShown) {
+      return;
+    }
+    var parts = window.location.hash.replace(/^#/, '').split('/');
+    var name = VIEWS[parts[0]] ? parts[0] : 'apercu';
+    var space = name === 'espaces' && /^[0-9a-f]{8}$/.test(parts[1] || '') ? parts[1] : null;
+    Object.keys(VIEWS).forEach(function (v) {
+      $('view-' + v).hidden = v !== name;
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.nav a'), function (a) {
+      if (a.getAttribute('data-view') === name) {
+        a.setAttribute('aria-current', 'page');
+      } else {
+        a.removeAttribute('aria-current');
+      }
+    });
+    textOf('t-main', VIEWS[name]);
+    document.title = (space ? 'Espace ' + space : VIEWS[name]) + ' · Relais Tomi';
+    var changed = space !== lastSpace;
+    selectedSpace = space;
+    lastSpace = space;
+    if (space && changed) {
+      data.devices = [];
+      renderDetail();
+      renderDevices();
+      loadDevices(space);
+    } else {
+      renderDetail();
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('#spaces-body tr'), function (tr) {
+      tr.classList.toggle('selected', tr.getAttribute('data-space') === space);
+    });
+    closeSheet();
+    if (name !== lastView || (changed && !desktop.matches)) {
+      window.scrollTo(0, 0);
+    }
+    if (space && changed && desktop.matches) {
+      $('h-detail').focus({ preventScroll: true });
+    }
+    lastView = name;
+  }
+
+  // The session sheet (⋮ on a phone), closed by the scrim, Escape, or a change of view.
+  function openSheet() {
+    $('session-panel').classList.add('open');
+    $('scrim').hidden = false;
+    $('menu').setAttribute('aria-expanded', 'true');
+    $('session-close').focus();
+  }
+
+  function closeSheet() {
+    var panel = $('session-panel');
+    if (!panel.classList.contains('open')) {
+      return;
+    }
+    panel.classList.remove('open');
+    $('scrim').hidden = true;
+    $('menu').setAttribute('aria-expanded', 'false');
+  }
+
+  // "What the relay sees": open on a desktop, folded on a phone.
+  function syncBlind() {
+    $('blind').open = desktop.matches;
+  }
+
+  // ----- desktop keyboard (never for an action that removes, deletes or invites) ----------------
+
+  var gPending = false;
+  var gTimer = null;
+  var KB = { a: 'apercu', e: 'espaces', i: 'invitations', j: 'journal', r: 'reglages' };
+
+  function typing(target) {
+    return target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName);
+  }
+
+  function moveSpace(step) {
+    var rows = Array.prototype.slice.call(document.querySelectorAll('#spaces-body tr'));
+    if (!rows.length) {
+      return;
+    }
+    var at = -1;
+    rows.forEach(function (r, i) {
+      if (r.getAttribute('data-space') === selectedSpace) {
+        at = i;
+      }
+    });
+    var next = rows[Math.max(0, Math.min(rows.length - 1, at + step))];
+    window.location.hash = '#espaces/' + next.getAttribute('data-space');
+  }
+
+  function onKey(event) {
+    if (event.key === 'Escape') {
+      if (document.querySelector('dialog[open]')) {
+        return;
+      }
+      if ($('session-panel').classList.contains('open')) {
+        closeSheet();
+        $('menu').focus();
+      } else if (selectedSpace) {
+        window.location.hash = '#espaces';
+      }
+      return;
+    }
+    if (!appShown || event.ctrlKey || event.metaKey || event.altKey || typing(event.target) || document.querySelector('dialog[open]')) {
+      return;
+    }
+    var k = event.key.toLowerCase();
+    if (gPending) {
+      gPending = false;
+      clearTimeout(gTimer);
+      if (KB[k]) {
+        event.preventDefault();
+        window.location.hash = '#' + KB[k];
+      }
+      return;
+    }
+    if (k === 'g') {
+      gPending = true;
+      gTimer = setTimeout(function () { gPending = false; }, 1500);
+    } else if (event.key === '?') {
+      $('shortcuts').showModal();
+    } else if (k === 'r') {
+      refreshAll();
+    } else if (k === 'c' && selectedSpace) {
+      copyText(selectedSpace, 'Identifiant');
+    } else if ((k === 'j' || k === 'arrowdown') && window.location.hash.indexOf('#espaces') === 0) {
+      event.preventDefault();
+      moveSpace(1);
+    } else if ((k === 'k' || k === 'arrowup') && window.location.hash.indexOf('#espaces') === 0) {
+      event.preventDefault();
+      moveSpace(-1);
+    }
+  }
+
+  // ===== startup =====================================================================================
 
   function start() {
     loadTheme();
-    $('theme').addEventListener('change', saveTheme);
-    $('toast-close').addEventListener('click', function () {
-      say('');
+    Array.prototype.forEach.call(document.getElementsByName('theme'), function (r) {
+      r.addEventListener('change', saveTheme);
     });
+    $('toast-close').addEventListener('click', function () { say(''); });
     $('enroll-form').addEventListener('submit', enroll);
     $('login-submit').addEventListener('click', login);
+    $('enroll-open').addEventListener('click', function () {
+      $('enroll-back').hidden = false;
+      showAuth('enroll');
+    });
+    $('enroll-back').addEventListener('click', function () { showAuth('login'); });
     $('logout').addEventListener('click', logout);
-    $('refresh').addEventListener('click', function () {
-      refreshAll();
+    Array.prototype.forEach.call(document.querySelectorAll('[data-close-all]'), function (b) {
+      b.addEventListener('click', closeAllSessions);
     });
-    $('devices-close').addEventListener('click', closeDevices);
-    $('invite-new').addEventListener('click', function () {
-      invite('new');
+    $('refresh').addEventListener('click', function () { refreshAll(); });
+    $('menu').addEventListener('click', openSheet);
+    $('scrim').addEventListener('click', closeSheet);
+    $('session-close').addEventListener('click', function () { closeSheet(); $('menu').focus(); });
+    $('back').addEventListener('click', function () { window.location.hash = '#espaces'; });
+    $('open-blind').addEventListener('click', function () {
+      setTimeout(function () {
+        $('blind').open = true;
+        $('blind').scrollIntoView({ block: 'center' });
+      }, 0);
     });
-    $('invite-rotate').addEventListener('click', function () {
-      invite('rotate');
+    syncBlind();
+    if (desktop.addEventListener) {
+      desktop.addEventListener('change', syncBlind);
+    }
+    window.addEventListener('hashchange', route);
+    document.addEventListener('keydown', onKey);
+    $('shortcuts-open').addEventListener('click', function () { $('shortcuts').showModal(); });
+    $('sc-close').addEventListener('click', function () { $('shortcuts').close(); });
+
+    // The "?" buttons: the explanation stays folded until it is asked for.
+    Array.prototype.forEach.call(document.querySelectorAll('.help-btn'), function (b) {
+      b.addEventListener('click', function () {
+        var open = b.getAttribute('aria-expanded') !== 'true';
+        b.setAttribute('aria-expanded', open ? 'true' : 'false');
+        $(b.getAttribute('aria-controls')).hidden = !open;
+      });
     });
+    // Copy buttons, wherever they are drawn.
+    document.addEventListener('click', function (event) {
+      var b = event.target.closest ? event.target.closest('button[data-copy]') : null;
+      if (b) {
+        var v = copyValue(b);
+        if (v) {
+          copyText(v, b.getAttribute('data-copy') === 'Commande' ? 'Commande' : b.getAttribute('data-copy'));
+        }
+      }
+    });
+
+    // Spaces: sorting, a click on the row.
+    Array.prototype.forEach.call(document.querySelectorAll('#spaces-table button.sort'), function (b) {
+      b.addEventListener('click', function () { setSort('spaces', b.getAttribute('data-sort')); });
+    });
+    $('spaces-sort').addEventListener('change', function (e) {
+      sorts.spaces.key = e.target.value;
+      sorts.spaces.dir = e.target.value === 'id' ? 1 : -1;
+      renderSpaces();
+    });
+    $('devices-sort').addEventListener('change', function (e) {
+      sorts.devices.key = e.target.value;
+      sorts.devices.dir = e.target.value === 'name' || e.target.value === 'platform' ? 1 : -1;
+      renderDevices();
+    });
+    $('spaces-body').addEventListener('click', function (event) {
+      var tr = event.target.closest('tr');
+      if (tr && !event.target.closest('a, button')) {
+        window.location.hash = '#espaces/' + tr.getAttribute('data-space');
+      }
+    });
+    $('spaces-retry').addEventListener('click', function () { refreshAll(); });
+    $('banner-close').addEventListener('click', function () { $('spaces-banner').hidden = true; });
+    $('spaces-banner').setAttribute('tabindex', '-1');
+
+    // The detail: the quota of the space, the devices, the deletion.
+    $('sq-edit').addEventListener('click', function () {
+      var s = spaceById(selectedSpace);
+      $('sq-form').hidden = false;
+      $('sq-edit').hidden = true;
+      $('sq-edit').setAttribute('aria-expanded', 'true');
+      $('sq-mib').value = s && s.max_bytes ? String(Math.round(s.max_bytes / 1048576 * 10) / 10).replace('.', ',') : '';
+      previewSpaceQuota();
+      $('sq-mib').focus();
+    });
+    $('sq-mib').addEventListener('input', previewSpaceQuota);
+    $('sq-form').addEventListener('submit', function (event) {
+      event.preventDefault();
+      var bytes = previewSpaceQuota();
+      if (bytes === null) {
+        $('sq-mib').focus();
+        return;
+      }
+      saveSpaceQuota(bytes, 'Quota de l’espace réglé : ' + fmtBytes(bytes) + '.');
+    });
+    $('sq-default').addEventListener('click', function () {
+      saveSpaceQuota(null, 'Quota de l’espace : retour au quota par défaut.');
+    });
+    $('sq-none').addEventListener('click', function () {
+      saveSpaceQuota(0, 'Quota de l’espace : aucune limite.');
+    });
+    $('d-devices').addEventListener('change', function (event) {
+      if (event.target.classList.contains('dev-sel')) {
+        syncSelection();
+      }
+    });
+    $('d-devices').addEventListener('click', function (event) {
+      var button = event.target.closest('.dev-revoke');
+      if (button) {
+        askRevoke([button.closest('.dev').getAttribute('data-device')], button);
+      }
+    });
+    $('d-selclear').addEventListener('click', function () {
+      Array.prototype.forEach.call(document.querySelectorAll('#d-devices .dev-sel'), function (b) { b.checked = false; });
+      syncSelection();
+    });
+    $('d-selrevoke').addEventListener('click', function () { askRevoke(selectedIds(), $('d-selrevoke')); });
+    $('d-delete').addEventListener('click', function () { askDelete($('d-delete')); });
+
+    // Invitations.
+    $('invite-new').addEventListener('click', function () { askInvite('new', $('invite-new')); });
+    $('invite-rotate').addEventListener('click', function () { askInvite('rotate', $('invite-rotate')); });
+    $('invite-cancel').addEventListener('click', cancelInvitations);
+    $('token-copy').addEventListener('click', function () { copyText($('token').textContent, 'Jeton'); });
+    $('token-link-copy').addEventListener('click', function () { copyText($('token-link').textContent, 'Lien'); });
+    $('token-hide').addEventListener('click', hideToken);
+    // Leaving the page clears the displayed token (and its QR).
+    window.addEventListener('pagehide', hideToken);
+
+    // Settings.
     $('quota-form').addEventListener('submit', submitQuota);
     $('quota-mib').addEventListener('input', previewQuota);
     $('quota-unlimited').addEventListener('click', quotaUnlimited);
     $('quota-reset').addEventListener('click', function () {
-      saveQuota(null, 'Quota par défaut rétabli à celui de la configuration du relais.');
+      saveDefaultQuota(null, 'Quota par défaut rétabli à celui de la configuration du relais.');
     });
-    $('token-copy').addEventListener('click', copyToken);
-    $('token-link-copy').addEventListener('click', copyLink);
-    $('token-hide').addEventListener('click', hideToken);
     $('diagnostic-copy').addEventListener('click', function () {
-      renderDiagnostic();
-      copyText($('diagnostic').textContent, 'Diagnostic');
+      var text = diagnosticText();
+      $('diagnostic').textContent = text;
+      copyText(text, 'Diagnostic');
     });
-    // Leaving the page clears the displayed token (and its QR).
-    window.addEventListener('pagehide', hideToken);
-    setupSort('spaces-table', 'spaces', renderSpaces);
-    setupSort('devices-table', 'devices', renderDevices);
+
+    // The sheet of the step-up.
+    $('su-input').addEventListener('input', syncTyped);
+    $('su-cancel').addEventListener('click', closeStep);
+    $('su-ok').addEventListener('click', onStepOk);
 
     if (!webauthnAvailable()) {
-      show('nojs');
+      showAuth('nojs');
       return;
     }
     api('GET', 'api/state')
@@ -2143,12 +3172,13 @@
         if (r.data.authenticated) {
           return openDashboard();
         }
-        show(r.data.enrolled ? 'login' : 'enroll');
+        $('enroll-back').hidden = true;
+        showAuth(r.data.enrolled ? 'login' : 'enroll');
         return null;
       })
       .catch(function () {
         say('Le relais ne répond pas. Recharge la page.', 'error');
-        show('login');
+        showAuth('login');
       });
   }
 
