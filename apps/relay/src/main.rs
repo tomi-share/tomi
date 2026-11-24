@@ -72,11 +72,14 @@ enum AdminCommand {
     /// Lists the pending invitations (permissions to create a space).
     Invite {
         /// Creates an invitation and prints its installation token (shown only now).
-        #[arg(long = "new", conflicts_with = "rotate")]
+        #[arg(long = "new", conflicts_with_all = ["rotate", "cancel"])]
         new: bool,
         /// Replaces every pending invitation by a new one and prints its token.
-        #[arg(long)]
+        #[arg(long, conflicts_with = "cancel")]
         rotate: bool,
+        /// Invalidates every pending invitation without making another one.
+        #[arg(long)]
+        cancel: bool,
     },
     /// Revokes a device (id or prefix of at least 8 characters).
     Revoke {
@@ -136,11 +139,33 @@ enum TrashSub {
 }
 
 #[derive(Subcommand)]
+enum KeysSub {
+    /// Removes passkey number N and closes the sessions it opened (never the last key: that is
+    /// `reset`).
+    Remove { number: i64 },
+}
+
+#[derive(Subcommand)]
 enum WebSub {
     /// Makes a one-time enrolment code (shown once, valid 15 minutes, 5 attempts) to register the
     /// first passkey.
     Enroll,
-    /// Removes the passkey and closes every session; the enrolment then needs a new code.
+    /// Lists the passkeys (number, kind, dates); `keys remove <N>` removes one.
+    #[command(args_conflicts_with_subcommands = true)]
+    Keys {
+        #[arg(long)]
+        json: bool,
+        #[command(subcommand)]
+        action: Option<KeysSub>,
+    },
+    /// Shows the policy of the deletion of a space from the panel, or sets it.
+    Policy {
+        /// `any-key` (default) or `device-key` (a key bound to its device; refused if none is
+        /// enrolled).
+        #[arg(long, value_name = "any-key|device-key")]
+        space_deletion: Option<String>,
+    },
+    /// Removes every passkey and closes every session; the enrolment then needs a new code.
     Reset {
         /// The first 8 characters of the panel path (otherwise asked on the terminal).
         #[arg(long)]
@@ -244,7 +269,15 @@ async fn administer(config: Option<PathBuf>, cmd: AdminCommand) -> u8 {
         AdminCommand::Devices { json, space } => Cmd::Devices { json, space },
         AdminCommand::Spaces { json } => Cmd::Spaces { json },
         AdminCommand::Quota { space, value } => Cmd::Quota { space, value },
-        AdminCommand::Invite { new, rotate } => Cmd::Invite { rotate, new },
+        AdminCommand::Invite {
+            new,
+            rotate,
+            cancel,
+        } => Cmd::Invite {
+            rotate,
+            new,
+            cancel,
+        },
         AdminCommand::Revoke { target, space } => Cmd::Revoke { target, space },
         AdminCommand::Reset { space, confirm } => Cmd::Reset {
             confirm: confirm.or_else(ask_confirmation),
@@ -276,6 +309,13 @@ async fn administer(config: Option<PathBuf>, cmd: AdminCommand) -> u8 {
         } => Cmd::Web {
             action: match (rotate_path, action) {
                 (_, Some(WebSub::Enroll)) => WebAction::Enroll,
+                (_, Some(WebSub::Keys { json, action })) => match action {
+                    None => WebAction::Keys { json },
+                    Some(KeysSub::Remove { number }) => WebAction::KeysRemove { number },
+                },
+                (_, Some(WebSub::Policy { space_deletion })) => {
+                    WebAction::Policy { space_deletion }
+                }
                 (_, Some(WebSub::Reset { confirm })) => WebAction::Reset {
                     confirm: confirm.or_else(ask_web_confirmation),
                 },

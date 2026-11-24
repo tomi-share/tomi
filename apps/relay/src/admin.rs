@@ -53,6 +53,9 @@ pub enum Cmd {
         rotate: bool,
         #[serde(default)]
         new: bool,
+        /// Invalidates the pending invitations without making another one.
+        #[serde(default)]
+        cancel: bool,
     },
     Revoke {
         target: String,
@@ -90,6 +93,18 @@ pub enum WebAction {
     Enroll,
     /// Deletes the passkey and the sessions. The enrolment reopens once `enroll` makes a new code.
     Reset { confirm: Option<String> },
+    /// Lists the passkeys (number, kind, dates) and the policy.
+    Keys {
+        #[serde(default)]
+        json: bool,
+    },
+    /// Removes the passkey number `number` and closes the sessions it opened.
+    KeysRemove { number: i64 },
+    /// Shows the policy of the deletion of a space, or sets it: `any-key` or `device-key`.
+    Policy {
+        #[serde(default)]
+        space_deletion: Option<String>,
+    },
 }
 
 /// What a command printed and its exit code: 0 success, 1 error, 2 refusal or bad usage.
@@ -124,8 +139,16 @@ impl Output {
 pub fn needs_exclusive_access(cmd: &Cmd) -> bool {
     match cmd {
         Cmd::Status { .. } | Cmd::Devices { .. } | Cmd::Spaces { .. } => false,
-        Cmd::Invite { rotate, new } => *rotate || *new,
-        Cmd::Web { action } => !matches!(action, WebAction::Show),
+        Cmd::Invite {
+            rotate,
+            new,
+            cancel,
+        } => *rotate || *new || *cancel,
+        Cmd::Web { action } => match action {
+            WebAction::Show | WebAction::Keys { .. } => false,
+            WebAction::Policy { space_deletion } => space_deletion.is_some(),
+            _ => true,
+        },
         Cmd::Trash { action, .. } => !matches!(action, crate::trash::TrashAction::List),
         Cmd::Quota { .. } | Cmd::Revoke { .. } | Cmd::Reset { .. } => true,
     }
@@ -144,7 +167,11 @@ pub async fn run(st: &AppState, cmd: Cmd) -> Output {
         Cmd::Devices { json, space } => devices(st, space.as_deref(), json).await,
         Cmd::Spaces { json } => spaces(st, json).await,
         Cmd::Quota { space, value } => quota(st, space.as_deref(), &value),
-        Cmd::Invite { rotate, new } => invite(st, rotate, new),
+        Cmd::Invite {
+            rotate,
+            new,
+            cancel,
+        } => invite(st, rotate, new, cancel).await,
         Cmd::Revoke { target, space } => revoke(st, space.as_deref(), &target).await,
         Cmd::Reset { confirm, space } => reset(st, space.as_deref(), confirm.as_deref()).await,
         Cmd::Web { action } => crate::admin_web::command(st, action).await,
@@ -651,8 +678,26 @@ pub(crate) fn issue_invitation(st: &AppState, rotate: bool) -> Result<String, Ap
 ///
 /// The relay keeps only the hash of a token, so the token of an earlier invitation cannot be
 /// shown again: it is printed once, when the invitation is created.
-fn invite(st: &AppState, rotate: bool, new: bool) -> Output {
+async fn invite(st: &AppState, rotate: bool, new: bool, cancel: bool) -> Output {
     let routing = st.spaces.routing();
+    if cancel {
+        if rotate || new {
+            return Output::fail(2, "--cancel cannot be combined with --new or --rotate");
+        }
+        return match install::clear(routing) {
+            Ok(n) => {
+                crate::admin_audit::record(
+                    st,
+                    crate::admin_audit::kind::INVITATIONS_CANCELLED,
+                    None,
+                    None,
+                )
+                .await;
+                Output::ok(format!("{n} pending invitation(s) invalidated\n"))
+            }
+            Err(e) => Output::from_error(&e),
+        };
+    }
     if rotate || new {
         return match issue_invitation(st, rotate) {
             Ok(t) => Output::ok(format!("{t}\n")),
@@ -677,7 +722,7 @@ fn invite(st: &AppState, rotate: bool, new: bool) -> Output {
                 ));
             }
             out.push_str(
-                "a token is shown once, when it is created; `--new` adds an invitation, `--rotate` replaces them all\n",
+                "a token is shown once, when it is created; `--new` adds an invitation, `--rotate` replaces them all, `--cancel` invalidates them\n",
             );
             Output::ok(out)
         }
@@ -916,7 +961,8 @@ mod tests {
             serde_json::from_str::<Cmd>(r#"{"cmd":"invite","rotate":true}"#).unwrap(),
             Cmd::Invite {
                 rotate: true,
-                new: false
+                new: false,
+                cancel: false
             }
         );
         let status = Cmd::Status {
@@ -928,15 +974,23 @@ mod tests {
         assert!(needs_exclusive_access(&q));
         assert!(needs_exclusive_access(&Cmd::Invite {
             rotate: true,
-            new: false
+            new: false,
+            cancel: false
         }));
         assert!(needs_exclusive_access(&Cmd::Invite {
             rotate: false,
-            new: true
+            new: true,
+            cancel: false
+        }));
+        assert!(needs_exclusive_access(&Cmd::Invite {
+            rotate: false,
+            new: false,
+            cancel: true
         }));
         assert!(!needs_exclusive_access(&Cmd::Invite {
             rotate: false,
-            new: false
+            new: false,
+            cancel: false
         }));
     }
 }

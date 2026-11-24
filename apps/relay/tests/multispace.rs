@@ -1221,6 +1221,7 @@ async fn admin_commands_take_a_space_and_the_relay_has_a_global_view() {
         Cmd::Invite {
             rotate: false,
             new: true,
+            cancel: false,
         },
     )
     .await;
@@ -1233,6 +1234,7 @@ async fn admin_commands_take_a_space_and_the_relay_has_a_global_view() {
         Cmd::Invite {
             rotate: false,
             new: false,
+            cancel: false,
         },
     )
     .await;

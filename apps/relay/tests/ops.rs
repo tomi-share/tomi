@@ -360,7 +360,11 @@ async fn a124_reset_wipes_the_last_space_and_prints_a_new_token() {
 }
 
 fn invite(rotate: bool, new: bool) -> Cmd {
-    Cmd::Invite { rotate, new }
+    Cmd::Invite {
+        rotate,
+        new,
+        cancel: false,
+    }
 }
 
 fn status(json: bool, space: Option<&str>) -> Cmd {

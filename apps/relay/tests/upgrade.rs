@@ -247,6 +247,7 @@ async fn a_read_only_command_creates_nothing() {
         Cmd::Invite {
             rotate: false,
             new: false,
+            cancel: false,
         },
     )
     .await;
@@ -257,6 +258,7 @@ async fn a_read_only_command_creates_nothing() {
         Cmd::Invite {
             rotate: false,
             new: true,
+            cancel: false,
         },
     )
     .await;
@@ -320,6 +322,7 @@ async fn a_read_only_command_changes_no_database() {
         Cmd::Invite {
             rotate: false,
             new: false,
+            cancel: false,
         },
     ] {
         let out = admin::run(&st, cmd).await;

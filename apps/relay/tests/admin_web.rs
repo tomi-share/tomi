@@ -3080,3 +3080,238 @@ async fn the_quota_of_a_space_the_invitations_and_the_sessions_need_the_session_
         .await
         .err(401, "unauthorized");
 }
+
+// ===== the CLI side: several passkeys, the policy, the invitations ============================
+
+const FLAG_BE: u8 = 0x08;
+
+async fn register_flags(env: &Env, seg: &str, auth: &Authenticator, flags: Option<u8>) {
+    env.clock.advance_secs(60);
+    let code = enroll_code(env).await;
+    let options = register_options(env, seg, &code).await.ok(200);
+    let tweak = Tweak {
+        flags,
+        ..Tweak::default()
+    };
+    let reg = auth.create(&challenge_of(&options), &tweak);
+    post(env, seg, "api/register/finish", reg.json(), None)
+        .await
+        .ok(204);
+}
+
+#[tokio::test]
+async fn up_to_five_passkeys_with_numbers_that_are_never_reused() {
+    let env = panel().await;
+    let seg = segment(&env);
+    let mut keys: Vec<Authenticator> = (0..5).map(|_| Authenticator::for_test_relay()).collect();
+    for k in &keys {
+        register_flags(&env, &seg, k, None).await;
+    }
+    // A sixth is refused before any code is made.
+    let out = web(&env, WebAction::Enroll).await;
+    assert_eq!(out.exit, 2, "{}", out.stderr);
+
+    let listing = web(&env, WebAction::Keys { json: true }).await;
+    let v: Value = serde_json::from_str(&listing.stdout).unwrap();
+    let numbers: Vec<i64> = v["keys"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|k| k["number"].as_i64().unwrap())
+        .collect();
+    assert_eq!(numbers, [1, 2, 3, 4, 5]);
+    assert_eq!(v["keys"][0]["device_bound"], true);
+    assert_eq!(v["policy"]["space_deletion"], "any-key");
+
+    // Each key signs in; removing key 2 closes the sessions it opened, and no other one.
+    let c2 = signed_in_again(&env, &seg, &mut keys[1]).await;
+    let c3 = signed_in_again(&env, &seg, &mut keys[2]).await;
+    let out = web(&env, WebAction::KeysRemove { number: 2 }).await;
+    assert_eq!(out.exit, 0, "{}", out.stderr);
+    get(&env, &seg, "api/status", Some(&c2))
+        .await
+        .err(401, "unauthorized");
+    get(&env, &seg, "api/status", Some(&c3)).await.ok(200);
+    // The removed key no longer signs in; the number 2 is not given again.
+    let r = login_raw(&env, &seg, &mut keys[1], &Tweak::default()).await;
+    assert_eq!(r.status, 401);
+    let extra = Authenticator::for_test_relay();
+    register_flags(&env, &seg, &extra, None).await;
+    let listing = web(&env, WebAction::Keys { json: true }).await;
+    let v: Value = serde_json::from_str(&listing.stdout).unwrap();
+    let numbers: Vec<i64> = v["keys"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|k| k["number"].as_i64().unwrap())
+        .collect();
+    assert_eq!(numbers, [1, 3, 4, 5, 6]);
+    // The panel lists them, generated labels only, and marks the key of this session.
+    let panel_keys = get(&env, &seg, "api/keys", Some(&c3)).await.ok(200);
+    assert_eq!(panel_keys["keys"][1]["number"], 3);
+    assert_eq!(panel_keys["keys"][1]["this_session"], true);
+    assert_eq!(panel_keys["keys"][0]["this_session"], false);
+    assert_eq!(panel_keys["keys"][0]["label"], "Clé 1 · liée à l'appareil");
+    // Keys are enrolled and removed with the CLI only.
+    for path in ["api/keys/remove", "api/keys/add", "api/policy"] {
+        post(&env, &seg, path, json!({}), Some(&c3))
+            .await
+            .err(404, "not_found");
+    }
+}
+
+#[tokio::test]
+async fn the_last_passkey_cannot_be_removed_and_the_previous_binary_still_finds_a_key() {
+    let env = panel().await;
+    let seg = segment(&env);
+    let a = Authenticator::for_test_relay();
+    register_flags(&env, &seg, &a, None).await;
+    let out = web(&env, WebAction::KeysRemove { number: 1 }).await;
+    assert_eq!(out.exit, 2, "{}", out.stderr);
+    assert!(out.stderr.contains("reset"), "{}", out.stderr);
+    assert_eq!(web(&env, WebAction::KeysRemove { number: 9 }).await.exit, 1);
+
+    let b = Authenticator::for_test_relay();
+    register_flags(&env, &seg, &b, None).await;
+    assert_eq!(web(&env, WebAction::KeysRemove { number: 1 }).await.exit, 0);
+    // The single-key table of the previous version holds the key that is left.
+    let legacy: Vec<u8> = env
+        .state
+        .spaces
+        .routing()
+        .read_sync(|tx| {
+            Ok(
+                tx.query_row("SELECT credential_id FROM admin_web_credential", [], |r| {
+                    r.get(0)
+                })?,
+            )
+        })
+        .unwrap();
+    assert_eq!(legacy, b.credential_id);
+    // A reset removes everything and the numbers still go on.
+    let code = web(&env, WebAction::Show).await;
+    let segment8 = code
+        .stdout
+        .lines()
+        .next()
+        .unwrap()
+        .trim_end_matches('/')
+        .rsplit('/')
+        .next()
+        .unwrap()[..8]
+        .to_owned();
+    let out = web(
+        &env,
+        WebAction::Reset {
+            confirm: Some(segment8),
+        },
+    )
+    .await;
+    assert_eq!(out.exit, 0, "{}", out.stderr);
+    let c = Authenticator::for_test_relay();
+    register_flags(&env, &seg, &c, None).await;
+    let v: Value =
+        serde_json::from_str(&web(&env, WebAction::Keys { json: true }).await.stdout).unwrap();
+    assert_eq!(v["keys"][0]["number"], 3);
+}
+
+#[tokio::test]
+async fn the_device_key_policy_is_refused_without_such_a_key_and_then_binds_the_deletion() {
+    let env = panel().await;
+    let seg = segment(&env);
+    let (_devs, _) = env.space_of(2).await;
+    // Key 1 is synchronisable (BE set), key 2 is bound to its device.
+    let mut synced = Authenticator::for_test_relay();
+    register_flags(
+        &env,
+        &seg,
+        &synced,
+        Some(FLAG_UP | FLAG_UV | FLAG_AT | FLAG_BE),
+    )
+    .await;
+    let mut bound = Authenticator::for_test_relay();
+
+    let policy = |v: Option<&str>| WebAction::Policy {
+        space_deletion: v.map(str::to_owned),
+    };
+    assert_eq!(
+        web(&env, policy(None)).await.stdout,
+        "space deletion: any-key\n"
+    );
+    let refused = web(&env, policy(Some("device-key"))).await;
+    assert_eq!(refused.exit, 2, "{}", refused.stderr);
+    assert_eq!(web(&env, policy(Some("sometimes"))).await.exit, 2);
+
+    register_flags(&env, &seg, &bound, None).await;
+    assert_eq!(web(&env, policy(Some("device-key"))).await.exit, 0);
+    assert_eq!(
+        web(&env, policy(None)).await.stdout,
+        "space deletion: device-key\n"
+    );
+    // The last bound key cannot go while the policy asks for one.
+    assert_eq!(web(&env, WebAction::KeysRemove { number: 2 }).await.exit, 2);
+
+    let cookie = signed_in_again(&env, &seg, &mut synced).await;
+    let space = env.space_id[..8].to_owned();
+    let del = json!({ "type": "delete_space", "space_id": space, "confirm": space });
+    // The options only offer the bound key, and an assertion of the synced one is refused.
+    env.clock.advance_secs(20);
+    let opts = post(
+        &env,
+        &seg,
+        "api/stepup/options",
+        json!({ "action": del }),
+        Some(&cookie),
+    )
+    .await
+    .ok(200);
+    let allowed = opts["publicKey"]["allowCredentials"].as_array().unwrap();
+    assert_eq!(allowed.len(), 1);
+    assert_eq!(allowed[0]["id"], b64_encode(&bound.credential_id));
+    let a = synced.get(&challenge_of(&opts), &Tweak::default());
+    env.clock.advance_secs(20);
+    post(
+        &env,
+        &seg,
+        "api/actions",
+        json!({ "action": del, "assertion": a.json() }),
+        Some(&cookie),
+    )
+    .await
+    .err(401, "unauthorized");
+    assert_eq!(env.state.spaces.list().len(), 1);
+    // The bound key does it (other actions stay open to any key).
+    act(&env, &seg, del, &cookie, &mut bound).await.ok(200);
+    assert!(env.state.spaces.is_empty());
+}
+
+#[tokio::test]
+async fn the_invitations_are_invalidated_from_the_cli_without_making_another() {
+    let env = panel().await;
+    let new = |rotate, new, cancel| Cmd::Invite {
+        rotate,
+        new,
+        cancel,
+    };
+    assert_eq!(
+        admin::run(&env.state, new(false, true, false)).await.exit,
+        0
+    );
+    assert_eq!(
+        admin::run(&env.state, new(false, true, false)).await.exit,
+        0
+    );
+    let pending = |env: &Env| {
+        tomi_relay::install::list(env.state.spaces.routing())
+            .unwrap()
+            .len()
+    };
+    let before = pending(&env);
+    assert!(before >= 2);
+    let out = admin::run(&env.state, new(false, false, true)).await;
+    assert_eq!(out.exit, 0, "{}", out.stderr);
+    assert_eq!(pending(&env), 0, "nothing is created");
+    assert!(admin::needs_exclusive_access(&new(false, false, true)));
+    // --cancel does not mix with the other two.
+    assert_eq!(admin::run(&env.state, new(true, false, true)).await.exit, 2);
+}

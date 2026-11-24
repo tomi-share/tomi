@@ -331,6 +331,7 @@ impl Env {
             tomi_relay::admin::Cmd::Invite {
                 rotate: false,
                 new: true,
+                cancel: false,
             },
         )
         .await;
