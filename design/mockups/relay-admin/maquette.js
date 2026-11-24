@@ -301,7 +301,7 @@
         '<td class="c-usage">' + usageHtml(s) + '</td>' +
         '<td class="c-act"><time datetime="' + s.act[1] + '" title="' + s.act[2] + '">' + s.act[0] + '</time></td>' +
         '<td class="c-crt"><time datetime="' + s.crt[1] + '" title="' + s.crt[2] + '">' + s.crt[0] + '</time></td>' +
-        '<td class="c-go"><a class="btn tonal sm" href="#espaces/' + id + '" aria-label="Appareils de l’espace ' + id + '"><span>Appareils</span>' +
+        '<td class="c-go"><a class="btn tonal sm" href="#espaces/' + id + '" aria-label="Détail de l’espace ' + id + '"><span>Détail</span>' +
         icon('chevron') + '</a></td></tr>';
     }).join('');
     var n = ORDER.length;
@@ -421,9 +421,6 @@
       li.querySelector('.dev-check .sr').textContent = 'Sélectionner ' + d.name;
       li.querySelector('.dev-revoke').hidden = last;
       li.querySelector('.dev-last').hidden = !last;
-      li.querySelector('.dev-quick').hidden = last;
-      li.querySelector('.dev-quick').setAttribute('aria-label', 'Retirer ' + d.name + ' de l’espace');
-      li.querySelector('.dev-quick').setAttribute('title', 'Retirer ' + d.name);
       list.appendChild(li);
     });
     syncSelection();
@@ -466,7 +463,7 @@
     }
   });
   $('d-devices').addEventListener('click', function (event) {
-    var button = event.target.closest('.dev-revoke, .dev-quick');
+    var button = event.target.closest('.dev-revoke');
     if (button) {
       askRevoke([button.closest('.dev').getAttribute('data-device')], button);
     }
@@ -672,7 +669,8 @@
   // =====================================================================================
   var su = $('stepup');
   var current = null;
-  var countdown = null;
+  // Le défi expire au bout de 2 min ; la page ne montre pas de décompte (décision du 24/11/2026).
+  var expiry = null;
   var MESSAGES = {
     cancelled: ['warn', 'warning', 'Annulé sur ton appareil', 'Rien n’a été fait. Tu peux réessayer quand tu veux.'],
     refused: ['', 'error', 'Clé d’accès refusée par le relais',
@@ -691,7 +689,7 @@
 
   function setSu(state, extra) {
     su.setAttribute('data-state', state);
-    clearInterval(countdown);
+    clearTimeout(expiry);
     var ok = $('su-ok');
     var cancel = $('su-cancel');
     var msg = $('su-msg');
@@ -705,15 +703,9 @@
       $('su-ok-label').textContent = current.okLabel;
       syncTyped();
     } else if (state === 'pending') {
-      var left = 120;
-      $('su-countdown').textContent = '2:00';
-      countdown = setInterval(function () {
-        left -= 1;
-        $('su-countdown').textContent = Math.floor(left / 60) + ':' + ('0' + (left % 60)).slice(-2);
-        if (left <= 0) {
-          setSu('expired');
-        }
-      }, 1000);
+      expiry = setTimeout(function () {
+        setSu('expired');
+      }, 120000);
       cancel.focus();
     } else if (state === 'limit') {
       msg.className = 'su-msg warn';
@@ -800,14 +792,14 @@
   }
 
   function closeSu() {
-    clearInterval(countdown);
+    clearTimeout(expiry);
     if (su.open) {
       su.close();
     }
   }
 
   su.addEventListener('close', function () {
-    clearInterval(countdown);
+    clearTimeout(expiry);
     restoreFocus();
   });
   $('su-cancel').addEventListener('click', closeSu);
@@ -920,7 +912,7 @@
         trash.insertBefore(row, trash.firstChild);
         $('trash-count').textContent = trash.children.length;
         $('banner-id').textContent = id;
-        $('banner-cmd').textContent = 'tomi-relay admin trash restore ' + id;
+        $('banner-cmd').textContent = 'tomi-relay admin trash restore --space ' + id;
         $('spaces-banner').hidden = false;
         renderSpaces();
         window.location.hash = '#espaces';
@@ -1006,7 +998,7 @@
       ],
       pk: 'Ta clé d’accès te sera demandée : un nouveau jeton est créé',
       okLabel: 'Remplacer avec ma clé d’accès',
-      cmd: 'tomi-relay admin invite --rotate\ntomi-relay admin invite --new',
+      cmd: 'tomi-relay admin invite --rotate',
       limit: INVITE_LIMIT,
       done: function () {
         RELAY.invitations = [newInvitation()];

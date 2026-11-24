@@ -2683,10 +2683,6 @@ details.fold.card.cli > summary {
   }
 }
 
-.dev-quick {
-  display: none !important;
-}
-
 .selbar {
   position: sticky;
   bottom: calc(var(--nav-h) + env(safe-area-inset-bottom));
@@ -3179,11 +3175,7 @@ dialog.confirm {
     background: var(--brand-container);
   }
 
-  /* Panneau de détail : appareils en lignes denses, action rapide au survol. */
-  .dev {
-    grid-template-columns: var(--target) minmax(0, 1fr) auto;
-  }
-
+  /* Panneau de détail : appareils en lignes denses. Pas de « Retirer » au survol (décision du 24/11/2026). */
   .dev-check {
     height: 3rem;
     margin-left: 0;
@@ -3201,22 +3193,6 @@ dialog.confirm {
   .dev.selected,
   .dev.selected:hover {
     background: var(--brand-container);
-  }
-
-  .dev-quick {
-    display: inline-grid !important;
-    margin: 0.375rem var(--space-1) 0 0;
-    color: var(--error);
-    opacity: 0;
-  }
-
-  .dev-quick[hidden] {
-    display: none !important;
-  }
-
-  .dev:hover .dev-quick,
-  .dev:focus-within .dev-quick {
-    opacity: 1;
   }
 
   .detail .devices {
@@ -3538,16 +3514,6 @@ dialog.confirm {
 
 .board .desk-panel .devices {
   margin: var(--space-2) calc(-1 * var(--space-4)) 0;
-}
-
-.board .desk-panel .dev {
-  grid-template-columns: var(--target) minmax(0, 1fr) auto;
-}
-
-.board .desk-panel .dev-quick {
-  display: inline-grid !important;
-  margin: 0.375rem var(--space-1) 0 0;
-  color: var(--error);
 }
 
 .board .desk-panel .dev.hover {
