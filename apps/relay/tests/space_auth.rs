@@ -128,6 +128,7 @@ async fn a05b_a_lost_201_is_recovered_by_asking_again() {
         Cmd::Invite {
             rotate: true,
             new: false,
+            cancel: false,
         },
     )
     .await;

@@ -1712,6 +1712,8 @@ pub async fn command(st: &AppState, action: WebAction) -> Output {
             web.set_segment(new.clone());
             web.clear_ephemeral();
             web.record(JournalKind::PathRotated, None, now);
+            crate::admin_audit::record(st, crate::admin_audit::kind::PATH_ROTATED, None, None)
+                .await;
             tracing::warn!("admin web: the secret path was replaced, every session is closed");
             Output::ok(format!("{}\n", panel_url(&st.cfg, &new)))
         }
@@ -1744,6 +1746,159 @@ pub async fn command(st: &AppState, action: WebAction) -> Output {
                 panel_url(&st.cfg, &segment)
             );
             out
+        }
+        WebAction::Keys { json } => {
+            let creds = match routing.read(stored_credentials).await {
+                Ok(c) => c,
+                Err(e) => return fail(e),
+            };
+            let bound = routing.read(device_key_required).await.unwrap_or(false);
+            if json {
+                let list: Vec<Value> = creds
+                    .iter()
+                    .map(|c| {
+                        json!({
+                            "number": c.num,
+                            "device_bound": !c.backup_eligible,
+                            "created_at": crate::wire::ts_format(c.created_at),
+                            "last_used_at": c.last_used_at.map(crate::wire::ts_format),
+                        })
+                    })
+                    .collect();
+                return Output::ok(format!(
+                    "{}\n",
+                    json!({ "keys": list, "max": MAX_KEYS, "policy": { "space_deletion": if bound { "device-key" } else { "any-key" } } })
+                ));
+            }
+            if creds.is_empty() {
+                return Output::ok(
+                    "no passkey: `tomi-relay admin web enroll` makes an enrolment code\n",
+                );
+            }
+            let mut out = String::new();
+            for c in &creds {
+                out.push_str(&format!(
+                    "{}  {}  added {}  last used {}\n",
+                    c.num,
+                    c.label(),
+                    crate::wire::ts_format(c.created_at),
+                    c.last_used_at
+                        .map_or_else(|| "never".to_owned(), crate::wire::ts_format)
+                ));
+            }
+            out.push_str(&format!(
+                "deletion of a space: {}\n",
+                if bound {
+                    "device-bound key required"
+                } else {
+                    "any key"
+                }
+            ));
+            Output::ok(out)
+        }
+        WebAction::KeysRemove { number } => {
+            enum Removed {
+                Done,
+                NoSuchKey,
+                Last,
+                LastBound,
+            }
+            let done = routing
+                .write(move |tx| {
+                    let creds = stored_credentials(tx)?;
+                    let Some(target) = creds.iter().find(|c| c.num == number) else {
+                        return Ok(Removed::NoSuchKey);
+                    };
+                    if creds.len() <= 1 {
+                        return Ok(Removed::Last);
+                    }
+                    let others_bound = creds.iter().any(|c| c.num != number && !c.backup_eligible);
+                    if device_key_required(tx)? && !target.backup_eligible && !others_bound {
+                        return Ok(Removed::LastBound);
+                    }
+                    tx.execute(
+                        "DELETE FROM admin_web_credentials WHERE num = ?1",
+                        params![number],
+                    )?;
+                    sync_legacy(tx)?;
+                    crate::admin_audit::record_tx(
+                        tx,
+                        now,
+                        crate::admin_audit::kind::PASSKEY_REMOVED,
+                        None,
+                        Some(number),
+                    )?;
+                    Ok(Removed::Done)
+                })
+                .await;
+            match done {
+                Err(e) => fail(e),
+                Ok(Removed::NoSuchKey) => Output::fail(1, "no such passkey (see `tomi-relay admin web keys`)"),
+                Ok(Removed::Last) => Output::fail(
+                    2,
+                    "this is the last passkey: `tomi-relay admin web reset` removes it and reopens the enrolment",
+                ),
+                Ok(Removed::LastBound) => Output::fail(
+                    2,
+                    "this is the last device-bound key and the deletion of a space requires one: `tomi-relay admin web policy --space-deletion any-key` first",
+                ),
+                Ok(Removed::Done) => {
+                    if let Some(web) = st.admin_web.as_ref() {
+                        web.close_sessions_of_key(number);
+                        web.record(JournalKind::PasskeyRemoved, None, now);
+                    }
+                    tracing::warn!("admin web: a passkey was removed by the administrator");
+                    Output::ok(format!(
+                        "passkey {number} removed; the sessions it opened are closed\n"
+                    ))
+                }
+            }
+        }
+        WebAction::Policy { space_deletion } => {
+            let Some(wanted) = space_deletion else {
+                let bound = routing.read(device_key_required).await.unwrap_or(false);
+                return Output::ok(format!(
+                    "space deletion: {}\n",
+                    if bound { "device-key" } else { "any-key" }
+                ));
+            };
+            let device_bound = match wanted.trim() {
+                "any-key" => false,
+                "device-key" => true,
+                _ => return Output::fail(2, "the policy is `any-key` or `device-key`"),
+            };
+            let done = routing
+                .write(move |tx| {
+                    if device_bound && !stored_credentials(tx)?.iter().any(|c| !c.backup_eligible)
+                    {
+                        return Ok(false);
+                    }
+                    tx.execute(
+                        "INSERT OR REPLACE INTO admin_web_policy (id, critical_requires_device_bound)
+                         VALUES (1, ?1)",
+                        params![i64::from(device_bound)],
+                    )?;
+                    crate::admin_audit::record_tx(
+                        tx,
+                        now,
+                        crate::admin_audit::kind::POLICY_CHANGED,
+                        None,
+                        None,
+                    )?;
+                    Ok(true)
+                })
+                .await;
+            match done {
+                Err(e) => fail(e),
+                Ok(false) => Output::fail(
+                    2,
+                    "no device-bound key is enrolled: enrol one (`tomi-relay admin web enroll`, with a hardware key) before requiring it",
+                ),
+                Ok(true) => Output::ok(format!(
+                    "space deletion: {}\n",
+                    if device_bound { "device-key" } else { "any-key" }
+                )),
+            }
         }
         WebAction::Reset { confirm } => {
             let Some(segment) = segment else {
