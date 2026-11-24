@@ -1,8 +1,9 @@
 # Enable the web administration panel and create the access key
 
 Step by step, over SSH on the server (see `infra/forge/README.md`). The panel is
-**disabled by default**; it is read-only (state, spaces, devices, invitations) and protected
-by an access key (passkey, WebAuthn). The relay stays blind: the panel never shows content,
+**disabled by default**; it shows the state of the relay and offers a few actions (remove devices, delete a
+space into a 7-day trash, invitations, quotas). It is protected by access keys (passkeys, WebAuthn, up to 5), and
+what destroys or creates a right asks for a key **at each action**. The relay stays blind: the panel never shows content,
 keys or secrets. Full description of the panel: `apps/relay/README.md`, section
 "Web administration panel".
 
@@ -104,7 +105,13 @@ CFG=/home/deploy/tomi-data/config.toml
 
 - `--rotate-path`: use it if the URL has leaked, or as a precaution. Then open the new URL (shown by
   `admin web`); the access key stays valid.
-- `reset`: use it to change device or after losing the key. It deletes the registered key and the
+- Several keys: run `admin web enroll` again for each one (5 at most), ideally one **bound to its device** (hardware
+  key). `admin web keys` lists them, `admin web keys remove <N>` removes one and closes its sessions (never the last).
+  `admin web policy --space-deletion device-key` then restricts the deletion of a space to the device-bound keys (off
+  by default; refused while none is enrolled).
+- The trash: a space deleted from the panel waits 7 days. `admin trash` lists it, `admin trash restore --space <id>`
+  brings it back (then open Tomi on each device of the space), `admin trash purge --space <id>` deletes it for good.
+- `reset`: use it to change device or after losing every key. It deletes the registered keys and the
   sessions, and **reopens enrolment**: create a new code (`admin web enroll`) and register a new key.
   It requires `--confirm` with the first 8 characters of the panel's path.
 - Disable the panel: remove `admin_web = true` from the configuration and restart the daemon. All the

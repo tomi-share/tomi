@@ -123,6 +123,8 @@ event, nor its type, nor the meaning pin/unpin or archive/unarchive). **It holds
 | **Another person on the same relay** (they have their own space) | The same public responses as the unknown person (`hello` only says that at least one space exists); everything a member of **their** space sees | Try an identifier (session token, `device_id`, channel number) to reach another's space; randomly claim an open pairing channel (the other pairing fails, CPace prevents any takeover); exhaust the shared limits (`rl_global_claim`, same IP address, §8.5); fill the relay's total (§8.4) | The space of a request is that of its identifier, and only that space's database is consulted (§1.4): reading, writing, revoking, purging or counting in another's space is impossible. An identifier that designates no space receives the unknown-identifier response: one cannot know whether it exists elsewhere. A signing key or `device_id` already known in another space is refused at registration (`device_exists`): this reveals the existence of the key only to whoever already knows it. A quota per space (set by the operator) bounds each; cryptography remains the barrier for content (each space has its key, which the relay has never had). |
 | **The relay operator** (who hosts other people) | The metadata of **all** spaces (§1.2): devices, times, sizes, presence | Revoke a device, erase a space (`tomi-relay admin`, §8.7), shut down the service | They read nothing and cannot forge a device accepted by the others (like the compromised relay, first line). It is no longer "their own relay" for other people: they SHOULD know what it sees. |
 | **Thief of a revoked device** | The device's local content (out of scope for this document) | Connect to the relay | Revocation: key deleted from the relay, sessions and WebSockets cut immediately (§3.4). |
+| **Stolen web-panel session** (cookie of the optional panel, §8.7.1) | The metadata the panel reads | Change a quota (reversible), invalidate invitations, close the sessions | No step-up without the passkey: removing a device, deleting a space and creating an invitation need a passkey assertion tied to the exact action; ceilings; 7-day trash; audit log |
+| **Compromised passkey of the web panel** (synchronized account taken) | Everything the panel offers, within the ceilings | Remove devices (recoverable by re-pairing), delete spaces (restorable 7 days by the CLI) | Optional policy "deleting a space needs a device-bound key"; ceilings; trash; audit; `admin web reset` cuts everything |
 | **Thief of a device not yet revoked, unlocked** | Everything the device sees | Act as the device, including revoking others | Out of the API's scope (strong biometrics on the client side, D39); recourse: `tomi-relay admin revoke` over SSH. |
 
 Out of scope: an actively compromised member device; fine-grained traffic analysis.
@@ -2922,6 +2924,12 @@ too short or ambiguous is refused (code 2); a prefix that designates nothing is 
 | `admin revoke [--space <id>] <device_id or prefix ≥ 8 characters>` | revocation §3.4 (path (c): `via: "admin"`, `revoked_by: null`, `rotation_required = true`); closes the device's WebSockets (`4003`). Refuses (code 2) an ambiguous prefix and the last member (points to `reset`) | confirmation |
 | `admin reset [--space <id>] [--confirm <first 8 characters>]` | asks you to retype the first 8 characters of **this space's** `space_id` (or use `--confirm`); closes the WebSockets **of this space** (`4004`); deletes its folder (database and blobs), its routing entries, its quota override and the invitations it consumed (their tokens become invalid tokens: `403`), **nothing else**: the other spaces, their connections and `public/` are not touched. If no space remains, it adds a new invitation and displays its token (invitations already pending are kept: they may have been made for other people); otherwise it displays `space <8 characters> deleted`. On a relay without a space, without `--space`, there is nothing to erase: it only adds a new invitation | new token, or confirmation |
 
+| Command (additive) | Effect |
+|---|---|
+| `admin invite --cancel` | write: invalidates the pending invitations without making another (exclusive with `--new` and `--rotate`) |
+| `admin web keys [--json]`, `admin web keys remove <N>`, `admin web policy [--space-deletion any-key\|device-key]`, `admin web enroll`, `admin web reset` | the passkeys of the web panel and its policy (§8.7.1) |
+| `admin trash [--json]`, `admin trash restore [--space <id>]`, `admin trash purge [--space <id>] [--confirm <8 characters>]` | the spaces deleted from the web panel, kept 7 days (§8.7.1); same designation rule as `--space`; `purge` asks for the 8 characters like `reset` |
+
 Deleting a space by its last device (`DELETE /v1/space`, §4.4.1) does the same thing as `admin reset` of that space
 (same relay function), with one difference: it **never** creates an invitation, even if no space remains. The token
 would have no safe place to be displayed; the operator makes one with `admin invite --new` (or the relay announces
@@ -2934,9 +2942,12 @@ but no send yet; `disabled` = not configured.
 
 #### 8.7.1 Exception: the web admin panel
 
-The relay MAY serve a small web panel for supervision and invitations (`apps/relay/src/admin_web.rs`). It is the
-**only** exception to "no administration API on the network" (§8.7) and the **only** one to "no cookie" (§2.4);
-it is bounded as follows.
+The relay MAY serve a web panel for supervision and for a short list of actions (`apps/relay/src/admin_web.rs`,
+`admin_actions.rs`). It is the **only** exception to "no administration API on the network" (§8.7) and the **only**
+one to "no cookie" (§2.4); it is bounded as follows. Its design is in `design/mockups/relay-admin/`
+(`DECISION-ACTIONS.md`, `DECISIONS-UI.md`).
+
+**Access**
 
 - **Disabled by default** (`admin_web = false`, variable `TOMI_RELAY_ADMIN_WEB`). When disabled, no path of the panel
   is routed: everything answers exactly like an unknown resource (`404`). Enabling it requires a `public_url` in
@@ -2944,39 +2955,97 @@ it is bounded as follows.
   refuses to start (code `1`, §8.6).
 - **Outside the API.** The panel lives under `/<segment>/`, where `<segment>` is a secret of 128 random bits
   (base64url), created at the first startup with the panel active and kept in `routing.db`. It is defence in depth
-  against scanners, **not** authentication. Another first segment, or a request without it, receives the ordinary
-  `404`. The logs (§9) label these requests with a constant (`admin-web`): never the segment. Nothing of the panel
-  exists under `/v1/*`, and the relay sets **no** cookie on `/v1/*`.
-- **Authentication: a passkey** (WebAuthn, ES256, `none` attestation, **user verification (UV) required**). A single
-  administrator, a single key. The first key is registered with a **single-use enrollment code** generated on the
-  machine (`tomi-relay admin web enroll`: 15 minutes, 5 attempts, only its SHA-256 is kept). Once the key is
-  registered, the enrollment endpoints answer `404` permanently; replacing it is done locally (`admin web reset`).
+  against scanners, **not** authentication. Another first segment receives the ordinary `404`. The logs (§9) label
+  these requests with a constant (`admin-web`): never the segment. Nothing of the panel exists under `/v1/*`, and the
+  relay sets **no** cookie on `/v1/*`.
+- **Authentication: passkeys** (WebAuthn, ES256, `none` attestation, **user verification (UV) required**). One
+  administrator, **up to 5 passkeys**. A key is registered with a **single-use enrollment code** generated on the
+  machine (`tomi-relay admin web enroll`: 15 minutes, 5 attempts, only its SHA-256 is kept). The enrollment endpoints
+  answer `404` unless a code is pending (or no key exists yet). Keys are enrolled and removed **with the CLI only**.
+  Each key has a **number that is never reused**, and a generated label (`Clé 2 · liée à l'appareil`); the BE flag
+  the authenticator declares at enrollment tells a key bound to its device (hardware key, BE = 0) from a
+  synchronizable one. It is a declaration, not a proof (no attestation).
 - **Session: a cookie `__Host-tomi-admin`** (`Secure`, `HttpOnly`, `SameSite=Strict`, `Path=/`, without `Domain`),
-  256 random bits, of which only the SHA-256 is kept, in memory. 30 minutes of inactivity, 8 hours at most. This
-  cookie is set only by the panel.
-- **A single administrative action.** (Passkey enrollment and sign-out also write, but they only modify the panel's
-  passkey and sessions, not the relay.) `POST /<segment>/api/invitations` (`{"mode": "new" | "rotate"}`) does what
-  `admin invite --new` / `--rotate` do (§8.7) and returns the installation token **once only**, in that response.
-  Every `POST` of the panel MUST carry an `Origin` header equal to the origin of `public_url` **and** the header
+  256 random bits, of which only the SHA-256 is kept, in memory, with the number of the key that opened it. 30
+  minutes of inactivity, 8 hours at most. This cookie is set only by the panel.
+- Every `POST` of the panel MUST carry an `Origin` header equal to the origin of `public_url` **and** the header
   `X-Tomi-Admin: 1`, otherwise `403`; with `SameSite=Strict`, this is the protection against cross-site requests.
-  There is **no** revocation, **no** space erasure, and **no** change of the quota of ONE space via the web: these
-  commands remain local. Only the **default space quota** can be set there (`GET`/`POST api/quota`, with the same
-  safeguards as `api/invitations`). `POST` carries `{"default_bytes": N}`: an integer of bytes between 1 MiB and
-  2^53-1, `0` (no per-space limit) or `null` (forget the panel's value); the response
-  `{"default": {"bytes", "source", ...}}` gives the effective value and its origin.
-- **Reads**: the relay state, the spaces, the devices and the pending invitations (never the token), produced by the
-  same functions as `admin status`, `spaces`, `devices` and `invite`. **Metadata** only: the relay remains blind, and
-  the panel never shows or carries an item, a file name, a key or a secret. Added (additive) reads: more counts,
-  dates and flags per space and per device (`api/spaces`, `api/devices`), `GET api/about` (version, startup, server
-  clock, session end, configuration limits: neither path nor URL) and `GET api/journal` (what the panel has done since
-  startup, kept in memory only: fixed words, dates and counts, never a value coming from a request, an address, or
-  anything from a space).
-- **Hardening**: a per-address rate limit for every sensitive request (code, challenge, sign-in: burst of 10, then 6
-  per minute) and a wider global ceiling; a body of 16 KiB at most; page, script and stylesheet embedded in the
-  binary, same origin, strict `Content-Security-Policy` (`default-src 'none'`), `Cache-Control: no-store`,
-  `Referrer-Policy: no-referrer`.
-- **Local commands**: `tomi-relay admin web` (panel URL and passkey state), `admin web --rotate-path` (new segment:
-  the old one and all sessions stop working), `admin web enroll`, `admin web reset`.
+
+**What the panel does, and what protects it.** A stolen session reads metadata and, at worst, changes a quota; it
+cannot remove, delete or invite.
+
+| Action | Route | Protection |
+|---|---|---|
+| Remove devices from a space | `POST api/actions` `revoke_devices` | step-up; 10 removals / hour; the last member is refused |
+| Delete a space | `POST api/actions` `delete_space` | step-up + the 8 first characters typed; 2 deletions / 24 h; 7-day trash; optional device-bound key |
+| Create or replace the invitations | `POST api/actions` `create_invitation` (`new` \| `rotate`) | step-up; 5 invitations / hour |
+| Quota of one space | `POST api/spaces/quota` `{space_id, value, confirm?}` | session; `409` `confirmation_required` (with `blocked`) if the space would be blocked |
+| Default quota | `POST api/quota` `{default_bytes, confirm?}` | session; same confirmation, listing the blocked spaces |
+| Invalidate the pending invitations | `POST api/invitations/cancel` | session |
+| Close every session | `POST api/sessions/close-all` | session |
+| Passkeys, policy, path, reset, trash restore and purge | CLI only (below) | local |
+
+`POST api/invitations` of earlier versions no longer exists (`404`). The relay does not renew a space key: a
+removal sets `rotation_required` and a remaining member renews it (§7.6); nothing in the panel can "validate" it.
+
+**Step-up.** `POST api/stepup/options` `{"action": {...}}` (live session): the server resolves the action to **full**
+identifiers (a space or device prefix of at least 8 characters designates exactly one; otherwise `409`), checks the
+target and the ceiling (`429` before any challenge), computes
+`h = SHA-256("tomi-admin-action-v1" || 0x00 || canonical JSON of the action)`, draws a 32-byte nonce and answers
+`publicKey` with `challenge = SHA-256(nonce || h)`, `userVerification: "required"`, `timeout: 120000` and
+`allowCredentials` (only the device-bound keys for `delete_space` if the policy asks), plus a `summary` built from the
+relay's own data (what the page shows while the key is awaited: the authenticator shows only the site name). The
+challenge is kept in memory with `h`, the session and an epoch; it lives **2 minutes** and works **once**.
+`POST api/actions` `{"action", "assertion": {id, clientDataJSON, authenticatorData, signature}}`: the challenge is
+taken out of the store (single use, whatever follows), tied to the **same session** and to the hash of **the action of
+this request**, then the assertion is verified as at sign-in (origin, `rpIdHash`, UP + UV, signature counter) and
+the target is checked **again in the write transaction**. Answers: `200` with the state after the action; `401`
+`reason: "refused"` (`refusals`, `max_refusals`) or `reason: "expired"` (too late, not counted); `409` `reason:
+"target_changed"` or `"last_device"`; `429` `reason: "ceiling"` with `retry_after` and the equivalent CLI command.
+**Five refused step-ups close the session** (`session_closed: true`), never the key: a thief of the cookie must not
+be able to lock the administrator out.
+
+**Ceilings**, per relay (not per session or address), in memory, on **successful** actions only (a failed action gives
+its place back), fixed in the code and shown in `api/about` (`ceilings`): 2 space deletions per 24 h, 10 device
+removals per hour, 5 invitations per hour.
+
+**Trash.** A space deleted from the panel is gone at once for every device (`4004`, §4.4.1: same function as
+`admin reset`, no invitation created), but its folder is **renamed** into `<data_dir>/spaces.trash/<space_id>-<unix
+seconds>/` (never copied) and recorded in `space_trash` (deletion, purge date at +7 days, size, its own quota). The
+maintenance purges it after 7 days; it counts in the free disk space, not in `max_relay_bytes`. Restoring and purging
+are CLI only. A restore rebuilds the routing (devices, signing keys, sessions and channels are read from the space
+database) and gives the quota back; it is refused if the id is used again or if a device or key of the space belongs
+to another space meanwhile. After a restore a device resumes at its next network action (the doorbell stopped at
+`4004`: "open Tomi on each device").
+
+**Audit log.** `admin_web_audit` (`routing.db`): date, a fixed word, the 8-character id of the target (space or
+device) and the number of the key; 500 lines and 90 days at most. Never a device name, an address, a token, a code or a
+value of a request. It records sign-ins, refused step-ups, the actions above, the keys added or removed, the path
+changed and the trash restored, purged or expired. `GET api/journal` returns it (`audit`) with the in-memory journal
+of the process (`entries`).
+
+**Reads** (metadata only: the relay stays blind; never an item, a file name, a key or a secret): `api/status`,
+`api/spaces`, `api/devices` (adds the 8-character `id` of a device), `api/invitations` (never a token), `api/quota`,
+`api/about` (version, start, server clock, session end, configuration limits, **`sessions.others`**, `ceilings`,
+`trash_days`), `api/journal`, **`api/keys`** (number, label, `device_bound`, dates, `this_session`, the policy),
+**`api/trash`** (short ids, dates, sizes).
+
+**Storage** (`routing.db`, additive migrations, `user_version` unchanged; a relay of the previous version ignores
+these tables): `admin_web_credentials` (replaces the single-key `admin_web_credential`, which keeps the
+lowest-numbered key so that the previous binary still starts), `admin_web_policy`, `admin_web_audit`, `space_trash`.
+
+**Hardening**: a per-address rate limit for every sensitive request (code, challenge, sign-in, step-up: burst of 10,
+then 6 per minute) and a wider global ceiling; a body of 16 KiB at most; page, script and stylesheet embedded in the
+binary, same origin, strict `Content-Security-Policy` (`default-src 'none'`, no inline script or style),
+`Cache-Control: no-store`, `Referrer-Policy: no-referrer`.
+
+**Local commands**: `tomi-relay admin web` (URL and keys), `admin web --rotate-path` (new segment: the old one and all
+sessions stop working), `admin web enroll` (a code to add a key; refused at 5 keys), `admin web keys [--json]`,
+`admin web keys remove <N>` (closes the sessions the key opened; refuses the last key, which is `reset`, and the
+last device-bound key while the policy requires one), `admin web policy [--space-deletion any-key|device-key]`
+(`device-key` is refused, code 2, if no device-bound key is enrolled; **off by default**), `admin web reset`,
+`admin invite --cancel`, `admin trash [--json]`, `admin trash restore [--space <id>]`,
+`admin trash purge [--space <id>] [--confirm <8 characters>]` (no "empty everything": one space at a time).
 
 An operator who does not want it leaves `admin_web = false`: the relay then behaves exactly as if this section did
 not exist (annex B.3, point 6).
@@ -3498,6 +3567,12 @@ clock). "Member" = a device with a valid session, unless stated otherwise.
 - **A125** `admin invite` → lists the invitations (never a token); `--new` → displays a token that creates a space, including on a relay that already has one; `--rotate` → replaces all **pending** invitations with a single one; old pending tokens give `403 install_token_invalid` (a token already consumed always gives `409 space_exists`, A08).
 - **A126** `admin status` with an invalid FCM service account file → health `auth_error`, and the relay serves other requests normally.
 - **A127** No network route allows `revoke` without a member session, nor `reset` of a space that has other members, nor `quota`, nor reading or creating an invitation (verified by walking the routing table). The only space deletion possible over the network is `DELETE /v1/space`, reserved for the only active member of the space (A177–A183).
+
+- **A128** Web panel: a challenge made for one action and presented for another, replayed, issued to another session or older than 2 minutes is refused and does nothing; five refused step-ups close the session and not the key.
+- **A129** Web panel: a stolen session (cookie, no passkey) cannot remove a device, delete a space or create an invitation; `POST api/invitations` answers `404`.
+- **A130** Web panel: the ceilings (2 deletions / 24 h, 10 removals / hour, 5 invitations / hour) count successful actions only and answer `429` with the CLI command before any challenge; the last member is never removed; a changed target is `409`.
+- **A131** Web panel: the last passkey cannot be removed; removing a key closes the sessions it opened; numbers are never reused; the device-bound policy is refused without such a key and then restricts the deletion of a space to those keys.
+- **A132** A space deleted from the panel is gone at once for its devices and waits in `spaces.trash/`; `admin trash restore` rebuilds its routing and quota and is refused when the id is used again; `purge` needs the 8 characters; the maintenance purges after 7 days.
 
 ### 11.13 Rate limits
 

@@ -63,7 +63,7 @@ only a fingerprint of the token. This single-use token allows a first device to 
 (`POST /v1/space`); the invitation is then consumed. A consumed invitation stays in `routing.db`
 (with the `space_id` that was created): if the `201` response is lost, the founder resends the
 request, gets `409 space_exists`, and proves with its keys that the space is its own. `admin reset`
-of the space forgets it; `admin invite --rotate` only removes pending invitations. One invitation per
+of the space forgets it; `admin invite --rotate` replaces the pending invitations with a new one (the consumed ones stay). One invitation per
 person to welcome: `tomi-relay admin invite --new`.
 
 ## Configuration (§8.6)
@@ -114,7 +114,7 @@ tomi-relay admin status --space <id> [--json]     # one space: members, usage, q
 tomi-relay admin spaces [--json]                  # the spaces: id, date, members, usage, quota
 tomi-relay admin devices [--space <id>] [--json]  # the member devices of a space
 tomi-relay admin quota [--space <id>] <bytes|none|default>   # quota override of ONE space (the default for all is set from the web panel)
-tomi-relay admin invite [--new | --rotate]        # lists pending invitations; --new: creates one and shows its token; --rotate: replaces the pending invitations
+tomi-relay admin invite [--new | --rotate | --cancel]  # lists pending invitations; --new: creates one and shows its token; --rotate: replaces the pending invitations with a new one; --cancel: invalidates them without making another
 tomi-relay admin revoke [--space <id>] <id|prefix>  # revokes a device (prefix ≥ 8 characters)
 tomi-relay admin reset [--space <id>] [--confirm <8 chars of the space_id>]  # deletes ONE space, nothing else
 ```
@@ -195,8 +195,10 @@ in `public/.well-known/` without a list of paths, and the relay does not serve a
 
 ## Web administration panel
 
-In addition to the local socket, the relay can serve a web panel: **read-only + invitations**,
-protected by a **passkey** (WebAuthn). A single administrator per relay, a single key.
+In addition to the local socket, the relay can serve a web panel: supervision plus a short list of
+actions (remove devices, delete a space, invitations, quotas), protected by **passkeys** (WebAuthn, up to 5)
+and, for what destroys or creates a right, by a **passkey assertion tied to the action** (step-up).
+A single administrator per relay.
 The panel never displays or carries item content, file names, keys or secrets:
 the relay stays blind.
 
@@ -220,7 +222,13 @@ is the constant `admin-web`.
 tomi-relay admin web                 # shows the full URL (public_url + segment) and the state of the key
 tomi-relay admin web --rotate-path   # new segment: the old one and all sessions stop working
 tomi-relay admin web enroll          # single-use enrolment code (shown ONCE)
-tomi-relay admin web reset [--confirm <first 8 chars of the segment>]   # deletes the key and the sessions, reopens enrolment
+tomi-relay admin web reset [--confirm <first 8 chars of the segment>]   # deletes every key and the sessions, reopens enrolment
+tomi-relay admin web keys [--json]   # the passkeys (up to 5; numbers are never reused)
+tomi-relay admin web keys remove <N> # removes key N and closes its sessions (never the last key)
+tomi-relay admin web policy [--space-deletion any-key|device-key]   # off by default; device-key needs a device-bound key
+tomi-relay admin trash [--json]      # spaces deleted from the panel, kept 7 days
+tomi-relay admin trash restore [--space <id>]   # brings one back (then open Tomi on each device)
+tomi-relay admin trash purge [--space <id>] [--confirm <8 chars>]
 ```
 
 Like the other `admin` commands, those that write go through the socket of the running relay (Unix),
@@ -232,8 +240,29 @@ A public relay reachable before its owner has enrolled their key could be claime
 unknown party. Enrolment therefore requires an **enrolment code** created on the server by `admin web enroll`: 60 random bits
 (`xxxx-xxxx-xxxx`), **valid for 15 minutes, 5 attempts** (the fifth failure invalidates the code),
 compared in constant time; only its SHA-256 fingerprint is kept. The first holder of the code
-enrols their key; **as soon as a key is registered, enrolment is closed for good** (its endpoints
-answer 404). Adding or replacing a key is only possible through the CLI: `admin web reset`, then a new code.
+enrols their key; **once a key exists, the enrolment endpoints answer 404 unless a code is pending**.
+Keys are added with a new code (`admin web enroll`, 5 keys at most) and removed with
+`admin web keys remove <N>`: never from the web, so that a stolen session cannot add a key of its own. A key
+that is **bound to its device** (hardware key) is recommended: `admin web policy --space-deletion device-key`
+(off by default, refused while no such key is enrolled) then restricts the deletion of a space to those keys.
+The BE flag that tells the two apart is declared by the authenticator, not attested.
+
+### Actions and what protects them
+
+| Action | Protection |
+|---|---|
+| Remove devices of a space | step-up (one passkey gesture for the whole selection), 10 per hour, never the last member |
+| Delete a space | step-up + the 8 first characters typed, 2 per 24 h, **7-day trash** (restore and purge: CLI only) |
+| Create or replace invitations | step-up, 5 per hour |
+| Quota of a space, default quota | session; confirmation if a space would be blocked |
+| Invalidate invitations, close every session | session (they only remove a right) |
+| Passkeys, policy, path, reset, trash restore and purge | CLI only |
+
+The step-up challenge is `SHA-256(nonce || hash of the exact action)`, single use, 2 minutes, tied to the session;
+the server resolves the target again when it writes. Ceilings are per relay and count successful actions only;
+five refused step-ups close the session (never the key). A persistent audit log (500 lines, 90 days) keeps the
+8-character id of the target and the number of the key, never a name, address or token. Spec: `spec/api-v1.md`
+§8.7.1.
 
 ### Passkey (WebAuthn, in pure Rust)
 
@@ -276,6 +305,9 @@ Added reads (additive, under the same session, metadata only):
   the server clock), end of the session (`session.idle_ends_at`, `absolute_ends_at`, `ends_at`), `push_configured`
   and the configuration limits (total, configured quota, sizes, retention, inactivity, purge…). No path,
   URL or file.
+* `GET api/keys` (passkeys: number, generated label, kind, dates, the policy) and `GET api/trash` (spaces kept 7 days:
+  short id, dates, size). `GET api/journal` also returns `audit`, the persistent log (500 lines, 90 days, 8-character
+  target id and key number only). `GET api/about` adds `sessions.others` (live sessions other than this one) and `ceilings`.
 * `GET api/journal`: the panel's **administration journal** since startup, in memory only (lost
   at restart, 100 lines at most): sign-in, refused sign-in, refused enrolment code, sign-out, key
   created, invitation created/replaced, default quota changed (with its number of bytes), and, from the CLI, path
@@ -302,17 +334,25 @@ No automatic refresh: it would keep the session open forever. The interface is a
   (10 in burst, then 6/min), with a wider global safety net: a flood from a single address therefore does not
   lock out the legitimate administrator, who connects from another one.
 * **Unknown party before enrolment**: they need the enrolment code (15 min, 5 attempts, 60 bits).
-* **Cookie theft**: session of 8 h at most, 30 min of inactivity, `HttpOnly`/`Secure`/`SameSite=Strict`.
-  `admin web reset` or `--rotate-path` cuts everything off.
+* **Cookie theft** (malware, shared machine): session of 8 h at most, 30 min of inactivity,
+  `HttpOnly`/`Secure`/`SameSite=Strict`. The thief reads metadata and can change a quota; he cannot remove a device,
+  delete a space or create an invitation, which each need a passkey assertion tied to that action. "Close every session"
+  (panel) or `admin web reset` / `--rotate-path` (CLI) cuts everything off.
+* **A passkey of a synchronized account taken**: the ceilings (2 space deletions per 24 h, 10 removals and 5
+  invitations per hour, per relay), the 7-day trash, the audit log, and the optional policy that restricts the deletion of a
+  space to a device-bound key. **A script injected in the page** could substitute the action at the next step-up (the
+  authenticator shows only the site name): the strict CSP, no inline code and DOM built with `textContent` make it very
+  unlikely, and no WebAuthn-only design removes it.
 * **CSRF**: `SameSite=Strict`, exact `Origin` and a custom header on every `POST`; no CORS.
 * **Phishing**: the key is bound to the `rpId`; another origin cannot get it to sign.
 * **Out of scope**: a compromised server machine (which can read `routing.db` anyway); a reverse proxy that logs
   URLs (Caddy: the segment would appear there; do not log panel paths, or rotate the segment with
   `--rotate-path`); attestation (we do not know which authenticator produced the key).
 * The panel is a deliberate exception to "no administration API on the network" (`spec/api-v1.md` §8.7):
-  it offers reads and invitations, under a passkey, disabled by default.
+  it offers reads and a short list of actions, under a passkey, disabled by default.
 
-The three panel tables (`admin_web_credential`, `admin_web_enrollment`, `admin_web_session` in
+The panel tables (`admin_web_path`, `admin_web_credential` (kept in step for the previous binary),
+`admin_web_credentials`, `admin_web_enrollment`, `admin_web_policy`, `admin_web_audit`, `space_trash` in
 `routing.db`) are created by an additive migration as soon as `routing.db` is opened for writing, even when
 `admin_web = false`: they stay empty and inert while the panel is not enabled, and a binary of the
 previous version opens the same database without seeing anything in it.
