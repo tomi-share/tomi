@@ -4827,7 +4827,7 @@ dependencies = [
 
 [[package]]
 name = "tomi-core"
-version = "0.6.0-beta.3"
+version = "0.6.0-beta.4"
 dependencies = [
  "base64 0.23.1",
  "chacha20poly1305",
