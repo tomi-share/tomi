@@ -803,23 +803,29 @@
 
   // ----- clipboard -------------------------------------------------------------------------------
 
+  // Resolves to true once copied.
   function copyText(text, what) {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       return navigator.clipboard.writeText(text).then(
         function () {
           say(what + ' copié.');
+          return true;
         },
         function () {
           say('Copie impossible : sélectionne le texte et copie-le à la main.', 'error');
+          return false;
         }
       );
     }
     say('Copie impossible : sélectionne le texte et copie-le à la main.', 'error');
-    return Promise.resolve();
+    return Promise.resolve(false);
   }
 
   // The text a copy button copies: its command, the id next to it, or the one of the open space.
   function copyValue(button) {
+    if (button.id === 'su-copy') {
+      return (stepCfg && stepCfg.expect) || '';
+    }
     var cmd = button.closest('.cmd');
     if (cmd) {
       return cmd.querySelector('code').textContent;
@@ -1087,7 +1093,7 @@
   function closeAllSessions() {
     confirmAction({
       title: 'Fermer toutes les sessions ?',
-      text: 'Toutes les sessions du panneau seront fermées, celle-ci comprise. Ta clé d’accès reste valable : tu pourras te reconnecter tout de suite.',
+      text: 'Celle-ci comprise. Ta clé d’accès reste valable : tu pourras te reconnecter aussitôt.',
       ok: 'Fermer toutes les sessions',
       tone: ''
     }).then(function (yes) {
@@ -1176,23 +1182,22 @@
   var refusals = 0;
 
   var STEP_MSG = {
-    cancelled: ['warn', 'warning', 'Annulé sur ton appareil', 'Rien n’a été fait. Tu peux réessayer quand tu veux.'],
-    refused: ['', 'error', 'Clé d’accès refusée par le relais',
-      'Cette clé n’est pas enregistrée sur ce relais, ou la vérification (empreinte, visage, code) n’a pas eu lieu. Rien n’a été fait.'],
-    expired: ['warn', 'schedule', 'Délai de 2 min dépassé',
-      'Ce défi n’est plus valable et rien n’a été fait. Recommence pour en obtenir un nouveau.'],
+    cancelled: ['warn', 'warning', 'Annulé sur ton appareil', 'Rien n’a été fait.'],
+    refused: ['', 'error', 'Clé d’accès refusée',
+      'Clé inconnue de ce relais, ou vérification (empreinte, visage, code) non faite. Rien n’a été fait.'],
+    expired: ['warn', 'schedule', 'Délai de 2 min dépassé', 'Rien n’a été fait. Recommence.'],
     error: ['', 'error', 'Le relais n’a pas répondu',
-      'L’action a pu être faite, ou non. Actualise pour voir l’état réel avant de recommencer.'],
+      'L’action a pu être faite, ou non : actualise avant de recommencer.'],
     closed: ['', 'lock', 'Session fermée par prudence',
-      '5 refus de clé d’accès dans cette session. Ta clé d’accès reste valable : reconnecte-toi, puis regarde le journal si ce n’était pas toi.'],
+      '5 refus de clé d’accès. Ta clé reste valable : reconnecte-toi, et regarde le journal si ce n’était pas toi.'],
     changed: ['warn', 'info', 'Déjà fait ailleurs',
-      'La cible a changé depuis que tu as ouvert cette fenêtre. Rien n’a été fait : actualise pour voir l’état réel.'],
+      'La cible a changé entre-temps. Rien n’a été fait : actualise.'],
     lastdevice: ['warn', 'info', 'Dernier appareil de l’espace',
-      'Un espace garde au moins un appareil. Rien n’a été fait. Pour en finir avec cet espace, supprime-le : une clé d’accès te sera demandée.'],
+      'Un espace garde au moins un appareil. Rien n’a été fait. Pour en finir, supprime l’espace.'],
     devicekey: ['warn', 'lock', 'Clé liée à l’appareil exigée',
-      'La suppression d’un espace demande une clé liée à l’appareil, et aucune n’est enregistrée. Rien n’a été fait. Ajoutes-en une sur le serveur avec « tomi-relay admin web enroll ».'],
+      'Aucune n’est enregistrée. Rien n’a été fait. Ajoutes-en une sur le serveur : « tomi-relay admin web enroll ».'],
     throttled: ['warn', 'schedule', 'Trop de demandes',
-      'Rien n’a été fait. Ce n’est pas un plafond du relais : la limite de débit se lève en quelques secondes.']
+      'Rien n’a été fait. Ce n’est pas un plafond : réessaie dans quelques secondes.']
   };
 
   function msgBox(state, extra) {
@@ -1214,7 +1219,7 @@
         tries.appendChild(el('span', i <= refusals ? 'used' : ''));
       }
       box.appendChild(tries);
-      box.appendChild(el('p', null, 'Refus ' + refusals + ' sur 5 : au cinquième, cette session se ferme. Ta clé d’accès, elle, reste valable.'));
+      box.appendChild(el('p', null, 'Refus ' + refusals + ' sur 5 : au cinquième, la session se ferme (pas ta clé).'));
     }
     if (state === 'throttled' && extra && extra.wait) {
       box.appendChild(el('p', null, 'Réessaie dans ' + fmtDuration(extra.wait) + '.'));
@@ -1225,7 +1230,7 @@
       s2.appendChild(document.createTextNode('Limite atteinte : ' + extra.cap));
       box.className = 'su-msg warn';
       box.appendChild(s2);
-      box.appendChild(el('p', null, extra.next + ' Rien n’a été fait. Si c’est urgent, fais-le sur le serveur :'));
+      box.appendChild(el('p', null, extra.next + ' Rien n’a été fait. Urgent ? Sur le serveur :'));
     }
   }
 
@@ -1276,11 +1281,27 @@
     }
     var value = $('su-input').value.trim().toLowerCase();
     var good = value === stepCfg.expect;
+    var wrong = !good && value.length >= stepCfg.expect.length;
     ok.disabled = !good;
     var out = $('su-match');
     out.className = 'caption' + (good ? ' ok' : '');
-    out.textContent = good ? 'Identifiant correct' : value.length === 8 ? 'Ce n’est pas cet espace' : '';
-    $('su-input').setAttribute('aria-invalid', value.length === 8 && !good ? 'true' : 'false');
+    out.textContent = good ? 'Correct' : wrong ? (stepCfg.word ? 'Ce n’est pas le mot demandé' : 'Ce n’est pas cet espace') : '';
+    $('su-input').setAttribute('aria-invalid', wrong ? 'true' : 'false');
+  }
+
+  // After the copy button of the sheet: a check for a moment, and a word in the live caption.
+  var copiedTimer = null;
+
+  function copiedInSheet(ok) {
+    var b = $('su-copy');
+    clearTimeout(copiedTimer);
+    setIcon(b.querySelector('svg'), ok ? 'check' : 'copy');
+    var out = $('su-match');
+    out.className = 'caption';
+    out.textContent = ok ? 'Copié : colle-le dans le champ.' : 'Copie impossible : saisis-le.';
+    copiedTimer = setTimeout(function () {
+      setIcon(b.querySelector('svg'), 'copy');
+    }, 2000);
   }
 
   function abortStep() {
@@ -1322,13 +1343,20 @@
     stepCfg = cfg;
     ensureCaps();
     textOf('su-title', cfg.title);
+    textOf('su-sub', cfg.sub || '');
+    $('su-sub').hidden = !cfg.sub;
     $('su-ico').className = 'su-ico' + (cfg.tone === '' ? ' create' : '');
     clear($('su-ico'));
     $('su-ico').appendChild(ico(cfg.icon, 'lg'));
     fillRecap(cfg);
     $('su-type').hidden = !cfg.expect;
     $('su-input').value = '';
+    $('su-input').maxLength = cfg.expect ? cfg.expect.length : 8;
     textOf('su-expect', cfg.expect || '');
+    // Copies exactly what has to be typed.
+    $('su-copy').setAttribute('data-copy', cfg.word ? 'Mot' : 'Identifiant');
+    $('su-copy').setAttribute('aria-label', cfg.word ? 'Copier le mot à saisir' : 'Copier l’identifiant à saisir');
+    setIcon($('su-copy').querySelector('svg'), 'copy');
     textOf('su-pk-text', cfg.pk);
     textOf('su-cmd', cfg.cmd);
     textOf('su-cmd-note', cfg.cmdNote || '');
@@ -1413,7 +1441,7 @@
         if (r.status === 401 && d.reason === 'expired') {
           setStep('expired');
         } else if (r.status === 401 && d.session_closed) {
-          lostSession('Ta session a été fermée par prudence : 5 confirmations par clé d’accès ont été refusées. Ta clé reste valable.', 'error');
+          lostSession('Session fermée par prudence après 5 refus de clé d’accès. Ta clé reste valable.', 'error');
         } else if (r.status === 401 && d.reason === 'refused') {
           refusals = Number(d.refusals) || refusals + 1;
           setStep('refused');
@@ -1470,7 +1498,8 @@
   var CAPS = {
     space_deletions: 'suppressions d’espace',
     device_removals: 'retraits d’appareil',
-    invitations: 'invitations'
+    invitations: 'invitations',
+    trash_emptyings: 'vidages de la corbeille'
   };
 
   function capLine(kind) {
@@ -1479,7 +1508,13 @@
       return '';
     }
     var per = c.window_secs >= 86400 ? ' par 24 h' : ' par heure';
-    return c.max + ' ' + CAPS[kind] + per + ' au plus sur ce relais';
+    return c.max + ' ' + CAPS[kind] + per + ' au plus';
+  }
+
+  // The key line of the sheet: the passkey is asked, and the ceiling of the action.
+  function pkLine(kind) {
+    var cap = capLine(kind);
+    return 'Clé d’accès requise' + (cap ? ' · ' + cap : '');
   }
 
   function limitText(d) {
@@ -1552,20 +1587,19 @@
     openStep({
       from: from,
       icon: 'person-remove',
-      title: one ? 'Retirer ' + (devices[0].name || 'cet appareil') + ' de l’espace ' + id + ' ?' :
-        'Retirer ' + devices.length + ' appareils de l’espace ' + id + ' ?',
+      title: one ? 'Retirer cet appareil ?' : 'Retirer ' + devices.length + ' appareils ?',
+      sub: 'Espace ' + id,
       recap: devices.map(recapDevice),
       conseq: [
-        [one ? 'Il perd l’accès tout de suite. Pour revenir, il devra être recouplé depuis un autre appareil.' :
-          'Ils perdent l’accès tout de suite. Pour revenir, ils devront être recouplés depuis un autre appareil.', 'strong'],
-        [one ? 'Ses données restent lisibles sur lui : un retrait n’efface rien.' :
-          'Leurs données restent lisibles sur eux : un retrait n’efface rien.', ''],
-        ['Un appareil restant renouvellera la clé de l’espace à sa prochaine connexion.', 'good']
+        [one ? 'Il perd l’accès tout de suite ; pour revenir, il faudra le recoupler.' :
+          'Ils perdent l’accès tout de suite ; pour revenir, il faudra les recoupler.', 'strong'],
+        [one ? 'Rien n’est effacé sur lui.' : 'Rien n’est effacé sur eux.', ''],
+        ['Un appareil restant renouvellera la clé de l’espace.', 'good']
       ],
-      pk: 'Ta clé d’accès te sera demandée · ' + capLine('device_removals'),
+      pk: pkLine('device_removals'),
       okLabel: 'Retirer avec ma clé d’accès',
       cmd: devices.map(function (d) { return 'tomi-relay admin revoke --space ' + id + ' ' + d.id; }).join('\n'),
-      cmdNote: 'Sur le serveur, la commande agit tout de suite, sans autre confirmation.',
+      cmdNote: 'Sur le serveur : immédiat, sans confirmation.',
       action: function () {
         return { type: 'revoke_devices', space_id: id, device_ids: ids.slice() };
       },
@@ -1587,7 +1621,8 @@
     openStep({
       from: from,
       icon: 'delete',
-      title: 'Supprimer l’espace ' + id + ' ?',
+      title: 'Supprimer cet espace ?',
+      sub: 'Espace ' + id,
       facts: true,
       expect: id,
       recap: [
@@ -1597,15 +1632,14 @@
         recapFact('Créé', fmtDate(s.created_at).split(' ')[0])
       ],
       conseq: [
-        [(s.members > 1 ? 'Ses ' + s.members + ' appareils ne le trouvent plus' : 'Son appareil ne le trouve plus') +
-          ', tout de suite : plus aucune synchronisation.', 'strong'],
-        ['Rien n’est effacé sur les appareils, et aucune invitation n’est créée à la place.', ''],
-        ['Le relais garde le dossier chiffré 7 jours. Seul le serveur peut le restaurer.', 'good']
+        [(s.members > 1 ? 'Ses ' + s.members + ' appareils le perdent' : 'Son appareil le perd') + ' tout de suite.', 'strong'],
+        ['Rien n’est effacé sur les appareils.', ''],
+        ['Corbeille 7 jours ; restauration sur le serveur.', 'good']
       ],
-      pk: 'Ta clé d’accès te sera demandée · ' + capLine('space_deletions'),
+      pk: pkLine('space_deletions'),
       okLabel: 'Supprimer avec ma clé d’accès',
       cmd: 'tomi-relay admin reset --space ' + id + ' --confirm ' + id,
-      cmdNote: 'Attention : sur le serveur, l’effacement est immédiat, sans corbeille.',
+      cmdNote: 'Sur le serveur : effacement immédiat, sans corbeille.',
       action: function () {
         return { type: 'delete_space', space_id: id, confirm: $('su-input').value.trim().toLowerCase() };
       },
@@ -1643,11 +1677,11 @@
         return li;
       }) : [],
       conseq: rotate ?
-        [[(pending > 1 ? 'Les ' + pending + ' invitations en attente cesseront' : 'L’invitation en attente cessera') + ' de fonctionner tout de suite.', 'strong'],
-          ['Un nouveau jeton sera créé et affiché une seule fois.', ''],
+        [[(pending > 1 ? 'Les ' + pending + ' invitations en attente cessent' : 'L’invitation en attente cesse') + ' de marcher tout de suite.', 'strong'],
+          ['Nouveau jeton, affiché une seule fois.', ''],
           ['Les espaces existants ne changent pas.', 'good']] :
-        [['Son jeton permettra à qui l’a de créer un espace sur ton relais. Il s’affichera une seule fois.', '']],
-      pk: 'Ta clé d’accès te sera demandée · ' + capLine('invitations'),
+        [['Qui a le jeton peut créer un espace sur ton relais. Affiché une seule fois.', '']],
+      pk: pkLine('invitations'),
       okLabel: rotate ? 'Remplacer avec ma clé d’accès' : 'Créer avec ma clé d’accès',
       cmd: rotate ? 'tomi-relay admin invite --rotate' : 'tomi-relay admin invite --new',
       action: function () {
@@ -1659,6 +1693,54 @@
         revealToken(r);
         say(rotate ? 'Invitations remplacées' : 'Invitation créée');
         refreshStatusOnly();
+      }
+    });
+  }
+
+  // Empties the whole trash: the server binds the step-up to the exact entries listed here.
+  function askEmptyTrash(from) {
+    var rows = (data.trash && data.trash.trash) || [];
+    if (!rows.length) {
+      return;
+    }
+    var ids = rows.map(function (r) { return r.space_id; });
+    var bytes = 0;
+    rows.forEach(function (r) { bytes += Number(r.size_bytes || 0); });
+    openStep({
+      from: from,
+      icon: 'delete',
+      title: 'Vider la corbeille ?',
+      sub: plural(rows.length, 'espace', 'espaces') + ' · ' + fmtBytes(bytes),
+      expect: 'vider',
+      word: true,
+      recap: rows.map(function (r) {
+        var li = el('li');
+        li.appendChild(ico('delete'));
+        var main = el('span', 'r-main');
+        main.appendChild(el('strong', null, 'Espace'));
+        main.appendChild(el('span', 'caption', 'supprimé ' + rel(r.deleted_at) + ' · ' + fmtBytes(r.size_bytes)));
+        li.appendChild(main);
+        li.appendChild(el('span', 'mono r-id', r.space_id));
+        return li;
+      }),
+      conseq: [
+        ['Effacé pour de bon, tout de suite.', 'strong'],
+        ['Plus aucune restauration, même sur le serveur.', '']
+      ],
+      pk: pkLine('trash_emptyings'),
+      okLabel: 'Vider avec ma clé d’accès',
+      cmd: ids.map(function (id) { return 'tomi-relay admin trash purge --space ' + id + ' --confirm ' + id; }).join('\n'),
+      cmdNote: 'Sur le serveur : un espace à la fois.',
+      action: function () {
+        return { type: 'empty_trash', space_ids: ids.slice(), confirm: $('su-input').value.trim().toLowerCase() };
+      },
+      done: function (r) {
+        var n = (r.purged || []).length;
+        say(n === 1 ? 'Corbeille vidée · 1 espace effacé' : 'Corbeille vidée · ' + n + ' espaces effacés');
+        if (r.failed) {
+          say(plural(r.failed, 'espace n’a pas pu être effacé', 'espaces n’ont pas pu être effacés') + ' : réessaie, ou sur le serveur.', 'error');
+        }
+        refreshAll();
       }
     });
   }
@@ -2070,7 +2152,7 @@
     var span = el('span');
     if (s.rotation_required) {
       span.appendChild(el('strong', null, 'Clé à renouveler'));
-      span.appendChild(document.createTextNode(' après un retrait. Un appareil restant le fait tout seul à sa prochaine connexion ; le relais, qui n’a pas la clé, ne peut ni le faire ni le valider à sa place.'));
+      span.appendChild(document.createTextNode(' : un appareil restant le fera à sa prochaine connexion (le relais n’a pas la clé).'));
     } else {
       span.textContent = 'Clé de l’espace : rien en attente';
     }
@@ -2123,8 +2205,8 @@
     textOf('d-count', String(data.devices.length));
     $('devices-sort').value = sorts.devices.key;
     textOf('d-dev-hint', last ?
-      'Dernier appareil de l’espace : il ne peut pas être retiré. Pour en finir avec cet espace, supprime-le.' :
-      'Coche un ou plusieurs appareils pour les retirer : une seule confirmation avec ta clé d’accès.');
+      'Dernier appareil : il ne peut pas être retiré. Supprime plutôt l’espace.' :
+      'Coche des appareils pour les retirer en une fois.');
     var tpl = $('tpl-device');
     sortedBy(data.devices, sorts.devices, devValue).forEach(function (d) {
       var node = tpl.content.cloneNode(true);
@@ -2255,7 +2337,7 @@
         if (r.status === 409 && r.data && r.data.reason === 'confirmation_required') {
           return confirmAction({
             title: 'Bloquer les envois de cet espace ?',
-            text: 'L’espace utilise déjà plus que ce quota : ses envois seront refusés jusqu’à ce qu’il repasse dessous. Rien n’est supprimé.',
+            text: 'L’espace dépasse déjà ce quota : ses envois seront refusés tant qu’il est au-dessus. Rien n’est supprimé.',
             ok: 'Enregistrer quand même',
             list: [[id, 'utilise ' + fmtBytes(s ? s.used_bytes : 0)]]
           }).then(function (yes) {
@@ -2304,7 +2386,7 @@
     $('inv-empty').hidden = !!n;
     $('inv-actions').hidden = !n;
     textOf('inv-count', String(n));
-    textOf('inv-cap', capLine('invitations').replace(/ sur ce relais$/, ''));
+    textOf('inv-cap', capLine('invitations'));
   }
 
   function showQr(text) {
@@ -2387,7 +2469,7 @@
     var list = data.invitations.map(function (i) { return [i.id, 'créée ' + rel(i.created_at)]; });
     confirmAction({
       title: 'Invalider les invitations en attente ?',
-      text: 'Ces jetons cesseront de fonctionner. Aucune nouvelle invitation n’est créée, et les espaces existants ne changent pas.',
+      text: 'Ces jetons cesseront de marcher. Aucune invitation n’est créée ; les espaces existants ne changent pas.',
       ok: 'Invalider',
       list: list
     }).then(function (yes) {
@@ -2443,7 +2525,8 @@
     space_deleted: 'Espace supprimé, mis à la corbeille',
     space_restored: 'Espace restauré',
     trash_restored: 'Espace restauré depuis la corbeille',
-    trash_purged: 'Espace purgé de la corbeille',
+    trash_purged: 'Espace effacé de la corbeille',
+    trash_emptied: 'Corbeille vidée',
     trash_expired: 'Espace effacé de la corbeille (7 jours)'
   };
 
@@ -2483,7 +2566,7 @@
     li.appendChild(what);
     if (e.kind === 'sign_in_refused' || e.kind === 'enrollment_refused') {
       var adv = el('span', 'advice');
-      adv.appendChild(document.createTextNode('Pas toi ? Ferme toutes les sessions depuis Réglages, puis change l’adresse du panneau, sur le serveur : '));
+      adv.appendChild(document.createTextNode('Pas toi ? Ferme toutes les sessions (Réglages), puis change l’adresse sur le serveur : '));
       adv.appendChild(el('code', null, 'tomi-relay admin web --rotate-path'));
       li.appendChild(adv);
     }
@@ -2566,7 +2649,7 @@
           var ids = r.data.blocked || [];
           return confirmAction({
             title: ids.length > 1 ? 'Bloquer les envois de ' + ids.length + ' espaces ?' : 'Bloquer les envois d’un espace ?',
-            text: 'Ces espaces utilisent déjà plus que ce quota : leurs envois seront refusés jusqu’à ce qu’ils repassent dessous. Rien n’est supprimé.',
+            text: 'Ces espaces dépassent déjà ce quota : leurs envois seront refusés tant qu’ils sont au-dessus. Rien n’est supprimé.',
             ok: 'Enregistrer quand même',
             list: ids.map(function (id) { return [id, 'dépasse le quota']; })
           }).then(function (yes) {
@@ -2713,6 +2796,7 @@
     var first = t.trash[0] ? t.trash[0].space_id : '<id>';
     textOf('trash-restore-cmd', 'tomi-relay admin trash restore --space ' + first);
     textOf('trash-purge-cmd', 'tomi-relay admin trash purge --space ' + first);
+    $('trash-actions').hidden = t.trash.length === 0;
   }
 
   function diagnosticText() {
@@ -3084,7 +3168,11 @@
       if (b) {
         var v = copyValue(b);
         if (v) {
-          copyText(v, b.getAttribute('data-copy') === 'Commande' ? 'Commande' : b.getAttribute('data-copy'));
+          var copied = copyText(v, b.getAttribute('data-copy') === 'Commande' ? 'Commande' : b.getAttribute('data-copy'));
+          if (b.id === 'su-copy') {
+            // The toast is under the modal sheet: the sheet says it itself.
+            copied.then(copiedInSheet);
+          }
         }
       }
     });
@@ -3156,6 +3244,7 @@
     });
     $('d-selrevoke').addEventListener('click', function () { askRevoke(selectedIds(), $('d-selrevoke')); });
     $('d-delete').addEventListener('click', function () { askDelete($('d-delete')); });
+    $('trash-empty-btn').addEventListener('click', function () { askEmptyTrash($('trash-empty-btn')); });
 
     // Invitations.
     $('invite-new').addEventListener('click', function () { askInvite('new', $('invite-new')); });

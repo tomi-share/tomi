@@ -2453,10 +2453,12 @@ async fn the_page_offers_the_new_views_without_inline_code_or_a_secret_in_storag
         "diagnostic",
         "diagnostic-copy",
         "confirm-dialog",
+        "su-copy",
+        "trash-empty-btn",
     ] {
         assert!(html.contains(&format!("id=\"{id}\"")), "{id}");
     }
-    for needle in ["api/about", "api/journal", "showModal"] {
+    for needle in ["api/about", "api/journal", "showModal", "empty_trash"] {
         assert!(js.contains(needle), "{needle}");
     }
     // A confirmation is a dialog of the page, not a browser prompt (kept only as a fallback).

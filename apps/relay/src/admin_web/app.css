@@ -2781,6 +2781,16 @@ dialog.confirm {
   color: var(--brand);
 }
 
+/* Titre court, puis la cible en une ligne (« Espace 1a2b3c4d »). */
+.su-titles {
+  min-width: 0;
+}
+
+.su-titles .caption {
+  margin-top: 0.125rem;
+  overflow-wrap: anywhere;
+}
+
 .stepup > * + * {
   margin-top: var(--space-4);
 }
@@ -2895,6 +2905,18 @@ dialog.confirm {
   width: 100%;
   font-family: var(--font-mono);
   letter-spacing: 0.08em;
+}
+
+/* Le champ et, à sa droite, le bouton qui copie le texte à saisir. */
+.type-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.type-row input {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .type-confirm input[aria-invalid="true"] {

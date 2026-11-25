@@ -183,9 +183,9 @@
       <details class="fold card" id="blind">
         <summary>Ce que le relais voit, et ce qu’il ne voit pas<svg class="ico chev"><use href="#i-expand"/></svg></summary>
         <div class="fold-body hint">
-          <p>Le relais est <strong>aveugle</strong> : il stocke et fait suivre des octets chiffrés sur les appareils. Il n’a aucune clé d’espace : ni contenu, ni titre, ni nom de fichier, ni secret.</p>
-          <p>Ce panneau montre ce que le relais sait déjà pour faire son travail : des comptes, des tailles, des dates, des identifiants courts et le nom que chaque appareil s’est donné. « Éléments » compte des enveloppes chiffrées.</p>
-          <p>Retirer un appareil, supprimer un espace ou créer une invitation demande ta <strong>clé d’accès à chaque fois</strong> : une session volée ne peut ni retirer, ni supprimer, ni inviter. L’accès au panneau lui-même (clés, adresse) ne se change que sur le serveur.</p>
+          <p>Le relais est <strong>aveugle</strong> : il stocke et fait suivre des octets chiffrés sur les appareils, sans aucune clé. Ni contenu, ni titre, ni nom de fichier, ni secret.</p>
+          <p>Ce panneau montre ce qu’il sait déjà : comptes, tailles, dates, identifiants courts, nom de chaque appareil. « Éléments » compte des enveloppes chiffrées.</p>
+          <p>Retirer, supprimer, vider la corbeille ou inviter demande ta <strong>clé d’accès à chaque fois</strong> : une session volée ne le peut pas. Les clés et l’adresse du panneau ne se changent que sur le serveur.</p>
         </div>
       </details>
     </div>
@@ -200,7 +200,7 @@
           <svg class="ico"><use href="#i-delete"/></svg>
           <div class="banner-body">
             <p><strong>Espace <span class="mono" id="banner-id"></span> supprimé.</strong> Ses appareils ne le trouvent plus.</p>
-            <p class="caption">Le dossier chiffré reste dans la corbeille du relais jusqu’au <span id="banner-until"></span> ; seul le serveur peut le restaurer.</p>
+            <p class="caption">En corbeille jusqu’au <span id="banner-until"></span> ; restauration sur le serveur.</p>
             <details class="fold cli">
               <summary><svg class="ico sm"><use href="#i-terminal"/></svg>Équivalent en ligne de commande<svg class="ico chev"><use href="#i-expand"/></svg></summary>
               <div class="cmd"><code id="banner-cmd"></code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande de restauration"><svg class="ico"><use href="#i-copy"/></svg></button></div>
@@ -297,7 +297,7 @@
               </select>
             </label>
           </div>
-          <p class="caption" id="d-dev-hint">Coche un ou plusieurs appareils pour les retirer : une seule confirmation avec ta clé d’accès.</p>
+          <p class="caption" id="d-dev-hint">Coche des appareils pour les retirer en une fois.</p>
           <p class="error-line" id="devices-error" role="alert" hidden></p>
           <ul class="devices" id="d-devices"></ul>
           <!-- Sélection : apparaît dès qu'un appareil est coché, collée au-dessus de la navigation basse. -->
@@ -310,7 +310,7 @@
 
         <div class="card danger-zone" id="d-danger">
           <div class="card-head"><h3>Supprimer l’espace</h3></div>
-          <p class="hint">Ses appareils ne le trouvent plus, tout de suite, et ne peuvent plus synchroniser. Rien n’est effacé sur eux. Le relais garde le dossier chiffré 7 jours ; seul le serveur peut le restaurer.</p>
+          <p class="hint">Ses appareils le perdent tout de suite ; rien n’est effacé sur eux. Corbeille 7 jours, restauration sur le serveur.</p>
           <button type="button" class="btn danger-outline" id="d-delete"><svg class="ico"><use href="#i-delete"/></svg>Supprimer l’espace…</button>
         </div>
 
@@ -318,7 +318,7 @@
           <summary><svg class="ico sm"><use href="#i-terminal"/></svg>Équivalent en ligne de commande<svg class="ico chev"><use href="#i-expand"/></svg></summary>
           <div class="fold-body">
             <ul class="commands" id="d-commands"></ul>
-            <p class="caption">Sur le serveur, <code>reset</code> efface tout de suite, sans corbeille, et demande les 8 caractères.</p>
+            <p class="caption"><code>reset</code> efface tout de suite, sans corbeille.</p>
           </div>
         </details>
 
@@ -335,7 +335,7 @@
         <h2 id="token-title" tabindex="-1">Jeton d’installation</h2>
         <button type="button" class="btn ghost sm" id="token-hide">Masquer</button>
       </div>
-      <p class="once"><svg class="ico"><use href="#i-warning"/></svg><span>Affiché une seule fois. Copie-le maintenant : il sera masqué dans 10 min, ou si tu quittes la page.</span></p>
+      <p class="once"><svg class="ico"><use href="#i-warning"/></svg><span>Affiché une seule fois : copie-le maintenant (masqué dans 10 min ou si tu quittes la page).</span></p>
       <div class="token-grid">
         <div class="token-main">
           <code class="token-value" id="token"></code>
@@ -363,10 +363,8 @@
           <button type="button" class="icon-btn help-btn" aria-expanded="false" aria-controls="help-inv" aria-label="Aide : comment marchent les invitations"><svg class="ico lg"><use href="#i-help"/></svg></button>
         </div>
         <div class="help-text" id="help-inv" hidden>
-          <p>Le jeton n’est montré qu’une seule fois, à la création.</p>
-          <p>La personne le saisit à la main, ouvre le lien ou scanne le QR code sur l’appareil où Tomi est installé.</p>
-          <p>Créer ou remplacer une invitation demande ta clé d’accès : un jeton donne le droit d’occuper ton disque. Invalider les invitations en attente ne demande que la session, puisque cela retire un droit.</p>
-          <p>Les espaces existants ne changent jamais.</p>
+          <p>Le jeton n’est montré qu’une fois. La personne le saisit, ouvre le lien ou scanne le QR code dans Tomi.</p>
+          <p>Créer ou remplacer demande ta clé d’accès (un jeton occupe ton disque) ; invalider ne retire qu’un droit, la session suffit. Les espaces existants ne changent pas.</p>
         </div>
         <div class="actions stack">
           <button type="button" class="btn" id="invite-new"><svg class="ico"><use href="#i-add"/></svg>Créer une invitation</button>
@@ -403,7 +401,7 @@
         <button type="button" class="icon-btn help-btn" aria-expanded="false" aria-controls="help-journal" aria-label="Aide : ce que contient le journal"><svg class="ico lg"><use href="#i-help"/></svg></button>
       </div>
       <div class="help-text" id="help-journal" hidden>
-        <p>Les actions sensibles (retraits, suppressions, invitations, accès refusés) sont <strong>gardées 90 jours</strong>, 500 lignes au plus, avec l’identifiant court de la cible et le numéro de la clé d’accès utilisée. Le reste n’est gardé qu’en mémoire, jusqu’au redémarrage du relais.</p>
+        <p>Les actions sensibles (retraits, suppressions, corbeille, invitations, refus) sont <strong>gardées 90 jours</strong>, avec l’identifiant court de la cible et le numéro de la clé. Le reste est en mémoire jusqu’au redémarrage.</p>
         <p>Jamais de nom d’appareil, de jeton, de code, d’adresse ni de contenu.</p>
       </div>
       <p class="error-line" id="journal-error" role="alert" hidden></p>
@@ -422,9 +420,8 @@
             <button type="button" class="icon-btn help-btn" aria-expanded="false" aria-controls="help-quota" aria-label="Aide : le quota par défaut"><svg class="ico lg"><use href="#i-help"/></svg></button>
           </div>
           <div class="help-text" id="help-quota" hidden>
-            <p>Plafond de stockage de chaque espace qui n’a pas de quota propre (réglé dans le détail de l’espace).</p>
-            <p>Tant que rien n’est réglé, ni ici ni par <code>max_space_bytes</code> dans la configuration, un espace n’a aucune limite.</p>
-            <p>Un changement s’applique tout de suite. Rien n’est supprimé : un espace déjà au-dessus du nouveau plafond ne peut plus qu’en libérer. Si c’est le cas d’un espace, le panneau te le dit avant d’enregistrer.</p>
+            <p>Plafond de chaque espace sans quota propre. Sans réglage ici ni <code>max_space_bytes</code>, aucune limite.</p>
+            <p>Effet immédiat, rien n’est supprimé : un espace au-dessus ne peut plus que libérer de la place (le panneau te prévient avant).</p>
           </div>
           <div>
             <p class="error-line" id="quota-error" role="alert" hidden></p>
@@ -453,14 +450,14 @@
             <button type="button" class="icon-btn help-btn" aria-expanded="false" aria-controls="help-access" aria-label="Aide : l’accès au panneau"><svg class="ico lg"><use href="#i-help"/></svg></button>
           </div>
           <div class="help-text" id="help-access" hidden>
-            <p>Une clé <strong>liée à l’appareil</strong> (clé matérielle) ne quitte jamais son support : elle reste sûre si ton compte iCloud, Google ou ton gestionnaire de mots de passe est pris. Une clé <strong>synchronisée</strong> suit ce compte.</p>
-            <p>En garder deux évite de devoir passer par le serveur si tu en perds une.</p>
+            <p>Une clé <strong>liée à l’appareil</strong> ne quitte pas son support : sûre même si ton compte iCloud, Google ou ton gestionnaire de mots de passe est pris. Une clé <strong>synchronisée</strong> suit ce compte.</p>
+            <p>Garde-en deux pour ne pas dépendre du serveur si tu en perds une.</p>
           </div>
           <div class="sub-head"><h3>Clés d’accès</h3><span class="count" id="keys-count"></span></div>
           <p class="error-line" id="keys-error" role="alert" hidden></p>
           <ul class="rows keys" id="keys-list"></ul>
           <dl class="kv">
-            <div><dt>Clé exigée pour supprimer un espace</dt><dd id="access-policy"></dd></div>
+            <div><dt>Clé exigée pour supprimer ou vider</dt><dd id="access-policy"></dd></div>
             <div><dt>Autres sessions ouvertes</dt><dd id="access-others"></dd></div>
           </dl>
           <div class="actions stack">
@@ -470,10 +467,10 @@
           <div class="cli-only" role="group" aria-labelledby="h-cli-access">
             <p class="cli-only-head" id="h-cli-access"><svg class="ico sm"><use href="#i-terminal"/></svg>Sur le serveur seulement</p>
             <ul>
-              <li><strong>Ajouter ou retirer une clé d’accès.</strong> D’ici, une clé volée pourrait s’en ajouter une autre et garder l’accès après que tu as repris la main.</li>
-              <li><strong>Exiger la clé liée à l’appareil</strong> pour supprimer un espace. Pour la même raison : une session ne doit pas pouvoir baisser la garde.</li>
-              <li><strong>Changer l’adresse du panneau.</strong> D’ici, tu risquerais de t’enfermer dehors ; en urgence, « Fermer toutes les sessions » suffit.</li>
-              <li><strong>Réinitialiser l’accès</strong>, si tu as perdu toutes tes clés : sans clé, tu n’es plus connecté ici.</li>
+              <li><strong>Ajouter ou retirer une clé.</strong> Sinon, une clé volée pourrait s’en ajouter une autre.</li>
+              <li><strong>Exiger la clé liée à l’appareil</strong> pour supprimer ou vider : une session ne doit pas baisser la garde.</li>
+              <li><strong>Changer l’adresse du panneau</strong> : tu pourrais t’enfermer dehors. En urgence, « Fermer toutes les sessions ».</li>
+              <li><strong>Réinitialiser l’accès</strong>, si tu as perdu toutes tes clés.</li>
             </ul>
             <details class="fold cli">
               <summary><svg class="ico sm"><use href="#i-terminal"/></svg>Équivalent en ligne de commande<svg class="ico chev"><use href="#i-expand"/></svg></summary>
@@ -491,7 +488,7 @@
 
         <div class="card last">
           <div class="card-head"><h2>Diagnostic</h2></div>
-          <p class="hint">Un résumé à joindre pour signaler un problème : ni identifiant d’espace, ni nom d’appareil, ni jeton.</p>
+          <p class="hint">À joindre pour signaler un problème : ni identifiant d’espace, ni nom d’appareil, ni jeton.</p>
           <div class="actions stack">
             <button type="button" class="btn secondary" id="diagnostic-copy"><svg class="ico"><use href="#i-copy"/></svg>Copier le diagnostic</button>
           </div>
@@ -508,28 +505,30 @@
           <dl class="kv" id="about-facts"></dl>
         </div>
 
-        <!-- Corbeille : contenu visible, restauration et purge sur le serveur seulement. -->
+        <!-- Corbeille : contenu visible ; la vider demande la clé d'accès, restaurer se fait sur le serveur seulement. -->
         <div class="card" id="trash">
           <div class="card-head">
             <h2>Corbeille <span class="count" id="trash-count">0</span></h2>
             <button type="button" class="icon-btn help-btn" aria-expanded="false" aria-controls="help-trash" aria-label="Aide : la corbeille du relais"><svg class="ico lg"><use href="#i-help"/></svg></button>
           </div>
           <div class="help-text" id="help-trash" hidden>
-            <p>Un espace supprimé depuis ce panneau disparaît tout de suite pour ses appareils. Le relais garde son dossier, toujours chiffré, 7 jours, puis l’efface.</p>
-            <p>La corbeille compte dans l’espace disque libre, pas dans le total des espaces.</p>
+            <p>Un espace supprimé d’ici y reste 7 jours, toujours chiffré, puis le relais l’efface.</p>
+            <p>Elle compte dans l’espace disque libre, pas dans le total des espaces.</p>
           </div>
           <p class="error-line" id="trash-error" role="alert" hidden></p>
           <p class="empty" id="trash-empty" hidden>La corbeille est vide.</p>
           <ul class="rows" id="trash-list"></ul>
+          <div class="actions stack" id="trash-actions" hidden>
+            <button type="button" class="btn danger-outline" id="trash-empty-btn"><svg class="ico"><use href="#i-delete"/></svg>Vider la corbeille…</button>
+          </div>
           <div class="cli-only">
-            <p class="cli-only-head"><svg class="ico sm"><use href="#i-terminal"/></svg>Restaurer ou vider : sur le serveur seulement</p>
-            <p>D’ici, une clé volée pourrait vider la corbeille, qui ne protégerait plus de rien. Le serveur vérifie aussi qu’une restauration n’entre pas en conflit avec un autre espace.</p>
+            <p class="cli-only-head"><svg class="ico sm"><use href="#i-terminal"/></svg>Restaurer : sur le serveur seulement</p>
             <details class="fold cli">
               <summary><svg class="ico sm"><use href="#i-terminal"/></svg>Équivalent en ligne de commande<svg class="ico chev"><use href="#i-expand"/></svg></summary>
               <ul class="commands">
                 <li><span class="what">Voir la corbeille</span><div class="cmd"><code>tomi-relay admin trash</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande : voir la corbeille"><svg class="ico"><use href="#i-copy"/></svg></button></div></li>
                 <li><span class="what">Restaurer un espace</span><div class="cmd"><code id="trash-restore-cmd">tomi-relay admin trash restore --space &lt;id&gt;</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande : restaurer"><svg class="ico"><use href="#i-copy"/></svg></button></div></li>
-                <li><span class="what">Effacer un espace de la corbeille tout de suite</span><div class="cmd"><code id="trash-purge-cmd">tomi-relay admin trash purge --space &lt;id&gt;</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande : effacer de la corbeille"><svg class="ico"><use href="#i-copy"/></svg></button></div></li>
+                <li><span class="what">Effacer un seul espace de la corbeille</span><div class="cmd"><code id="trash-purge-cmd">tomi-relay admin trash purge --space &lt;id&gt;</code><button type="button" class="icon-btn" data-copy="Commande" aria-label="Copier la commande : effacer de la corbeille"><svg class="ico"><use href="#i-copy"/></svg></button></div></li>
               </ul>
             </details>
           </div>
@@ -565,28 +564,34 @@
   </div>
 </dialog>
 
-<!-- Confirmation avec clé d'accès (step-up) : retirer, supprimer, créer ou remplacer une invitation.
+<!-- Confirmation avec clé d'accès (step-up) : retirer, supprimer, vider la corbeille, créer ou remplacer une invitation.
      Feuille basse sous 640 px, boîte centrée au-delà. Le récapitulatif vient du serveur (api/stepup/options).
      data-state : review, pending, cancelled, refused, error, expired, limit, throttled, changed, lastdevice, devicekey, closed. -->
-<dialog id="stepup" class="confirm stepup" aria-labelledby="su-title" aria-describedby="su-conseq" data-state="review">
+<dialog id="stepup" class="confirm stepup" aria-labelledby="su-title" aria-describedby="su-sub su-conseq" data-state="review">
   <div class="su-head">
     <span class="su-ico" id="su-ico"><svg class="ico lg"><use href="#i-person-remove"/></svg></span>
-    <h2 id="su-title" tabindex="-1"></h2>
+    <div class="su-titles">
+      <h2 id="su-title" tabindex="-1"></h2>
+      <p class="caption" id="su-sub" hidden></p>
+    </div>
   </div>
   <div class="su-review">
     <ul class="recap" id="su-recap"></ul>
     <ul class="conseq" id="su-conseq"></ul>
     <div class="type-confirm" id="su-type" hidden>
-      <label for="su-input">Pour confirmer, saisis les 8 premiers caractères de l’identifiant : <span class="mono" id="su-expect"></span></label>
-      <input id="su-input" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="8" aria-describedby="su-match">
+      <label for="su-input">Pour confirmer, saisis <span class="mono" id="su-expect"></span></label>
+      <div class="type-row">
+        <input id="su-input" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="8" aria-describedby="su-match">
+        <button type="button" class="icon-btn" id="su-copy" data-copy="Identifiant" aria-label="Copier l’identifiant à saisir" title="Copier"><svg class="ico"><use href="#i-copy"/></svg></button>
+      </div>
       <span class="caption" id="su-match" aria-live="polite"></span>
     </div>
   </div>
   <!-- Clé d'accès en attente : filet linéaire, jamais de spinner. -->
   <div class="su-wait" role="status">
     <div class="loading-bar"></div>
-    <p><strong>Valide avec ta clé d’accès</strong> : empreinte, visage ou code de l’appareil.</p>
-    <p class="caption">Ta clé d’accès affiche « <span id="su-rp"></span> », jamais l’action : vérifie le récapitulatif ci-dessus. Ce défi reste valable 2 min.</p>
+    <p><strong>Valide avec ta clé d’accès</strong></p>
+    <p class="caption">Elle n’affiche que « <span id="su-rp"></span> » : vérifie le récapitulatif. Valable 2 min.</p>
   </div>
   <div class="su-msg" id="su-msg" role="alert"></div>
   <p class="pk-line" id="su-pk"><svg class="ico sm"><use href="#i-key"/></svg><span id="su-pk-text"></span></p>
@@ -614,7 +619,7 @@
     <div><dt><kbd>C</kbd></dt><dd>Copier l’identifiant de l’espace ouvert</dd></div>
     <div><dt><kbd>?</kbd></dt><dd>Afficher cette aide</dd></div>
   </dl>
-  <p class="caption">Retirer, supprimer, inviter : jamais de raccourci. Ces actions passent toujours par un bouton et ta clé d’accès.</p>
+  <p class="caption">Retirer, supprimer, vider, inviter : jamais de raccourci, toujours un bouton et ta clé d’accès.</p>
   <div class="actions"><button type="button" class="btn secondary" id="sc-close">Fermer</button></div>
 </dialog>
 
@@ -637,7 +642,7 @@
       </dl>
       <div class="dev-actions">
         <button type="button" class="btn danger-outline sm dev-revoke"><svg class="ico"><use href="#i-person-remove"/></svg>Retirer de l’espace…</button>
-        <p class="caption dev-last" hidden>Dernier appareil de l’espace : il ne peut pas être retiré. Pour en finir avec cet espace, supprime-le.</p>
+        <p class="caption dev-last" hidden>Dernier appareil : il ne peut pas être retiré. Supprime plutôt l’espace.</p>
       </div>
     </details>
   </li>

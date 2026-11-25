@@ -105,7 +105,7 @@ de 44). Sur desktop, à la souris, les boutons de second rang descendent à 36 p
 | Quota par défaut | Réglages (inchangé) | Session ; confirmation avec la liste des espaces bloqués | Inchangé, plus la confirmation conditionnelle |
 | Fermer toutes les sessions | ⋮ (téléphone), pied de la barre latérale (desktop), Réglages > Accès | Session (protection) | Confirmation, bouton principal (pas rouge) → connexion |
 | Clés d'accès, politique de clé, adresse, réinitialisation | Réglages > Accès au panneau | **Serveur seulement** | Lecture (type, dates, « Cette session ») ; un encadré dit pourquoi, la commande est dans le repli |
-| Corbeille | Réglages > Corbeille | **Serveur seulement** pour restaurer et vider | Contenu et échéance ; encadré « pourquoi » ; commandes dans le repli |
+| Corbeille | Réglages > Corbeille | Vider : clé d'accès + saisie de « vider » ; restaurer : **serveur seulement** | Contenu et échéance ; bouton « Vider la corbeille… » ; commandes dans le repli |
 | Clé d'espace à renouveler | Détail, ligne d'état | Aucune action | La phrase dit pourquoi il n'y a pas de bouton (le relais n'a pas la clé) |
 
 ### Parcours de confirmation
