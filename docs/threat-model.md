@@ -77,7 +77,10 @@ device is visible to whoever runs the relay.
   with an authenticated creation date older than that is shown as "unreadable (suspect)", kept raw, never retried and never
   consumed, so an item you deleted or that was set to disappear after reading is not brought back by a relay that kept the
   envelope. Limits: the check measures age from the moment the device first receives the item, and the relay still chooses
-  the order in which it presents events.
+  the order in which it presents events. The age is measured with the **device's own clock**, on purpose: the relay's clock is
+  the relay's word, and a relay that could shift it would switch this check off. The price is that a legitimate item is also
+  refused (and stays so) when the clocks of the sender and of the receiver disagree by about 60 days, or when it waited
+  more than 60 days in the sender's outbox: a visible failure, never a leak.
 - **Invent an unsigned revocation** ("by the administrator", "voluntary departure"), by emitting an explicit `device_revoked`
   event. Honest devices follow it with a signed rotation, which makes the removal permanent, so a malicious relay can make
   them drop a legitimate device, which then has to be paired again. This costs you availability, not confidentiality. The
