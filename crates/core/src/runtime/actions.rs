@@ -1198,12 +1198,15 @@ impl Engine {
                 return Ok(false);
             };
             let bytes = bundle.rotation.to_bytes()?;
+            // Before the post: an honest relay numbers the event above this cursor. The `seq` it
+            // answers is not proof of that (see `Supersession::unconfirmed_after`).
+            let cursor_at_post = self.store.read(|db| db.cursor())?;
             match self.authed(|| self.transport.post_rotation(&bytes)) {
                 Ok(seq) => {
                     self.with_crypto(|c, db, a| {
                         let out = c.trust.apply_rotation(&bundle.rotation, &a.keys)?;
                         if let Some(key) = out.new_space_key {
-                            c.ring.add_rotation_key(key, seq, now)?;
+                            c.ring.add_own_rotation_key(key, seq, cursor_at_post, now)?;
                         }
                         for d in db.devices()? {
                             if d.ed25519.as_ref().is_some_and(|k| c.trust.is_revoked(k)) {

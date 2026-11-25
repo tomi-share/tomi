@@ -2069,6 +2069,56 @@ fn hostile_relay_cannot_slip_an_old_epoch_item_under_a_low_seq() {
     ));
 }
 
+/// The records of the key ring of device `i`, to look at the supersession of epoch 1.
+fn epoch1_supersession(w: &World, i: usize) -> crate::Supersession {
+    w.e(i)
+        .read_crypto(|c, _| Ok(c.ring.to_records()))
+        .unwrap()
+        .into_iter()
+        .find(|r| r.epoch == 1)
+        .and_then(|r| r.superseded)
+        .expect("epoch 1 is superseded")
+}
+
+#[test]
+fn a_relay_that_inflates_the_answer_to_our_rotation_cannot_make_forged_items_readable() {
+    let w = World::new(3, 3);
+    for i in 0..3 {
+        w.e(i).sync().unwrap();
+    }
+    // The relay answers a `seq` far above the real position of the rotation event.
+    w.relay.with(|s| s.rotation_answer_inflation = 1_000);
+    w.e(0).revoke_device(&w.nodes[2].id).unwrap();
+    let before = epoch1_supersession(&w, 0);
+    assert!(
+        before.unconfirmed_after.is_some(),
+        "own rotation, not yet met"
+    );
+    // The revoked device and the relay: an item under the old key, numbered inside the lie.
+    let (forged, event) = forged_old_epoch_item(&w, w.relay.head() + 5);
+    w.relay.inject_events(vec![event]);
+    w.e(0).sync().unwrap();
+    let v = w.e(0).get_item(&forged).unwrap().unwrap();
+    assert!(
+        matches!(v.content, ItemContentView::Unreadable { .. }),
+        "an old-epoch item above the cursor of the post is not readable on the relay's word"
+    );
+}
+
+#[test]
+fn our_own_rotation_is_confirmed_when_its_event_comes_back() {
+    let w = World::new(3, 3);
+    for i in 0..3 {
+        w.e(i).sync().unwrap();
+    }
+    w.e(0).revoke_device(&w.nodes[2].id).unwrap();
+    assert!(epoch1_supersession(&w, 0).unconfirmed_after.is_some());
+    w.e(0).sync().unwrap();
+    let after = epoch1_supersession(&w, 0);
+    assert_eq!(after.unconfirmed_after, None);
+    assert!(after.rotation_seq <= w.relay.head());
+}
+
 #[test]
 fn a_replayed_event_is_ignored_and_never_moves_the_cursor_back() {
     let w = World::new(2, 2);

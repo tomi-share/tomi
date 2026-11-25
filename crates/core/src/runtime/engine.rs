@@ -1688,6 +1688,9 @@ impl Engine {
                         if c.ring
                             .tighten_supersession(r.new_epoch.saturating_sub(1), ev.seq)
                         {
+                            // Items of the old epoch that waited for this event (our own
+                            // rotation, `Supersession::unconfirmed_after`) are judged now.
+                            self.retry_key_pending(c, db, a)?;
                             Self::persist_crypto(c, db)?;
                         }
                         return Ok(None);

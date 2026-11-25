@@ -61,7 +61,11 @@ impl From<std::io::Error> for CoreError {
 }
 
 /// Current schema version (`PRAGMA user_version`).
-pub const SCHEMA_VERSION: i64 = 4;
+pub const SCHEMA_VERSION: i64 = 5;
+
+/// v4 -> v5: `space_keys.superseded_unconfirmed_after`, the sync cursor at the time this device
+/// posted a rotation, until the event is met in the log (`Supersession::unconfirmed_after`).
+const MIGRATE_V5: &str = "ALTER TABLE space_keys ADD COLUMN superseded_unconfirmed_after INTEGER;";
 
 /// v1 -> v2: count of `stale_key_epoch` answers per operation (bounded resync).
 const MIGRATE_V2: &str = "ALTER TABLE outbox ADD COLUMN stale_attempts INTEGER NOT NULL DEFAULT 0;";
@@ -774,22 +778,27 @@ impl Store {
         match version {
             0 => {
                 conn.execute_batch(&format!(
-                    "BEGIN;{SCHEMA_V1}{MIGRATE_V2}{MIGRATE_V3}{MIGRATE_V4}PRAGMA user_version = {SCHEMA_VERSION};COMMIT;"
+                    "BEGIN;{SCHEMA_V1}{MIGRATE_V2}{MIGRATE_V3}{MIGRATE_V4}{MIGRATE_V5}PRAGMA user_version = {SCHEMA_VERSION};COMMIT;"
                 ))?;
             }
             1 => {
                 conn.execute_batch(&format!(
-                    "BEGIN;{MIGRATE_V2}{MIGRATE_V3}{MIGRATE_V4}PRAGMA user_version = {SCHEMA_VERSION};COMMIT;"
+                    "BEGIN;{MIGRATE_V2}{MIGRATE_V3}{MIGRATE_V4}{MIGRATE_V5}PRAGMA user_version = {SCHEMA_VERSION};COMMIT;"
                 ))?;
             }
             2 => {
                 conn.execute_batch(&format!(
-                    "BEGIN;{MIGRATE_V3}{MIGRATE_V4}PRAGMA user_version = {SCHEMA_VERSION};COMMIT;"
+                    "BEGIN;{MIGRATE_V3}{MIGRATE_V4}{MIGRATE_V5}PRAGMA user_version = {SCHEMA_VERSION};COMMIT;"
                 ))?;
             }
             3 => {
                 conn.execute_batch(&format!(
-                    "BEGIN;{MIGRATE_V4}PRAGMA user_version = {SCHEMA_VERSION};COMMIT;"
+                    "BEGIN;{MIGRATE_V4}{MIGRATE_V5}PRAGMA user_version = {SCHEMA_VERSION};COMMIT;"
+                ))?;
+            }
+            4 => {
+                conn.execute_batch(&format!(
+                    "BEGIN;{MIGRATE_V5}PRAGMA user_version = {SCHEMA_VERSION};COMMIT;"
                 ))?;
             }
             v if v == SCHEMA_VERSION => {}
@@ -1162,7 +1171,8 @@ impl Db<'_> {
 
     pub fn keyring_records(&self) -> Result<Vec<KeyRingRecord>> {
         let mut st = self.conn.prepare(
-            "SELECT epoch, key_sealed, superseded_seq, superseded_applied_at_ms
+            "SELECT epoch, key_sealed, superseded_seq, superseded_applied_at_ms,
+                    superseded_unconfirmed_after
              FROM space_keys ORDER BY epoch",
         )?;
         let rows = st.query_map([], |r| {
@@ -1171,11 +1181,12 @@ impl Db<'_> {
                 r.get::<_, Option<Vec<u8>>>(1)?,
                 r.get::<_, Option<i64>>(2)?,
                 r.get::<_, Option<i64>>(3)?,
+                r.get::<_, Option<i64>>(4)?,
             ))
         })?;
         let mut out = Vec::new();
         for row in rows {
-            let (epoch, sealed, seq, applied) = row?;
+            let (epoch, sealed, seq, applied, unconfirmed) = row?;
             let epoch = u32::try_from(epoch).map_err(|_| corrupt("epoch"))?;
             let key = match sealed {
                 Some(s) => Some(
@@ -1188,6 +1199,7 @@ impl Db<'_> {
                 (Some(s), Some(a)) => Some(Supersession {
                     rotation_seq: u(s),
                     applied_at_ms: u(a),
+                    unconfirmed_after: unconfirmed.map(u),
                 }),
                 _ => None,
             };
@@ -1210,13 +1222,15 @@ impl Db<'_> {
             };
             self.conn.execute(
                 "INSERT INTO space_keys
-                 (epoch, key_sealed, superseded_seq, superseded_applied_at_ms)
-                 VALUES (?1, ?2, ?3, ?4)",
+                 (epoch, key_sealed, superseded_seq, superseded_applied_at_ms,
+                  superseded_unconfirmed_after)
+                 VALUES (?1, ?2, ?3, ?4, ?5)",
                 params![
                     r.epoch,
                     sealed,
                     r.superseded.map(|s| i(s.rotation_seq)),
-                    r.superseded.map(|s| i(s.applied_at_ms))
+                    r.superseded.map(|s| i(s.applied_at_ms)),
+                    r.superseded.and_then(|s| s.unconfirmed_after).map(i)
                 ],
             )?;
         }
@@ -2565,8 +2579,8 @@ mod tests {
                     .pragma_query_value(None, "user_version", |r| r.get(0))?)
             })
             .unwrap();
-        assert_eq!(v, 4);
-        // A database that is already v4 reopens as it is.
+        assert_eq!(v, SCHEMA_VERSION);
+        // A database that is already current reopens as it is.
         drop(s);
         let s = Store::open(&db, &dir.path().join("f"), &[1u8; 32]).unwrap();
         assert_eq!(s.read(|d| d.pending_ops()).unwrap().len(), 4);
@@ -2596,6 +2610,35 @@ mod tests {
             s.tx(|d| d.enqueue_op(&op, 2)).unwrap();
             assert_eq!(s.read(|d| d.pending_ops()).unwrap().len(), 2);
         }
+    }
+
+    #[test]
+    fn a_version_4_database_gets_the_unconfirmed_rotation_column_and_keeps_its_ring() {
+        let dir = tempfile::tempdir().unwrap();
+        let db = dir.path().join("old.db");
+        {
+            let c = Connection::open(&db).unwrap();
+            c.execute_batch(&format!(
+                "BEGIN;{SCHEMA_V1}{MIGRATE_V2}{MIGRATE_V3}{MIGRATE_V4}PRAGMA user_version = 4;COMMIT;"
+            ))
+            .unwrap();
+            c.execute(
+                "INSERT INTO space_keys (epoch, superseded_seq, superseded_applied_at_ms)
+                 VALUES (1, 9, 100)",
+                [],
+            )
+            .unwrap();
+        }
+        let s = Store::open(&db, &dir.path().join("f"), &[1u8; 32]).unwrap();
+        let recs = s.read(|d| d.keyring_records()).unwrap();
+        assert_eq!(
+            recs[0].superseded,
+            Some(Supersession {
+                rotation_seq: 9,
+                applied_at_ms: 100,
+                unconfirmed_after: None,
+            })
+        );
     }
 
     #[test]
@@ -2762,6 +2805,7 @@ mod tests {
                 superseded: Some(Supersession {
                     rotation_seq: 9,
                     applied_at_ms: 100,
+                    unconfirmed_after: Some(4),
                 }),
             },
             KeyRingRecord {

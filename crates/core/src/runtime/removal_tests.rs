@@ -466,7 +466,7 @@ fn the_history_transfer_carries_removed_slots_as_removed() {
 fn the_registry_goes_with_the_item_and_is_wiped_with_everything() {
     let (w, id) = two_files();
     w.e(1).delete_attachment(&id, 0, false).unwrap();
-    assert_eq!(super::super::store::SCHEMA_VERSION, 4);
+    assert_eq!(super::super::store::SCHEMA_VERSION, 5);
     let counts = w.e(1).store.row_counts();
     let reg = counts
         .iter()

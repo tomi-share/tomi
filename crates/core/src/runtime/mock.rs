@@ -141,6 +141,8 @@ pub struct State {
     /// `events` answers `has_more` with an empty page and the same `next_after` (a buggy or
     /// hostile relay that makes a client loop).
     pub stall_events: bool,
+    /// A hostile relay: added to the `seq` answered to `POST /v1/rotations` (not to the log).
+    pub rotation_answer_inflation: u64,
     wakers: Vec<(String, Sender<Result<Wake, u16>>)>,
     /// Close codes for the next doorbell connections, in order ([`MockRelay::close_next_doorbell`]).
     next_wake_closes: VecDeque<u16>,
@@ -303,6 +305,7 @@ impl MockRelay {
             limits: Limits::default(),
             stall_uploads: false,
             stall_events: false,
+            rotation_answer_inflation: 0,
             wakers: Vec::new(),
             next_wake_closes: VecDeque::new(),
             injected_events: Vec::new(),
@@ -1053,7 +1056,7 @@ impl RelayTransport for MockTransport {
                     Some(caller),
                 );
             }
-            Ok(seq)
+            Ok(seq.saturating_add(s.rotation_answer_inflation))
         })
     }
 

@@ -94,7 +94,10 @@ limited to 64 characters, and keeps at most 32 pending notices. A device that is
   reports a log older than the cursor (a restore from backup) it moves the cursor to that head and treats every item of a
   replaced epoch it sees for the first time as suspect. A window remains (`format-v1.md` §12): an item injected **before**
   the client applies the rotation, with a position lower than the rotation's, is accepted, for as long as old keys are kept
-  (up to 31 days by default).
+  (up to 31 days by default). The device that **posts** a rotation does not take the position the relay answers as the
+  rotation's: until the `rotation` event comes back in the log, an old-epoch item above the sync cursor of the moment of
+  the post waits as "key pending", then is judged on the real position of the event. A relay that withholds that event
+  keeps those items waiting, never readable.
 
 ### Who is the relay?
 
