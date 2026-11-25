@@ -106,6 +106,10 @@ public final class RustTomiCoreAdapter: TomiKit.TomiCore {
     private let supportsDemoEntry: Bool
     private var refreshPending = false
     private var wantsDoorbell = false
+    /// The app is on screen (`enterForeground` / `enterBackground` only). The notices the core hands over once are read only then:
+    /// a refresh in the background (a background refresh task) would take them with no screen to show them, and lose them if the
+    /// process is ended before the feed comes back.
+    private var isForeground = false
     private var doorbellRunning = false
     /// The current doorbell is being stopped by the app (not closed by the core).
     private var doorbellStopRequested = false
@@ -155,7 +159,8 @@ public final class RustTomiCoreAdapter: TomiKit.TomiCore {
         let core = self.core
         // What did not change keeps its storage (see `ItemReuse`): the merge runs off the main thread, with the read.
         let previous = state.items
-        guard let snapshot = try? await local.run({ Self.read(core, previous: previous) }) else { return }
+        let takeNotices = isForeground
+        guard let snapshot = try? await local.run({ Self.read(core, previous: previous, takeNotices: takeNotices) }) else { return }
         state.isDemo = snapshot.isDemo
         state.isPaired = snapshot.isPaired
         state.spaceState = snapshot.spaceState
@@ -173,7 +178,7 @@ public final class RustTomiCoreAdapter: TomiKit.TomiCore {
         startDoorbellIfNeeded()
     }
 
-    private nonisolated static func read(_ core: RustTomiCore, previous: [TomiItem]) -> Snapshot {
+    private nonisolated static func read(_ core: RustTomiCore, previous: [TomiItem], takeNotices: Bool) -> Snapshot {
         let paired = core.isPaired()
         var snapshot = Snapshot(
             isDemo: core.isDemo(),
@@ -191,9 +196,12 @@ public final class RustTomiCoreAdapter: TomiKit.TomiCore {
         snapshot.devices = (try? core.devices())?.compactMap { CoreMapping.device($0) }
         snapshot.items = (try? core.items()).map { ItemReuse.reuseUnchanged(previous: previous, fresh: $0.map(CoreMapping.item)) }
         // Read on the core's change notification (a sync that records a removal or a failed rotation reports one), never
-        // polled. The demo has no relay. A failed read loses nothing: the core keeps the notices until they are taken.
+        // polled. The demo has no relay. A failed read loses nothing: the core keeps the notices until they are taken, and they are
+        // taken only while the app is on screen (`takeNotices`).
         if !snapshot.isDemo {
             snapshot.rotationStalled = core.rotationStalled()
+        }
+        if !snapshot.isDemo, takeNotices {
             snapshot.relayRevocations = ((try? core.takeRelayRevocations()) ?? []).map(CoreMapping.relayRevocation)
         }
         return snapshot
@@ -650,14 +658,18 @@ public final class RustTomiCoreAdapter: TomiKit.TomiCore {
     // MARK: Foreground / background
 
     public func enterForeground() {
+        isForeground = true
         wantsDoorbell = true
         startDoorbellIfNeeded()
+        // Reads what the core kept for the notices while no screen was there.
+        scheduleRefresh()
         Task { try? await self.sync(pushToken: nil) }
     }
 
     /// Stops the doorbell and erases the decrypted files, inside an iOS background task so the
     /// erasure is not cut short by the suspension.
     public func enterBackground() {
+        isForeground = false
         wantsDoorbell = false
         stopDoorbell()
         #if canImport(UIKit)

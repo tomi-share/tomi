@@ -98,14 +98,19 @@ class RealTomiCoreNoticesTest {
     }
 
     @Test
-    fun aRevocationTakenBeforeAnyoneListensIsKept() = runBlocking {
+    fun aRevocationIsNotTakenWhileNobodyListens() = runBlocking {
         val native = pairedNative()
         val core = core(native)
         native.pendingRelayRevocations += FfiRelayRevocation("dev-pc", "PC-Bureau", "admin")
         core.sync()
+        native.registeredListener!!.onChanged()
+        Thread.sleep(200)
 
-        // Nobody was collecting when it was taken: it waits for the collector instead of being lost.
+        // No screen to show it (a sync started by a push): the core keeps it, so a process that dies loses nothing.
+        assertEquals(1, native.pendingRelayRevocations.size)
+        // The collector that comes later gets it.
         assertEquals("dev-pc", withTimeout(5_000) { core.relayRevocations.first() }.deviceId)
+        assertTrue(native.pendingRelayRevocations.isEmpty())
     }
 
     @Test

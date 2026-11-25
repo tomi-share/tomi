@@ -40,7 +40,7 @@ interface TomiCore {
 
     /**
      * Devices that the relay alone removed (its administrator, or a departure it reports), each delivered ONCE: the core hands each one over
-     * a single time and this flow buffers what nobody collects yet. The UI shows a one-time, non-blocking notice for each. Defaults to none.
+     * a single time, and only to a collector (nothing is taken while nobody collects: the core keeps it). The UI shows a one-time, non-blocking notice for each. Defaults to none.
      */
     val relayRevocations: Flow<RelayRevocation> get() = emptyFlow()
 

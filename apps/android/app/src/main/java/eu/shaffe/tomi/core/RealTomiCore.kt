@@ -6,7 +6,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
@@ -18,7 +17,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -80,9 +79,6 @@ class RealTomiCore(
     private val departureState = MutableStateFlow<Departure?>(null)
     private val rotationStalledState = MutableStateFlow(false)
 
-    /** What the core handed over once (`take_relay_revocations`) and nobody showed yet; in memory, a notice is not worth a store. */
-    private val relayRevocationChannel = Channel<RelayRevocation>(Channel.UNLIMITED)
-
     /** Departure calls in flight (an attempt, or an erasure that waits for one), guarded by [departureCountLock]. */
     private var departureCalls = 0
     private val departureCountLock = Any()
@@ -126,7 +122,14 @@ class RealTomiCore(
     override val localDevice: StateFlow<Device> = localDeviceState.asStateFlow()
     override val departure: StateFlow<Departure?> = departureState.asStateFlow()
     override val rotationStalled: StateFlow<Boolean> = rotationStalledState.asStateFlow()
-    override val relayRevocations: Flow<RelayRevocation> = relayRevocationChannel.receiveAsFlow()
+    /**
+     * Taken from the core only while someone collects, and handed straight to that collector: the core's `take_relay_revocations` clears
+     * its persisted list, so a take with no screen to show the notice (a sync started by a push, with no UI) would lose it if the process
+     * died before the feed came back. Until a collector asks, the core keeps it.
+     */
+    override val relayRevocations: Flow<RelayRevocation> = changes.onStart { emit(Unit) }.transform {
+        takeRelayRevocations().forEach { emit(it) }
+    }
     override val departureRunning: StateFlow<Boolean> = departureRunningState.asStateFlow()
 
     override val devices: Flow<List<Device>> = changes.onStart { emit(Unit) }.conflate().map { bridge.quick { readDevices() } }
@@ -144,9 +147,9 @@ class RealTomiCore(
     }
 
     /**
-     * What the core wants the user to know about the removal of a device: the persisted "rotation stalled" flag, and the revocations the
-     * relay alone made (each handed over once). Read when the core announces a change and after a sync, never on a timer. A failed read
-     * keeps what was known (nothing was taken: the core keeps a revocation until it is).
+     * What the core wants the user to know about the removal of a device: the persisted "rotation stalled" flag (the revocations the relay
+     * alone made are taken by [relayRevocations]). Read when the core announces a change and after a sync, never on a timer. A failed read
+     * keeps what was known.
      */
     private fun readNotices() {
         try {
@@ -154,11 +157,17 @@ class RealTomiCore(
         } catch (_: Exception) {
             // Kept as it was.
         }
-        try {
-            if (!pairedState.value) return
-            native.takeRelayRevocations().forEach { relayRevocationChannel.trySend(it.toDomain()) }
+    }
+
+    /** What the core handed over once, off the main thread; a failed read takes nothing (the core keeps it for the next collector's read). */
+    private suspend fun takeRelayRevocations(): List<RelayRevocation> {
+        if (!pairedState.value) return emptyList()
+        return try {
+            bridge.quick { native.takeRelayRevocations().map { it.toDomain() } }
+        } catch (e: CancellationException) {
+            throw e
         } catch (_: Exception) {
-            // Still in the core's store: the next read gets it.
+            emptyList()
         }
     }
 
