@@ -2907,16 +2907,29 @@ dialog.confirm {
   letter-spacing: 0.08em;
 }
 
-/* Le champ et, à sa droite, le bouton qui copie le texte à saisir. */
-.type-row {
+/* « Pour confirmer, saisis [texte] [copier] » : le texte à saisir en chasse fixe sur fond
+   légèrement différent, avec le bouton qui le copie juste à sa droite. */
+.type-prompt {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
 }
 
-.type-row input {
-  flex: 1 1 auto;
-  min-width: 0;
+.code-chip {
+  padding: 0.125rem var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--surface-alt);
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono);
+  letter-spacing: 0.06em;
+  font-feature-settings: "tnum" 1, "zero" 1, "calt" 0, "liga" 0;
+}
+
+.type-prompt .icon-btn {
+  width: 2.25rem;
+  height: 2.25rem;
+  margin-left: calc(-1 * var(--space-1));
 }
 
 .type-confirm input[aria-invalid="true"] {
@@ -2927,9 +2940,10 @@ dialog.confirm {
   color: var(--success);
 }
 
+/* Cachés tant que l'état de la feuille ne les demande pas (voir data-state plus bas). */
 .su-wait,
-.su-msg,
-.su-wait {
+.su-msg {
+  display: none;
   padding: var(--space-3) var(--space-4);
   border: 1px solid var(--brand);
   border-radius: var(--radius-md);

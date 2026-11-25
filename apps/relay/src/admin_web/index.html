@@ -579,11 +579,12 @@
     <ul class="recap" id="su-recap"></ul>
     <ul class="conseq" id="su-conseq"></ul>
     <div class="type-confirm" id="su-type" hidden>
-      <label for="su-input">Pour confirmer, saisis <span class="mono" id="su-expect"></span></label>
-      <div class="type-row">
-        <input id="su-input" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="8" aria-describedby="su-match">
-        <button type="button" class="icon-btn" id="su-copy" data-copy="Identifiant" aria-label="Copier l’identifiant à saisir" title="Copier"><svg class="ico"><use href="#i-copy"/></svg></button>
+      <div class="type-prompt">
+        <label for="su-input">Pour confirmer, saisis</label>
+        <code class="code-chip" id="su-expect"></code>
+        <button type="button" class="icon-btn sm" id="su-copy" data-copy="Identifiant" aria-label="Copier l’identifiant à saisir" title="Copier"><svg class="ico sm"><use href="#i-copy"/></svg></button>
       </div>
+      <input id="su-input" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="8" aria-describedby="su-match">
       <span class="caption" id="su-match" aria-live="polite"></span>
     </div>
   </div>
