@@ -228,7 +228,7 @@ tomi-relay admin web keys remove <N> # removes key N and closes its sessions (ne
 tomi-relay admin web policy [--space-deletion any-key|device-key]   # off by default; device-key needs a device-bound key
 tomi-relay admin trash [--json]      # spaces deleted from the panel, kept 7 days
 tomi-relay admin trash restore [--space <id>]   # brings one back (then open Tomi on each device)
-tomi-relay admin trash purge [--space <id>] [--confirm <8 chars>]
+tomi-relay admin trash purge [--space <id>] [--confirm <8 chars>]   # one entry; the panel can empty the whole trash
 ```
 
 Like the other `admin` commands, those that write go through the socket of the running relay (Unix),
@@ -244,7 +244,8 @@ enrols their key; **once a key exists, the enrolment endpoints answer 404 unless
 Keys are added with a new code (`admin web enroll`, 5 keys at most) and removed with
 `admin web keys remove <N>`: never from the web, so that a stolen session cannot add a key of its own. A key
 that is **bound to its device** (hardware key) is recommended: `admin web policy --space-deletion device-key`
-(off by default, refused while no such key is enrolled) then restricts the deletion of a space to those keys.
+(off by default, refused while no such key is enrolled) then restricts the deletion of a space, and the emptying of
+the trash, to those keys.
 The BE flag that tells the two apart is declared by the authenticator, not attested.
 
 ### Actions and what protects them
@@ -252,11 +253,12 @@ The BE flag that tells the two apart is declared by the authenticator, not attes
 | Action | Protection |
 |---|---|
 | Remove devices of a space | step-up (one passkey gesture for the whole selection), 10 per hour, never the last member |
-| Delete a space | step-up + the 8 first characters typed, 2 per 24 h, **7-day trash** (restore and purge: CLI only) |
+| Delete a space | step-up + the 8 first characters typed, 2 per 24 h, **7-day trash** (restore: CLI only) |
+| Empty the trash | step-up tied to the exact entries + the word `vider` typed, 2 per 24 h, device-bound key if the policy asks; deletes for good |
 | Create or replace invitations | step-up, 5 per hour |
 | Quota of a space, default quota | session; confirmation if a space would be blocked |
 | Invalidate invitations, close every session | session (they only remove a right) |
-| Passkeys, policy, path, reset, trash restore and purge | CLI only |
+| Passkeys, policy, path, reset, restoring a space, purging one entry of the trash | CLI only |
 
 The step-up challenge is `SHA-256(nonce || hash of the exact action)`, single use, 2 minutes, tied to the session;
 the server resolves the target again when it writes. Ceilings are per relay and count successful actions only;
@@ -335,12 +337,13 @@ No automatic refresh: it would keep the session open forever. The interface is a
   lock out the legitimate administrator, who connects from another one.
 * **Unknown party before enrolment**: they need the enrolment code (15 min, 5 attempts, 60 bits).
 * **Cookie theft** (malware, shared machine): session of 8 h at most, 30 min of inactivity,
-  `HttpOnly`/`Secure`/`SameSite=Strict`. The thief reads metadata and can change a quota; he cannot remove a device,
-  delete a space or create an invitation, which each need a passkey assertion tied to that action. "Close every session"
+  `HttpOnly`/`Secure`/`SameSite=Strict`. The thief reads metadata and can change a quota; they cannot remove a device,
+  delete a space, empty the trash or create an invitation, which each need a passkey assertion tied to that action. "Close every session"
   (panel) or `admin web reset` / `--rotate-path` (CLI) cuts everything off.
-* **A passkey of a synchronized account taken**: the ceilings (2 space deletions per 24 h, 10 removals and 5
-  invitations per hour, per relay), the 7-day trash, the audit log, and the optional policy that restricts the deletion of a
-  space to a device-bound key. **A script injected in the page** could substitute the action at the next step-up (the
+* **A passkey of a synchronized account taken**: the ceilings (2 space deletions and 2 emptyings of the trash per 24 h,
+  10 removals and 5 invitations per hour, per relay), the audit log, and the optional policy that restricts the deletion
+  of a space and the emptying of the trash to a device-bound key. Since the panel can empty the trash (owner's decision),
+  the 7-day trash no longer survives such a key: it only protects against a stolen session and a mistaken deletion. **A script injected in the page** could substitute the action at the next step-up (the
   authenticator shows only the site name): the strict CSP, no inline code and DOM built with `textContent` make it very
   unlikely, and no WebAuthn-only design removes it.
 * **CSRF**: `SameSite=Strict`, exact `Origin` and a custom header on every `POST`; no CORS.

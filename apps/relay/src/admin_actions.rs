@@ -2,8 +2,8 @@
 //! then do).
 //!
 //! * **Step-up** (`POST api/stepup/options`, `POST api/actions`): what destroys or creates a right
-//!   (remove devices, delete a space, create or replace invitations) needs a passkey assertion
-//!   **tied to that action**. The server resolves the action to full identifiers, hashes it
+//!   (remove devices, delete a space, empty the trash, create or replace invitations) needs a
+//!   passkey assertion **tied to that action**. The server resolves the action to full identifiers, hashes it
 //!   (`SHA-256("tomi-admin-action-v1" 0x00 canonical JSON)`), and issues the challenge
 //!   `SHA-256(nonce || hash)`, single use, 2 minutes, tied to the session. At execution it
 //!   resolves and hashes again from the request, so an assertion made for another action, another
@@ -13,7 +13,8 @@
 //!   invitations, closing every session.
 //! * **Ceilings**, per relay and in memory, on the successful actions only; 5 refused step-ups
 //!   close the session (never the passkey).
-//! * Everything else (passkeys, policy, path, the trash restore and purge) is the CLI only.
+//! * Everything else (passkeys, policy, path, restoring a space of the trash, purging one entry)
+//!   is the CLI only.
 
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
@@ -35,7 +36,7 @@ use crate::db::lock;
 use crate::error::{ApiError, Code};
 use crate::install;
 use crate::revoke::{revoke_device, Via};
-use crate::spaces::{DeleteOutcome, Space};
+use crate::spaces::{DeleteOutcome, Space, TrashRow};
 use crate::state::{AppState, Effects};
 use crate::store::{self, members};
 use crate::webauthn::{self, Expected};
@@ -49,16 +50,23 @@ pub enum Kind {
     SpaceDeletion,
     DeviceRemoval,
     Invitation,
+    TrashEmptying,
 }
 
 impl Kind {
-    pub const ALL: [Kind; 3] = [Kind::SpaceDeletion, Kind::DeviceRemoval, Kind::Invitation];
+    pub const ALL: [Kind; 4] = [
+        Kind::SpaceDeletion,
+        Kind::DeviceRemoval,
+        Kind::Invitation,
+        Kind::TrashEmptying,
+    ];
 
     /// How many in the window: 2 deletions of a space a day, 10 removals of a device an hour, 5
-    /// invitations an hour. Fixed in the code (a setting could only lower the guard).
+    /// invitations an hour, 2 emptyings of the trash a day (one per deletion). Fixed in the code
+    /// (a setting could only lower the guard).
     pub fn max(self) -> u32 {
         match self {
-            Kind::SpaceDeletion => 2,
+            Kind::SpaceDeletion | Kind::TrashEmptying => 2,
             Kind::DeviceRemoval => 10,
             Kind::Invitation => 5,
         }
@@ -66,7 +74,7 @@ impl Kind {
 
     pub fn window_ms(self) -> i64 {
         match self {
-            Kind::SpaceDeletion => 24 * 3_600_000,
+            Kind::SpaceDeletion | Kind::TrashEmptying => 24 * 3_600_000,
             Kind::DeviceRemoval | Kind::Invitation => 3_600_000,
         }
     }
@@ -76,6 +84,7 @@ impl Kind {
             Kind::SpaceDeletion => "space_deletions",
             Kind::DeviceRemoval => "device_removals",
             Kind::Invitation => "invitations",
+            Kind::TrashEmptying => "trash_emptyings",
         }
     }
 
@@ -85,6 +94,7 @@ impl Kind {
             Kind::SpaceDeletion => "tomi-relay admin reset --space <id>",
             Kind::DeviceRemoval => "tomi-relay admin revoke <device> --space <id>",
             Kind::Invitation => "tomi-relay admin invite --new",
+            Kind::TrashEmptying => "tomi-relay admin trash purge --space <id>",
         }
     }
 }
@@ -205,6 +215,21 @@ enum Resolved {
     Revoke { space: Arc<Space>, ids: Vec<String> },
     Delete { space: Arc<Space> },
     Invite { rotate: bool },
+    EmptyTrash { rows: Vec<TrashRow> },
+}
+
+/// The typed confirmation of `empty_trash`: the word the sheet of the page asks for.
+pub const EMPTY_TRASH_WORD: &str = "vider";
+
+/// Does the policy "deleting a space needs a device-bound key" cover this action? Deleting a
+/// space does, and so does emptying the trash, which deletes for good.
+fn under_device_key_policy(r: &Resolved) -> bool {
+    matches!(r, Resolved::Delete { .. } | Resolved::EmptyTrash { .. })
+}
+
+/// The 8-character id of a trash entry.
+fn trash_short(r: &TrashRow) -> String {
+    r.space_id.chars().take(8).collect()
 }
 
 struct Prepared {
@@ -365,6 +390,65 @@ async fn prepare(st: &AppState, action: &Value) -> Result<Prepared, ApiError> {
                 count: 1,
             })
         }
+        "empty_trash" => {
+            let given = action
+                .get("confirm")
+                .and_then(Value::as_str)
+                .map(|c| c.trim().to_ascii_lowercase());
+            if given.as_deref() != Some(EMPTY_TRASH_WORD) {
+                return Err(bad("confirm"));
+            }
+            // The page names what it shows (8-character ids): the trash must hold exactly that.
+            let shown = action
+                .get("space_ids")
+                .and_then(Value::as_array)
+                .ok_or_else(|| bad("space_ids"))?;
+            if shown.is_empty() || shown.len() > 256 {
+                return Err(bad("space_ids"));
+            }
+            let mut wanted: Vec<String> = Vec::new();
+            for v in shown {
+                let Some(w) = v.as_str().map(|s| s.trim().to_ascii_lowercase()) else {
+                    return Err(bad("space_ids"));
+                };
+                if w.len() < 8 || !w.bytes().all(|b| b.is_ascii_hexdigit() || b == b'-') {
+                    return Err(bad("space_ids"));
+                }
+                wanted.push(w.chars().take(8).collect());
+            }
+            wanted.sort();
+            wanted.dedup();
+            let rows = st
+                .spaces
+                .routing()
+                .read(|tx| crate::trash::rows(tx))
+                .await?;
+            let mut present: Vec<String> = rows.iter().map(trash_short).collect();
+            present.sort();
+            present.dedup();
+            if rows.is_empty() || present != wanted {
+                return Err(target_changed());
+            }
+            // The hash binds the exact entries (folder names), not only the ids shown.
+            let mut entries: Vec<&str> = rows.iter().map(|r| r.dir_name.as_str()).collect();
+            entries.sort_unstable();
+            let canonical = json!({ "type": "empty_trash", "entries": entries });
+            let hash = action_hash(&canonical);
+            Ok(Prepared {
+                summary: json!({
+                    "type": "empty_trash",
+                    "spaces": rows
+                        .iter()
+                        .map(|r| crate::trash::row_json(r, false))
+                        .collect::<Vec<_>>(),
+                    "size_bytes": rows.iter().map(|r| r.size_bytes).sum::<u64>(),
+                }),
+                hash,
+                resolved: Resolved::EmptyTrash { rows },
+                kind: Kind::TrashEmptying,
+                count: 1,
+            })
+        }
         _ => Err(bad("type")),
     }
 }
@@ -405,8 +489,7 @@ pub async fn stepup_options(
     web.ceilings
         .check(p.kind, p.count, now)
         .map_err(|retry| ceiling_error(p.kind, retry))?;
-    let bound_only =
-        matches!(p.resolved, Resolved::Delete { .. }) && device_key_required(st).await?;
+    let bound_only = under_device_key_policy(&p.resolved) && device_key_required(st).await?;
     let allowed: Vec<Value> = credentials(st)
         .await?
         .iter()
@@ -502,8 +585,7 @@ pub async fn run_action(st: &AppState, web: &AdminWeb, req: Request) -> Result<R
     let Some(cred) = found else {
         return Err(refused(st, web, &session, "credential").await);
     };
-    let needs_bound =
-        matches!(p.resolved, Resolved::Delete { .. }) && device_key_required(st).await?;
+    let needs_bound = under_device_key_policy(&p.resolved) && device_key_required(st).await?;
     if needs_bound && cred.backup_eligible {
         return Err(refused(st, web, &session, "policy").await);
     }
@@ -696,6 +778,57 @@ async fn execute(
                 &json!({ "ok": true, "type": "create_invitation", "token": token, "link": link, "invitations": list }),
             ))
         }
+        Resolved::EmptyTrash { rows } => {
+            // Checked again just before the removal: an entry added since (a new deletion) was
+            // not shown, so nothing is done; an entry gone since (purged by the maintenance) is
+            // simply skipped.
+            let now_rows = st
+                .spaces
+                .routing()
+                .read(|tx| crate::trash::rows(tx))
+                .await?;
+            if now_rows
+                .iter()
+                .any(|r| !rows.iter().any(|w| w.dir_name == r.dir_name))
+            {
+                return Err(target_changed());
+            }
+            let still: Vec<TrashRow> = rows
+                .into_iter()
+                .filter(|w| now_rows.iter().any(|r| r.dir_name == w.dir_name))
+                .collect();
+            if still.is_empty() {
+                return Err(target_changed());
+            }
+            let done = crate::trash::purge_rows(st, &still, Some(key_num)).await;
+            if done.purged.is_empty() && done.failed > 0 {
+                return Err(ApiError::internal("the trash could not be emptied"));
+            }
+            web.record(JournalKind::TrashEmptied, None, st.now());
+            tracing::warn!(
+                count = done.purged.len(),
+                failed = done.failed,
+                "admin web: the trash was emptied"
+            );
+            let left = st
+                .spaces
+                .routing()
+                .read(|tx| crate::trash::rows(tx))
+                .await?;
+            Ok(json_response(
+                StatusCode::OK,
+                &json!({
+                    "ok": true,
+                    "type": "empty_trash",
+                    "purged": done.purged,
+                    "failed": done.failed,
+                    "trash": left
+                        .iter()
+                        .map(|r| crate::trash::row_json(r, false))
+                        .collect::<Vec<_>>(),
+                }),
+            ))
+        }
     }
 }
 
@@ -869,7 +1002,8 @@ pub async fn keys(st: &AppState, web: &AdminWeb, req: Request) -> Result<Respons
     ))
 }
 
-/// `GET api/trash`: what the trash holds (short ids). Read only: restoring and purging are CLI.
+/// `GET api/trash`: what the trash holds (short ids). Emptying it is the step-up action
+/// `empty_trash`; restoring a space and purging one entry are CLI only.
 pub async fn trash(st: &AppState, web: &AdminWeb, req: Request) -> Result<Response, ApiError> {
     authorize(st, web, req.headers())?;
     let rows = st

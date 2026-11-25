@@ -84,7 +84,8 @@ supprime rien et n'obtient aucun jeton d'invitation.
 | Quota par défaut | Session (inchangé) + même confirmation, avec la liste des espaces qui seraient bloqués | Inchangé, plus la confirmation conditionnelle |
 | Fermer toutes les sessions (nouveau) | Session (action de protection) | ⋮ → « Fermer toutes les sessions » → retour à la connexion |
 | État de la clé d'espace | Aucune action (lecture) | Pastille « Clé à renouveler » + phrase d'explication |
-| Rotation du chemin, ajout / retrait / réinitialisation de passkey, politique de clé, restauration et purge de la corbeille, désactivation du panneau | **CLI seul** | Le panneau montre l'état (passkeys : type et dernière utilisation ; corbeille : contenu) et la commande à copier |
+| Vider la corbeille (ajout, décision du propriétaire) | Step-up lié aux entrées exactes + saisie de « vider » + plafond 2 / 24 h ; clé liée à l'appareil si la politique est active | Réglages > Corbeille, bouton « Vider la corbeille… » |
+| Rotation du chemin, ajout / retrait / réinitialisation de passkey, politique de clé, restauration d'un espace et purge d'une seule entrée de la corbeille, désactivation du panneau | **CLI seul** | Le panneau montre l'état (passkeys : type et dernière utilisation ; corbeille : contenu) et la commande à copier |
 
 Plafonds : comptés **par relais** (pas par session ni par adresse : ouvrir une autre session n'en donne pas
 d'autres), en mémoire, sur les seules actions **réussies**, en plus du seau `SENSITIVE` existant ; valeurs fixes
@@ -186,6 +187,9 @@ Le propriétaire a délégué les arbitrages. Les choix d'interface (I1 à I13) 
 - **A1. Corbeille de 7 jours** pour la suppression web, restauration et purge sur le serveur seulement. Seule
   protection qui couvre à la fois l'erreur de cible et la passkey compromise sans retarder l'action ; le coût
   (du disque pendant 7 jours) se libère par `admin trash purge`. `admin reset` en CLI garde l'effacement immédiat.
+  **Révisé (décision du propriétaire)** : le panneau peut désormais **vider** la corbeille (step-up, saisie de
+  « vider », plafond 2 / 24 h, politique de clé liée à l'appareil). La corbeille ne protège donc plus d'une passkey
+  compromise, seulement d'une session volée et d'une erreur de cible ; la restauration reste sur le serveur.
 - **A2. Politique « suppression d'espace = clé liée à l'appareil »** : proposée, **désactivée par défaut**,
   activable par CLI seulement et refusée tant qu'aucune clé liée à l'appareil n'est enrôlée. Automatique, elle
   t'empêcherait de supprimer en déplacement ; et le drapeau BE n'est qu'une déclaration de l'authentificateur

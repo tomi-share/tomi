@@ -4,8 +4,11 @@
 //! exactly as with `admin reset` or `DELETE /v1/space`; only its folder (database and encrypted
 //! blobs, which the relay can read no better than before) is kept, renamed into
 //! `<data_dir>/spaces.trash/<space_id>-<unix seconds>/` (see `Spaces::delete_keep`) and recorded in
-//! `space_trash`. It is **not** a delay: restoring and purging are `tomi-relay admin trash ...`,
-//! on the machine, never from the web. The maintenance purges what is past its 7 days.
+//! `space_trash`. It is **not** a delay: restoring is `tomi-relay admin trash restore`, on the
+//! machine, never from the web. Purging one space is `tomi-relay admin trash purge`; the panel can
+//! only empty the whole trash, behind a passkey step-up tied to the exact set of entries
+//! (`admin_actions.rs`, owner's decision: a stolen passkey can then empty it too, within its
+//! ceiling). The maintenance purges what is past its 7 days.
 
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
@@ -153,6 +156,41 @@ async fn forget_row(st: &AppState, dir_name: String) -> Result<(), ApiError> {
             Ok(())
         })
         .await
+}
+
+/// What [`purge_rows`] did.
+#[derive(Debug, Default)]
+pub struct Purged {
+    /// The 8-character ids of the spaces purged for good.
+    pub purged: Vec<String>,
+    /// The entries whose folder could not be removed (they stay listed).
+    pub failed: u32,
+}
+
+/// Empties these entries of the trash (the web panel's "Vider la corbeille"): removes each folder
+/// off the async workers, drops its row and writes `trash_purged` in the audit log with the key
+/// that signed the step-up. An entry whose folder is already gone and whose space is live (a
+/// restore that left its row) is only dropped, as with `purge`. Nothing is read from the folders.
+pub async fn purge_rows(st: &AppState, rows: &[TrashRow], key: Option<i64>) -> Purged {
+    let mut out = Purged::default();
+    for row in rows {
+        let short: String = row.space_id.chars().take(8).collect();
+        let Ok(removed) = remove_folder(st, &row.dir_name).await else {
+            out.failed += 1;
+            continue;
+        };
+        if forget_row(st, row.dir_name.clone()).await.is_err() {
+            out.failed += 1;
+            continue;
+        }
+        if !removed && is_live(st, row) {
+            continue;
+        }
+        admin_audit::record(st, kind::TRASH_PURGED, Some(short.clone()), key).await;
+        tracing::warn!(space = short, "a space of the trash was purged (web panel)");
+        out.purged.push(short);
+    }
+    out
 }
 
 /// `tomi-relay admin trash [--json]`, `... restore [--space <id>]`,

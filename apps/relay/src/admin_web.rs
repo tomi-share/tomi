@@ -622,6 +622,8 @@ pub enum JournalKind {
     DevicesRemoved,
     /// A space was deleted (into the trash).
     SpaceDeleted,
+    /// The trash was emptied (its spaces deleted for good).
+    TrashEmptied,
 }
 
 impl JournalKind {
@@ -649,6 +651,7 @@ impl JournalKind {
             Self::SessionsClosed => "sessions_closed",
             Self::DevicesRemoved => "devices_removed",
             Self::SpaceDeleted => "space_deleted",
+            Self::TrashEmptied => "trash_emptied",
         }
     }
 }

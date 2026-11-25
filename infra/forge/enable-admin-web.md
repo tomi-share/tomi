@@ -2,7 +2,7 @@
 
 Step by step, over SSH on the server (see `infra/forge/README.md`). The panel is
 **disabled by default**; it shows the state of the relay and offers a few actions (remove devices, delete a
-space into a 7-day trash, invitations, quotas). It is protected by access keys (passkeys, WebAuthn, up to 5), and
+space into a 7-day trash, empty that trash, invitations, quotas). It is protected by access keys (passkeys, WebAuthn, up to 5), and
 what destroys or creates a right asks for a key **at each action**. The relay stays blind: the panel never shows content,
 keys or secrets. Full description of the panel: `apps/relay/README.md`, section
 "Web administration panel".
@@ -107,10 +107,11 @@ CFG=/home/deploy/tomi-data/config.toml
   `admin web`); the access key stays valid.
 - Several keys: run `admin web enroll` again for each one (5 at most), ideally one **bound to its device** (hardware
   key). `admin web keys` lists them, `admin web keys remove <N>` removes one and closes its sessions (never the last).
-  `admin web policy --space-deletion device-key` then restricts the deletion of a space to the device-bound keys (off
-  by default; refused while none is enrolled).
+  `admin web policy --space-deletion device-key` then restricts the deletion of a space and the emptying of the trash
+  to the device-bound keys (off by default; refused while none is enrolled).
 - The trash: a space deleted from the panel waits 7 days. `admin trash` lists it, `admin trash restore --space <id>`
   brings it back (then open Tomi on each device of the space), `admin trash purge --space <id>` deletes it for good.
+  The panel can empty the whole trash (passkey at each emptying, 2 per 24 h); it cannot restore.
 - `reset`: use it to change device or after losing every key. It deletes the registered keys and the
   sessions, and **reopens enrolment**: create a new code (`admin web enroll`) and register a new key.
   It requires `--confirm` with the first 8 characters of the panel's path.

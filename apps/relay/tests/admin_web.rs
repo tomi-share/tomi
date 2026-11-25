@@ -2926,6 +2926,161 @@ fn the_ceiling_of_the_deletion_of_a_space_is_two_a_day_and_a_failure_gives_its_p
     assert!(wait > 3000 && wait <= 3600, "{wait}");
 }
 
+fn empty_trash(ids: &[&str], confirm: &str) -> Value {
+    json!({ "type": "empty_trash", "space_ids": ids, "confirm": confirm })
+}
+
+/// The folders in `spaces.trash/`.
+fn trash_folders(env: &Env) -> usize {
+    std::fs::read_dir(env.data_dir().join("spaces.trash"))
+        .map(|rd| rd.flatten().count())
+        .unwrap_or(0)
+}
+
+#[tokio::test]
+async fn emptying_the_trash_needs_the_passkey_the_word_and_the_exact_entries() {
+    let env = panel().await;
+    let seg = segment(&env);
+    let (_devs, _) = env.space_of(2).await;
+    let mut auth = Authenticator::for_test_relay();
+    let cookie = signed_in(&env, &mut auth).await;
+    let space = env.space_id[..8].to_owned();
+    act(
+        &env,
+        &seg,
+        json!({ "type": "delete_space", "space_id": space, "confirm": space }),
+        &cookie,
+        &mut auth,
+    )
+    .await
+    .ok(200);
+    assert_eq!(trash_folders(&env), 1);
+
+    // A session alone: no assertion, or a forged one, does nothing.
+    let good = empty_trash(&[&space], "vider");
+    env.clock.advance_secs(20);
+    post(
+        &env,
+        &seg,
+        "api/actions",
+        json!({ "action": good }),
+        Some(&cookie),
+    )
+    .await
+    .err(400, "bad_request");
+    let forged = auth.get(&[1u8; 32], &Tweak::default());
+    env.clock.advance_secs(20);
+    post(
+        &env,
+        &seg,
+        "api/actions",
+        json!({ "action": good, "assertion": forged.json() }),
+        Some(&cookie),
+    )
+    .await
+    .err(401, "unauthorized");
+    // The typed word and the list are checked before any challenge.
+    for bad in [
+        empty_trash(&[&space], "oui"),
+        empty_trash(&[], "vider"),
+        empty_trash(&["xyz"], "vider"),
+        json!({ "type": "empty_trash", "confirm": "vider" }),
+    ] {
+        act(&env, &seg, bad, &cookie, &mut auth)
+            .await
+            .err(400, "bad_request");
+    }
+    // A list that is not what the trash holds: the target changed.
+    act(
+        &env,
+        &seg,
+        empty_trash(&["00000000"], "vider"),
+        &cookie,
+        &mut auth,
+    )
+    .await
+    .err(409, "device_set_mismatch");
+    // A challenge made for the emptying, presented for another action, is refused.
+    let a = prepared(&env, &seg, &good, &cookie, &mut auth).await;
+    env.clock.advance_secs(20);
+    post(
+        &env,
+        &seg,
+        "api/actions",
+        json!({ "action": { "type": "create_invitation", "mode": "new" }, "assertion": a }),
+        Some(&cookie),
+    )
+    .await
+    .err(401, "unauthorized");
+    assert_eq!(trash_folders(&env), 1);
+    assert_eq!(audit_count(&env, "trash_purged"), 0);
+
+    // With the passkey: the folder goes for good, the audit names the key.
+    let done = act(
+        &env,
+        &seg,
+        empty_trash(&[&space.to_uppercase()], " VIDER "),
+        &cookie,
+        &mut auth,
+    )
+    .await
+    .ok(200);
+    assert_eq!(done["purged"], json!([space]));
+    assert_eq!(done["failed"], 0);
+    assert_eq!(done["trash"], json!([]));
+    assert_eq!(trash_folders(&env), 0);
+    let trash = get(&env, &seg, "api/trash", Some(&cookie)).await.ok(200);
+    assert_eq!(trash["trash"], json!([]));
+    assert_eq!(audit_count(&env, "trash_purged"), 1);
+    let journal = get(&env, &seg, "api/journal", Some(&cookie)).await.ok(200);
+    assert!(journal["audit"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|l| l["kind"] == "trash_purged" && l["target"] == space && l["key"] == 1));
+    assert!(journal["entries"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|l| l["kind"] == "trash_emptied"));
+    let about = get(&env, &seg, "api/about", Some(&cookie)).await.ok(200);
+    assert_eq!(about["ceilings"]["trash_emptyings"]["used"], 1);
+    assert_eq!(about["ceilings"]["trash_emptyings"]["max"], 2);
+    // Nothing is left to empty.
+    act(&env, &seg, good, &cookie, &mut auth)
+        .await
+        .err(409, "device_set_mismatch");
+    // And the space is gone for good: the CLI has nothing to restore.
+    let out = admin::run(
+        &env.state,
+        Cmd::Trash {
+            action: tomi_relay::trash::TrashAction::Restore,
+            space: Some(space.clone()),
+            confirm: None,
+            json: false,
+        },
+    )
+    .await;
+    assert_ne!(out.exit, 0);
+}
+
+#[test]
+fn the_ceiling_of_the_emptying_of_the_trash_is_two_a_day() {
+    use tomi_relay::admin_actions::{Ceilings, Kind};
+    let c = Ceilings::default();
+    let t = 1_000_000;
+    c.reserve(Kind::TrashEmptying, 1, t).unwrap();
+    c.reserve(Kind::TrashEmptying, 1, t + 10).unwrap();
+    let wait = c.reserve(Kind::TrashEmptying, 1, t + 20).unwrap_err();
+    assert!(wait > 86_000 && wait <= 86_400, "{wait}");
+    // Its own count: the deletions of a space are not touched.
+    assert!(c.check(Kind::SpaceDeletion, 2, t + 30).is_ok());
+    assert_eq!(
+        Kind::TrashEmptying.cli(),
+        "tomi-relay admin trash purge --space <id>"
+    );
+}
+
 #[tokio::test]
 async fn deleting_a_space_asks_its_eight_characters_and_goes_to_the_trash() {
     let env = panel().await;
@@ -2966,7 +3121,7 @@ async fn deleting_a_space_asks_its_eight_characters_and_goes_to_the_trash() {
     assert!(env.state.spaces.is_empty());
     let trash = get(&env, &seg, "api/trash", Some(&cookie)).await.ok(200);
     assert_eq!(trash["trash"][0]["space_id"], space);
-    // The trash is shown, never restored or purged from the web.
+    // The trash is shown; no route restores or purges one entry from the web.
     for path in ["api/trash/restore", "api/trash/purge"] {
         post(&env, &seg, path, json!({}), Some(&cookie))
             .await
@@ -3301,6 +3456,33 @@ async fn the_device_key_policy_is_refused_without_such_a_key_and_then_binds_the_
     // The bound key does it (other actions stay open to any key).
     act(&env, &seg, del, &cookie, &mut bound).await.ok(200);
     assert!(env.state.spaces.is_empty());
+    // Emptying the trash deletes for good: the same policy binds it.
+    let empty = json!({ "type": "empty_trash", "space_ids": [space], "confirm": "vider" });
+    env.clock.advance_secs(20);
+    let opts = post(
+        &env,
+        &seg,
+        "api/stepup/options",
+        json!({ "action": empty }),
+        Some(&cookie),
+    )
+    .await
+    .ok(200);
+    let allowed = opts["publicKey"]["allowCredentials"].as_array().unwrap();
+    assert_eq!(allowed.len(), 1);
+    assert_eq!(allowed[0]["id"], b64_encode(&bound.credential_id));
+    let a = synced.get(&challenge_of(&opts), &Tweak::default());
+    env.clock.advance_secs(20);
+    post(
+        &env,
+        &seg,
+        "api/actions",
+        json!({ "action": empty, "assertion": a.json() }),
+        Some(&cookie),
+    )
+    .await
+    .err(401, "unauthorized");
+    act(&env, &seg, empty, &cookie, &mut bound).await.ok(200);
 }
 
 #[tokio::test]

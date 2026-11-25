@@ -123,8 +123,8 @@ event, nor its type, nor the meaning pin/unpin or archive/unarchive). **It holds
 | **Another person on the same relay** (they have their own space) | The same public responses as the unknown person (`hello` only says that at least one space exists); everything a member of **their** space sees | Try an identifier (session token, `device_id`, channel number) to reach another's space; randomly claim an open pairing channel (the other pairing fails, CPace prevents any takeover); exhaust the shared limits (`rl_global_claim`, same IP address, §8.5); fill the relay's total (§8.4) | The space of a request is that of its identifier, and only that space's database is consulted (§1.4): reading, writing, revoking, purging or counting in another's space is impossible. An identifier that designates no space receives the unknown-identifier response: one cannot know whether it exists elsewhere. A signing key or `device_id` already known in another space is refused at registration (`device_exists`): this reveals the existence of the key only to whoever already knows it. A quota per space (set by the operator) bounds each; cryptography remains the barrier for content (each space has its key, which the relay has never had). |
 | **The relay operator** (who hosts other people) | The metadata of **all** spaces (§1.2): devices, times, sizes, presence | Revoke a device, erase a space (`tomi-relay admin`, §8.7), shut down the service | They read nothing and cannot forge a device accepted by the others (like the compromised relay, first line). It is no longer "their own relay" for other people: they SHOULD know what it sees. |
 | **Thief of a revoked device** | The device's local content (out of scope for this document) | Connect to the relay | Revocation: key deleted from the relay, sessions and WebSockets cut immediately (§3.4). |
-| **Stolen web-panel session** (cookie of the optional panel, §8.7.1) | The metadata the panel reads | Change a quota (reversible), invalidate invitations, close the sessions | No step-up without the passkey: removing a device, deleting a space and creating an invitation need a passkey assertion tied to the exact action; ceilings; 7-day trash; audit log |
-| **Compromised passkey of the web panel** (synchronized account taken) | Everything the panel offers, within the ceilings | Remove devices (recoverable by re-pairing), delete spaces (restorable 7 days by the CLI) | Optional policy "deleting a space needs a device-bound key"; ceilings; trash; audit; `admin web reset` cuts everything |
+| **Stolen web-panel session** (cookie of the optional panel, §8.7.1) | The metadata the panel reads | Change a quota (reversible), invalidate invitations, close the sessions | No step-up without the passkey: removing a device, deleting a space, emptying the trash and creating an invitation need a passkey assertion tied to the exact action; ceilings; 7-day trash; audit log |
+| **Compromised passkey of the web panel** (synchronized account taken) | Everything the panel offers, within the ceilings | Remove devices (recoverable by re-pairing), delete spaces and empty the trash (so a deletion is no longer restorable: owner's decision, §8.7.1) | Optional policy "deleting a space or emptying the trash needs a device-bound key"; ceilings (2 deletions and 2 emptyings / 24 h); audit; `admin web reset` cuts everything |
 | **Thief of a device not yet revoked, unlocked** | Everything the device sees | Act as the device, including revoking others | Out of the API's scope (strong biometrics on the client side, D39); recourse: `tomi-relay admin revoke` over SSH. |
 
 Out of scope: an actively compromised member device; fine-grained traffic analysis.
@@ -2972,18 +2972,19 @@ one to "no cookie" (§2.4); it is bounded as follows. Its design is in `design/m
   `X-Tomi-Admin: 1`, otherwise `403`; with `SameSite=Strict`, this is the protection against cross-site requests.
 
 **What the panel does, and what protects it.** A stolen session reads metadata and, at worst, changes a quota; it
-cannot remove, delete or invite.
+cannot remove, delete, empty the trash or invite.
 
 | Action | Route | Protection |
 |---|---|---|
 | Remove devices from a space | `POST api/actions` `revoke_devices` | step-up; 10 removals / hour; the last member is refused |
 | Delete a space | `POST api/actions` `delete_space` | step-up + the 8 first characters typed; 2 deletions / 24 h; 7-day trash; optional device-bound key |
+| Empty the trash | `POST api/actions` `empty_trash` `{space_ids, confirm: "vider"}` | step-up tied to the exact entries + the word typed; 2 emptyings / 24 h; optional device-bound key; deletes for good |
 | Create or replace the invitations | `POST api/actions` `create_invitation` (`new` \| `rotate`) | step-up; 5 invitations / hour |
 | Quota of one space | `POST api/spaces/quota` `{space_id, value, confirm?}` | session; `409` `confirmation_required` (with `blocked`) if the space would be blocked |
 | Default quota | `POST api/quota` `{default_bytes, confirm?}` | session; same confirmation, listing the blocked spaces |
 | Invalidate the pending invitations | `POST api/invitations/cancel` | session |
 | Close every session | `POST api/sessions/close-all` | session |
-| Passkeys, policy, path, reset, trash restore and purge | CLI only (below) | local |
+| Passkeys, policy, path, reset, restoring a space, purging one entry of the trash | CLI only (below) | local |
 
 `POST api/invitations` of earlier versions no longer exists (`404`). The relay does not renew a space key: a
 removal sets `rotation_required` and a remaining member renews it (§7.6); nothing in the panel can "validate" it.
@@ -2993,7 +2994,7 @@ identifiers (a space or device prefix of at least 8 characters designates exactl
 target and the ceiling (`429` before any challenge), computes
 `h = SHA-256("tomi-admin-action-v1" || 0x00 || canonical JSON of the action)`, draws a 32-byte nonce and answers
 `publicKey` with `challenge = SHA-256(nonce || h)`, `userVerification: "required"`, `timeout: 120000` and
-`allowCredentials` (only the device-bound keys for `delete_space` if the policy asks), plus a `summary` built from the
+`allowCredentials` (only the device-bound keys for `delete_space` and `empty_trash` if the policy asks), plus a `summary` built from the
 relay's own data (what the page shows while the key is awaited: the authenticator shows only the site name). The
 challenge is kept in memory with `h`, the session and an epoch; it lives **2 minutes** and works **once**.
 `POST api/actions` `{"action", "assertion": {id, clientDataJSON, authenticatorData, signature}}`: the challenge is
@@ -3006,14 +3007,14 @@ the target is checked **again in the write transaction**. Answers: `200` with th
 be able to lock the administrator out.
 
 **Ceilings**, per relay (not per session or address), in memory, on **successful** actions only (a failed action gives
-its place back), fixed in the code and shown in `api/about` (`ceilings`): 2 space deletions per 24 h, 10 device
-removals per hour, 5 invitations per hour.
+its place back), fixed in the code and shown in `api/about` (`ceilings`): 2 space deletions per 24 h, 2 emptyings of
+the trash per 24 h (`trash_emptyings`), 10 device removals per hour, 5 invitations per hour.
 
 **Trash.** A space deleted from the panel is gone at once for every device (`4004`, §4.4.1: same function as
 `admin reset`, no invitation created), but its folder is **renamed** into `<data_dir>/spaces.trash/<space_id>-<unix
 seconds>/` (never copied) and recorded in `space_trash` (deletion, purge date at +7 days, size, its own quota). The
-maintenance purges it after 7 days; it counts in the free disk space, not in `max_relay_bytes`. Restoring and purging
-are CLI only. A restore rebuilds the routing (devices, signing keys, sessions and channels are read from the space
+maintenance purges it after 7 days; it counts in the free disk space, not in `max_relay_bytes`. Restoring a space and
+purging one entry are CLI only. A restore rebuilds the routing (devices, signing keys, sessions and channels are read from the space
 database) and gives the quota back; it is refused if the id is used again or if a device or key of the space belongs
 to another space meanwhile. After a restore a device resumes at its next network action (the doorbell stopped at
 `4004`: "open Tomi on each device").
@@ -3023,6 +3024,21 @@ registered again (the deletion fails, the answer is `500`); if that is impossibl
 name). Purging an entry whose space is live (a restore that left its row) only drops the entry; folders are removed
 off the async workers.
 
+**Emptying the trash from the panel** (`empty_trash`, owner's decision). The page sends the 8-character ids it shows
+(`space_ids`) and the typed word `confirm: "vider"` (case and surrounding spaces ignored); a missing or wrong word or
+list is `400` before any challenge. The ids must be exactly the spaces the trash holds, otherwise `409`
+`target_changed`. The action is hashed as `{"type": "empty_trash", "entries": [folder names, sorted]}`, so the
+assertion is tied to the exact entries, not only to the ids shown. At execution the trash is read again: an entry
+added since is `409` and nothing is removed; an entry gone since (the maintenance) is skipped. Each folder is removed
+and its row dropped as by `admin trash purge` (nothing is read from it: the relay stays blind), with one
+`trash_purged` audit line per space naming the key that signed. Answer: `200` `{purged: [8-character ids], failed,
+trash}`; `500` if not one folder could be removed (the ceiling place is given back). The device-bound key policy
+applies as to `delete_space`. **This deliberately weakens the trash**: until this action, the trash survived a
+stolen passkey (only the CLI could purge); now a passkey can delete a space and empty the trash, so a deletion made
+with a stolen passkey may not be restorable. What remains: the step-up at each emptying, the ceiling (2 per 24 h),
+the typed word, the optional device-bound policy, the audit log, and the 7-day automatic purge, unchanged.
+Restoring stays CLI only.
+
 **Audit log.** `admin_web_audit` (`routing.db`): date, a fixed word, the 8-character id of the target (space or
 device) and the number of the key; 90 days at most, and 500 lines for the ordinary kinds. The lines of what
 destroys data or changes who can get in (devices removed, spaces deleted, invitations, keys, policy, path, trash) are
@@ -3031,7 +3047,7 @@ session-only routes (`api/spaces/quota`, `api/quota`, `api/invitations/cancel`, 
 rate limit of the other sensitive routes. The number of the key is the one that signed the step-up (for a
 session-only action: the key that opened the session). Never a device name, an address, a token, a code or a
 value of a request. It records sign-ins, refused step-ups, the actions above, the keys added or removed, the path
-changed and the trash restored, purged or expired. `GET api/journal` returns it (`audit`) with the in-memory journal
+changed and the trash restored, purged (from the CLI or by an emptying of the panel) or expired. `GET api/journal` returns it (`audit`) with the in-memory journal
 of the process (`entries`).
 
 **Reads** (metadata only: the relay stays blind; never an item, a file name, a key or a secret): `api/status`,
@@ -3058,7 +3074,8 @@ sessions stop working), `admin web enroll` (a code to add a key; refused at 5 ke
 last device-bound key while the policy requires one), `admin web policy [--space-deletion any-key|device-key]`
 (`device-key` is refused, code 2, if no device-bound key is enrolled; **off by default**), `admin web reset`,
 `admin invite --cancel`, `admin trash [--json]`, `admin trash restore [--space <id>]`,
-`admin trash purge [--space <id>] [--confirm <8 characters>]` (no "empty everything": one space at a time).
+`admin trash purge [--space <id>] [--confirm <8 characters>]` (one space at a time; emptying the whole trash is the
+panel's `empty_trash`).
 
 An operator who does not want it leaves `admin_web = false`: the relay then behaves exactly as if this section did
 not exist (annex B.3, point 6).
@@ -3582,10 +3599,10 @@ clock). "Member" = a device with a valid session, unless stated otherwise.
 - **A127** No network route allows `revoke` without a member session, nor `reset` of a space that has other members, nor `quota`, nor reading or creating an invitation (verified by walking the routing table). The only space deletion possible over the network is `DELETE /v1/space`, reserved for the only active member of the space (A177–A183).
 
 - **A128** Web panel: a challenge made for one action and presented for another, replayed, issued to another session or older than 2 minutes is refused and does nothing; five refused step-ups close the session and not the key.
-- **A129** Web panel: a stolen session (cookie, no passkey) cannot remove a device, delete a space or create an invitation; `POST api/invitations` answers `404`.
-- **A130** Web panel: the ceilings (2 deletions / 24 h, 10 removals / hour, 5 invitations / hour) count successful actions only and answer `429` with the CLI command before any challenge; the last member is never removed; a changed target is `409`.
+- **A129** Web panel: a stolen session (cookie, no passkey) cannot remove a device, delete a space, empty the trash or create an invitation; `POST api/invitations` answers `404`.
+- **A130** Web panel: the ceilings (2 deletions / 24 h, 2 emptyings of the trash / 24 h, 10 removals / hour, 5 invitations / hour) count successful actions only and answer `429` with the CLI command before any challenge; the last member is never removed; a changed target is `409`.
 - **A131** Web panel: the last passkey cannot be removed; removing a key closes the sessions it opened; numbers are never reused; the device-bound policy is refused without such a key and then restricts the deletion of a space to those keys.
-- **A132** A space deleted from the panel is gone at once for its devices and waits in `spaces.trash/`; `admin trash restore` rebuilds its routing and quota and is refused when the id is used again; `purge` needs the 8 characters; the maintenance purges after 7 days.
+- **A132** A space deleted from the panel is gone at once for its devices and waits in `spaces.trash/`; `admin trash restore` rebuilds its routing and quota and is refused when the id is used again; `purge` needs the 8 characters; the maintenance purges after 7 days. The panel's `empty_trash` needs the step-up, the word `vider` and exactly the ids the trash holds (`409` otherwise), removes every folder, writes one `trash_purged` line per space with the key, and follows the device-bound policy.
 
 ### 11.13 Rate limits
 
