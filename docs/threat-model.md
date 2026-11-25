@@ -97,7 +97,7 @@ limited to 64 characters, and keeps at most 32 pending notices. A device that is
   (up to 31 days by default). The device that **posts** a rotation does not take the position the relay answers as the
   rotation's: until the `rotation` event comes back in the log, an old-epoch item above the sync cursor of the moment of
   the post waits as "key pending", then is judged on the real position of the event. A relay that withholds that event
-  keeps those items waiting, never readable.
+  keeps those items waiting, never readable, and the old key is kept as long as they wait.
 
 ### Who is the relay?
 

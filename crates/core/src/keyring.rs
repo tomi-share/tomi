@@ -300,6 +300,22 @@ impl SpaceKeyRing {
         changed
     }
 
+    /// Ends the wait of every rotation of [`add_own_rotation_key`](Self::add_own_rotation_key)
+    /// without having met its event, for a full resync: the cursor jumps to `head_seq`, so the
+    /// event will never be read, and nothing the log serves from now on can sit above the head.
+    /// The recorded position is capped to it, as for a rotation learned from the relay's list.
+    /// Returns whether anything changed.
+    pub fn settle_unconfirmed(&mut self, head_seq: u64) -> bool {
+        let mut changed = false;
+        for s in self.superseded.values_mut() {
+            if s.unconfirmed_after.take().is_some() {
+                s.rotation_seq = s.rotation_seq.min(head_seq);
+                changed = true;
+            }
+        }
+        changed
+    }
+
     /// Makes every superseded epoch final: from now on **any** item sealed under one of them
     /// that is first seen is [`UnreadableReason::SuspectEpoch`], whatever its `seq`. Used when
     /// the relay's `seq` numbering can no longer be trusted to order events against the
@@ -620,6 +636,23 @@ mod tests {
         assert!(ring.open_received(&env1, &it.id, 60).is_readable());
         assert_eq!(
             ring.open_received(&env1, &it.id, 71),
+            ReceivedItem::Unreadable(UnreadableReason::SuspectEpoch)
+        );
+    }
+
+    #[test]
+    fn a_full_resync_settles_an_own_rotation_on_the_head() {
+        let k1 = SpaceKey::generate(1).unwrap();
+        let k2 = SpaceKey::generate(2).unwrap();
+        let it = item();
+        let env1 = seal_item(&it, &k1).unwrap();
+        let mut ring = SpaceKeyRing::new(k1);
+        ring.add_own_rotation_key(k2, 1_000_000, 50, DAY).unwrap();
+        assert!(ring.settle_unconfirmed(120));
+        assert!(!ring.settle_unconfirmed(120), "idempotent");
+        assert!(ring.open_received(&env1, &it.id, 120).is_readable());
+        assert_eq!(
+            ring.open_received(&env1, &it.id, 121),
             ReceivedItem::Unreadable(UnreadableReason::SuspectEpoch)
         );
     }

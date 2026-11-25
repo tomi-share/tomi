@@ -2133,6 +2133,11 @@ impl Engine {
                     Err(e) => self.diag(db, "rotation_refused", e.code())?,
                 }
             }
+            // The cursor jumps to the head below: a rotation we posted whose event was not read
+            // yet will not be, so its wait ends here (`Supersession::unconfirmed_after`).
+            if c.ring.settle_unconfirmed(space.head_seq) {
+                self.retry_key_pending(c, db, a)?;
+            }
             let known: Vec<String> = devices.iter().map(|d| d.device_id.clone()).collect();
             for d in &devices {
                 let state = match DeviceCert::from_bytes(&d.certificate) {
