@@ -78,9 +78,11 @@ device is visible to whoever runs the relay.
   consumed, so an item you deleted or that was set to disappear after reading is not brought back by a relay that kept the
   envelope. Limits: the check measures age from the moment the device first receives the item, and the relay still chooses
   the order in which it presents events. The age is measured with the **device's own clock**, on purpose: the relay's clock is
-  the relay's word, and a relay that could shift it would switch this check off. The price is that a legitimate item is also
-  refused (and stays so) when the clocks of the sender and of the receiver disagree by about 60 days, or when it waited
-  more than 60 days in the sender's outbox: a visible failure, never a leak.
+  the relay's word, and a relay that could shift it would switch this check off. The same goes for the `max_ttl` the relay
+  announces, which sets both windows: a device never uses more than **one year** of it, so a relay cannot stretch the
+  windows past that by announcing ten. The price of the device's own clock is that a legitimate item is also refused (and
+  stays so) when the clock skew between sender and receiver, plus the time it waited in the sender's outbox, exceeds 60 days
+  (between 60 and 90 days depending on how long the relay held it): a visible failure, never a leak.
 - **Invent an unsigned revocation** ("by the administrator", "voluntary departure"), by emitting an explicit `device_revoked`
   event. Honest devices follow it with a signed rotation, which makes the removal permanent, so a malicious relay can make
   them drop a legitimate device, which then has to be paired again. This costs you availability, not confidentiality. The
@@ -97,10 +99,10 @@ limited to 64 characters, and keeps at most 32 pending notices. A device that is
   reports a log older than the cursor (a restore from backup) it moves the cursor to that head and treats every item of a
   replaced epoch it sees for the first time as suspect. A window remains (`format-v1.md` §12): an item injected **before**
   the client applies the rotation, with a position lower than the rotation's, is accepted, for as long as old keys are kept
-  (up to 31 days by default). The device that **posts** a rotation does not take the position the relay answers as the
-  rotation's: until the `rotation` event comes back in the log, an old-epoch item above the sync cursor of the moment of
-  the post waits as "key pending", then is judged on the real position of the event. A relay that withholds that event
-  keeps those items waiting, never readable, and the old key is kept as long as they wait.
+  (up to 31 days by default). The device that posts the rotation does not take the position the relay answers either, nor the
+  position at which the relay later serves the event: it places the rotation at the log position it had reached just
+  before posting, so an old-epoch item above it is suspect. The price is that an honest item that another device sealed
+  under the old key during the round trip of that very post is hidden on the device that rotated.
 
 ### Who is the relay?
 

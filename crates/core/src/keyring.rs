@@ -52,9 +52,19 @@ pub const ITEM_AGE_MARGIN_MS: i64 = 60 * 86_400_000;
 /// ([`UnreadableReason::SuspectEpoch`], the one "suspect" state). Tombstones are kept for the same length of time
 /// ([`tombstone_retention_ms`]), so that one of the two always covers an item.
 pub fn item_max_age_ms(max_ttl_secs: u64) -> i64 {
-    i64::try_from(max_ttl_secs.saturating_mul(1000))
+    i64::try_from(trusted_ttl_secs(max_ttl_secs).saturating_mul(1000))
         .unwrap_or(i64::MAX)
         .saturating_add(ITEM_AGE_MARGIN_MS)
+}
+
+/// Highest `max_ttl_secs` that the retention rules below accept from a relay (one year). The
+/// value is the relay's own announcement: without a bound, a relay could announce ten years,
+/// then replay an item whose tombstone was pruned, and no age check would stop it. A relay
+/// configured for a longer retention than this is still served, but the windows stay at this size.
+pub const MAX_TRUSTED_TTL_SECS: u64 = 365 * 86_400;
+
+fn trusted_ttl_secs(max_ttl_secs: u64) -> u64 {
+    max_ttl_secs.min(MAX_TRUSTED_TTL_SECS)
 }
 
 /// How long a local item tombstone is kept: [`item_max_age_ms`].
@@ -66,7 +76,7 @@ pub fn tombstone_retention_ms(max_ttl_secs: u64) -> i64 {
 /// `max_ttl + 1 day` (31 days by default). Past that, no honest relay still holds an
 /// item of that epoch.
 pub fn space_key_retention_ms(max_ttl_secs: u64) -> u64 {
-    max_ttl_secs
+    trusted_ttl_secs(max_ttl_secs)
         .saturating_mul(1000)
         .saturating_add(SPACE_KEY_GRACE_MS)
 }
@@ -130,13 +140,6 @@ pub struct Supersession {
     pub rotation_seq: u64,
     /// Local time the rotation was applied (ms since the Unix epoch).
     pub applied_at_ms: u64,
-    /// Set only for a rotation this device posted itself, until the `rotation` event is met in
-    /// the log: the `seq` the relay answered is then no proof of the position of the event (an
-    /// inflated one would keep accepting, as readable, items forged under the old epoch). The
-    /// value is the sync cursor at the time of the post: an honest relay numbers the event
-    /// above it, so an old-epoch item above it waits (`KeyPending`) until the event is seen
-    /// and gives its exact position. `None` for every rotation learned from the log.
-    pub unconfirmed_after: Option<u64>,
 }
 
 /// Persisted form of one epoch of the ring. Store `key` in the OS secure storage.
@@ -255,65 +258,25 @@ impl SpaceKeyRing {
             Supersession {
                 rotation_seq,
                 applied_at_ms,
-                unconfirmed_after: None,
             },
         );
         self.keys.insert(new_key.epoch(), new_key);
         Ok(())
     }
 
-    /// Like [`add_rotation_key`](Self::add_rotation_key) for a rotation this device just
-    /// posted: `posted_seq` is the `seq` the relay answered and `cursor_at_post` the sync
-    /// cursor before the post. Until the event is met
-    /// ([`tighten_supersession`](Self::tighten_supersession)), an old-epoch item above
-    /// `cursor_at_post` is `KeyPending`, not judged on `posted_seq`.
-    pub fn add_own_rotation_key(
-        &mut self,
-        new_key: SpaceKey,
-        posted_seq: u64,
-        cursor_at_post: u64,
-        applied_at_ms: u64,
-    ) -> Result<()> {
-        let old = self.current_epoch();
-        self.add_rotation_key(new_key, posted_seq, applied_at_ms)?;
-        if let Some(s) = self.superseded.get_mut(&old) {
-            s.unconfirmed_after = Some(cursor_at_post);
-        }
-        Ok(())
-    }
-
     /// Lowers the recorded `rotation_seq` of the rotation `epoch -> epoch+1` to `seq`, when the
     /// log position of that rotation turns out to be lower than what was recorded (the `seq`
     /// a relay answered to `POST /v1/rotations` is not proof of the position of the event in
-    /// the log; the event itself, met in order, is). Never raises it. The event being met also
-    /// ends the wait of [`add_own_rotation_key`](Self::add_own_rotation_key). Returns whether
+    /// the log; the event itself, met in order, is). Never raises it. Returns whether
     /// anything changed.
     pub fn tighten_supersession(&mut self, epoch: u32, seq: u64) -> bool {
-        let Some(s) = self.superseded.get_mut(&epoch) else {
-            return false;
-        };
-        let mut changed = s.unconfirmed_after.take().is_some();
-        if seq < s.rotation_seq {
-            s.rotation_seq = seq;
-            changed = true;
-        }
-        changed
-    }
-
-    /// Ends the wait of every rotation of [`add_own_rotation_key`](Self::add_own_rotation_key)
-    /// without having met its event, for a full resync: the cursor jumps to `head_seq`, so the
-    /// event will never be read, and nothing the log serves from now on can sit above the head.
-    /// The recorded position is capped to it, as for a rotation learned from the relay's list.
-    /// Returns whether anything changed.
-    pub fn settle_unconfirmed(&mut self, head_seq: u64) -> bool {
-        let mut changed = false;
-        for s in self.superseded.values_mut() {
-            if s.unconfirmed_after.take().is_some() {
-                s.rotation_seq = s.rotation_seq.min(head_seq);
-                changed = true;
+        match self.superseded.get_mut(&epoch) {
+            Some(s) if seq < s.rotation_seq => {
+                s.rotation_seq = seq;
+                true
             }
+            _ => false,
         }
-        changed
     }
 
     /// Makes every superseded epoch final: from now on **any** item sealed under one of them
@@ -324,9 +287,8 @@ impl SpaceKeyRing {
     pub fn freeze_supersessions(&mut self) -> bool {
         let mut changed = false;
         for s in self.superseded.values_mut() {
-            if s.rotation_seq != 0 || s.unconfirmed_after.is_some() {
+            if s.rotation_seq != 0 {
                 s.rotation_seq = 0;
-                s.unconfirmed_after = None;
                 changed = true;
             }
         }
@@ -345,11 +307,6 @@ impl SpaceKeyRing {
         if let Some(s) = self.superseded.get(&key_epoch) {
             if item_seq > s.rotation_seq {
                 return Err(UnreadableReason::SuspectEpoch);
-            }
-            // Our own rotation, not yet met in the log: only what is at or below the cursor of
-            // the post is known to precede it.
-            if s.unconfirmed_after.is_some_and(|c| item_seq > c) {
-                return Err(UnreadableReason::KeyPending);
             }
         }
         match self.keys.get(&key_epoch) {
@@ -516,6 +473,27 @@ mod tests {
     }
 
     #[test]
+    fn a_ttl_announced_by_the_relay_cannot_stretch_the_windows_past_the_bound() {
+        let year = MAX_TRUSTED_TTL_SECS;
+        let ten_years = 10 * year;
+        assert_eq!(item_max_age_ms(ten_years), item_max_age_ms(year));
+        assert_eq!(
+            tombstone_retention_ms(ten_years),
+            tombstone_retention_ms(year)
+        );
+        assert_eq!(
+            space_key_retention_ms(ten_years),
+            space_key_retention_ms(year)
+        );
+        assert_eq!(item_max_age_ms(u64::MAX), item_max_age_ms(year));
+        // Below the bound the relay's value is used as before.
+        assert_eq!(
+            item_max_age_ms(DEFAULT_MAX_TTL_SECS),
+            (30 + 60) * DAY as i64
+        );
+    }
+
+    #[test]
     fn epoch_rule_and_discard() {
         let k1 = SpaceKey::generate(1).unwrap();
         let k2 = SpaceKey::generate(2).unwrap();
@@ -602,71 +580,6 @@ mod tests {
         let again = SpaceKeyRing::from_records(&fresh.to_records()).unwrap();
         assert!(again.is_erased());
         assert_eq!(again.current_epoch(), 1);
-    }
-
-    #[test]
-    fn own_rotation_waits_for_its_event_before_judging_items_above_the_cursor() {
-        let k1 = SpaceKey::generate(1).unwrap();
-        let k2 = SpaceKey::generate(2).unwrap();
-        let it = item();
-        let env1 = seal_item(&it, &k1).unwrap();
-        let mut ring = SpaceKeyRing::new(k1);
-        // Posted with the cursor at 50; a hostile relay answered 1_000_000.
-        ring.add_own_rotation_key(k2, 1_000_000, 50, DAY).unwrap();
-        assert!(ring.open_received(&env1, &it.id, 50).is_readable());
-        for seq in [51, 500_000, 1_000_000] {
-            assert_eq!(
-                ring.open_received(&env1, &it.id, seq),
-                ReceivedItem::Unreadable(UnreadableReason::KeyPending)
-            );
-        }
-        assert_eq!(
-            ring.open_received(&env1, &it.id, 1_000_001),
-            ReceivedItem::Unreadable(UnreadableReason::SuspectEpoch)
-        );
-        // Survives a restart.
-        let mut ring = SpaceKeyRing::from_records(&ring.to_records()).unwrap();
-        assert_eq!(
-            ring.open_received(&env1, &it.id, 60),
-            ReceivedItem::Unreadable(UnreadableReason::KeyPending)
-        );
-        // The event is met at its real position: items are judged on it from now on.
-        assert!(ring.tighten_supersession(1, 70));
-        assert!(!ring.tighten_supersession(1, 70), "idempotent");
-        assert!(ring.open_received(&env1, &it.id, 60).is_readable());
-        assert_eq!(
-            ring.open_received(&env1, &it.id, 71),
-            ReceivedItem::Unreadable(UnreadableReason::SuspectEpoch)
-        );
-    }
-
-    #[test]
-    fn a_full_resync_settles_an_own_rotation_on_the_head() {
-        let k1 = SpaceKey::generate(1).unwrap();
-        let k2 = SpaceKey::generate(2).unwrap();
-        let it = item();
-        let env1 = seal_item(&it, &k1).unwrap();
-        let mut ring = SpaceKeyRing::new(k1);
-        ring.add_own_rotation_key(k2, 1_000_000, 50, DAY).unwrap();
-        assert!(ring.settle_unconfirmed(120));
-        assert!(!ring.settle_unconfirmed(120), "idempotent");
-        assert!(ring.open_received(&env1, &it.id, 120).is_readable());
-        assert_eq!(
-            ring.open_received(&env1, &it.id, 121),
-            ReceivedItem::Unreadable(UnreadableReason::SuspectEpoch)
-        );
-    }
-
-    #[test]
-    fn own_rotation_met_at_the_answered_seq_still_ends_the_wait() {
-        let k1 = SpaceKey::generate(1).unwrap();
-        let k2 = SpaceKey::generate(2).unwrap();
-        let it = item();
-        let env1 = seal_item(&it, &k1).unwrap();
-        let mut ring = SpaceKeyRing::new(k1);
-        ring.add_own_rotation_key(k2, 100, 50, DAY).unwrap();
-        assert!(ring.tighten_supersession(1, 100), "the wait ended");
-        assert!(ring.open_received(&env1, &it.id, 99).is_readable());
     }
 
     #[test]

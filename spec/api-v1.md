@@ -2196,7 +2196,11 @@ the only way to hear what the relay publishes next), the client moves the cursor
 superseded epoch (the recorded `seq` of each rotation becomes 0): from then on an item of a replaced epoch that the
 client sees for the first time is suspect whatever its `seq`. In a full resync the `seq` recorded for a rotation is
 capped at `head_seq`, and when the rotation event itself is met in the log the recorded `seq` is lowered to that of the
-event (a `seq` returned by `POST /v1/rotations` is not proof of the position of the event).
+event (a `seq` returned by `POST /v1/rotations` is not proof of the position of the event). The device that posts a
+rotation records, for the epoch it replaces, the position of its own cursor just before the post (it synchronised just
+before): neither the `seq` the relay answers nor the position at which the event is served later bounds what an
+honest item of the old epoch can be, because both are the relay's word. An old-epoch item above that position is
+suspect on that device (an honest one sealed by another device during the round trip of the post is hidden there).
 
 Acknowledgements (`ack`, `read`) are sent after the current page, in series, and replayed until they succeed
 (they are idempotent). `read` is sent when the user opens, copies or closes the item (D16).

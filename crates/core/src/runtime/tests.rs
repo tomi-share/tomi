@@ -2081,19 +2081,16 @@ fn epoch1_supersession(w: &World, i: usize) -> crate::Supersession {
 }
 
 #[test]
-fn a_relay_that_inflates_the_answer_to_our_rotation_cannot_make_forged_items_readable() {
+fn our_own_rotation_is_placed_at_the_cursor_of_the_post_not_at_the_relays_answer() {
     let w = World::new(3, 3);
     for i in 0..3 {
         w.e(i).sync().unwrap();
     }
+    let cursor = w.relay.head();
     // The relay answers a `seq` far above the real position of the rotation event.
-    w.relay.with(|s| s.rotation_answer_inflation = 1_000);
+    w.relay.with(|s| s.rotation_answer_inflation = 1_000_000);
     w.e(0).revoke_device(&w.nodes[2].id).unwrap();
-    let before = epoch1_supersession(&w, 0);
-    assert!(
-        before.unconfirmed_after.is_some(),
-        "own rotation, not yet met"
-    );
+    assert_eq!(epoch1_supersession(&w, 0).rotation_seq, cursor);
     // The revoked device and the relay: an item under the old key, numbered inside the lie.
     let (forged, event) = forged_old_epoch_item(&w, w.relay.head() + 5);
     w.relay.inject_events(vec![event]);
@@ -2103,20 +2100,11 @@ fn a_relay_that_inflates_the_answer_to_our_rotation_cannot_make_forged_items_rea
         matches!(v.content, ItemContentView::Unreadable { .. }),
         "an old-epoch item above the cursor of the post is not readable on the relay's word"
     );
-}
-
-#[test]
-fn our_own_rotation_is_confirmed_when_its_event_comes_back() {
-    let w = World::new(3, 3);
-    for i in 0..3 {
-        w.e(i).sync().unwrap();
-    }
-    w.e(0).revoke_device(&w.nodes[2].id).unwrap();
-    assert!(epoch1_supersession(&w, 0).unconfirmed_after.is_some());
+    // Whatever comes next (here the injected event puts the cursor above the real head, which
+    // freezes the epochs), the line never goes up: the position a relay serves an event at is
+    // its own word too.
     w.e(0).sync().unwrap();
-    let after = epoch1_supersession(&w, 0);
-    assert_eq!(after.unconfirmed_after, None);
-    assert!(after.rotation_seq <= w.relay.head());
+    assert!(epoch1_supersession(&w, 0).rotation_seq <= cursor);
 }
 
 #[test]

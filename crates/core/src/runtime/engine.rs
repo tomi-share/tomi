@@ -1688,9 +1688,6 @@ impl Engine {
                         if c.ring
                             .tighten_supersession(r.new_epoch.saturating_sub(1), ev.seq)
                         {
-                            // Items of the old epoch that waited for this event (our own
-                            // rotation, `Supersession::unconfirmed_after`) are judged now.
-                            self.retry_key_pending(c, db, a)?;
                             Self::persist_crypto(c, db)?;
                         }
                         return Ok(None);
@@ -1753,12 +1750,12 @@ impl Engine {
                         }
                         Err(e) => {
                             self.diag(db, "device_cert_refused", e.code())?;
-                            DeviceState::Unverified
+                            Self::state_of_unproven_cert(c, &device.sign_pk)
                         }
                     },
                     Err(e) => {
                         self.diag(db, "device_cert_malformed", e.code())?;
-                        DeviceState::Unverified
+                        Self::state_of_unproven_cert(c, &device.sign_pk)
                     }
                 };
                 self.upsert_device(db, device, state)
@@ -1866,6 +1863,18 @@ impl Engine {
                 self.diag(db, "event_malformed", kind)
             }
             EventData::Unknown { .. } => Ok(()),
+        }
+    }
+
+    /// State of a device whose certificate, as the relay served it, proves nothing (unreadable,
+    /// or not issued by a member we know): a device that the signed chain of the space already
+    /// lists as a member stays `Verified`, whatever the relay sends along. Otherwise the relay
+    /// could flip a real member to `Unverified` at will, and back, with a certificate it made up.
+    fn state_of_unproven_cert(c: &Crypto, sign_pk: &[u8]) -> DeviceState {
+        if c.trust.is_member(sign_pk) {
+            DeviceState::Verified
+        } else {
+            DeviceState::Unverified
         }
     }
 
@@ -2133,11 +2142,6 @@ impl Engine {
                     Err(e) => self.diag(db, "rotation_refused", e.code())?,
                 }
             }
-            // The cursor jumps to the head below: a rotation we posted whose event was not read
-            // yet will not be, so its wait ends here (`Supersession::unconfirmed_after`).
-            if c.ring.settle_unconfirmed(space.head_seq) {
-                self.retry_key_pending(c, db, a)?;
-            }
             let known: Vec<String> = devices.iter().map(|d| d.device_id.clone()).collect();
             for d in &devices {
                 let state = match DeviceCert::from_bytes(&d.certificate) {
@@ -2152,7 +2156,7 @@ impl Engine {
                             DeviceState::Unverified
                         }
                     },
-                    _ => DeviceState::Unverified,
+                    _ => Self::state_of_unproven_cert(c, &d.sign_pk),
                 };
                 self.upsert_device(db, d, state)?;
             }

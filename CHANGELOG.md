@@ -26,7 +26,7 @@ version and the frozen vectors in `spec/vectors/`, not by application versions.
 
 ### Security
 - Core: the epoch-ordering rule no longer relies on relay-chosen positions; a sync page without progress ends the loop; SQLite `secure_delete` and WAL truncation; tombstones kept 90 days and items older than that refused as suspect; space keys erased on a verified signed self-revocation; persisted `rotation_stalled` flag and relay-revocation notices, shown by the three apps (a calm banner while a key rotation keeps failing, and a one-time notice for a device the relay alone removed); relay-announced removals are validated (known verified device, `admin` or `self` only, bounded name and list), and a rotation blocked by a device the relay dropped while this one was away now completes.
-- Core: the device that posts a key rotation no longer trusts the position the relay answers for it; old-epoch items above its sync cursor wait until the rotation event is seen in the log (database schema 5).
+- Core: the device that posts a key rotation no longer trusts the position the relay answers for it: it judges the items of the old epoch against the sync cursor it had just before the post.
 - Android, iOS: the notice of a device removed by the relay alone is taken from the core only while the app is on screen, so a sync run in the background (push, background refresh) can no longer take it and lose it with the process.
 - Android, iOS, Windows: the "new device" alert is raised only for a device whose certificate the space accepted, so a relay cannot make up an alert by listing a device nobody added; the device name is bounded in the Android alert like on the other two.
 - Relay: every `X-Forwarded-For` line is read.
