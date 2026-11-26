@@ -105,10 +105,14 @@
     };
     window.addEventListener("blur", hideTyped);
     document.addEventListener("visibilitychange", onVisibility);
+    // A lock or a sleep does not always move the focus: the mask goes back on its own event.
+    let stopLock: (() => void) | undefined;
+    events.sessionLocked(hideTyped).then((u) => (cancelled ? u() : (stopLock = u)));
     return () => {
       cancelled = true;
       unlisten?.();
       stopSpace?.();
+      stopLock?.();
       window.removeEventListener("blur", hideTyped);
       document.removeEventListener("visibilitychange", onVisibility);
     };

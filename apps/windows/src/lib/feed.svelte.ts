@@ -442,6 +442,7 @@ class Feed {
       events.itemsChanged(() => void this.refresh()),
       events.spaceChanged(() => void this.refreshStatus()),
       events.relayRevocations(() => void this.takeRelayNotices()),
+      events.sessionLocked(() => this.hideAllValues()),
       events.jobChanged((job) => this.#upsertJob(job)),
       events.focusItem((id) => {
         this.filter = "all";

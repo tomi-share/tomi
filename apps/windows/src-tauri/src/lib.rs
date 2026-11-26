@@ -47,7 +47,7 @@ use std::collections::HashSet;
 use std::sync::atomic::{AtomicBool, AtomicUsize};
 use std::sync::{Arc, Mutex};
 
-use tauri::{DragDropEvent, Manager, RunEvent, WindowEvent};
+use tauri::{DragDropEvent, Emitter, Manager, RunEvent, WindowEvent};
 
 use crate::clip_clears::ClipboardClears;
 use crate::core_api::TomiCore;
@@ -319,13 +319,16 @@ fn setup(app: &mut tauri::App) -> SetupResult {
 
     tray::build(&handle)?;
 
-    // The Windows Hello window of hidden content does not survive a lock, a disconnect or a sleep.
+    // The Windows Hello window of hidden content does not survive a lock, a disconnect or a sleep,
+    // and what a webview already shows of it (a revealed secret, a typed one) is masked at once:
+    // closing the gate alone would leave it on screen for the rest of its 15 s.
     {
         let h = handle.clone();
         session_watch::start(move || {
             if let Some(state) = h.try_state::<AppState>() {
                 state.secret_gate.close();
             }
+            let _ = h.emit(session_watch::HIDE_EVENT, ());
         });
     }
 

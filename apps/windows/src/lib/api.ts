@@ -520,6 +520,8 @@ export const events = {
   spaceChanged: (cb: () => void): Promise<UnlistenFn> => listen("space-changed", () => cb()),
   /** A relay removal is waiting: read it with `takeRelayNotices` (only a visible window does). */
   relayRevocations: (cb: () => void): Promise<UnlistenFn> => listen("relay-revocations", () => cb()),
+  /** The session was locked, disconnected or put to sleep: mask every revealed or typed secret. */
+  sessionLocked: (cb: () => void): Promise<UnlistenFn> => listen("session-locked", () => cb()),
   jobChanged: (cb: (job: JobView) => void): Promise<UnlistenFn> =>
     listen<JobView>("job-changed", (e) => cb(e.payload)),
   popoverShown: (cb: () => void): Promise<UnlistenFn> => listen("popover-shown", () => cb()),

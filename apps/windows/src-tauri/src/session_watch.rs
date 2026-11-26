@@ -6,7 +6,12 @@
 //! thread of its own with its own message loop. It registers for the session notifications of
 //! its session (`WTSRegisterSessionNotification`) and receives the power broadcast
 //! (`WM_POWERBROADCAST`), which only top-level windows get. The window procedure only calls the
-//! callback it was started with, and decides what closes the gate in [`closes_gate`].
+//! callback it was started with, and decides what closes the gate in [`closes_gate`]. The callback
+//! also tells the webviews to mask what they show ([`HIDE_EVENT`]).
+
+/// Event sent to every webview when the gate closes: each one masks what it shows of hidden
+/// content (`events.sessionLocked` in `api.ts`).
+pub const HIDE_EVENT: &str = "session-locked";
 
 /// `WM_WTSSESSION_CHANGE` (`wParam` = the event below).
 pub const WM_WTSSESSION_CHANGE: u32 = 0x02B1;
@@ -145,6 +150,14 @@ mod tests {
             assert!(closes_gate(WM_WTSSESSION_CHANGE, event), "{event:#x}");
         }
         assert!(closes_gate(WM_POWERBROADCAST, 0x4));
+    }
+
+    #[test]
+    fn the_hide_event_is_the_one_the_webviews_listen_to() {
+        // `events.sessionLocked` in `src/lib/api.ts` listens to this exact name.
+        assert_eq!(HIDE_EVENT, "session-locked");
+        let api = include_str!("../../src/lib/api.ts");
+        assert!(api.contains(&format!("listen(\"{HIDE_EVENT}\"")));
     }
 
     #[test]
