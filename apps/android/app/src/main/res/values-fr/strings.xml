@@ -200,6 +200,8 @@
     <string name="dialog_delete_everywhere_title">Supprimer partout ?</string>
     <string name="dialog_delete_everywhere_message">L’élément sera effacé sur tous tes appareils et sur ton serveur Tomi. Les appareils hors ligne l’effaceront à leur reconnexion. Cette action est définitive.</string>
     <string name="dialog_delete_everywhere_secret">Ce contenu masqué sera effacé sur tous tes appareils et sur ton serveur Tomi. Un appareil qui l’a déjà affiché a pu en garder une copie. Cette action est définitive.</string>
+    <string name="dialog_delete_local_title">Supprimer de cet appareil ?</string>
+    <string name="dialog_delete_local_message">L’élément sera retiré de cet appareil uniquement. Tes autres appareils en gardent une copie. Cette action est définitive.</string>
     <string name="dialog_delete_image_everywhere_title">Supprimer l’image partout ?</string>
     <string name="dialog_delete_image_everywhere_message">Cette image sera effacée sur tous tes appareils et sur ton serveur Tomi. Les appareils hors ligne l’effaceront à leur reconnexion. Cette action est définitive.</string>
     <string name="dialog_delete_image_everywhere_secret">Cette image masquée sera effacée sur tous tes appareils et sur ton serveur Tomi. Un appareil qui l’a déjà affichée a pu en garder une copie. Cette action est définitive.</string>

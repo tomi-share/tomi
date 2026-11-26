@@ -20,6 +20,7 @@ import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material.icons.outlined.DeleteOutline
+import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.PushPin
@@ -57,6 +58,7 @@ import eu.shaffe.tomi.core.DeliveryStatus
 import eu.shaffe.tomi.core.ReadPolicy
 import eu.shaffe.tomi.core.TomiItem
 import eu.shaffe.tomi.core.kind
+import eu.shaffe.tomi.share.FileDownloads
 import eu.shaffe.tomi.share.FileSharing
 import eu.shaffe.tomi.share.ItemSharing
 import eu.shaffe.tomi.ui.common.TomiSnackbarHost
@@ -182,6 +184,9 @@ private fun DetailToolbar(
 ) {
     var moreMenu by remember { mutableStateOf(false) }
     var confirmEverywhere by remember { mutableStateOf(false) }
+    var confirmLocal by remember { mutableStateOf(false) }
+    // A lone file has no row menu: its download is offered here.
+    val soleFileSlot = FileDownloads.soleFileSlot(item)
     val canCopy = item.text != null || item.url != null
     val textMode = item.text?.let { RenderModes.resolve(it, state.preferredRenderMode) }
     val canOpen = item.url != null && (!item.secret || revealed)
@@ -262,13 +267,27 @@ private fun DetailToolbar(
                             },
                         )
                     }
-                    if (canOpen || canCopyLinkSeparately) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    if (soleFileSlot != null) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.file_download)) },
+                            leadingIcon = { Icon(Icons.Outlined.Download, contentDescription = null) },
+                            onClick = {
+                                moreMenu = false
+                                actions.onDownloadFile(soleFileSlot)
+                            },
+                        )
+                    }
+                    if (canOpen || canCopyLinkSeparately || soleFileSlot != null) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.action_delete_local)) },
                         leadingIcon = { Icon(Icons.Outlined.DeleteOutline, contentDescription = null) },
+                        colors = MenuDefaults.itemColors(
+                            textColor = MaterialTheme.colorScheme.error,
+                            leadingIconColor = MaterialTheme.colorScheme.error,
+                        ),
                         onClick = {
                             moreMenu = false
-                            actions.onDeleteLocal()
+                            confirmLocal = true
                         },
                     )
                     DropdownMenuItem(
@@ -288,6 +307,15 @@ private fun DetailToolbar(
         }
     }
 
+    if (confirmLocal) {
+        DeleteLocalDialog(
+            onConfirm = {
+                confirmLocal = false
+                actions.onDeleteLocal()
+            },
+            onDismiss = { confirmLocal = false },
+        )
+    }
     if (confirmEverywhere) {
         DeleteEverywhereDialog(
             secret = item.secret,

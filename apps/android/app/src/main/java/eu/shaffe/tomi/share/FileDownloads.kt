@@ -3,6 +3,7 @@ package eu.shaffe.tomi.share
 import eu.shaffe.tomi.core.Attachment
 import eu.shaffe.tomi.core.TomiItem
 import eu.shaffe.tomi.core.findBySlot
+import eu.shaffe.tomi.core.slotOf
 
 /** Result of [FileDownloads.download]. */
 sealed interface FileDownloadResult {
@@ -40,6 +41,16 @@ object FileDownloads {
 
     /** True if the rows of the files of [item] may offer "Télécharger": a readable item that is not hidden. */
     fun canDownload(item: TomiItem): Boolean = item.isReadable && !item.secret && item.attachments.isNotEmpty()
+
+    /**
+     * The slot the "⋮" of the DETAIL downloads for [item]: the one file of an item that has only one, which has no row menu of its own
+     * (see `AttachmentRemovals.canRemoveFromBatch`). Null when the entry is not offered: no file, several files (each row has its
+     * "Télécharger"), a hidden or unreadable item, or a lone image (its viewer already has "Enregistrer").
+     */
+    fun soleFileSlot(item: TomiItem): Int? {
+        if (!canDownload(item) || item.attachments.size != 1 || item.attachments.single().isImage) return null
+        return item.attachments.slotOf(0)
+    }
 
     /**
      * Resolves the file of [slot] ([resolveUri]: `TomiCore.attachmentUri`, decrypted on demand; null when not available) and hands it to

@@ -20771,6 +20771,196 @@
         }
       }
     },
+    "dialog_delete_local_message" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Eintrag wird nur von diesem Gerät entfernt. Deine anderen Geräte behalten ihre Kopie. Diese Aktion ist endgültig."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The item will be removed from this device only. Your other devices keep their copy. This action is permanent."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El elemento se quitará solo de este dispositivo. Tus otros dispositivos conservan su copia. Esta acción es permanente."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’élément sera retiré de cet appareil uniquement. Tes autres appareils en gardent une copie. Cette action est définitive."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "यह आइटम सिर्फ़ इस डिवाइस से हटाया जाएगा। आपके दूसरे डिवाइस में इसकी कॉपी बनी रहेगी। यह कार्रवाई स्थायी है।"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item ini hanya akan dihapus dari perangkat ini. Perangkat Anda yang lain tetap menyimpan salinannya. Tindakan ini permanen."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’elemento sarà rimosso solo da questo dispositivo. I tuoi altri dispositivi ne conservano una copia. Questa azione è definitiva."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このアイテムはこのデバイスからのみ削除されます。ほかのデバイスにはコピーが残ります。この操作は取り消せません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "항목이 이 기기에서만 지워져요. 다른 기기에는 사본이 그대로 남아요. 이 작업은 영구적이에요."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Het item wordt alleen van dit apparaat verwijderd. Je andere apparaten houden hun kopie. Deze actie is definitief."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Element zostanie usunięty tylko z tego urządzenia. Twoje pozostałe urządzenia zachowają swoją kopię. Tego działania nie można cofnąć."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O item será removido somente deste dispositivo. Seus outros dispositivos mantêm a cópia. Esta ação é permanente."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Элемент будет удалён только с этого устройства. На ваших других устройствах останется его копия. Это действие необратимо."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öğe yalnızca bu cihazdan kaldırılacak. Diğer cihazlarınız kendi kopyasını saklar. Bu işlem kalıcıdır."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "该条目只会从此设备上移除，你的其他设备会保留各自的副本。此操作是永久性的。"
+          }
+        }
+      }
+    },
+    "dialog_delete_local_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Von diesem Gerät löschen?"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete from this device?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Eliminar de este dispositivo?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer de cet appareil ?"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "इस डिवाइस से डिलीट करें?"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hapus dari perangkat ini?"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminare da questo dispositivo?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このデバイスから削除しますか？"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 기기에서 삭제할까요?"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verwijderen van dit apparaat?"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usunąć z tego urządzenia?"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Excluir deste dispositivo?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удалить с этого устройства?"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu cihazdan silinsin mi?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要从此设备删除吗？"
+          }
+        }
+      }
+    },
     "erase_anyway" : {
       "extractionState" : "manual",
       "localizations" : {

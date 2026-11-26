@@ -121,6 +121,7 @@ internal fun AttachmentList(
     if (attachments.isEmpty()) return
     // Slot of the attachment whose "everywhere" removal waits for its confirmation (which names the file).
     var confirmEverywhereSlot by remember { mutableStateOf<Int?>(null) }
+    var confirmLocalSlot by remember { mutableStateOf<Int?>(null) }
     val context = LocalContext.current
     val viewLabel = stringResource(R.string.action_view_image)
     val codeLabel = stringResource(R.string.action_view_code)
@@ -184,7 +185,7 @@ internal fun AttachmentList(
                         topAligned = isFrame,
                         onShare = { fileRowActions?.onShare?.invoke(slot) },
                         onDownload = { fileRowActions?.onDownload?.invoke(slot) },
-                        onDeleteLocal = { fileRowActions?.onDelete?.invoke(slot, false) },
+                        onDeleteLocal = { confirmLocalSlot = slot },
                         onDeleteEverywhere = { confirmEverywhereSlot = slot },
                     ) {
                         if (isFrame && bitmap != null) {
@@ -226,6 +227,18 @@ internal fun AttachmentList(
         }
     }
 
+    confirmLocalSlot?.let { slot ->
+        // Same as below: nothing to confirm when the file has vanished meanwhile.
+        if (attachments.findBySlot(slot) != null && fileRowActions != null) {
+            DeleteLocalDialog(
+                onConfirm = {
+                    confirmLocalSlot = null
+                    fileRowActions.onDelete(slot, false)
+                },
+                onDismiss = { confirmLocalSlot = null },
+            )
+        }
+    }
     // The attachment may have vanished meanwhile (removed from another device): then there is nothing left to confirm.
     confirmEverywhereSlot?.let { slot ->
         val target = attachments.findBySlot(slot)

@@ -190,6 +190,8 @@
     <string name="dialog_delete_everywhere_title">すべての場所から削除しますか？</string>
     <string name="dialog_delete_everywhere_message">このアイテムはすべてのデバイスとTomiサーバーから消去されます。オフラインのデバイスでは、再接続時に消去されます。この操作は取り消せません。</string>
     <string name="dialog_delete_everywhere_secret">この非表示のコンテンツはすべてのデバイスとTomiサーバーから消去されます。すでに表示したデバイスにはコピーが残っている可能性があります。この操作は取り消せません。</string>
+    <string name="dialog_delete_local_title">このデバイスから削除しますか？</string>
+    <string name="dialog_delete_local_message">このアイテムはこのデバイスからのみ削除されます。ほかのデバイスにはコピーが残ります。この操作は取り消せません。</string>
     <string name="dialog_delete_image_everywhere_title">すべての場所から画像を削除しますか？</string>
     <string name="dialog_delete_image_everywhere_message">この画像はすべてのデバイスとTomiサーバーから消去されます。オフラインのデバイスでは、再接続時に消去されます。この操作は取り消せません。</string>
     <string name="dialog_delete_image_everywhere_secret">この非表示の画像はすべてのデバイスとTomiサーバーから消去されます。すでに表示したデバイスにはコピーが残っている可能性があります。この操作は取り消せません。</string>

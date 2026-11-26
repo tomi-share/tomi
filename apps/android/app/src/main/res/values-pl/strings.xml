@@ -220,6 +220,8 @@
     <string name="dialog_delete_everywhere_title">Usunąć wszędzie?</string>
     <string name="dialog_delete_everywhere_message">Element zostanie wymazany ze wszystkich twoich urządzeń i z twojego serwera Tomi. Urządzenia offline wymażą go po ponownym połączeniu. Tego działania nie można cofnąć.</string>
     <string name="dialog_delete_everywhere_secret">Ta ukryta treść zostanie wymazana ze wszystkich twoich urządzeń i z twojego serwera Tomi. Urządzenie, które już ją pokazało, mogło zachować kopię. Tego działania nie można cofnąć.</string>
+    <string name="dialog_delete_local_title">Usunąć z tego urządzenia?</string>
+    <string name="dialog_delete_local_message">Element zostanie usunięty tylko z tego urządzenia. Twoje pozostałe urządzenia zachowają swoją kopię. Tego działania nie można cofnąć.</string>
     <string name="dialog_delete_image_everywhere_title">Usunąć obraz wszędzie?</string>
     <string name="dialog_delete_image_everywhere_message">Ten obraz zostanie wymazany ze wszystkich twoich urządzeń i z twojego serwera Tomi. Urządzenia offline wymażą go po ponownym połączeniu. Tego działania nie można cofnąć.</string>
     <string name="dialog_delete_image_everywhere_secret">Ten ukryty obraz zostanie wymazany ze wszystkich twoich urządzeń i z twojego serwera Tomi. Urządzenie, które już go pokazało, mogło zachować kopię. Tego działania nie można cofnąć.</string>

@@ -183,6 +183,7 @@ fun ItemCard(
     val unread = !item.read && !outgoing
     val textMode = item.text?.let { RenderModes.resolve(it, preferredMode) }
     var confirmDeleteEverywhere by remember { mutableStateOf(false) }
+    var confirmDeleteLocal by remember { mutableStateOf(false) }
     var menuOpen by remember { mutableStateOf(false) }
     val secretColor = TomiTheme.colors.secret
 
@@ -300,6 +301,7 @@ fun ItemCard(
                                 revealed = revealed,
                                 textMode = textMode,
                                 actions = actions,
+                                onConfirmDeleteLocal = { confirmDeleteLocal = true },
                                 onConfirmDeleteEverywhere = { confirmDeleteEverywhere = true },
                             )
                         }
@@ -336,6 +338,15 @@ fun ItemCard(
         }
     }
 
+    if (confirmDeleteLocal) {
+        DeleteLocalDialog(
+            onConfirm = {
+                confirmDeleteLocal = false
+                actions.onDeleteLocal()
+            },
+            onDismiss = { confirmDeleteLocal = false },
+        )
+    }
     if (confirmDeleteEverywhere) {
         DeleteEverywhereDialog(
             secret = item.secret,
@@ -346,6 +357,26 @@ fun ItemCard(
             onDismiss = { confirmDeleteEverywhere = false },
         )
     }
+}
+
+/**
+ * Confirmation of every "delete from this device" (an item, a file, an image). The core forgets the item here for good and there is no
+ * "Annuler" banner to fall back on, so the entry is not one tap away from being irreversible (it is also drawn in the error colour).
+ */
+@Composable
+fun DeleteLocalDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        shape = TomiTheme.shapes.menu,
+        title = { Text(stringResource(R.string.dialog_delete_local_title)) },
+        text = { Text(stringResource(R.string.dialog_delete_local_message)) },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(stringResource(R.string.action_delete_local), color = MaterialTheme.colorScheme.error)
+            }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
+    )
 }
 
 @Composable
@@ -376,6 +407,7 @@ private fun ItemMenu(
     revealed: Boolean,
     textMode: RenderMode?,
     actions: CardActions,
+    onConfirmDeleteLocal: () -> Unit,
     onConfirmDeleteEverywhere: () -> Unit,
 ) {
     fun run(block: () -> Unit): () -> Unit = {
@@ -447,7 +479,11 @@ private fun ItemMenu(
         DropdownMenuItem(
             text = { Text(stringResource(R.string.action_delete_local)) },
             leadingIcon = { Icon(Icons.Outlined.DeleteOutline, contentDescription = null) },
-            onClick = run(actions.onDeleteLocal),
+            colors = MenuDefaults.itemColors(
+                textColor = MaterialTheme.colorScheme.error,
+                leadingIconColor = MaterialTheme.colorScheme.error,
+            ),
+            onClick = run(onConfirmDeleteLocal),
         )
         DropdownMenuItem(
             text = { Text(stringResource(R.string.action_delete_everywhere)) },

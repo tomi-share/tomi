@@ -191,6 +191,8 @@
     <string name="dialog_delete_everywhere_title">모든 곳에서 삭제할까요?</string>
     <string name="dialog_delete_everywhere_message">항목이 모든 기기와 Tomi 서버에서 지워져요. 오프라인 기기는 다시 연결될 때 지워요. 이 작업은 영구적이에요.</string>
     <string name="dialog_delete_everywhere_secret">이 숨김 콘텐츠가 모든 기기와 Tomi 서버에서 지워져요. 이미 이 콘텐츠를 표시한 기기에는 사본이 남아 있을 수 있어요. 이 작업은 영구적이에요.</string>
+    <string name="dialog_delete_local_title">이 기기에서 삭제할까요?</string>
+    <string name="dialog_delete_local_message">항목이 이 기기에서만 지워져요. 다른 기기에는 사본이 그대로 남아요. 이 작업은 영구적이에요.</string>
     <string name="dialog_delete_image_everywhere_title">모든 곳에서 이미지를 삭제할까요?</string>
     <string name="dialog_delete_image_everywhere_message">이 이미지가 모든 기기와 Tomi 서버에서 지워져요. 오프라인 기기는 다시 연결될 때 지워요. 이 작업은 영구적이에요.</string>
     <string name="dialog_delete_image_everywhere_secret">이 숨김 이미지가 모든 기기와 Tomi 서버에서 지워져요. 이미 이 이미지를 표시한 기기에는 사본이 남아 있을 수 있어요. 이 작업은 영구적이에요.</string>

@@ -211,6 +211,8 @@
     <string name="dialog_delete_everywhere_title">¿Eliminar en todas partes?</string>
     <string name="dialog_delete_everywhere_message">El elemento se borrará de todos tus dispositivos y de tu servidor Tomi. Los dispositivos sin conexión lo borrarán al volver a conectarse. Esta acción es permanente.</string>
     <string name="dialog_delete_everywhere_secret">Este contenido oculto se borrará de todos tus dispositivos y de tu servidor Tomi. Un dispositivo que ya lo haya mostrado podría haber guardado una copia. Esta acción es permanente.</string>
+    <string name="dialog_delete_local_title">¿Eliminar de este dispositivo?</string>
+    <string name="dialog_delete_local_message">El elemento se quitará solo de este dispositivo. Tus otros dispositivos conservan su copia. Esta acción es permanente.</string>
     <string name="dialog_delete_image_everywhere_title">¿Eliminar la imagen en todas partes?</string>
     <string name="dialog_delete_image_everywhere_message">Esta imagen se borrará de todos tus dispositivos y de tu servidor Tomi. Los dispositivos sin conexión la borrarán al volver a conectarse. Esta acción es permanente.</string>
     <string name="dialog_delete_image_everywhere_secret">Esta imagen oculta se borrará de todos tus dispositivos y de tu servidor Tomi. Un dispositivo que ya la haya mostrado podría haber guardado una copia. Esta acción es permanente.</string>

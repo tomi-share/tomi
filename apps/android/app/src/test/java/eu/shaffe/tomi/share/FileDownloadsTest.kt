@@ -10,6 +10,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.Instant
@@ -49,6 +50,22 @@ class FileDownloadsTest {
         assertFalse(FileDownloads.canDownload(files(secret = true)))
         assertFalse(FileDownloads.canDownload(readableItem("n", source, now)))
         assertFalse(FileDownloads.canDownload(TomiItem("u", ItemContent.Unreadable(UnreadableReason.UpdateRequired), source, now)))
+    }
+
+    @Test
+    fun theDetailMenuDownloadsTheLoneFileOfAnItemByItsSlot() {
+        fun one(attachment: Attachment, secret: Boolean = false) =
+            readableItem("f", source, now, attachments = listOf(attachment), secret = secret)
+        // A lone file has no row menu: the "⋮" of the detail offers it, for the slot the core knows it by (not its position).
+        assertEquals(3, FileDownloads.soleFileSlot(one(pdf.withSlot(3))))
+        assertEquals(0, FileDownloads.soleFileSlot(one(pdf)))
+        // Several files: each row has its own entry. A lone image: its viewer has "Enregistrer".
+        assertNull(FileDownloads.soleFileSlot(files()))
+        assertNull(FileDownloads.soleFileSlot(one(png)))
+        // No workaround for a hidden item, and nothing for an item without a file or an unreadable one.
+        assertNull(FileDownloads.soleFileSlot(one(pdf, secret = true)))
+        assertNull(FileDownloads.soleFileSlot(readableItem("n", source, now)))
+        assertNull(FileDownloads.soleFileSlot(TomiItem("u", ItemContent.Unreadable(UnreadableReason.UpdateRequired), source, now)))
     }
 
     @Test

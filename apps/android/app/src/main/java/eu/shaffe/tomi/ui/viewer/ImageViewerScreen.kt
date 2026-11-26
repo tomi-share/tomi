@@ -104,6 +104,7 @@ import eu.shaffe.tomi.ui.common.TomiSnackbarHost
 import eu.shaffe.tomi.ui.common.FlagSecureEffect
 import eu.shaffe.tomi.ui.common.findActivity
 import eu.shaffe.tomi.ui.common.rememberAuthenticator
+import eu.shaffe.tomi.ui.feed.DeleteLocalDialog
 import eu.shaffe.tomi.ui.feed.FeedEventsEffect
 import eu.shaffe.tomi.ui.feed.AttachmentRemovals
 import eu.shaffe.tomi.ui.feed.FeedViewModel
@@ -257,6 +258,7 @@ private fun ViewerPages(
     val noApp = stringResource(R.string.share_no_app)
     // The slot of the image to delete everywhere, asked to confirm: fixed when the menu was used, even if the pager moves meanwhile.
     var confirmDeleteEverywhereSlot by remember { mutableStateOf<Int?>(null) }
+    var confirmDeleteLocalSlot by remember { mutableStateOf<Int?>(null) }
     val canDelete = AttachmentRemovals.canRemove(item)
     val relaySupportsRemoval by viewModel.attachmentRemovalEverywhere.collectAsStateWithLifecycle()
     // Null when the page is out of range (the list just changed): the action then does nothing instead of aiming at another image.
@@ -343,8 +345,18 @@ private fun ViewerPages(
                 }
             },
             onDetails = onOpenDetail,
-            onDeleteLocal = { currentSlot()?.let { viewModel.deleteAttachment(item, it, everywhere = false) } },
+            onDeleteLocal = { confirmDeleteLocalSlot = currentSlot() },
             onDeleteEverywhere = { confirmDeleteEverywhereSlot = currentSlot() },
+        )
+    }
+
+    confirmDeleteLocalSlot?.let { slot ->
+        DeleteLocalDialog(
+            onConfirm = {
+                confirmDeleteLocalSlot = null
+                viewModel.deleteAttachment(item, slot, everywhere = false)
+            },
+            onDismiss = { confirmDeleteLocalSlot = null },
         )
     }
 
@@ -430,6 +442,10 @@ private fun ViewerActionBar(
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.viewer_delete_local)) },
                             leadingIcon = { Icon(Icons.Outlined.DeleteOutline, contentDescription = null) },
+                            colors = MenuDefaults.itemColors(
+                                textColor = MaterialTheme.colorScheme.error,
+                                leadingIconColor = MaterialTheme.colorScheme.error,
+                            ),
                             onClick = {
                                 deleteMenu = false
                                 onDeleteLocal()

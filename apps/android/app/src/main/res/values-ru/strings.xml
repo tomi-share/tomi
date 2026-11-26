@@ -220,6 +220,8 @@
     <string name="dialog_delete_everywhere_title">Удалить везде?</string>
     <string name="dialog_delete_everywhere_message">Элемент будет стёрт со всех ваших устройств и с вашего сервера Tomi. Устройства не в сети сотрут его, когда снова подключатся. Это действие необратимо.</string>
     <string name="dialog_delete_everywhere_secret">Это скрытое содержимое будет стёрто со всех ваших устройств и с вашего сервера Tomi. Устройство, на котором его уже показывали, могло сохранить копию. Это действие необратимо.</string>
+    <string name="dialog_delete_local_title">Удалить с этого устройства?</string>
+    <string name="dialog_delete_local_message">Элемент будет удалён только с этого устройства. На ваших других устройствах останется его копия. Это действие необратимо.</string>
     <string name="dialog_delete_image_everywhere_title">Удалить изображение везде?</string>
     <string name="dialog_delete_image_everywhere_message">Это изображение будет стёрто со всех ваших устройств и с вашего сервера Tomi. Устройства не в сети сотрут его, когда снова подключатся. Это действие необратимо.</string>
     <string name="dialog_delete_image_everywhere_secret">Это скрытое изображение будет стёрто со всех ваших устройств и с вашего сервера Tomi. Устройство, на котором его уже показывали, могло сохранить копию. Это действие необратимо.</string>
