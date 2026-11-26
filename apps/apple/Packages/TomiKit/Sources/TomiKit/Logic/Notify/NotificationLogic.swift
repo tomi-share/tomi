@@ -131,10 +131,13 @@ public struct NewDeviceNotifierState: Sendable {
     /// devices): not taken as a reference.
     public mutating func update(devices: [Device], appVisible: Bool, importing: Bool = false) -> [Device] {
         guard devices.contains(where: \.isThisDevice) else { return [] }
+        // Only a device whose certificate the space accepted counts: the relay alone can list one that nobody added, and an
+        // alert about it would be a false alarm. It is announced if it becomes verified later.
+        let verified = devices.filter(\.isVerified)
         let previous = known
-        known = Set(devices.map(\.id))
+        known = Set(verified.map(\.id))
         guard let previous, !importing, !appVisible else { return [] }
-        return devices.filter { !$0.isThisDevice && !previous.contains($0.id) }
+        return verified.filter { !$0.isThisDevice && !previous.contains($0.id) }
     }
 
     /// The device left its space: nothing is tracked any more.

@@ -211,11 +211,18 @@ fn arrivals(
     known: &mut Option<std::collections::HashSet<String>>,
     devices: &[crate::model::Device],
 ) -> Vec<String> {
-    let ids = devices.iter().map(|d| d.id.clone()).collect();
+    // Only a device whose certificate the space accepted counts: the relay alone can list one
+    // that nobody added, and a toast about it would be a false alarm. It is announced if it
+    // becomes verified later.
+    let verified = || {
+        devices
+            .iter()
+            .filter(|d| d.state == crate::model::DeviceState::Verified)
+    };
+    let ids = verified().map(|d| d.id.clone()).collect();
     let fresh = match known.as_ref() {
         None => Vec::new(),
-        Some(seen) => devices
-            .iter()
+        Some(seen) => verified()
             .filter(|d| !d.this_device && !seen.contains(&d.id))
             .map(|d| d.name.clone())
             .collect(),
@@ -251,8 +258,13 @@ async fn remember_devices(app: &AppHandle) {
     let core = app.state::<AppState>().core.clone();
     if may_notify(core.as_ref()) && !core.is_demo() {
         if let Ok(devices) = core.devices().await {
-            *KNOWN_DEVICES.lock().unwrap_or_else(|p| p.into_inner()) =
-                Some(devices.into_iter().map(|d| d.id).collect());
+            *KNOWN_DEVICES.lock().unwrap_or_else(|p| p.into_inner()) = Some(
+                devices
+                    .into_iter()
+                    .filter(|d| d.state == crate::model::DeviceState::Verified)
+                    .map(|d| d.id)
+                    .collect(),
+            );
         }
     }
 }
@@ -359,6 +371,22 @@ mod tests {
         let mut again = space.clone();
         again.push(device("c", "iPhone", false));
         assert_eq!(arrivals(&mut known, &again), vec!["iPhone".to_string()]);
+    }
+
+    #[test]
+    fn a_device_the_space_did_not_verify_is_not_announced_until_it_is() {
+        let mut known = None;
+        let space = vec![device("a", "PC", true), device("b", "Pixel", false)];
+        arrivals(&mut known, &space);
+        let mut forged = device("c", "Ghost", false);
+        forged.state = DeviceState::Unverified;
+        let mut with_forged = space.clone();
+        with_forged.push(forged);
+        assert!(arrivals(&mut known, &with_forged).is_empty());
+        assert!(arrivals(&mut known, &with_forged).is_empty());
+        let mut verified = space.clone();
+        verified.push(device("c", "Ghost", false));
+        assert_eq!(arrivals(&mut known, &verified), vec!["Ghost".to_string()]);
     }
 
     #[test]

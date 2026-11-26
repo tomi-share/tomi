@@ -112,7 +112,8 @@ enum CoreMapping {
             name: d.name,
             platform: DevicePlatform(core: d.platform),
             lastActivity: d.lastSeenAtMs.map(date),
-            isThisDevice: d.isThisDevice
+            isThisDevice: d.isThisDevice,
+            isVerified: d.state != .unverified
         )
     }
 

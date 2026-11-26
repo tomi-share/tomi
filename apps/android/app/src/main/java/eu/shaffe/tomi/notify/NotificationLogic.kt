@@ -114,8 +114,11 @@ class NewDeviceDetector {
     @Synchronized
     fun onDevices(devices: List<Device>, importing: Boolean): List<Device> {
         val previous = known
-        known = devices.mapTo(HashSet()) { it.id }
+        // Only a device whose certificate the space accepted counts: the relay alone can list one that nobody added, and an
+        // alert about it would be a false alarm. It is announced if it becomes verified later.
+        val verified = devices.filter { it.verified }
+        known = verified.mapTo(HashSet()) { it.id }
         if (previous == null || importing) return emptyList()
-        return devices.filter { it.id !in previous && !it.isThisDevice }
+        return verified.filter { it.id !in previous && !it.isThisDevice }
     }
 }

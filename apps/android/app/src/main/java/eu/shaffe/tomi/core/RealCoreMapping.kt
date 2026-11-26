@@ -36,7 +36,7 @@ internal fun String.toDevicePlatform(): DevicePlatform = when (lowercase()) {
 }
 
 internal fun FfiDevice.toDomain(): Device =
-    Device(id, name, platform.toDevicePlatform(), lastSeenAtMs?.let(Instant::ofEpochMilli), isThisDevice)
+    Device(id, name, platform.toDevicePlatform(), lastSeenAtMs?.let(Instant::ofEpochMilli), isThisDevice, verified = state != DeviceStateKind.UNVERIFIED)
 
 /** Devices that are still members: a revoked device is not shown in the list of devices of the space. */
 internal fun FfiDevice.isMember(): Boolean = state == DeviceStateKind.VERIFIED || state == DeviceStateKind.UNVERIFIED

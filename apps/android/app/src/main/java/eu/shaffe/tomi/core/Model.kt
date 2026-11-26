@@ -236,6 +236,11 @@ data class Device(
     val platform: DevicePlatform,
     val lastActivity: Instant?,
     val isThisDevice: Boolean,
+    /**
+     * The core checked the certificate of this device against the chain of the space. `false` for a device that the relay's log lists
+     * without a certificate the space accepts: it still shows in the list (it may be revoked), but nothing announces it as joined.
+     */
+    val verified: Boolean = true,
 )
 
 /** An attachment staged on disk by the app layer; the core must read it before `enqueue` returns. */

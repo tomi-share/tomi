@@ -40,6 +40,17 @@ final class NotificationLogicTests: XCTestCase {
         XCTAssertTrue(state.update(devices: third, appVisible: false).isEmpty, "and it is not announced afterwards")
     }
 
+    func testADeviceTheSpaceDidNotVerifyIsNotAnnouncedUntilItIs() {
+        var state = NewDeviceNotifierState()
+        let me = device("me", mine: true)
+        XCTAssertTrue(state.update(devices: [me], appVisible: false).isEmpty)
+        var forged = device("ghost")
+        forged.isVerified = false
+        XCTAssertTrue(state.update(devices: [me, forged], appVisible: false).isEmpty)
+        XCTAssertTrue(state.update(devices: [me, forged], appVisible: false).isEmpty)
+        XCTAssertEqual(state.update(devices: [me, device("ghost")], appVisible: false).map(\.id), ["ghost"])
+    }
+
     func testTheDevicesOfAJoinOrAnUnreadListAreNotNews() {
         var state = NewDeviceNotifierState()
         XCTAssertTrue(state.update(devices: [], appVisible: false).isEmpty)

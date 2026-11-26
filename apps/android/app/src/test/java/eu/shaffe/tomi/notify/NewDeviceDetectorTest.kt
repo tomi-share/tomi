@@ -44,6 +44,15 @@ class NewDeviceDetectorTest {
     }
 
     @Test
+    fun aDeviceThatTheSpaceDidNotVerifyIsNotAnnouncedUntilItIs() {
+        val forged = pc.copy(verified = false)
+        detector.onDevices(listOf(me, phone), importing = false)
+        assertTrue(detector.onDevices(listOf(me, phone, forged), importing = false).isEmpty())
+        assertTrue(detector.onDevices(listOf(me, phone, forged), importing = false).isEmpty())
+        assertEquals(listOf(pc), detector.onDevices(listOf(me, phone, pc), importing = false))
+    }
+
+    @Test
     fun thisDeviceIsNeverAnnouncedToItself() {
         detector.onDevices(emptyList(), importing = false)
         assertTrue(detector.onDevices(listOf(me), importing = false).isEmpty())

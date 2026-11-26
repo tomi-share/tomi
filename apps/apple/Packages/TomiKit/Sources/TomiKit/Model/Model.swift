@@ -260,13 +260,20 @@ public struct Device: Identifiable, Hashable, Sendable {
     public var platform: DevicePlatform
     public var lastActivity: Date?
     public var isThisDevice: Bool
+    /// The core checked the certificate of this device against the chain of the space. `false` for a device that the relay's
+    /// log lists without a certificate the space accepts: it shows in the list (it may be revoked), but is never announced.
+    public var isVerified: Bool
 
-    public init(id: String, name: String, platform: DevicePlatform, lastActivity: Date?, isThisDevice: Bool) {
+    public init(
+        id: String, name: String, platform: DevicePlatform, lastActivity: Date?, isThisDevice: Bool,
+        isVerified: Bool = true
+    ) {
         self.id = id
         self.name = name
         self.platform = platform
         self.lastActivity = lastActivity
         self.isThisDevice = isThisDevice
+        self.isVerified = isVerified
     }
 }
 

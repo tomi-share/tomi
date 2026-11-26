@@ -176,6 +176,14 @@ class RealCoreMappingTest {
     }
 
     @Test
+    fun onlyTheDeviceTheSpaceDidNotVerifyIsMarkedAsSuch() {
+        fun verified(state: DeviceStateKind) = FfiDevice("d", "PC", "windows", state, null, false).toDomain().verified
+
+        assertTrue(verified(DeviceStateKind.VERIFIED))
+        assertFalse(verified(DeviceStateKind.UNVERIFIED))
+    }
+
+    @Test
     fun aRevokedDeviceIsNotAMemberAnyMore() {
         fun member(state: DeviceStateKind) = FfiDevice("d", "PC", "windows", state, null, false).isMember()
 

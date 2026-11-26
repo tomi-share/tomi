@@ -130,6 +130,8 @@ class IncomingNotifications(
     }
 
     internal fun buildDeviceAdded(device: Device): NotificationCompat.Builder {
+        // The name comes from the device itself: shown bounded, like the body of an item.
+        val body = context.getString(R.string.notif_device_added_body, device.name.take(MAX_BODY))
         val publicVersion = NotificationCompat.Builder(context, NotificationChannels.DEVICES)
             .setSmallIcon(R.drawable.ic_stat_tomi)
             .setColor(ContextCompat.getColor(context, R.color.notification_accent))
@@ -143,8 +145,8 @@ class IncomingNotifications(
             .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
             .setPublicVersion(publicVersion)
             .setContentTitle(context.getString(R.string.notif_device_added_title))
-            .setContentText(context.getString(R.string.notif_device_added_body, device.name))
-            .setStyle(NotificationCompat.BigTextStyle().bigText(context.getString(R.string.notif_device_added_body, device.name)))
+            .setContentText(body)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
             .setContentIntent(openAppIntent())
     }
 
