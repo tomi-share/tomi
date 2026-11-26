@@ -134,6 +134,9 @@ struct DevicesScreen: View {
             formatter.unitsStyle = .full
             parts.append(formatter.localizedString(for: last, relativeTo: Date()))
         }
+        // The space does not vouch for this device (the relay lists it with a certificate that proves nothing): shown so
+        // that it can be revoked, never announced as a newcomer.
+        if !device.isVerified { parts.append(L10n.text("devices_unverified")) }
         return parts.joined(separator: " · ")
     }
 

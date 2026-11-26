@@ -411,6 +411,7 @@
     <string name="devices_add">デバイスを追加</string>
     <string name="devices_empty">スペースにはまだデバイスがありません。</string>
     <string name="devices_this_device">このデバイス</string>
+    <string name="devices_unverified">未確認</string>
     <string name="devices_rename">名前を変更</string>
     <string name="devices_revoke">無効化</string>
     <string name="devices_revoke_title">「%1$s」を無効化しますか？</string>

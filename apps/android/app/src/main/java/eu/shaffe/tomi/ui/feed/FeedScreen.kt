@@ -891,13 +891,19 @@ fun ItemCardHost(
 fun FeedEventsEffect(viewModel: FeedViewModel, snackbar: SnackbarHostState) {
     val resources = LocalResources.current
     val scope = rememberCoroutineScope()
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    // The core clears a notice when it hands it over: it is taken only while the screen is started, so that a notice is never taken
+    // for a screen that is not there to show it.
+    LaunchedEffect(viewModel, lifecycle) {
+        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            viewModel.relayRevocations.collect { revocation ->
+                val notice = resources.getString(RelayRevocationNotice.messageRes(revocation.via), revocation.deviceName)
+                scope.launch { snackbar.showFeedback(notice) }
+            }
+        }
+    }
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
-            if (event is FeedEvent.RelayRevoked) {
-                val notice = resources.getString(RelayRevocationNotice.messageRes(event.revocation.via), event.revocation.deviceName)
-                scope.launch { snackbar.showFeedback(notice) }
-                return@collect
-            }
             val undoLabel = resources.getString(R.string.action_undo)
             val message = resources.getString(
                 when (event) {
@@ -907,7 +913,6 @@ fun FeedEventsEffect(viewModel: FeedViewModel, snackbar: SnackbarHostState) {
                     FeedEvent.BiometricUnavailable -> R.string.toast_biometric_unavailable
                     FeedEvent.DeletedLocal -> R.string.snackbar_deleted_local
                     FeedEvent.DeletedEverywhere -> R.string.snackbar_deleted_everywhere
-                    is FeedEvent.RelayRevoked -> return@collect // Handled above.
                     FeedEvent.PinFailed -> R.string.snackbar_pin_failed
                     FeedEvent.ActionFailed -> R.string.snackbar_action_failed
                     is FeedEvent.ArchiveDone ->

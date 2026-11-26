@@ -411,6 +411,7 @@
     <string name="devices_add">添加设备</string>
     <string name="devices_empty">你的空间中还没有设备。</string>
     <string name="devices_this_device">此设备</string>
+    <string name="devices_unverified">未验证</string>
     <string name="devices_rename">重命名</string>
     <string name="devices_revoke">吊销</string>
     <string name="devices_revoke_title">要吊销“%1$s”吗？</string>

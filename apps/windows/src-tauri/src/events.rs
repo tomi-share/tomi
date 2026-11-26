@@ -161,7 +161,7 @@ async fn space_changed(app: &AppHandle) {
     let _ = app.emit("space-changed", ());
     let state = app.state::<AppState>();
     announce_new_devices(app, state.core.as_ref()).await;
-    tell_relay_revocations(app, state.core.as_ref(), &state.relay_notices);
+    ring_for_relay_revocations(app, state.core.as_ref());
     if !may_notify(state.core.as_ref()) {
         return;
     }
@@ -185,17 +185,30 @@ async fn space_changed(app: &AppHandle) {
     }
 }
 
-/// Devices the relay removed on its own authority: taken from the core (once) after a change of
-/// the space, never on a timer, and handed to the webview that is on screen as a plain notice.
-/// Nothing in the demo space nor on a PC that has no space; a failed read leaves the core's list
-/// as it was, so the next change tries again.
-fn tell_relay_revocations(app: &AppHandle, core: &dyn TomiCore, notices: &RelayNotices) {
-    if !may_notify(core) || core.is_demo() {
-        return;
-    }
-    if relay_notices::collect(core, notices).unwrap_or(false) {
+/// A change of the space may have brought a device the relay removed on its own authority: the
+/// webviews are told to look, and only one that is visible does (`take_relay_notices`). Nothing is
+/// taken from the core here: the core hands each notice over once and keeps it until then, so a
+/// notice that no window shows (all hidden in the tray) is not lost when the process stops.
+/// Nothing in the demo space nor on a PC that has no space.
+fn ring_for_relay_revocations(app: &AppHandle, core: &dyn TomiCore) {
+    if may_notify(core) && !core.is_demo() {
         let _ = app.emit("relay-revocations", ());
     }
+}
+
+/// What a visible window is told about devices the relay removed on its own authority: takes
+/// from the core (which clears its list) and hands over what is pending, once. Only called by a
+/// webview that is visible, so the core keeps the notice until somebody can read it. Nothing in
+/// the demo space nor on a PC that has no space; a failed read leaves the core's list as it was,
+/// so the next look tries again.
+pub fn relay_notices_for_a_visible_window(
+    core: &dyn TomiCore,
+    notices: &RelayNotices,
+) -> Vec<crate::core_api::RelayRevocation> {
+    if may_notify(core) && !core.is_demo() {
+        let _ = relay_notices::collect(core, notices);
+    }
+    notices.take()
 }
 
 /// The devices of the space as last seen, to tell a newcomer from a device that was already
@@ -219,7 +232,18 @@ fn arrivals(
             .iter()
             .filter(|d| d.state == crate::model::DeviceState::Verified)
     };
-    let ids = verified().map(|d| d.id.clone()).collect();
+    let mut ids: std::collections::HashSet<String> = verified().map(|d| d.id.clone()).collect();
+    // A device already known that is listed unverified for a moment (the relay can send a
+    // certificate that proves nothing) stays known: it does not come back as a newcomer when it
+    // is verified again.
+    if let Some(seen) = known.as_ref() {
+        ids.extend(
+            devices
+                .iter()
+                .filter(|d| seen.contains(&d.id))
+                .map(|d| d.id.clone()),
+        );
+    }
     let fresh = match known.as_ref() {
         None => Vec::new(),
         Some(seen) => verified()
@@ -387,6 +411,17 @@ mod tests {
         let mut verified = space.clone();
         verified.push(device("c", "Ghost", false));
         assert_eq!(arrivals(&mut known, &verified), vec!["Ghost".to_string()]);
+    }
+
+    #[test]
+    fn a_known_device_that_looks_unverified_for_a_moment_is_not_announced_when_verified_again() {
+        let mut known = None;
+        let space = vec![device("a", "PC", true), device("b", "Pixel", false)];
+        arrivals(&mut known, &space);
+        let mut shaky = space.clone();
+        shaky[1].state = DeviceState::Unverified;
+        assert!(arrivals(&mut known, &shaky).is_empty());
+        assert!(arrivals(&mut known, &space).is_empty());
     }
 
     #[test]

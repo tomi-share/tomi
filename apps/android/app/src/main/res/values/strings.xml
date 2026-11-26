@@ -426,6 +426,7 @@
     <string name="devices_add">Add a device</string>
     <string name="devices_empty">No devices in your space yet.</string>
     <string name="devices_this_device">This device</string>
+    <string name="devices_unverified">not verified</string>
     <string name="devices_rename">Rename</string>
     <string name="devices_revoke">Revoke</string>
     <string name="devices_revoke_title">Revoke “%1$s”?</string>

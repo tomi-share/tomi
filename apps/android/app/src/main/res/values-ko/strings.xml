@@ -412,6 +412,7 @@
     <string name="devices_add">기기 추가</string>
     <string name="devices_empty">아직 내 공간에 기기가 없어요.</string>
     <string name="devices_this_device">이 기기</string>
+    <string name="devices_unverified">확인되지 않음</string>
     <string name="devices_rename">이름 변경</string>
     <string name="devices_revoke">해지</string>
     <string name="devices_revoke_title">‘%1$s’을(를) 해지할까요?</string>

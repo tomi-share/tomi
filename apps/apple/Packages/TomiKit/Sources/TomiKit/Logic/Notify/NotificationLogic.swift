@@ -135,7 +135,9 @@ public struct NewDeviceNotifierState: Sendable {
         // alert about it would be a false alarm. It is announced if it becomes verified later.
         let verified = devices.filter(\.isVerified)
         let previous = known
-        known = Set(verified.map(\.id))
+        // A device already known that is listed unverified for a moment (the relay can send a certificate that proves
+        // nothing) stays known: it does not come back as a newcomer when it is verified again.
+        known = Set(verified.map(\.id)).union(devices.map(\.id).filter { previous?.contains($0) == true })
         guard let previous, !importing, !appVisible else { return [] }
         return verified.filter { !$0.isThisDevice && !previous.contains($0.id) }
     }

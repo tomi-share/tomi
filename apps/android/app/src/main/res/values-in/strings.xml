@@ -412,6 +412,7 @@
     <string name="devices_add">Tambahkan perangkat</string>
     <string name="devices_empty">Belum ada perangkat di ruang Anda.</string>
     <string name="devices_this_device">Perangkat ini</string>
+    <string name="devices_unverified">belum diverifikasi</string>
     <string name="devices_rename">Ganti nama</string>
     <string name="devices_revoke">Cabut</string>
     <string name="devices_revoke_title">Cabut “%1$s”?</string>

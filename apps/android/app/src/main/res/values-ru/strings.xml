@@ -456,6 +456,7 @@
     <string name="devices_add">Добавить устройство</string>
     <string name="devices_empty">В вашем пространстве пока нет устройств.</string>
     <string name="devices_this_device">Это устройство</string>
+    <string name="devices_unverified">не проверено</string>
     <string name="devices_rename">Переименовать</string>
     <string name="devices_revoke">Отозвать</string>
     <string name="devices_revoke_title">Отозвать «%1$s»?</string>

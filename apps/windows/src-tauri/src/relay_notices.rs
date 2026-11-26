@@ -1,11 +1,11 @@
 //! Devices the relay removed on its own authority, waiting to be told to the user once.
 //!
 //! The core hands each such revocation over exactly once (`TomiCore::take_relay_revocations`
-//! clears its persisted list). The bridge takes them after a change of the space, and the webview
-//! that is on screen picks them up here (`take_relay_notices`): taking again returns nothing, so
-//! the popover and the main window never both show the same notice. A window that is hidden does
-//! not take them (the front checks that it is visible), so a notice is never swallowed by a
-//! window nobody looks at. A device name and an id: nothing secret, nothing to wipe.
+//! clears its persisted list), so it is taken only when a window that is on screen asks
+//! (`take_relay_notices`, which calls [`collect`]): taking again returns nothing, so the popover
+//! and the main window never both show the same notice. A window that is hidden does not ask (the
+//! front checks that it is visible), so the notice stays in the core, which keeps it across a
+//! restart, until somebody can read it. A device name and an id: nothing secret, nothing to wipe.
 
 use std::sync::Mutex;
 
@@ -45,9 +45,9 @@ impl RelayNotices {
     }
 }
 
-/// Reads what the core has to tell and queues it. Returns whether the webviews should be told
-/// (something is pending). Called after a change of the space, never on a timer: a failure to
-/// read leaves the core's list untouched, so the next change tries again.
+/// Reads what the core has to tell and queues it. Returns whether something is pending. Called
+/// only on behalf of a window that is on screen, never on a timer: a failure to read leaves the
+/// core's list untouched, so the next look tries again.
 pub fn collect(core: &dyn TomiCore, notices: &RelayNotices) -> Result<bool, CoreError> {
     let fresh = core.take_relay_revocations()?;
     if fresh.is_empty() {

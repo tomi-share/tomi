@@ -51,6 +51,17 @@ final class NotificationLogicTests: XCTestCase {
         XCTAssertEqual(state.update(devices: [me, device("ghost")], appVisible: false).map(\.id), ["ghost"])
     }
 
+    func testAKnownDeviceTheRelayMakesLookUnverifiedForAMomentIsNotAnnouncedWhenVerifiedAgain() {
+        var state = NewDeviceNotifierState()
+        let me = device("me", mine: true)
+        let pc = device("pc")
+        XCTAssertTrue(state.update(devices: [me, pc], appVisible: false).isEmpty)
+        var shaky = pc
+        shaky.isVerified = false
+        XCTAssertTrue(state.update(devices: [me, shaky], appVisible: false).isEmpty)
+        XCTAssertTrue(state.update(devices: [me, pc], appVisible: false).isEmpty)
+    }
+
     func testTheDevicesOfAJoinOrAnUnreadListAreNotNews() {
         var state = NewDeviceNotifierState()
         XCTAssertTrue(state.update(devices: [], appVisible: false).isEmpty)

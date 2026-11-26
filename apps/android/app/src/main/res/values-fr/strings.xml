@@ -426,6 +426,7 @@
     <string name="devices_add">Ajouter un appareil</string>
     <string name="devices_empty">Aucun appareil dans ton espace pour l’instant.</string>
     <string name="devices_this_device">Cet appareil</string>
+    <string name="devices_unverified">non vérifié</string>
     <string name="devices_rename">Renommer</string>
     <string name="devices_revoke">Révoquer</string>
     <string name="devices_revoke_title">Révoquer « %1$s » ?</string>

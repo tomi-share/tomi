@@ -211,6 +211,8 @@ final class AppContainer {
     func surfaceVisibilityChanged(_ visible: Bool) {
         guard visible != surfaceVisible else { return }
         surfaceVisible = visible
+        // The notices the core hands over once are read only while a surface can show them.
+        core?.setNoticesWanted(visible)
         purgeTask?.cancel()
         purgeTask = nil
         if visible {

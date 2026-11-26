@@ -53,6 +53,20 @@ class NewDeviceDetectorTest {
     }
 
     @Test
+    fun aKnownDeviceThatTheRelayMakesLookUnverifiedForAMomentIsNotAnnouncedWhenItIsVerifiedAgain() {
+        detector.onDevices(listOf(me, phone), importing = false)
+        assertTrue(detector.onDevices(listOf(me, phone.copy(verified = false)), importing = false).isEmpty())
+        assertTrue(detector.onDevices(listOf(me, phone), importing = false).isEmpty())
+    }
+
+    @Test
+    fun aListWithoutThisDeviceIsNotAReference() {
+        detector.onDevices(listOf(me, phone), importing = false)
+        assertTrue(detector.onDevices(emptyList(), importing = false).isEmpty())
+        assertTrue(detector.onDevices(listOf(me, phone), importing = false).isEmpty())
+    }
+
+    @Test
     fun thisDeviceIsNeverAnnouncedToItself() {
         detector.onDevices(emptyList(), importing = false)
         assertTrue(detector.onDevices(listOf(me), importing = false).isEmpty())

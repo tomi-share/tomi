@@ -30,6 +30,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -65,7 +66,6 @@ sealed interface FeedEvent {
     data object PinFailed : FeedEvent
 
     /** The relay alone removed [revocation]'s device from the space: a one-time, non-blocking notice. */
-    data class RelayRevoked(val revocation: RelayRevocation) : FeedEvent
 
     /** A call on the core failed (network, storage...). The action did not happen; nothing is fatal. */
     data object ActionFailed : FeedEvent
@@ -123,10 +123,12 @@ class FeedViewModel(private val container: AppContainer) : ViewModel() {
     /** The removal of a device is not finished (the key rotation keeps failing): the feed header shows [RotationStalledBanner]. */
     val rotationStalled: StateFlow<Boolean> = core.rotationStalled
 
-    init {
-        // A device the relay alone removed: said once, as a plain notice (the core hands each one over a single time).
-        viewModelScope.launch { core.relayRevocations.collect { eventChannel.send(FeedEvent.RelayRevoked(it)) } }
-    }
+    /**
+     * Devices the relay alone removed: said once, as a plain notice. The core hands each one over a single time and keeps it until
+     * somebody collects, so this is collected only while the screen is started (see [FeedEventsEffect]), never by the view model
+     * itself, which outlives a stopped activity.
+     */
+    val relayRevocations: Flow<RelayRevocation> = core.relayRevocations
 
     private val merged = combine(core.items, revealed) { items, revealedSnapshots ->
         // An "after first read" secret leaves the core as soon as it is read; keep it on screen until it is hidden.

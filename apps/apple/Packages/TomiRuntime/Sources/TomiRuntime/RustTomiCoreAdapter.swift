@@ -106,10 +106,11 @@ public final class RustTomiCoreAdapter: TomiKit.TomiCore {
     private let supportsDemoEntry: Bool
     private var refreshPending = false
     private var wantsDoorbell = false
-    /// The app is on screen (`enterForeground` / `enterBackground` only). The notices the core hands over once are read only then:
-    /// a refresh in the background (a background refresh task) would take them with no screen to show them, and lose them if the
-    /// process is ended before the feed comes back.
-    private var isForeground = false
+    /// Something that can show the notices is on screen. The notices the core hands over once are read only then: a refresh in the
+    /// background (a background refresh task, a Mac with its popover closed) would take them with no screen to show them, and lose
+    /// them if the process is ended before the feed comes back. On iOS it follows `enterForeground` / `enterBackground`; on the Mac,
+    /// whose doorbell never stops, only `setNoticesWanted` changes it.
+    private var showsNotices = false
     private var doorbellRunning = false
     /// The current doorbell is being stopped by the app (not closed by the core).
     private var doorbellStopRequested = false
@@ -159,7 +160,7 @@ public final class RustTomiCoreAdapter: TomiKit.TomiCore {
         let core = self.core
         // What did not change keeps its storage (see `ItemReuse`): the merge runs off the main thread, with the read.
         let previous = state.items
-        let takeNotices = isForeground
+        let takeNotices = showsNotices
         guard let snapshot = try? await local.run({ Self.read(core, previous: previous, takeNotices: takeNotices) }) else { return }
         state.isDemo = snapshot.isDemo
         state.isPaired = snapshot.isPaired
@@ -657,8 +658,17 @@ public final class RustTomiCoreAdapter: TomiKit.TomiCore {
 
     // MARK: Foreground / background
 
+    public func setNoticesWanted(_ wanted: Bool) {
+        guard showsNotices != wanted else { return }
+        showsNotices = wanted
+        // Reads what the core kept while nothing could show it.
+        if wanted { scheduleRefresh() }
+    }
+
     public func enterForeground() {
-        isForeground = true
+        #if !os(macOS)
+        showsNotices = true
+        #endif
         wantsDoorbell = true
         startDoorbellIfNeeded()
         // Reads what the core kept for the notices while no screen was there.
@@ -669,7 +679,9 @@ public final class RustTomiCoreAdapter: TomiKit.TomiCore {
     /// Stops the doorbell and erases the decrypted files, inside an iOS background task so the
     /// erasure is not cut short by the suspension.
     public func enterBackground() {
-        isForeground = false
+        #if !os(macOS)
+        showsNotices = false
+        #endif
         wantsDoorbell = false
         stopDoorbell()
         #if canImport(UIKit)

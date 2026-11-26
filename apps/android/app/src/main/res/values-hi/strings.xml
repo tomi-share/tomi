@@ -426,6 +426,7 @@
     <string name="devices_add">डिवाइस जोड़ें</string>
     <string name="devices_empty">आपके स्पेस में अभी कोई डिवाइस नहीं है।</string>
     <string name="devices_this_device">यह डिवाइस</string>
+    <string name="devices_unverified">पुष्टि नहीं हुई</string>
     <string name="devices_rename">नाम बदलें</string>
     <string name="devices_revoke">निरस्त करें</string>
     <string name="devices_revoke_title">“%1$s” को निरस्त करें?</string>

@@ -113,11 +113,18 @@ class NewDeviceDetector {
 
     @Synchronized
     fun onDevices(devices: List<Device>, importing: Boolean): List<Device> {
+        // A list without this device is not read yet (a failed read gives an empty one): not a reference, or the next
+        // good list would announce every device of the space.
+        if (devices.none { it.isThisDevice }) return emptyList()
         val previous = known
         // Only a device whose certificate the space accepted counts: the relay alone can list one that nobody added, and an
-        // alert about it would be a false alarm. It is announced if it becomes verified later.
+        // alert about it would be a false alarm. It is announced if it becomes verified later. A device already known that
+        // is listed unverified for a moment (the relay can send a certificate that proves nothing) stays known: it does not
+        // come back as a newcomer when it is verified again.
         val verified = devices.filter { it.verified }
-        known = verified.mapTo(HashSet()) { it.id }
+        known = verified.mapTo(HashSet()) { it.id }.also { ids ->
+            previous?.let { p -> devices.mapNotNullTo(ids) { d -> d.id.takeIf { it in p } } }
+        }
         if (previous == null || importing) return emptyList()
         return verified.filter { it.id !in previous && !it.isThisDevice }
     }

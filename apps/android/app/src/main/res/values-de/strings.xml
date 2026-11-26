@@ -426,6 +426,7 @@
     <string name="devices_add">Gerät hinzufügen</string>
     <string name="devices_empty">Noch keine Geräte in deinem Raum.</string>
     <string name="devices_this_device">Dieses Gerät</string>
+    <string name="devices_unverified">nicht bestätigt</string>
     <string name="devices_rename">Umbenennen</string>
     <string name="devices_revoke">Ausschließen</string>
     <string name="devices_revoke_title">„%1$s“ ausschließen?</string>

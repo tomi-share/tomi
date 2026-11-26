@@ -456,6 +456,7 @@
     <string name="devices_add">Dodaj urządzenie</string>
     <string name="devices_empty">W twojej przestrzeni nie ma jeszcze urządzeń.</string>
     <string name="devices_this_device">To urządzenie</string>
+    <string name="devices_unverified">niezweryfikowane</string>
     <string name="devices_rename">Zmień nazwę</string>
     <string name="devices_revoke">Unieważnij</string>
     <string name="devices_revoke_title">Unieważnić „%1$s”?</string>

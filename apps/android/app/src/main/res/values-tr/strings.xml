@@ -426,6 +426,7 @@
     <string name="devices_add">Cihaz ekle</string>
     <string name="devices_empty">Alanınızda henüz cihaz yok.</string>
     <string name="devices_this_device">Bu cihaz</string>
+    <string name="devices_unverified">doğrulanmadı</string>
     <string name="devices_rename">Yeniden adlandır</string>
     <string name="devices_revoke">Erişimi kes</string>
     <string name="devices_revoke_title">“%1$s” cihazının erişimi kesilsin mi?</string>

@@ -210,6 +210,9 @@ fun DevicesScreen(viewModel: DevicesViewModel, onBack: () -> Unit, onAddDevice: 
                                     if (device.isThisDevice) stringResource(R.string.devices_this_device) else null,
                                     platform,
                                     activity,
+                                    // The space does not vouch for this device (the relay lists it with a certificate that proves
+                                    // nothing): shown so that it can be revoked, never announced as a newcomer.
+                                    if (!device.verified) stringResource(R.string.devices_unverified) else null,
                                 )
                                 val inactiveDays = DeviceInactivity.inactiveDays(device, Instant.now())
                                 Column {

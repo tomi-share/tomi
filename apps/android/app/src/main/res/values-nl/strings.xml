@@ -426,6 +426,7 @@
     <string name="devices_add">Apparaat toevoegen</string>
     <string name="devices_empty">Nog geen apparaten in je ruimte.</string>
     <string name="devices_this_device">Dit apparaat</string>
+    <string name="devices_unverified">niet geverifieerd</string>
     <string name="devices_rename">Naam wijzigen</string>
     <string name="devices_revoke">Intrekken</string>
     <string name="devices_revoke_title">Toegang van “%1$s” intrekken?</string>

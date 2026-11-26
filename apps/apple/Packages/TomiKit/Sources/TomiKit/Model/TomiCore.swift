@@ -181,9 +181,14 @@ public protocol TomiCore: AnyObject {
     func enterForeground()
     /// The app left the screen: stop the doorbell, erase the decrypted files.
     func enterBackground()
+    /// A surface that can show the notices the core hands over once (a device the relay removed) is on screen, or not. The core
+    /// clears such a notice when it gives it, so it is read only while someone can see it. On iOS this follows
+    /// `enterForeground` / `enterBackground`; the Mac, whose doorbell never stops, tells it when its popover or window opens and closes.
+    func setNoticesWanted(_ wanted: Bool)
 }
 
 public extension TomiCore {
+    func setNoticesWanted(_ wanted: Bool) {}
     var canEnterDemo: Bool { false }
     var canLeaveDemo: Bool { false }
     func enterDemo() async throws { throw TomiCoreError(.invalidInput, reason: "demo entry not supported") }

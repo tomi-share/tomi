@@ -442,6 +442,7 @@
     <string name="devices_add">Agregar un dispositivo</string>
     <string name="devices_empty">Todavía no hay dispositivos en tu espacio.</string>
     <string name="devices_this_device">Este dispositivo</string>
+    <string name="devices_unverified">no verificado</string>
     <string name="devices_rename">Cambiar nombre</string>
     <string name="devices_revoke">Revocar</string>
     <string name="devices_revoke_title">¿Revocar “%1$s”?</string>

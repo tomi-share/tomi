@@ -638,7 +638,7 @@ pub async fn app_info(app: AppHandle, state: State<'_, AppState>) -> AppResult<A
 /// it only while it is visible.
 #[tauri::command]
 pub fn take_relay_notices(state: State<'_, AppState>) -> Vec<RelayRevocation> {
-    state.relay_notices.take()
+    crate::events::relay_notices_for_a_visible_window(state.core.as_ref(), &state.relay_notices)
 }
 
 /// "Essayer avec des données de démonstration": enters the demo space of the real core (fictitious
