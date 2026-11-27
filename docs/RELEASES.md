@@ -55,7 +55,7 @@ as it is (or deleted) and never written to again.
 Android and Windows together, from `main` only. The repository must be public: the attestations that the release notes tell users
 to verify exist only for public repositories.
 
-1. Choose the version `X.Y.Z`. It is the same for both apps, and a release always contains both, even if only one changed.
+1. Choose the version `X.Y.Z`. It is the same for both apps. A pushed tag builds and publishes both; to ship only one app, see "A partial release" below.
    - Android: set `versionName = "X.Y.Z"` **and raise `versionCode`** in `apps/android/app/build.gradle.kts`. Android refuses an
      update whose `versionCode` did not grow, so this is a one-way door: never lower it, never reuse it.
    - Windows: set the same `version` in `apps/windows/src-tauri/tauri.conf.json`, `apps/windows/package.json` and
@@ -64,7 +64,7 @@ to verify exist only for public repositories.
      Nothing checks it, since the release does not carry the Apple apps.
 2. Add the user-visible changes to `CHANGELOG.md`, commit, and get it onto `main` (rebase, never a merge commit).
 3. Optional dry run, no tag needed: **Actions > Release apps > Run workflow**, with the tag you are about to create (for example
-   `v0.2.0`). It runs every check and both builds, and publishes nothing.
+   `v0.2.0`), both apps ticked and **Publish** unticked. It runs every check and both builds, and publishes nothing.
 4. Tag the commit on `main` and push the tag:
 
    ```sh
@@ -77,11 +77,30 @@ to verify exist only for public repositories.
    or did not go up; the commit is not on `main`; the repository is private; `ALLOW_UNSIGNED_WINDOWS_RELEASE` is not `true` (while
    the installer is unsigned); the Android release signing secrets are missing, or the APK is debuggable, debug-signed, unsigned
    or signed by another certificate; either build fails; a release already exists for the tag; or an attestation does not verify.
-   Nothing is published unless **both** files are good.
+   Nothing is published unless every file of the release is good.
 6. Otherwise it creates a **draft** release with the files (`tomi-android-X.Y.Z.apk`, `tomi-windows-X.Y.Z-setup.exe`, each with its
    `.sha256`) and generated notes (protocol compatibility, path-scoped changes, verification commands, and for Android the
    certificate fingerprint), verifies the attestation of each file, and publishes it as the repository's "Latest". Then check it:
    `gh release view v0.2.0`, and run the verification commands of the notes on a downloaded copy.
+
+### A partial release (one app only)
+
+When only one app has changed (say a Windows fix), you do not have to rebuild and re-version the other one. **Actions > Release apps >
+Run workflow**, from `main`, with the tag `vX.Y.Z`, the box of the app to build ticked, the other unticked, and **Publish** ticked:
+
+- The checks cover only the app being built: its version files must equal `X.Y.Z` and go up. The other app's files are left alone
+  (its in-app version stays what it was).
+- The file of the app that is not built is **carried over unchanged** from the newest earlier stable release that holds one
+  (`tomi-android-0.2.0.apk` stays named `0.2.0`, with its own `.sha256`), after its checksum is verified; a carried APK also goes
+  through the APK check again and, like every file, its build provenance attestation is verified before publishing. The release
+  therefore always holds an APK and an installer, and "Latest" is never missing one.
+- The notes say which file is carried over and from which release, and list only the changes of the built app plus `crates/core` and `spec`.
+- Unlike a pushed tag (which always builds both), a manual publish does not need the tag to exist: the release creates it on the
+  commit of the run, which must be on `main` and the tip of the branch. The tag must not exist yet.
+- The first grouped release must build both apps: there is nothing earlier to carry over. If an earlier file has no attestation
+  (it was built while the repository was private), the verification stops the run, and so does a file whose checksum does not match.
+
+Leave **Publish** unticked for a dry run: the same checks and builds, nothing published.
 
 A published tag is never reused, a stable release is never replaced with `--clobber`, and a mistake is fixed forward with the next
 version. When you only want a build to try, run a development build (`*-dev-<run>`) from **Actions > Build apps**.

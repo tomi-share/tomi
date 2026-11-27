@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Checks that a stable release tag matches the versions stored in the repository (docs/RELEASES.md, rule 1).
 #
-#   check-release-version.sh v1.2.3
+#   check-release-version.sh v1.2.3                  # Android and Windows
+#   check-release-version.sh v1.2.3 windows          # a partial release: only the listed apps are checked (comma separated)
 #
 # One tag, one version number for every app that ships from GitHub (Android and Windows; macOS is set aside until it can be
 # built and signed in CI, iOS is distributed through the stores). Run it from the repository root, on the commit that carries
@@ -12,6 +13,7 @@
 #           than the one of the previous release (Android refuses to update an app whose versionCode did not grow).
 # Windows:  `version` in apps/windows/src-tauri/tauri.conf.json, apps/windows/package.json and apps/windows/src-tauri/Cargo.toml
 #           all equal the tag version.
+# A partial release (second argument) checks only the listed apps; the others are carried over from the previous release.
 # Both:     the version is strictly greater than the one of the previous release of that app (a published tag is never reused,
 #           and nothing goes backwards). The previous release is the highest earlier `vX.Y.Z` tag or, before the grouped
 #           releases existed, the highest `android-vX.Y.Z` / `windows-vX.Y.Z` tag of that app.
@@ -24,7 +26,12 @@ fail() {
 }
 
 tag="${1:-}"
-[ -n "$tag" ] || fail "usage: check-release-version.sh <vX.Y.Z>"
+[ -n "$tag" ] || fail "usage: check-release-version.sh <vX.Y.Z> [android,windows]"
+# The apps this release builds. An app left out is not checked here: the release carries over its file from the previous release.
+platforms="${2:-android,windows}"
+want() { case ",${platforms}," in *",$1,"*) return 0 ;; *) return 1 ;; esac; }
+[ -n "${platforms//,/}" ] || fail "no app selected."
+[[ "$platforms" =~ ^(android|windows)(,(android|windows))?$ ]] || fail "unknown app list '$platforms' (expected android, windows or android,windows)."
 
 if [[ "$tag" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
   version="${BASH_REMATCH[1]}"
@@ -62,30 +69,36 @@ greater() { # <a> <b>
 }
 
 # --- Android ---------------------------------------------------------------------------------------------------------------
-android_previous="$(previous_tag_of android)"
-name="$(gradle_value versionName)"
-code="$(gradle_value versionCode)"
-[ "$name" = "$version" ] || fail "$gradle_file has versionName \"$name\" but the tag says $version."
-[[ "$code" =~ ^[0-9]+$ ]] || fail "versionCode in $gradle_file is not a number ('$code')."
-if [ -n "$android_previous" ]; then
-  prev_code="$(gradle_value versionCode "$android_previous")"
-  prev_name="$(gradle_value versionName "$android_previous")"
-  [[ "$prev_code" =~ ^[0-9]+$ ]] || fail "could not read the versionCode of $android_previous."
-  [ "$code" -gt "$prev_code" ] || fail "versionCode $code is not greater than $prev_code of $android_previous: Android would refuse the update. Raise versionCode."
-  greater "$version" "$prev_name" || fail "version $version is not greater than $prev_name of $android_previous (Android)."
+android_previous=""
+if want android; then
+  android_previous="$(previous_tag_of android)"
+  name="$(gradle_value versionName)"
+  code="$(gradle_value versionCode)"
+  [ "$name" = "$version" ] || fail "$gradle_file has versionName \"$name\" but the tag says $version."
+  [[ "$code" =~ ^[0-9]+$ ]] || fail "versionCode in $gradle_file is not a number ('$code')."
+  if [ -n "$android_previous" ]; then
+    prev_code="$(gradle_value versionCode "$android_previous")"
+    prev_name="$(gradle_value versionName "$android_previous")"
+    [[ "$prev_code" =~ ^[0-9]+$ ]] || fail "could not read the versionCode of $android_previous."
+    [ "$code" -gt "$prev_code" ] || fail "versionCode $code is not greater than $prev_code of $android_previous: Android would refuse the update. Raise versionCode."
+    greater "$version" "$prev_name" || fail "version $version is not greater than $prev_name of $android_previous (Android)."
+  fi
 fi
 
 # --- Windows ---------------------------------------------------------------------------------------------------------------
-windows_previous="$(previous_tag_of windows)"
-tauri="$(jq -r .version "$tauri_file")"
-package="$(jq -r .version "$package_file")"
-cargo="$(cargo_package_version)"
-[ "$tauri" = "$version" ] || fail "$tauri_file has version \"$tauri\" but the tag says $version."
-[ "$package" = "$version" ] || fail "$package_file has version \"$package\" but the tag says $version."
-[ "$cargo" = "$version" ] || fail "$cargo_file has version \"$cargo\" but the tag says $version."
-if [ -n "$windows_previous" ]; then
-  prev_version="$(git show "$windows_previous:$tauri_file" | jq -r .version)"
-  greater "$version" "$prev_version" || fail "version $version is not greater than $prev_version of $windows_previous (Windows)."
+windows_previous=""
+if want windows; then
+  windows_previous="$(previous_tag_of windows)"
+  tauri="$(jq -r .version "$tauri_file")"
+  package="$(jq -r .version "$package_file")"
+  cargo="$(cargo_package_version)"
+  [ "$tauri" = "$version" ] || fail "$tauri_file has version \"$tauri\" but the tag says $version."
+  [ "$package" = "$version" ] || fail "$package_file has version \"$package\" but the tag says $version."
+  [ "$cargo" = "$version" ] || fail "$cargo_file has version \"$cargo\" but the tag says $version."
+  if [ -n "$windows_previous" ]; then
+    prev_version="$(git show "$windows_previous:$tauri_file" | jq -r .version)"
+    greater "$version" "$prev_version" || fail "version $version is not greater than $prev_version of $windows_previous (Windows)."
+  fi
 fi
 
 echo "version=$version"

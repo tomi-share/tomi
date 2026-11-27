@@ -91,7 +91,7 @@ and the Windows NSIS installer, then publishes them as the immutable pre-release
 `windows-dev-<run>` (one per run, the last three of each are kept; `publish=false`: artifacts only). macOS/iOS builds are not run in CI, because macOS runners are more expensive.
 Stable releases are cut from a `vX.Y.Z` tag (one version, one release for Android and Windows) by `.github/workflows/release-apps.yml`, which
 calls the same build jobs and refuses to publish unless the versions, the commit and the files check out; `release-apps.yml` has
-a dry run (Actions > Release apps > Run workflow). The checks can be run locally:
+a dry run and partial releases (Actions > Release apps > Run workflow: choose Android and/or Windows). The checks can be run locally:
 `bash .github/scripts/check-release-version.sh v0.2.0`. Tag naming, the step-by-step procedure and changelog rules:
 see [RELEASES.md](RELEASES.md).
 
