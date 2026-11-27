@@ -87,6 +87,7 @@ env:
   CARGO_TERM_COLOR: always
   RUST_VERSION: "1.99"
   NDK_VERSION: "27.0.12077973"
+  CARGO_NDK_VERSION: "4.1.2"
 
 # Actions pinned by SHA (readable tag in a comment):
 #   actions/checkout          v6.1.0   d23441a48e516b6c34aea4fa41551a30e30af803
@@ -136,7 +137,7 @@ jobs:
         with:
           key: build-apps-android
       - name: cargo-ndk
-        run: cargo install cargo-ndk --locked
+        run: cargo install cargo-ndk --locked --version "$CARGO_NDK_VERSION"
       # Release key from the repository secrets (docs/RELEASES.md). All four secrets or none: with none, the APK stays unsigned
       # (labelled, never published); with only some, the run fails rather than silently falling back to something weaker.
       - name: Release key

@@ -241,13 +241,13 @@ fn setup(app: &mut tauri::App) -> SetupResult {
     std::fs::create_dir_all(&staging_dir)?;
     let paths = Arc::new(PathRegistry::new(&staging_dir));
 
-    // The real core, unless this is a debug build started with `TOMI_DEMO=1`: the in-memory
     // A secret copied by a run that crashed is still on the clipboard (nothing wiped it): empty
     // it now, only if it still carries Tomi's secret marker (never reading the content).
     std::thread::spawn(|| {
         let _ = clipboard::clear_leftover_secret();
     });
 
+    // The real core, unless this is a debug build started with `TOMI_DEMO=1`: the in-memory
     // stand-in, nothing is encrypted, stored or sent. A release build does not compile the
     // stand-in; its way into a demo is the real core's demo space, entered from the pairing
     // screen (`commands::enter_demo`).

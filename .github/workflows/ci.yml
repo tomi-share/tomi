@@ -40,6 +40,7 @@ env:
   # Aligned with docs/DEV.md (Rust 1.99). Change it here, in one place only, when upgrading.
   RUST_VERSION: "1.99"
   NDK_VERSION: "27.0.12077973"
+  CARGO_NDK_VERSION: "4.1.2"
 
 # Actions pinned by full commit SHA (the readable tag is in a comment).
 #   actions/checkout                 v6.1.0   d23441a48e516b6c34aea4fa41551a30e30af803
@@ -275,7 +276,7 @@ jobs:
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - name: cargo-ndk and native libraries
         run: |
-          cargo install cargo-ndk --locked
+          cargo install cargo-ndk --locked --version "$CARGO_NDK_VERSION"
           cargo ndk -t arm64-v8a -t x86_64 -o apps/android/app/src/main/jniLibs build -p tomi-core --locked
       - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
         with:

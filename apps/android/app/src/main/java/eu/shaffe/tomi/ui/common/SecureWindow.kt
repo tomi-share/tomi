@@ -90,13 +90,13 @@ private object SensitiveWindowProtection {
     }
 }
 
-/** One counter for the whole app, keyed by window: FLAG_SECURE (and the protection above) is set by the first user and cleared by the last. */
 /** Windows whose overlays are hidden ([FlagSecureEffect] `hideOverlays`): set by the first screen that asks, cleared by the last. */
 private val overlayHiddenWindows = ReferenceCounter<Window>(
     onFirst = { it.setHideOverlayWindows(true) },
     onLast = { it.setHideOverlayWindows(false) },
 )
 
+/** One counter for the whole app, keyed by window: FLAG_SECURE (and the protection above) is set by the first user and cleared by the last. */
 private val secureWindows = ReferenceCounter<Window>(
     onFirst = {
         it.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)

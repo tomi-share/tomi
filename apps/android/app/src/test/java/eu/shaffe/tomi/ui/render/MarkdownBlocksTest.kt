@@ -304,10 +304,15 @@ class MarkdownBlocksTest {
         val used = (0 until 300).joinToString(" ") { "[l$it]" }
         val md = used + "\n\n" + lines(100) + "\n\n" + (0 until 120_000).joinToString("\n") { "[d$it]: u" }
         assertTrue(md.length > 1_000_000)
-        val start = System.nanoTime()
+        // CPU time of this thread, after one warm-up run: the wall clock of a loaded machine (a
+        // build running alongside) and a cold JIT made this test fail without any regression. A
+        // quadratic version needs minutes for 120 000 definitions, so the bound stays far from it.
+        val cpu = java.lang.management.ManagementFactory.getThreadMXBean()
+        preview(md)
+        val start = cpu.currentThreadCpuTime
         repeat(3) { preview(md) }
-        val ms = (System.nanoTime() - start) / 3_000_000
-        assertTrue("preview of 1 MiB took $ms ms", ms < 1_000)
+        val ms = (cpu.currentThreadCpuTime - start) / 3_000_000
+        assertTrue("preview of 1 MiB took $ms ms of CPU", ms < 2_000)
     }
 
     @Test
