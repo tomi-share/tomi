@@ -29,7 +29,7 @@ body:
     attributes:
       label: Version
       description: App version or release tag, or the commit if you build from source.
-      placeholder: "relay-v0.5.2, android-dev, commit abc1234"
+      placeholder: "relay-v0.5.2, android-dev-42, commit abc1234"
     validations:
       required: true
   - type: input

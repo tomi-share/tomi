@@ -1,7 +1,8 @@
 name: Build apps
 
 # Builds the Android APK and the Windows installer (NSIS) on demand, then publishes them to the
-# GitHub pre-releases `android-dev` and `windows-dev`. Manual trigger only: a Windows runner counts
+# GitHub pre-releases `android-dev-<run>` and `windows-dev-<run>` (one immutable pre-release per run, the last three
+# are kept; docs/RELEASES.md). Manual trigger only: a Windows runner counts
 # double against the quota of private repositories (limited minutes per month on the Free plan), so
 # there is no build on every push. macOS / iOS: deliberately absent (a macOS runner costs 10x the rate).
 #
@@ -32,7 +33,7 @@ name: Build apps
 #   SIGNPATH_SIGNING_POLICY_SLUG    variable: the signing policy (release-signing, each request approved by hand)
 
 # Also callable (`workflow_call`) by release-apps.yml, which builds exactly the same files for a stable tag and publishes them
-# itself: `publish` is then false, so the rolling pre-release step below never runs for a stable release. The called jobs
+# itself: `publish` is then false, so the development pre-release step below never runs for a stable release. The called jobs
 # need the `id-token` and `attestations` permissions that the caller grants them.
 on:
   workflow_dispatch:
@@ -482,46 +483,50 @@ jobs:
             (cd "$(dirname "$1")" && sha256sum --check "$(basename "$1").sha256")
           }
 
-          # Rolling development pre-releases; created on first use (see docs/RELEASES.md). Refuses to touch a release that is
-          # not a pre-release, so that this workflow can never overwrite the assets of a stable release.
-          ensure_release() {
-            if gh release view "$1" >/dev/null 2>&1; then
-              if [ "$(gh release view "$1" --json isPrerelease --jq .isPrerelease)" != "true" ]; then
-                echo "::error title=Release::$1 is not a pre-release: refusing to replace its assets."
+          # Development builds: one immutable pre-release per run, tagged `android-dev-<run number>` / `windows-dev-<run number>`. Releases are immutable on
+          # this repository, so a published release can never be changed and its tag can never be reused: no rolling `*-dev`
+          # pointer, no --clobber (docs/RELEASES.md). Draft first (assets can only be added while it is a draft), then published.
+          # `--latest=false`: the repository's "latest" release is not meant to say which product is newest.
+          KEEP_DEV_BUILDS=3
+          RUN_TAG="${GITHUB_RUN_NUMBER}"
+          if [ "${GITHUB_RUN_ATTEMPT:-1}" != "1" ]; then RUN_TAG="${RUN_TAG}-r${GITHUB_RUN_ATTEMPT}"; fi
+
+          # Publishes the files after the title `$3` as the pre-release `$1-$RUN_TAG`, then prunes the oldest `$1-*` builds so that
+          # only the last $KEEP_DEV_BUILDS remain. Deleting a release is allowed, only reusing its tag is not, and the tags carry
+          # the run number, which never repeats.
+          publish_dev() {
+            local product="$1" title="$2" tag main
+            shift 2
+            tag="${product}-${RUN_TAG}"
+            main="$(basename "$1")"
+            # A draft left over by an earlier failed attempt of this very run holds no tag yet: replace it. A published release
+            # with this tag is immutable and stops the run.
+            if gh release view "$tag" >/dev/null 2>&1; then
+              if [ "$(gh release view "$tag" --json isDraft --jq .isDraft)" != "true" ]; then
+                echo "::error title=Release::$tag is already published and immutable: it cannot be replaced."
                 exit 1
               fi
-            else
-              gh release create "$1" --prerelease --target "$SHA" --title "$2" \
-                --notes "Rolling development build. Not a stable release (see docs/RELEASES.md)."
+              gh release delete "$tag" --yes
             fi
-          }
-
-          # Replaces the assets of the rolling release `$1` with the files after the title `$2`, removes the other assets, and
-          # states in the notes which commit and run produced them and how to verify them. `--clobber` is deliberate and limited
-          # to these rolling `*-dev` pre-releases, which are replaced by design; every replacement comes with a new checksum
-          # and a new build-provenance attestation, and the notes name the commit. Stable releases (`*-vX.Y.Z` tags) must never
-          # use --clobber: they are created once, and a fix is a new version (docs/RELEASES.md, rule 1).
-          publish_rolling() {
-            local tag="$1" title="$2" main keep=" " f asset
-            shift 2
-            main="$(basename "$1")"
-            ensure_release "$tag" "$title"
-            gh release upload "$tag" "$@" --clobber
-            for f in "$@"; do keep="${keep}$(basename "$f") "; done
-            gh release view "$tag" --json assets --jq '.assets[].name' | while read -r asset; do
-              case "$keep" in
-                *" ${asset} "*) ;;
-                *) echo "Removing stale asset: ${asset}"; gh release delete-asset "$tag" "$asset" --yes ;;
-              esac
-            done
-            gh release edit "$tag" --notes "Rolling development build: its assets are REPLACED by every run of the workflow, so this is not a stable release (see docs/RELEASES.md).
+            gh release create "$tag" --draft --prerelease --latest=false --target "$SHA" --title "${title} #${GITHUB_RUN_NUMBER}" \
+              --notes "Development build, not a stable release (see docs/RELEASES.md). This release is immutable; only the last ${KEEP_DEV_BUILDS} development builds of this product are kept.
 
           Built from commit ${SHA} by ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
 
           Verify a download (details in docs/RELEASES.md, \"Verifying a download\"):
 
               sha256sum --check ${main}.sha256
-              gh attestation verify ${main} --repo ${GITHUB_REPOSITORY}"
+              gh attestation verify ${main} --repo ${GITHUB_REPOSITORY}" \
+              "$@"
+            gh release edit "$tag" --draft=false
+
+            # Prune. Never touches stable releases: their tags (`<product>-vX.Y.Z`) do not start with `<product>-`, here `android-dev-` / `windows-dev-`.
+            gh release list --limit 100 --json tagName,createdAt \
+              | jq -r --arg p "${product}-" '[.[] | select(.tagName | startswith($p))] | sort_by(.createdAt) | reverse | .['"$KEEP_DEV_BUILDS"':][].tagName' \
+              | while read -r old; do
+                  echo "Removing old development build: ${old}"
+                  gh release delete "$old" --cleanup-tag --yes
+                done
           }
 
           if [ "$ANDROID_RESULT" = "success" ] && [ "$ANDROID_PUBLISHABLE" = "true" ]; then
@@ -530,7 +535,7 @@ jobs:
             verify_checksum "$apk"
             # Second, independent run of the check, on the file that is about to be uploaded (not on the build job's copy).
             bash .github/scripts/verify-android-apk.sh "$apk" "$EXPECTED_CERT"
-            publish_rolling android-dev "Android development build" "$apk" "$apk.sha256"
+            publish_dev android-dev "Android development build" "$apk" "$apk.sha256"
           elif [ "$ANDROID_RESULT" = "success" ]; then
             echo "::notice title=Android::The APK is not a signed release build: not published."
           fi
@@ -539,6 +544,6 @@ jobs:
             exe="$(find dl -name tomi-windows-setup.exe | head -n 1)"
             test -n "$exe"
             verify_checksum "$exe"
-            publish_rolling windows-dev "Windows development build" "$exe" "$exe.sha256"
+            publish_dev windows-dev "Windows development build" "$exe" "$exe.sha256"
           fi
           echo "Published from ${SHA}."

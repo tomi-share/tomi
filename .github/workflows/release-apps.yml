@@ -107,7 +107,7 @@ jobs:
     name: Build
     needs: prepare
     # A called workflow cannot ask for more than its caller grants, even for a job that is skipped. build-apps.yml has a
-    # `publish` job (rolling pre-releases) that asks for `contents: write`; it never runs here (`publish: false` below),
+    # `publish` job (development pre-releases) that asks for `contents: write`; it never runs here (`publish: false` below),
     # and the build jobs themselves only ask for `contents: read`, so they keep that.
     permissions:
       contents: write

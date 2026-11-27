@@ -9,15 +9,20 @@ version; there is no global version number. Client/relay compatibility is carrie
 | Product | Tag | GitHub release | Trigger | Status |
 |---|---|---|---|---|
 | Relay | `relay-vX.Y.Z` | Linux binaries | push of the tag (`release-relay.yml`) | **in place** |
-| Android, development | `android-dev` | rolling pre-release, release-signed APK `tomi-android-release.apk` (only when the release key is configured, see "Android release signing") | manual run of `build-apps.yml` | **in place** |
-| Windows, development | `windows-dev` | rolling pre-release, `tomi-windows-setup.exe` (unsigned) with `.sha256` and a build provenance attestation | manual run of `build-apps.yml` | **in place** |
+| Android, development | `android-dev-<run>` | one immutable pre-release per run, release-signed APK `tomi-android-release.apk` (only when the release key is configured, see "Android release signing") | manual run of `build-apps.yml` | **in place** |
+| Windows, development | `windows-dev-<run>` | one immutable pre-release per run, `tomi-windows-setup.exe` (unsigned) with `.sha256` and a build provenance attestation | manual run of `build-apps.yml` | **in place** |
 | Android, stable | `android-vX.Y.Z` | non-prerelease: APK signed with the release key, `.sha256`, attestation, notes | push of the tag (`release-apps.yml`) | **in place**, not run yet ("Cutting a stable release") |
 | Windows, stable | `windows-vX.Y.Z` | non-prerelease: NSIS installer (not code-signed yet), `.sha256`, attestation, notes | push of the tag (`release-apps.yml`) | **in place**, not run yet; needs the repository variable `ALLOW_UNSIGNED_WINDOWS_RELEASE` until the installer is signed |
 | CLI | `cli-vX.Y.Z` | binaries | push of the tag | planned |
 | iOS | none | distributed through TestFlight / App Store | | not applicable |
 
-The `*-dev` releases are rolling: they are created on first use by the workflow and their assets are overwritten by
-each build. They are always marked as pre-releases and are not stable releases.
+The `*-dev-<run>` releases are development builds, one per run of the workflow (`<run>` is the run number, with `-rN` appended
+on a re-run). Each is created as a draft, filled, then published, and from then on it is immutable like every release of this
+repository. The workflow keeps the last three of each product and deletes the older ones with their tag (deleting is allowed;
+reusing a tag is not, and the run number never repeats). They are always marked as pre-releases and are not stable releases.
+To fetch the newest one: `gh release list --limit 5`, or `gh release download android-dev-<run>`. The former rolling
+`android-dev` tag is a dead name: GitHub never lets the tag of an immutable release be reused, so it is left
+as it is (or deleted) and never written to again.
 
 ## Rules
 
@@ -66,7 +71,7 @@ verify exist only for public repositories.
    and run the verification commands of the notes on a downloaded copy.
 
 A published tag is never reused, a stable release is never replaced with `--clobber`, and a mistake is fixed forward with the next
-version. When you only want a build to try, run the rolling `*-dev` builds from **Actions > Build apps**.
+version. When you only want a build to try, run a development build (`*-dev-<run>`) from **Actions > Build apps**.
 
 ## Android release signing
 
@@ -78,7 +83,7 @@ through `run-as` or JDWP), and a build signed with a debug key has no safe updat
 
 `.github/workflows/build-apps.yml` (manual run; input `android_variant`, default `release`):
 
-| Situation | Artifact (workflow artifact `android-apk`) | Published to `android-dev`? |
+| Situation | Artifact (workflow artifact `android-apk`) | Published to `android-dev-<run>`? |
 |---|---|---|
 | `release`, the four secrets below are set | `tomi-android-release.apk`, signed with the release key | **Yes**, after the APK check |
 | `release`, no secret (a fork, a contributor) | `tomi-android-release-UNSIGNED.apk`, does not install | No |
@@ -169,14 +174,13 @@ Limits to know about:
   can replace its `.sha256` too. The attestation and, for Android, the signing certificate are the checks that count.
 - Attestation says *where the file was built from*, not that the source is free of bugs or that nobody with write access
   changed the workflow. It is evidence for a user, not a substitute for reviewing the repository.
-- The rolling `android-dev` and `windows-dev` pre-releases are **replaced by every run** (`gh release upload --clobber`). That is
-  deliberate and limited to those two tags (the relay workflow no longer keeps a rolling pointer: releases are immutable): a rolling channel
-  is meant to be overwritten, the workflow refuses to touch a
-  release that is not a pre-release, removes stale assets, and states in the release notes which commit and which workflow
-  run produced the current files; each replacement has its own checksum and its own attestation. **Stable releases never use
-  `--clobber`**: they are created once from a `*-vX.Y.Z` tag, a published tag is never reused (rule 1), and a fix is a new version.
-  When the stable workflows exist, also enable GitHub's *immutable releases* setting so that published assets cannot be
-  altered after the fact.
+- Development builds (`android-dev-<run>`, `windows-dev-<run>`) are **never replaced**: GitHub's *immutable releases* setting is on
+  for this repository, so once published a release cannot get, lose or change an asset, and its tag can never be reused, not even
+  after the release is deleted. A moving "latest dev" pointer is therefore impossible; each run publishes a new pre-release
+  whose notes state which commit and which workflow run produced it, with its own checksum and its own attestation. Only the
+  pruning deletes anything, and only whole development releases (with their tag). No workflow uses `--clobber`; stable
+  releases are created once from a `*-vX.Y.Z` tag, a published tag is never reused (rule 1), and a fix is a new version.
+  Keep the *immutable releases* setting on: it is what makes a published file impossible to alter after the fact.
 - In the Android job the signing secrets are in the environment of the Gradle step that builds and signs the APK, and that step
   also compiles the Rust dependencies. A compromised build-time dependency could therefore read them. What reduces this:
   dependency versions pinned by lockfiles and audited in CI (`security.yml`), actions pinned by commit SHA, and keeping the
