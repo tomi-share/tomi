@@ -273,6 +273,8 @@
   const rowMenus = $derived(expanded && canRemoveFromBatch(item) && !gone);
   /** Slot of the file whose "partout" removal waits for its confirmation. */
   let confirmFileSlot = $state<number | null>(null);
+  /** Slot of the file whose "de cet appareil" removal waits for its confirmation (it cannot be undone either). */
+  let confirmLocalFileSlot = $state<number | null>(null);
   let removingFile = false;
   $effect(() => {
     if (expanded) void feed.refreshRemovalSupport();
@@ -280,7 +282,7 @@
 
   function rowEntries(a: AttachmentView): MenuEntry[] {
     const list: MenuEntry[] = [
-      { label: msg.card.fileDeleteLocal, icon: "delete", onselect: () => void removeFile(a.slot, a, false) },
+      { label: msg.card.fileDeleteLocal, icon: "delete", onselect: () => (confirmLocalFileSlot = a.slot) },
     ];
     if (feed.removalEverywhere) {
       list.push({
@@ -315,6 +317,14 @@
     if (slot === null) return;
     const a = (item.secret ? revealedFiles : item.attachments).find((f) => f.slot === slot);
     if (a) void removeFile(slot, a, true);
+  }
+
+  function confirmLocalFile() {
+    const slot = confirmLocalFileSlot;
+    confirmLocalFileSlot = null;
+    if (slot === null) return;
+    const a = (item.secret ? revealedFiles : item.attachments).find((f) => f.slot === slot);
+    if (a) void removeFile(slot, a, false);
   }
 
   const confirmFileName = $derived(
@@ -733,6 +743,16 @@
     confirmLabel={msg.card.deleteEverywhere}
     onconfirm={removeEverywhere}
     oncancel={() => (confirmDelete = false)}
+  />
+{/if}
+
+{#if confirmLocalFileSlot !== null}
+  <Dialog
+    title={msg.card.deleteLocalTitle}
+    message={msg.card.deleteLocalMessage}
+    confirmLabel={msg.card.fileDeleteLocal}
+    onconfirm={confirmLocalFile}
+    oncancel={() => (confirmLocalFileSlot = null)}
   />
 {/if}
 

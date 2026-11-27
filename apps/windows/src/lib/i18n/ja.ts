@@ -116,6 +116,8 @@ export const ja: Dictionary = {
     delete: "削除",
     deleteLocal: "このデバイスから削除",
     deleteEverywhere: "すべての場所から削除",
+    deleteLocalTitle: "このデバイスから削除しますか？",
+    deleteLocalMessage: "このアイテムはこのデバイスからのみ削除されます。ほかのデバイスにはコピーが残ります。この操作は取り消せません。",
     deletedLocal: "このデバイスから削除しました",
     deletedEverywhere: "すべてのデバイスに削除を要求しました",
     imageDeletedLocal: "このデバイスから画像を削除しました",

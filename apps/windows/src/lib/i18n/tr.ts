@@ -115,6 +115,8 @@ export const tr: Dictionary = {
     delete: "Sil",
     deleteLocal: "Bu cihazdan sil",
     deleteEverywhere: "Her yerden sil",
+    deleteLocalTitle: "Bu cihazdan silinsin mi?",
+    deleteLocalMessage: "Öğe yalnızca bu cihazdan kaldırılacak. Diğer cihazlarınız kendi kopyasını saklar. Bu işlem kalıcıdır.",
     deletedLocal: "Bu cihazdan silindi",
     deletedEverywhere: "Tüm cihazlardan silinmesi istendi",
     imageDeletedLocal: "Görsel bu cihazdan silindi",

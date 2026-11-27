@@ -115,6 +115,8 @@ export const fr: Dictionary = {
     delete: "Supprimer",
     deleteLocal: "Supprimer de cet appareil",
     deleteEverywhere: "Supprimer partout",
+    deleteLocalTitle: "Supprimer de cet appareil ?",
+    deleteLocalMessage: "L’élément sera retiré de cet appareil uniquement. Tes autres appareils en gardent une copie. Cette action est définitive.",
     deletedLocal: "Supprimé de cet appareil",
     deletedEverywhere: "Suppression demandée sur tous les appareils",
     // Removal of ONE file of an item (the item stays), same words as Android.

@@ -117,6 +117,8 @@ export const pt: Dictionary = {
     delete: "Excluir",
     deleteLocal: "Excluir deste dispositivo",
     deleteEverywhere: "Excluir em todo lugar",
+    deleteLocalTitle: "Excluir deste dispositivo?",
+    deleteLocalMessage: "O item será removido somente deste dispositivo. Seus outros dispositivos mantêm a cópia. Esta ação é permanente.",
     deletedLocal: "Excluído deste dispositivo",
     deletedEverywhere: "Exclusão solicitada em todos os dispositivos",
     imageDeletedLocal: "Imagem excluída deste dispositivo",

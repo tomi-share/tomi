@@ -116,6 +116,8 @@ export const id: Dictionary = {
     delete: "Hapus",
     deleteLocal: "Hapus dari perangkat ini",
     deleteEverywhere: "Hapus di semua tempat",
+    deleteLocalTitle: "Hapus dari perangkat ini?",
+    deleteLocalMessage: "Item ini hanya akan dihapus dari perangkat ini. Perangkat Anda yang lain tetap menyimpan salinannya. Tindakan ini permanen.",
     deletedLocal: "Dihapus dari perangkat ini",
     deletedEverywhere: "Penghapusan diminta di semua perangkat",
     imageDeletedLocal: "Gambar dihapus dari perangkat ini",

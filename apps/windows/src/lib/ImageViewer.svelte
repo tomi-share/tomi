@@ -31,6 +31,8 @@
   let item = $state<ItemView | null>(null);
   /** Slot of the image whose "partout" removal waits for its confirmation (fixed when chosen). */
   let confirmSlot = $state<number | null>(null);
+  /** Slot of the image whose "de cet appareil" removal waits for its confirmation (it cannot be undone either). */
+  let confirmLocalSlot = $state<number | null>(null);
   let removing = false;
   let position = $state(0);
   let src = $state<string | null>(null);
@@ -177,6 +179,7 @@
   function close() {
     feed.viewer = null;
     confirmSlot = null;
+    confirmLocalSlot = null;
   }
 
   // ---- removal of the image on screen (the item stays; the core deletes it when nothing is left)
@@ -188,7 +191,7 @@
       {
         label: msg.viewer.deleteLocal,
         icon: "delete",
-        onselect: () => void removeSlot(entries[position]?.slot, false),
+        onselect: () => (confirmLocalSlot = entries[position]?.slot ?? null),
       },
     ];
     // "Partout" only when the relay can carry it; a confirmation first.
@@ -214,6 +217,12 @@
     } finally {
       removing = false;
     }
+  }
+
+  function confirmLocal() {
+    const slot = confirmLocalSlot;
+    confirmLocalSlot = null;
+    void removeSlot(slot ?? undefined, false);
   }
 
   function confirmEverywhere() {
@@ -332,6 +341,16 @@
 
   <footer class="hint small">{msg.viewer.hint}</footer>
 </div>
+
+{#if confirmLocalSlot !== null && item}
+  <Dialog
+    title={msg.card.deleteLocalTitle}
+    message={msg.card.deleteLocalMessage}
+    confirmLabel={msg.viewer.deleteLocal}
+    onconfirm={confirmLocal}
+    oncancel={() => (confirmLocalSlot = null)}
+  />
+{/if}
 
 {#if confirmSlot !== null && item}
   <Dialog

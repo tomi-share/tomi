@@ -114,6 +114,8 @@ export const en = {
     delete: "Delete",
     deleteLocal: "Delete from this device",
     deleteEverywhere: "Delete everywhere",
+    deleteLocalTitle: "Delete from this device?",
+    deleteLocalMessage: "The item will be removed from this device only. Your other devices keep their copy. This action is permanent.",
     deletedLocal: "Deleted from this device",
     deletedEverywhere: "Deletion requested on all devices",
     // Removal of ONE file of an item (the item stays), same words as Android.

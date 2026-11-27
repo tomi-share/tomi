@@ -118,6 +118,8 @@ export const ru: Dictionary = {
     delete: "Удалить",
     deleteLocal: "Удалить с этого устройства",
     deleteEverywhere: "Удалить везде",
+    deleteLocalTitle: "Удалить с этого устройства?",
+    deleteLocalMessage: "Элемент будет удалён только с этого устройства. На ваших других устройствах останется его копия. Это действие необратимо.",
     deletedLocal: "Удалено с этого устройства",
     deletedEverywhere: "Удаление запрошено на всех устройствах",
     imageDeletedLocal: "Изображение удалено с этого устройства",

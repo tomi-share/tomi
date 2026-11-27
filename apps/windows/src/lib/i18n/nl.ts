@@ -116,6 +116,8 @@ export const nl: Dictionary = {
     delete: "Verwijderen",
     deleteLocal: "Verwijderen van dit apparaat",
     deleteEverywhere: "Overal verwijderen",
+    deleteLocalTitle: "Verwijderen van dit apparaat?",
+    deleteLocalMessage: "Het item wordt alleen van dit apparaat verwijderd. Je andere apparaten houden hun kopie. Deze actie is definitief.",
     deletedLocal: "Verwijderd van dit apparaat",
     deletedEverywhere: "Verwijdering aangevraagd op alle apparaten",
     imageDeletedLocal: "Afbeelding verwijderd van dit apparaat",

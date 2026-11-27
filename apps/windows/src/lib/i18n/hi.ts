@@ -115,6 +115,8 @@ export const hi: Dictionary = {
     delete: "डिलीट करें",
     deleteLocal: "इस डिवाइस से डिलीट करें",
     deleteEverywhere: "हर जगह से डिलीट करें",
+    deleteLocalTitle: "इस डिवाइस से डिलीट करें?",
+    deleteLocalMessage: "यह आइटम सिर्फ़ इस डिवाइस से हटाया जाएगा। आपके दूसरे डिवाइस में इसकी कॉपी बनी रहेगी। यह कार्रवाई स्थायी है।",
     deletedLocal: "इस डिवाइस से डिलीट किया गया",
     deletedEverywhere: "सभी डिवाइस पर डिलीट करने का अनुरोध किया गया",
     imageDeletedLocal: "इमेज इस डिवाइस से डिलीट की गई",

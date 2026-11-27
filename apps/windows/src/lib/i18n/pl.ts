@@ -117,6 +117,8 @@ export const pl: Dictionary = {
     delete: "Usuń",
     deleteLocal: "Usuń z tego urządzenia",
     deleteEverywhere: "Usuń wszędzie",
+    deleteLocalTitle: "Usunąć z tego urządzenia?",
+    deleteLocalMessage: "Element zostanie usunięty tylko z tego urządzenia. Twoje pozostałe urządzenia zachowają swoją kopię. Tego działania nie można cofnąć.",
     deletedLocal: "Usunięto z tego urządzenia",
     deletedEverywhere: "Zażądano usunięcia na wszystkich urządzeniach",
     imageDeletedLocal: "Usunięto obraz z tego urządzenia",

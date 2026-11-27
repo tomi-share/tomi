@@ -115,6 +115,8 @@ export const ko: Dictionary = {
     delete: "삭제",
     deleteLocal: "이 기기에서 삭제",
     deleteEverywhere: "모든 곳에서 삭제",
+    deleteLocalTitle: "이 기기에서 삭제할까요?",
+    deleteLocalMessage: "항목이 이 기기에서만 지워져요. 다른 기기에는 사본이 그대로 남아요. 이 작업은 영구적이에요.",
     deletedLocal: "이 기기에서 삭제됨",
     deletedEverywhere: "모든 기기에 삭제를 요청했어요",
     imageDeletedLocal: "이 기기에서 이미지를 삭제했어요",

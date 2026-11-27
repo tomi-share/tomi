@@ -116,6 +116,8 @@ export const zh: Dictionary = {
     delete: "删除",
     deleteLocal: "从此设备删除",
     deleteEverywhere: "在所有设备上删除",
+    deleteLocalTitle: "要从此设备删除吗？",
+    deleteLocalMessage: "该条目只会从此设备上移除，你的其他设备会保留各自的副本。此操作是永久性的。",
     deletedLocal: "已从此设备删除",
     deletedEverywhere: "已请求在所有设备上删除",
     imageDeletedLocal: "已从此设备删除图片",

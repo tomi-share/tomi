@@ -116,6 +116,8 @@ export const de: Dictionary = {
     delete: "Löschen",
     deleteLocal: "Von diesem Gerät löschen",
     deleteEverywhere: "Überall löschen",
+    deleteLocalTitle: "Von diesem Gerät löschen?",
+    deleteLocalMessage: "Der Eintrag wird nur von diesem Gerät entfernt. Deine anderen Geräte behalten ihre Kopie. Diese Aktion ist endgültig.",
     deletedLocal: "Von diesem Gerät gelöscht",
     deletedEverywhere: "Löschen auf allen Geräten angefordert",
     imageDeletedLocal: "Bild von diesem Gerät gelöscht",
