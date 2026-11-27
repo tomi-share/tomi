@@ -16,9 +16,11 @@ import kotlin.math.max
  *  - [Resting]: offset 0, closed;
  *  - [Open]: offset `-ACTIONS_WIDTH` (88 dp), the pill is fully revealed, settled and tappable, nothing is archived yet;
  *  - [Out]: offset `-width`, the card is fully out to the LEFT = the action is committed (archive / un-archive).
- * There is NO anchor on the right, so a drag to the right can not move the card past [Resting].
+ * There is NO anchor on the right unless the card also has a second action on that side ([OpenStart] / [OutStart], the mirror of
+ * [Open] / [Out], at `+ACTIONS_WIDTH` and `+width`): then a drag to the right reveals it the same way (the pin). Without it a drag to
+ * the right can not move the card past [Resting].
  */
-enum class SwipeValue { Resting, Open, Out }
+enum class SwipeValue { Resting, Open, Out, OpenStart, OutStart }
 
 /**
  * Where the finger (or the card) is, by distance dragged: [Closed] (the pill has not fully entered), [Open] (the pill is fully
@@ -95,10 +97,17 @@ object SwipeArchiveLogic {
      * The anchors for a card of [width] px: rest at 0, open at `-openPx`, fully out to the left at `-width`. Nothing on the right.
      * [openPx] is clamped like [openOffset].
      */
-    fun anchors(width: Float, openPx: Float): DraggableAnchors<SwipeValue> = DraggableAnchors {
+    fun anchors(width: Float, openPx: Float, hasEnd: Boolean = true, hasStart: Boolean = false): DraggableAnchors<SwipeValue> = DraggableAnchors {
         SwipeValue.Resting at 0f
-        SwipeValue.Open at -openOffset(openPx, width)
-        SwipeValue.Out at -width
+        // A side without an action has no anchor: the card does not move that way at all.
+        if (hasEnd) {
+            SwipeValue.Open at -openOffset(openPx, width)
+            SwipeValue.Out at -width
+        }
+        if (hasStart) {
+            SwipeValue.OpenStart at openOffset(openPx, width)
+            SwipeValue.OutStart at width
+        }
     }
 
     /** A new state, at rest. Never restored from a saved state: a restored position would bring a card back already swiped. */
@@ -106,6 +115,23 @@ object SwipeArchiveLogic {
 
     /** How far the card is dragged to the left, px (>= 0). The state offset is NaN until the anchors are known: 0 then. */
     fun reveal(offset: Float): Float = if (offset.isNaN()) 0f else max(-offset, 0f)
+
+    /** How far the card is dragged to the RIGHT, px (>= 0): the mirror of [reveal], for the action of the start side. */
+    fun revealStart(offset: Float): Float = if (offset.isNaN()) 0f else max(offset, 0f)
+
+    /** The distance of the drag on whichever side the card is, px (>= 0): what the stages ([nextZone]) are measured on. */
+    fun magnitude(offset: Float): Float = max(reveal(offset), revealStart(offset))
+
+    /** True when the card is dragged to the right (the start side), false for the left or at rest. */
+    fun isStartSide(offset: Float): Boolean = revealStart(offset) > 0f
+
+    /** The place the stage [value] has on the start side: [SwipeValue.Open] / [SwipeValue.Out] become their mirrors. */
+    fun onSide(value: SwipeValue, start: Boolean): SwipeValue = when {
+        !start -> value
+        value == SwipeValue.Open -> SwipeValue.OpenStart
+        value == SwipeValue.Out -> SwipeValue.OutStart
+        else -> value
+    }
 
     /**
      * The [SwipeZone] at a [reveal] of this many px, on a card of [width] px whose open stage is at [openPx]. A stage is entered
@@ -134,7 +160,8 @@ object SwipeArchiveLogic {
         }
 
     /** The pill is tappable, and a tap on the card body closes instead of opening the item, only when the card is settled open. */
-    fun isOpenForTaps(settled: SwipeValue, exiting: Boolean): Boolean = settled == SwipeValue.Open && !exiting
+    fun isOpenForTaps(settled: SwipeValue, exiting: Boolean): Boolean =
+        (settled == SwipeValue.Open || settled == SwipeValue.OpenStart) && !exiting
 
     /** 0..1 progress of the pill entering (scale, shift and opacity all follow it), for a reveal of [reveal] px. */
     fun arrival(reveal: Float, actionsWidth: Float): Float {
@@ -212,13 +239,14 @@ internal class ArchiveSettleFling(
             return 0f
         }
         val spec: AnimationSpec<Float> = when (value) {
-            SwipeValue.Out -> tween(SwipeArchiveLogic.STRETCH_MS, easing = EaseOutCubic)
+            SwipeValue.Out, SwipeValue.OutStart -> tween(SwipeArchiveLogic.STRETCH_MS, easing = EaseOutCubic)
             // Open: critically damped, so the pill never swells past its place.
-            SwipeValue.Open -> spring(SwipeArchiveLogic.OPEN_DAMPING_RATIO, SwipeArchiveLogic.RETURN_STIFFNESS)
+            SwipeValue.Open, SwipeValue.OpenStart -> spring(SwipeArchiveLogic.OPEN_DAMPING_RATIO, SwipeArchiveLogic.RETURN_STIFFNESS)
             SwipeValue.Resting -> spring(SwipeArchiveLogic.RETURN_DAMPING_RATIO, SwipeArchiveLogic.RETURN_STIFFNESS)
         }
         // Keep the finger's momentum only when it points to the target, and never for Open (it would overshoot the pill's place).
-        val velocity = if (value != SwipeValue.Open && (target - start) * initialVelocity > 0f) initialVelocity else 0f
+        val opens = value == SwipeValue.Open || value == SwipeValue.OpenStart
+        val velocity = if (!opens && (target - start) * initialVelocity > 0f) initialVelocity else 0f
         animate(start, target, velocity, spec) { v, _ -> scrollBy(v - state.requireOffset()) } // the anchors clamp any overshoot
         scrollBy(target - state.requireOffset()) // land exactly on the anchor, so that the state settles on it
         return 0f
@@ -227,17 +255,17 @@ internal class ArchiveSettleFling(
 
 /**
  * The action decided at the release, delivered exactly once: after the exit animation, or on disposal if the card leaves the
- * screen first.
+ * screen first. One per side of the card ([ArchiveAction] on the left, [PinAction] on the right).
  */
-class PendingDelivery {
-    private var pending: ArchiveAction? = null
+class PendingDelivery<T : Any> {
+    private var pending: T? = null
 
-    fun arm(action: ArchiveAction) {
+    fun arm(action: T) {
         pending = action
     }
 
     /** Hands the action to [sink] if there is one not delivered yet. Returns whether it did. */
-    fun deliver(sink: (ArchiveAction) -> Unit): Boolean {
+    fun deliver(sink: (T) -> Unit): Boolean {
         val action = pending ?: return false
         pending = null
         sink(action)

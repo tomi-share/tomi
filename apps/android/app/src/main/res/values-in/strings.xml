@@ -73,6 +73,8 @@
     <string name="snackbar_pin_failed">Sematan tidak dapat diubah. Coba lagi.</string>
     <string name="snackbar_archived">Diarsipkan</string>
     <string name="snackbar_unarchived">Dikeluarkan dari arsip</string>
+    <string name="snackbar_pinned">Disematkan</string>
+    <string name="snackbar_unpinned">Sematan dilepas</string>
     <string name="snackbar_archive_failed">Arsip tidak dapat diubah. Coba lagi.</string>
     <string name="snackbar_nothing_to_share">Tidak ada yang dapat dibagikan dari item ini.</string>
     <string name="detail_not_found">Item tidak ditemukan. Item mungkin sudah kedaluwarsa atau dihapus.</string>

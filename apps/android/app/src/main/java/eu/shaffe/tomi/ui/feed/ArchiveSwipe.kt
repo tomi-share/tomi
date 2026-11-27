@@ -15,6 +15,16 @@ enum class ArchiveAction {
     val inverse: ArchiveAction get() = if (this == Archive) Unarchive else Archive
 }
 
+/** What the swipe to the RIGHT of a card does: pin it, or unpin a pinned one. The core makes pin and archive exclusive. */
+enum class PinAction {
+    Pin,
+    Unpin,
+    ;
+
+    /** The action that cancels this one (the "Undo" of the feedback banner). */
+    val inverse: PinAction get() = if (this == Pin) Unpin else Pin
+}
+
 /**
  * Pure rules of the archive gesture. The UI only goes through
  * [TomiCore.archive] / [TomiCore.unarchive]: there is no local archive state in the app.
@@ -33,14 +43,25 @@ object ArchiveSwipe {
         if (item.isShownAsArchived()) ArchiveAction.Unarchive else ArchiveAction.Archive
 
     /**
-     * The action of the swipe to the left on [item], or null when the card does not swipe. A pinned card never swipes (the user
-     * wanted it on top; the menu offers "Unpin" and "Archive"), nor does an item that cannot be archived. Everywhere else the
-     * swipe archives, except on an archived card (Archives view, or a search) where it un-archives.
+     * The action of the swipe to the left on [item], or null when the card has none. A pinned card does not archive by swipe (the
+     * user wanted it on top; it swipes to the right to be unpinned, and the menu offers "Archive"), nor does an item that cannot be
+     * archived. Everywhere else the swipe archives, except on an archived card (Archives view, or a search) where it un-archives.
      */
     fun swipeAction(item: TomiItem, localDeviceId: String): ArchiveAction? = when {
         item.pinned -> null
         !canArchive(item, localDeviceId) -> null
         else -> menuAction(item)
+    }
+
+    /**
+     * The action of the swipe to the RIGHT on [item], or null when the card has none: "Unpin" on a pinned card (which swipes, to the
+     * right only, to be unpinned), "Pin" on any other. Not on an archived card (Archives view, or a search): the core makes pin and
+     * archive exclusive, so "Undo" could not bring it back where it was; its menu still offers "Pin".
+     */
+    fun pinSwipeAction(item: TomiItem): PinAction? = when {
+        item.isShownAsArchived() -> null
+        item.pinned -> PinAction.Unpin
+        else -> PinAction.Pin
     }
 
     /** Runs [action] on the core. The one place that maps an [ArchiveAction] to the contract. */

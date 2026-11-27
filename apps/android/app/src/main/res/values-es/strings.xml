@@ -75,6 +75,8 @@
     <string name="snackbar_pin_failed">No se pudo fijar o dejar de fijar. Vuelve a intentarlo.</string>
     <string name="snackbar_archived">Archivado</string>
     <string name="snackbar_unarchived">Desarchivado</string>
+    <string name="snackbar_pinned">Fijado</string>
+    <string name="snackbar_unpinned">Ya no está fijado</string>
     <string name="snackbar_archive_failed">No se pudo archivar o desarchivar. Vuelve a intentarlo.</string>
     <string name="snackbar_nothing_to_share">No hay nada que compartir en este elemento.</string>
     <string name="detail_not_found">No se encontró el elemento. Puede que haya expirado o que se haya eliminado.</string>

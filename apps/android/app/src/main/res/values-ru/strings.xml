@@ -75,6 +75,8 @@
     <string name="snackbar_pin_failed">Не удалось изменить закрепление. Повторите попытку.</string>
     <string name="snackbar_archived">Перемещено в архив</string>
     <string name="snackbar_unarchived">Возвращено из архива</string>
+    <string name="snackbar_pinned">Закреплено</string>
+    <string name="snackbar_unpinned">Откреплено</string>
     <string name="snackbar_archive_failed">Не удалось изменить архив. Повторите попытку.</string>
     <string name="snackbar_nothing_to_share">В этом элементе нечем поделиться.</string>
     <string name="detail_not_found">Элемент не найден. Возможно, срок его действия истёк или он был удалён.</string>

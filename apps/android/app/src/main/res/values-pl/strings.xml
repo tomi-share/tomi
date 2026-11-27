@@ -75,6 +75,8 @@
     <string name="snackbar_pin_failed">Nie udało się zmienić przypięcia. Spróbuj ponownie.</string>
     <string name="snackbar_archived">Zarchiwizowano</string>
     <string name="snackbar_unarchived">Przywrócono z archiwum</string>
+    <string name="snackbar_pinned">Przypięto</string>
+    <string name="snackbar_unpinned">Odpięto</string>
     <string name="snackbar_archive_failed">Nie udało się zmienić archiwizacji. Spróbuj ponownie.</string>
     <string name="snackbar_nothing_to_share">W tym elemencie nie ma nic do udostępnienia.</string>
     <string name="detail_not_found">Nie znaleziono elementu. Mógł wygasnąć lub zostać usunięty.</string>

@@ -73,6 +73,8 @@
     <string name="snackbar_pin_failed">Impossible de modifier l’épingle. Réessaie.</string>
     <string name="snackbar_archived">Archivé</string>
     <string name="snackbar_unarchived">Désarchivé</string>
+    <string name="snackbar_pinned">Épinglé</string>
+    <string name="snackbar_unpinned">Désépinglé</string>
     <string name="snackbar_archive_failed">Impossible de modifier l’archive. Réessaie.</string>
     <string name="snackbar_nothing_to_share">Rien à partager dans cet élément.</string>
     <string name="detail_not_found">Élément introuvable. Il a peut-être expiré ou été supprimé.</string>

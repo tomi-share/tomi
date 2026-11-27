@@ -75,6 +75,8 @@
     <string name="snackbar_pin_failed">Não foi possível alterar a fixação. Tente novamente.</string>
     <string name="snackbar_archived">Arquivado</string>
     <string name="snackbar_unarchived">Desarquivado</string>
+    <string name="snackbar_pinned">Fixado</string>
+    <string name="snackbar_unpinned">Desafixado</string>
     <string name="snackbar_archive_failed">Não foi possível alterar o arquivamento. Tente novamente.</string>
     <string name="snackbar_nothing_to_share">Nada para compartilhar neste item.</string>
     <string name="detail_not_found">Item não encontrado. Ele pode ter expirado ou sido excluído.</string>

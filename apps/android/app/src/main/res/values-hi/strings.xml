@@ -73,6 +73,8 @@
     <string name="snackbar_pin_failed">पिन नहीं बदला जा सका। फिर से कोशिश करें।</string>
     <string name="snackbar_archived">आर्काइव किया गया</string>
     <string name="snackbar_unarchived">आर्काइव से निकाला गया</string>
+    <string name="snackbar_pinned">पिन किया गया</string>
+    <string name="snackbar_unpinned">अनपिन किया गया</string>
     <string name="snackbar_archive_failed">आर्काइव नहीं बदला जा सका। फिर से कोशिश करें।</string>
     <string name="snackbar_nothing_to_share">इस आइटम में शेयर करने के लिए कुछ नहीं है।</string>
     <string name="detail_not_found">आइटम नहीं मिला। हो सकता है कि वह समाप्त हो गया हो या डिलीट कर दिया गया हो।</string>

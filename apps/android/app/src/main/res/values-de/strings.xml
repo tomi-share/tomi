@@ -73,6 +73,8 @@
     <string name="snackbar_pin_failed">Anheften konnte nicht geändert werden. Versuche es erneut.</string>
     <string name="snackbar_archived">Archiviert</string>
     <string name="snackbar_unarchived">Aus Archiv geholt</string>
+    <string name="snackbar_pinned">Angeheftet</string>
+    <string name="snackbar_unpinned">Nicht mehr angeheftet</string>
     <string name="snackbar_archive_failed">Archivierung konnte nicht geändert werden. Versuche es erneut.</string>
     <string name="snackbar_nothing_to_share">In diesem Eintrag gibt es nichts zu teilen.</string>
     <string name="detail_not_found">Eintrag nicht gefunden. Er ist vielleicht abgelaufen oder wurde gelöscht.</string>

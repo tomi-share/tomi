@@ -204,10 +204,12 @@ fun ItemCard(
         canShare = ItemSharing.canShare(item) || FileSharing.canShare(item),
     )
     // TalkBack cannot reach the menu by a long press nor swipe: every entry is also a custom action of the card. The archive one is
-    // the swipe wrapper's own when the card swipes (the feed list), so it is not offered twice.
+    // the swipe wrapper's own when the card swipes (the feed list), so it is not offered twice; same for the pin.
     val a11yActions = if (showMenu && !expanded) {
         cardAccessibilityActions(
-            item, menuEntries, hasInlineCopy, archiveIsSwipe = ArchiveSwipe.swipeAction(item, localDeviceId) != null,
+            item, menuEntries, hasInlineCopy,
+            archiveIsSwipe = ArchiveSwipe.swipeAction(item, localDeviceId) != null,
+            pinIsSwipe = ArchiveSwipe.pinSwipeAction(item) != null,
             textMode, actions, onDelete = { confirmDelete = true },
         )
     } else {
@@ -427,6 +429,7 @@ private fun cardAccessibilityActions(
     entries: List<ItemMenuEntry>,
     hasInlineCopy: Boolean,
     archiveIsSwipe: Boolean,
+    pinIsSwipe: Boolean,
     textMode: RenderMode?,
     actions: CardActions,
     onDelete: () -> Unit,
@@ -445,7 +448,7 @@ private fun cardAccessibilityActions(
                 ItemMenuEntry.OpenLink -> add(action(R.string.action_open, actions.onOpenLink))
                 ItemMenuEntry.CopyLink -> add(action(R.string.action_copy_link, actions.onCopyLink))
                 ItemMenuEntry.Share -> add(action(R.string.action_share, actions.onShare))
-                ItemMenuEntry.Pin -> add(action(if (item.pinned) R.string.action_unpin else R.string.action_pin, actions.onTogglePin))
+                ItemMenuEntry.Pin -> if (!pinIsSwipe) add(action(if (item.pinned) R.string.action_unpin else R.string.action_pin, actions.onTogglePin))
                 ItemMenuEntry.Archive -> if (!archiveIsSwipe) {
                     add(action(if (item.isShownAsArchived()) R.string.action_unarchive else R.string.action_archive, actions.onToggleArchive))
                 }

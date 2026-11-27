@@ -25,12 +25,15 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.outlined.Archive
+import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material.icons.outlined.Unarchive
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -45,6 +48,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -52,6 +56,7 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.Role
@@ -59,6 +64,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import eu.shaffe.tomi.R
 import eu.shaffe.tomi.ui.theme.TomiTheme
@@ -91,13 +97,16 @@ private fun isReducedMotion(context: Context): Boolean =
     Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
 
 /**
- * Swipe to the LEFT on a card = [action] (archive, or un-archive on an archived card), in TWO steps (swipe to reveal, as iOS Mail /
- * Gmail / the reference app T3 Code `thread-swipe-actions`). Never a deletion, never another direction, no confirmation: the feedback
- * banner offers "Undo". With a null [action] the card does not swipe.
+ * Swipe to the LEFT on a card = [action] (archive, or un-archive on an archived card), and to the RIGHT = [pinAction] (pin, or unpin a
+ * pinned card), each in TWO steps (swipe to reveal, as iOS Mail / Gmail / the reference app T3 Code `thread-swipe-actions`). The right
+ * side is the left one mirrored: same stages, same thresholds, same haptic tick, the pill grows to the right. Never a deletion, no
+ * confirmation: the feedback banner offers "Undo". A side without an action has no anchor: the card does not move that way (with
+ * neither, it does not swipe).
  *
- * Gesture: `Modifier.anchoredDraggable(Orientation.Horizontal)` on an `AnchoredDraggableState<SwipeValue>` with three anchors,
- * [SwipeValue.Resting] (0), [SwipeValue.Open] (`-88 dp`, the pill fully revealed) and [SwipeValue.Out] (`-width`, the card fully out).
- * There is no anchor on the right: a drag to the right never moves the card past rest. The drag detection only looks at the
+ * Gesture: `Modifier.anchoredDraggable(Orientation.Horizontal)` on an `AnchoredDraggableState<SwipeValue>` with up to five anchors,
+ * [SwipeValue.Resting] (0), [SwipeValue.Open] (`-88 dp`, the pill fully revealed) and [SwipeValue.Out] (`-width`, the card fully out),
+ * and their mirrors [SwipeValue.OpenStart] / [SwipeValue.OutStart] on the right. A side without an action has none: a drag that way
+ * never moves the card past rest. The drag detection only looks at the
  * horizontal axis (touch slop from the view configuration), so a vertical drift of the finger never claims the gesture and the
  * `LazyColumn` keeps its vertical scroll: this is the standard conflict resolution of the pointer system (the child that first passes
  * its slop on its own axis wins). Taps and long presses are untouched. A child that scrolls sideways and sits under the finger wins the
@@ -131,12 +140,17 @@ fun SwipeToArchive(
     action: ArchiveAction?,
     onAction: (ArchiveAction) -> Unit,
     modifier: Modifier = Modifier,
+    /** The action of the swipe to the right (pin / unpin), or null when the card has none that way. */
+    pinAction: PinAction? = null,
+    onPinAction: (PinAction) -> Unit = {},
     keepOpen: Boolean = true,
     onOpenChange: (Boolean) -> Unit = {},
     content: @Composable () -> Unit,
 ) {
     val currentAction by rememberUpdatedState(action)
     val currentOnAction by rememberUpdatedState(onAction)
+    val currentPin by rememberUpdatedState(pinAction)
+    val currentOnPin by rememberUpdatedState(onPinAction)
     val currentOnOpenChange by rememberUpdatedState(onOpenChange)
     val context = LocalContext.current
     val vibrator = remember(context) { systemVibrator(context) }
@@ -148,7 +162,8 @@ fun SwipeToArchive(
 
     // A plain `remember`, NOT `rememberSaveable`: a card that comes back (Undo, new composition) starts closed, never swiped or open.
     val state = remember { SwipeArchiveLogic.newState() }
-    val delivery = remember { PendingDelivery() }
+    val delivery = remember { PendingDelivery<ArchiveAction>() }
+    val pinDelivery = remember { PendingDelivery<PinAction>() }
     /** 0 = full height, 1 = collapsed. */
     val collapse = remember { Animatable(0f) }
     var widthPx by remember { mutableFloatStateOf(0f) }
@@ -161,6 +176,7 @@ fun SwipeToArchive(
     // The action is delivered once: here, or on disposal if the card leaves the composition before the end of its exit.
     fun deliver() {
         delivery.deliver { currentOnAction(it) }
+        pinDelivery.deliver { currentOnPin(it) }
     }
 
     DisposableEffect(Unit) {
@@ -184,28 +200,35 @@ fun SwipeToArchive(
         }
     }
 
-    /** Tap on the pill: the same commit as the full swipe, i.e. the card goes out and the settle on Out runs the exit below. */
-    fun commitFromPill() {
-        if (currentAction == null || exiting) return
+    /**
+     * Tap on the pill of one side ([start]: the right one): the same commit as the full swipe, i.e. the card goes out and the settle
+     * on Out (or OutStart) runs the exit below.
+     */
+    fun commitFromPill(start: Boolean) {
+        if ((if (start) currentPin else currentAction) == null || exiting) return
+        val out = SwipeArchiveLogic.onSide(SwipeValue.Out, start)
         exiting = true // no drag, no tick from now on
         scope.launch {
             if (reduceMotion) {
-                state.snapTo(SwipeValue.Out)
+                state.snapTo(out)
             } else {
-                state.animateTo(SwipeValue.Out, tween(SwipeArchiveLogic.STRETCH_MS, easing = EaseOutCubic))
+                state.animateTo(out, tween(SwipeArchiveLogic.STRETCH_MS, easing = EaseOutCubic))
             }
-            if (state.settledValue != SwipeValue.Out) exiting = false // interrupted before the commit: the card is usable again
+            if (state.settledValue != out) exiting = false // interrupted before the commit: the card is usable again
         }
     }
 
     // The anchors depend on the width of the card, known after the first layout.
-    LaunchedEffect(state, widthPx, actionsWidthPx) {
-        if (widthPx > 0f) state.updateAnchors(SwipeArchiveLogic.anchors(widthPx, actionsWidthPx))
+    LaunchedEffect(state, widthPx, actionsWidthPx, action != null, pinAction != null) {
+        if (widthPx > 0f) {
+            state.updateAnchors(SwipeArchiveLogic.anchors(widthPx, actionsWidthPx, hasEnd = action != null, hasStart = pinAction != null))
+        }
     }
 
     // Stages: pill opening, armed past 58 %, and back. One strong haptic tick per crossing of 58 % (hysteresis in nextZone).
     LaunchedEffect(state) {
-        snapshotFlow { SwipeArchiveLogic.reveal(state.offset) }.collect { reveal ->
+        // The distance on whichever side the card is: the stages are the same on both.
+        snapshotFlow { SwipeArchiveLogic.magnitude(state.offset) }.collect { reveal ->
             val next = SwipeArchiveLogic.nextZone(zone, reveal, widthPx, actionsWidthPx, hysteresisPx)
             if (next == zone) return@collect
             zone = next
@@ -223,8 +246,12 @@ fun SwipeToArchive(
     // The trigger: the state has SETTLED on Out (finger lifted while armed, or tap on the pill). Collapse the row, then run the action.
     LaunchedEffect(state, reduceMotion) {
         snapshotFlow { state.settledValue }.collect { value ->
-            if (value != SwipeValue.Out) return@collect
-            val decided = currentAction
+            val start = when (value) {
+                SwipeValue.Out -> false
+                SwipeValue.OutStart -> true
+                else -> return@collect
+            }
+            val decided: Any? = if (start) currentPin?.also { pinDelivery.arm(it) } else currentAction?.also { delivery.arm(it) }
             if (decided == null) {
                 state.snapTo(SwipeValue.Resting)
                 exiting = false
@@ -232,7 +259,6 @@ fun SwipeToArchive(
             }
             val (_, collapseMs) = SwipeArchiveLogic.exitTimings(reduceMotion)
             exiting = true
-            delivery.arm(decided)
             try {
                 // Collapse: the row folds up in height (the card is already out and the pill stretched by the settle).
                 if (!reduceMotion) collapse.animateTo(1f, tween(collapseMs, easing = FastOutSlowInEasing))
@@ -254,13 +280,19 @@ fun SwipeToArchive(
     }
 
     val label = action?.let { stringResource(if (it == ArchiveAction.Archive) R.string.action_archive else R.string.action_unarchive) }
-    val showBackground by remember { derivedStateOf { SwipeArchiveLogic.reveal(state.offset) > 0f } }
+    val pinLabel = pinAction?.let { stringResource(if (it == PinAction.Pin) R.string.action_pin else R.string.action_unpin) }
+    val showBackground by remember { derivedStateOf { SwipeArchiveLogic.magnitude(state.offset) > 0f } }
+    /** The card is dragged to the right: the pill under it is the one of the pin. */
+    val onStartSide by remember { derivedStateOf { SwipeArchiveLogic.isStartSide(state.offset) } }
     /** Settled open: the pill is tappable and the body tap closes instead of opening the item. */
     val isOpen by remember { derivedStateOf { SwipeArchiveLogic.isOpenForTaps(state.settledValue, exiting) } }
     val fling = remember(state, reduceMotion, hysteresisPx, actionsWidthPx) {
         ArchiveSettleFling(
             state = state,
-            targetFor = { SwipeArchiveLogic.settleTarget(zone, SwipeArchiveLogic.reveal(state.offset), widthPx, actionsWidthPx, hysteresisPx) },
+            targetFor = {
+                val target = SwipeArchiveLogic.settleTarget(zone, SwipeArchiveLogic.magnitude(state.offset), widthPx, actionsWidthPx, hysteresisPx)
+                SwipeArchiveLogic.onSide(target, SwipeArchiveLogic.isStartSide(state.offset))
+            },
             reduceMotion = reduceMotion,
         )
     }
@@ -278,20 +310,23 @@ fun SwipeToArchive(
                 state = state,
                 orientation = Orientation.Horizontal,
                 // Not before the anchors are known (the offset is NaN until then), not during the exit, not without an action.
-                enabled = action != null && !exiting && !state.offset.isNaN(),
+                enabled = (action != null || pinAction != null) && !exiting && !state.offset.isNaN(),
                 flingBehavior = fling,
             )
             .then(
-                if (action != null && label != null) {
-                    // TalkBack cannot swipe: the same action as a custom action of the card (no gesture, no animation).
-                    Modifier.semantics { customActions = listOf(CustomAccessibilityAction(label) { onAction(action); true }) }
-                } else {
-                    Modifier
+                // TalkBack cannot swipe: the same actions as custom actions of the card (no gesture, no animation).
+                Modifier.semantics {
+                    customActions = listOfNotNull(
+                        if (action != null && label != null) CustomAccessibilityAction(label) { onAction(action); true } else null,
+                        if (pinAction != null && pinLabel != null) CustomAccessibilityAction(pinLabel) { onPinAction(pinAction); true } else null,
+                    )
                 },
             ),
     ) {
         // Nothing under the card at rest: no coloured fringe around its border.
-        if (showBackground && action != null && label != null) {
+        val shownAction = if (onStartSide) pinAction else action
+        val shownLabel = if (onStartSide) pinLabel else label
+        if (showBackground && shownAction != null && shownLabel != null) {
             Box(
                 Modifier
                     .matchParentSize()
@@ -299,16 +334,22 @@ fun SwipeToArchive(
                     .background(MaterialTheme.colorScheme.primaryContainer),
             ) {
                 ActionPill(
-                    unarchive = action == ArchiveAction.Unarchive,
-                    label = label,
+                    icon = if (onStartSide) {
+                        if (pinAction == PinAction.Unpin) Icons.Filled.PushPin else Icons.Outlined.PushPin
+                    } else {
+                        if (action == ArchiveAction.Unarchive) Icons.Outlined.Unarchive else Icons.Outlined.Archive
+                    },
+                    label = shownLabel,
                     enabled = isOpen,
-                    onClick = ::commitFromPill,
-                    reveal = { SwipeArchiveLogic.reveal(state.offset) },
+                    mirrored = onStartSide,
+                    onClick = { commitFromPill(onStartSide) },
+                    reveal = { SwipeArchiveLogic.magnitude(state.offset) },
                     cardWidth = { widthPx },
                 )
             }
         }
-        Box(Modifier.graphicsLayer { translationX = -SwipeArchiveLogic.reveal(state.offset) }) {
+        // The card follows the finger on either side (the offset is negative to the left, positive to the right).
+        Box(Modifier.graphicsLayer { translationX = -SwipeArchiveLogic.reveal(state.offset) + SwipeArchiveLogic.revealStart(state.offset) }) {
             content()
             if (isOpen) {
                 // Reveal convention: while the card is open, a tap on its body closes it instead of opening the item. This layer sits
@@ -334,9 +375,28 @@ fun SwipeToArchive(
  */
 @Composable
 private fun ActionPill(
-    unarchive: Boolean,
+    icon: ImageVector,
     label: String,
     enabled: Boolean,
+    /** The pill of the right side: the whole thing mirrored (it enters from the left and stretches to the right). */
+    mirrored: Boolean,
+    onClick: () -> Unit,
+    reveal: () -> Float,
+    cardWidth: () -> Float,
+) {
+    // Mirrored by the layout direction (alignment, padding and placement are relative to it); the translations below are absolute.
+    val direction = if (mirrored) -1f else 1f
+    CompositionLocalProvider(LocalLayoutDirection provides if (mirrored) LayoutDirection.Rtl else LayoutDirection.Ltr) {
+        ActionPillContent(icon, label, enabled, direction, onClick, reveal, cardWidth)
+    }
+}
+
+@Composable
+private fun ActionPillContent(
+    icon: ImageVector,
+    label: String,
+    enabled: Boolean,
+    direction: Float,
     onClick: () -> Unit,
     reveal: () -> Float,
     cardWidth: () -> Float,
@@ -380,7 +440,7 @@ private fun ActionPill(
                         val scale = SwipeArchiveLogic.pillScale(arrival)
                         scaleX = scale
                         scaleY = scale
-                        translationX = shift * (1f - arrival)
+                        translationX = direction * shift * (1f - arrival)
                         alpha = arrival
                     }
                     .clip(CircleShape)
@@ -389,12 +449,12 @@ private fun ActionPill(
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    if (unarchive) Icons.Outlined.Unarchive else Icons.Outlined.Archive,
+                    icon,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onPrimary,
                     // Centred in the pill up to the threshold, then takes off to the left (no scale).
                     modifier = Modifier.graphicsLayer {
-                        translationX = SwipeArchiveLogic.iconOffsetInPill(reveal(), actionsWidth, cardWidth())
+                        translationX = direction * SwipeArchiveLogic.iconOffsetInPill(reveal(), actionsWidth, cardWidth())
                     },
                 )
             }

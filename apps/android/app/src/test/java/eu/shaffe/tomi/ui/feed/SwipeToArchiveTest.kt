@@ -324,7 +324,7 @@ class SwipeToArchiveTest {
     fun theTapOnThePillDeliversTheActionOnlyOnce() {
         // The pill tap and the full swipe share the path: arm at the settle on Out, deliver after the collapse, and the
         // disposal of the row right after (it left the list) must not deliver a second time.
-        val delivery = PendingDelivery()
+        val delivery = PendingDelivery<ArchiveAction>()
         val got = mutableListOf<ArchiveAction>()
         delivery.arm(ArchiveAction.Archive)
         assertTrue(delivery.deliver { got += it }) // after the collapse
@@ -338,7 +338,7 @@ class SwipeToArchiveTest {
 
     @Test
     fun theDecidedActionIsDeliveredExactlyOnce() {
-        val delivery = PendingDelivery()
+        val delivery = PendingDelivery<ArchiveAction>()
         val got = mutableListOf<ArchiveAction>()
         assertFalse(delivery.deliver { got += it }) // nothing decided: nothing delivered (e.g. disposal of a card never swiped)
         delivery.arm(ArchiveAction.Archive)
@@ -349,7 +349,7 @@ class SwipeToArchiveTest {
 
     @Test
     fun aNewDecisionAfterARestoreIsDeliveredAgain() {
-        val delivery = PendingDelivery()
+        val delivery = PendingDelivery<ArchiveAction>()
         val got = mutableListOf<ArchiveAction>()
         delivery.arm(ArchiveAction.Archive)
         delivery.deliver { got += it }

@@ -72,6 +72,8 @@
     <string name="snackbar_pin_failed">无法更改置顶。请重试。</string>
     <string name="snackbar_archived">已归档</string>
     <string name="snackbar_unarchived">已取消归档</string>
+    <string name="snackbar_pinned">已置顶</string>
+    <string name="snackbar_unpinned">已取消置顶</string>
     <string name="snackbar_archive_failed">无法更改归档。请重试。</string>
     <string name="snackbar_nothing_to_share">此条目中没有可分享的内容。</string>
     <string name="detail_not_found">找不到该条目。它可能已过期或已被删除。</string>

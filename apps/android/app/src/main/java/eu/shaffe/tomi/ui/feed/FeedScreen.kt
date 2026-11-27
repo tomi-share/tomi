@@ -381,9 +381,9 @@ private const val SECTION_HEADER_TYPE = -1
 /**
  * What the card of the item is made of. The list keeps the composition of a card that left the screen for the next card of
  * the SAME type: a Markdown card then reuses a Markdown card (its native view included) instead of being rebuilt out of, say,
- * a hidden one. [swipeable]: the cards of "Recent" are wrapped in the swipe to archive, the pinned ones are not.
+ * a hidden one. Every card of the lists is wrapped in the same swipe (archive to the left, pin to the right).
  */
-private fun TomiItem.cardContentType(swipeable: Boolean): Int {
+private fun TomiItem.cardContentType(): Int {
     val body = when {
         !isReadable -> 0
         secret -> 1
@@ -394,7 +394,7 @@ private fun TomiItem.cardContentType(swipeable: Boolean): Int {
             null -> 5
         }
     }
-    return if (swipeable) body else body + 10
+    return body
 }
 
 @Composable
@@ -416,6 +416,29 @@ private fun FeedList(
         snapshotFlow { listState.isScrollInProgress }.collect { scrolling -> if (scrolling) openId = null }
     }
     ReadWhenSeenEffect(listState, state.sections.pinned + state.sections.recent, viewModel)
+    // Swipe to the left = archive (un-archive on an archived card), to the right = pin (unpin on a pinned one). A card has the side
+    // it can use only: a pinned one swipes to the right alone, an archived one to the left alone.
+    val swipeCard: @Composable (TomiItem, Modifier) -> Unit = { item, modifier ->
+        SwipeToArchive(
+            action = ArchiveSwipe.swipeAction(item, state.localDeviceId),
+            onAction = { action -> viewModel.applyArchiveAction(item, action) },
+            pinAction = ArchiveSwipe.pinSwipeAction(item),
+            onPinAction = { action -> viewModel.applyPinAction(item, action) },
+            // One open card at a time: opening this one makes `openId` change, which closes the previous one.
+            keepOpen = openId == item.id,
+            onOpenChange = { open ->
+                if (open) openId = item.id else if (openId == item.id) openId = null
+            },
+            modifier = modifier,
+        ) {
+            ItemCardHost(
+                item, state, viewModel, expanded = false,
+                onOpenDetail = { onOpenItem(item.id) },
+                onOpenImage = { index -> onOpenImage(item.id, index) },
+                onOpenCodeFile = { index -> onOpenCodeFile(item.id, index) },
+            )
+        }
+    }
     // While searching the results are one flat list (no section titles): pinned ones first, then the others.
     val flat = FeedSearchDisplay.isFlat(state.query)
     LazyColumn(
@@ -430,13 +453,8 @@ private fun FeedList(
                     SectionHeader(stringResource(R.string.section_pinned), state.sections.pinned.size, pinned = true)
                 }
             }
-            items(state.sections.pinned, key = { it.id }, contentType = { it.cardContentType(swipeable = false) }) { item ->
-                ItemCardHost(
-                    item, state, viewModel, expanded = false,
-                    onOpenDetail = { onOpenItem(item.id) },
-                    onOpenImage = { index -> onOpenImage(item.id, index) },
-                    onOpenCodeFile = { index -> onOpenCodeFile(item.id, index) },
-                )
+            items(state.sections.pinned, key = { it.id }, contentType = { it.cardContentType() }) { item ->
+                swipeCard(item, Modifier.animateItem())
             }
         }
         if (state.sections.recent.isNotEmpty()) {
@@ -446,25 +464,8 @@ private fun FeedList(
                     SectionHeader(stringResource(title), count = null, pinned = false)
                 }
             }
-            items(state.sections.recent, key = { it.id }, contentType = { it.cardContentType(swipeable = true) }) { item ->
-                // Swipe to the left = archive (un-archive on an archived card). Not on the pinned cards above.
-                SwipeToArchive(
-                    action = ArchiveSwipe.swipeAction(item, state.localDeviceId),
-                    onAction = { action -> viewModel.applyArchiveAction(item, action) },
-                    // One open card at a time: opening this one makes `openId` change, which closes the previous one.
-                    keepOpen = openId == item.id,
-                    onOpenChange = { open ->
-                        if (open) openId = item.id else if (openId == item.id) openId = null
-                    },
-                    modifier = Modifier.animateItem(),
-                ) {
-                    ItemCardHost(
-                        item, state, viewModel, expanded = false,
-                        onOpenDetail = { onOpenItem(item.id) },
-                        onOpenImage = { index -> onOpenImage(item.id, index) },
-                        onOpenCodeFile = { index -> onOpenCodeFile(item.id, index) },
-                    )
-                }
+            items(state.sections.recent, key = { it.id }, contentType = { it.cardContentType() }) { item ->
+                swipeCard(item, Modifier.animateItem())
             }
         }
     }
@@ -917,6 +918,7 @@ fun FeedEventsEffect(viewModel: FeedViewModel, snackbar: SnackbarHostState) {
                     FeedEvent.ActionFailed -> R.string.snackbar_action_failed
                     is FeedEvent.ArchiveDone ->
                         if (event.action == ArchiveAction.Archive) R.string.snackbar_archived else R.string.snackbar_unarchived
+                    is FeedEvent.PinDone -> if (event.action == PinAction.Pin) R.string.snackbar_pinned else R.string.snackbar_unpinned
                     FeedEvent.ArchiveFailed -> R.string.snackbar_archive_failed
                     FeedEvent.NothingToShare -> R.string.snackbar_nothing_to_share
                     FeedEvent.ImageSaved -> R.string.snackbar_image_saved
@@ -937,6 +939,9 @@ fun FeedEventsEffect(viewModel: FeedViewModel, snackbar: SnackbarHostState) {
                 if (event is FeedEvent.ArchiveDone) {
                     // "Archived · Undo" / "Unarchived · Undo": same banner as the other confirmations, with its action.
                     if (snackbar.showFeedback(message, undoLabel, FeedbackTone.Done) == SnackbarResult.ActionPerformed) viewModel.undoArchive(event)
+                } else if (event is FeedEvent.PinDone) {
+                    // "Pinned · Undo" / "Unpinned · Undo": the card changed section, so the banner tells where it went.
+                    if (snackbar.showFeedback(message, undoLabel, FeedbackTone.Done) == SnackbarResult.ActionPerformed) viewModel.undoPin(event)
                 } else {
                     val done = event == FeedEvent.CopiedSecret || event == FeedEvent.ImageSaved ||
                         event == FeedEvent.FileDownloaded ||

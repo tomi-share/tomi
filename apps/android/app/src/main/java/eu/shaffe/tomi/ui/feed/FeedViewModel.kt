@@ -65,6 +65,9 @@ sealed interface FeedEvent {
     data object DeletedEverywhere : FeedEvent
     data object PinFailed : FeedEvent
 
+    /** [action] was done on [itemId] by the swipe to the right. The banner says so and offers "Undo" ([FeedViewModel.undoPin]). */
+    data class PinDone(val action: PinAction, val itemId: String) : FeedEvent
+
     /** The relay alone removed [revocation]'s device from the space: a one-time, non-blocking notice. */
 
     /** A call on the core failed (network, storage...). The action did not happen; nothing is fatal. */
@@ -282,6 +285,25 @@ class FeedViewModel(private val container: AppContainer) : ViewModel() {
                 ArchiveSwipe.perform(core, action, item.id)
             }
             if (done) eventChannel.send(FeedEvent.ArchiveDone(action, item.id, wasPinned = item.pinned))
+        }
+    }
+
+    /** Pins or unpins [item] (the swipe to the right), then offers "Undo" in the feedback banner. Never marks the item read. */
+    fun applyPinAction(item: TomiItem, action: PinAction) {
+        viewModelScope.launch {
+            val done = safeCore(onFailure = { eventChannel.send(FeedEvent.PinFailed) }) {
+                if (action == PinAction.Pin) core.pin(item.id) else core.unpin(item.id)
+            }
+            if (done) eventChannel.send(FeedEvent.PinDone(action, item.id))
+        }
+    }
+
+    /** "Undo" of the pin banner: the inverse call on the core. */
+    fun undoPin(done: FeedEvent.PinDone) {
+        viewModelScope.launch {
+            safeCore(onFailure = { eventChannel.send(FeedEvent.PinFailed) }) {
+                if (done.action.inverse == PinAction.Pin) core.pin(done.itemId) else core.unpin(done.itemId)
+            }
         }
     }
 

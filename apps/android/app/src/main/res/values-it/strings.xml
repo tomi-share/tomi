@@ -74,6 +74,8 @@
     <string name="snackbar_pin_failed">Impossibile modificare il fissaggio. Riprova.</string>
     <string name="snackbar_archived">Archiviato</string>
     <string name="snackbar_unarchived">Tolto dall’archivio</string>
+    <string name="snackbar_pinned">Fissato</string>
+    <string name="snackbar_unpinned">Non più fissato</string>
     <string name="snackbar_archive_failed">Impossibile modificare l’archivio. Riprova.</string>
     <string name="snackbar_nothing_to_share">Niente da condividere in questo elemento.</string>
     <string name="detail_not_found">Elemento non trovato. Potrebbe essere scaduto o stato eliminato.</string>

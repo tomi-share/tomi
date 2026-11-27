@@ -72,6 +72,8 @@
     <string name="snackbar_pin_failed">ピン留めを変更できませんでした。もう一度お試しください。</string>
     <string name="snackbar_archived">アーカイブしました</string>
     <string name="snackbar_unarchived">アーカイブを解除しました</string>
+    <string name="snackbar_pinned">ピン留めしました</string>
+    <string name="snackbar_unpinned">ピン留めを外しました</string>
     <string name="snackbar_archive_failed">アーカイブを変更できませんでした。もう一度お試しください。</string>
     <string name="snackbar_nothing_to_share">このアイテムには共有できるものがありません。</string>
     <string name="detail_not_found">アイテムが見つかりません。期限切れになったか、削除された可能性があります。</string>

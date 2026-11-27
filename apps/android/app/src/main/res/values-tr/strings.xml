@@ -73,6 +73,8 @@
     <string name="snackbar_pin_failed">Sabitleme değiştirilemedi. Tekrar deneyin.</string>
     <string name="snackbar_archived">Arşivlendi</string>
     <string name="snackbar_unarchived">Arşivden çıkarıldı</string>
+    <string name="snackbar_pinned">Sabitlendi</string>
+    <string name="snackbar_unpinned">Sabitleme kaldırıldı</string>
     <string name="snackbar_archive_failed">Arşiv durumu değiştirilemedi. Tekrar deneyin.</string>
     <string name="snackbar_nothing_to_share">Bu öğede paylaşılacak bir şey yok.</string>
     <string name="detail_not_found">Öğe bulunamadı. Süresi dolmuş veya silinmiş olabilir.</string>

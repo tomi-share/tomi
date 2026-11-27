@@ -73,6 +73,8 @@
     <string name="snackbar_pin_failed">Couldn’t change the pin. Try again.</string>
     <string name="snackbar_archived">Archived</string>
     <string name="snackbar_unarchived">Unarchived</string>
+    <string name="snackbar_pinned">Pinned</string>
+    <string name="snackbar_unpinned">Unpinned</string>
     <string name="snackbar_archive_failed">Couldn’t change the archive. Try again.</string>
     <string name="snackbar_nothing_to_share">Nothing to share in this item.</string>
     <string name="detail_not_found">Item not found. It may have expired or been deleted.</string>
