@@ -59,7 +59,7 @@ serves as the default display mode.
 | Windows client | **Rust + Tauri** | webview + `core` directly |
 | Android client | **Native Kotlin** | Jetpack Compose + `core` via UniFFI; ACTION_SEND sharing, notifications, Keystore |
 | iOS client | **Swift + SwiftUI** | `core` via UniFFI (`TomiCore`) |
-| Android versions | **minSdk 33** (Android 13); compileSdk 37, targetSdk 36 (Android 16) | 33 = sensitive clipboard handling + notification permission |
+| Android versions | **minSdk 33** (Android 13); compileSdk 37.2, targetSdk 36 (Android 16) | 33 = sensitive clipboard handling + notification permission |
 | CLI | **`tomi`** (Rust) | `core` + a thin layer of commands |
 | Android notifications | **FCM** | a bare doorbell (empty message); sending sits behind an interface so UnifiedPush can be added later |
 | Windows notifications | native | via a persistent WebSocket |
