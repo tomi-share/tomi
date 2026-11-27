@@ -30,7 +30,14 @@ enum class TapAction {
     companion object {
         const val SHORT_TEXT_MAX_CHARS = 140
 
-        fun forItem(item: TomiItem): TapAction = when (item.kind()) {
+        fun forItem(item: TomiItem): TapAction {
+            // An "after first read" item that is not hidden: a copy, an open or a share would consume it (delete it everywhere) without
+            // the user having seen it. The card is where it is read, and reading it there is what consumes it.
+            if (item.kind() != ItemKind.Secret && NotificationContent.isConcealed(item)) return OpenCard
+            return byKind(item)
+        }
+
+        private fun byKind(item: TomiItem): TapAction = when (item.kind()) {
             ItemKind.Secret -> AuthenticateAndCopy
             ItemKind.Image -> PreviewImage
             // A code file is read in Tomi's own code screen (colours, search), not handed to another app: open the card.

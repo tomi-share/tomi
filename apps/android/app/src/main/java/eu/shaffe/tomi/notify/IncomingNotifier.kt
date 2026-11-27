@@ -26,10 +26,11 @@ class IncomingNotifier(
             known = list.mapTo(HashSet()) { it.id }
             val localId = core.localDevice.value.id
 
-            // Dismiss notifications of items that were read elsewhere or deleted; with the last of them, the summary goes too.
-            val unreadIds = list.filter { !it.read }.mapTo(HashSet()) { it.id }
+            // Dismiss notifications of items that were read elsewhere, archived (put away on any device) or deleted; with the last of them,
+            // the summary goes too.
+            val pendingIds = list.filter(NotificationContent::isPending).mapTo(HashSet()) { it.id }
             val hadNotified = notified.isNotEmpty()
-            notified.filter { it !in unreadIds }.forEach {
+            notified.filter { it !in pendingIds }.forEach {
                 notifications.cancel(it)
                 notified.remove(it)
             }
@@ -39,7 +40,7 @@ class IncomingNotifier(
             val importing = grace.isImporting(core.isPaired.value)
             // The first emission is the existing history: it must not notify.
             if (previous == null || importing) return@collect
-            val fresh = list.filter { it.id !in previous && !it.isOutgoing(localId) && !it.read }
+            val fresh = list.filter { it.id !in previous && !it.isOutgoing(localId) && NotificationContent.isPending(it) }
             if (fresh.isEmpty() || isAppVisible()) return@collect
             fresh.asReversed().forEach {
                 notified += it.id

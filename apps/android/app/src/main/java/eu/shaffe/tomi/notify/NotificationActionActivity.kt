@@ -12,12 +12,24 @@ import eu.shaffe.tomi.AppContainer
 import eu.shaffe.tomi.MainActivity
 import eu.shaffe.tomi.TomiApplication
 import eu.shaffe.tomi.R
+import eu.shaffe.tomi.core.ItemKind
 import eu.shaffe.tomi.core.TomiItem
+import eu.shaffe.tomi.core.kind
 import eu.shaffe.tomi.core.safeCore
 import eu.shaffe.tomi.core.slotOf
 import eu.shaffe.tomi.security.AuthOutcome
+import eu.shaffe.tomi.share.FileDownloadResult
+import eu.shaffe.tomi.share.FileDownloads
+import eu.shaffe.tomi.share.FileShareOutcome
+import eu.shaffe.tomi.share.FileSharing
+import eu.shaffe.tomi.share.ItemSharing
 import eu.shaffe.tomi.share.LinkExtractor
+import eu.shaffe.tomi.share.ShareOutcome
+import eu.shaffe.tomi.ui.common.launchFileShare
+import eu.shaffe.tomi.ui.common.launchSystemShare
+import eu.shaffe.tomi.ui.common.saveToDownloads
 import eu.shaffe.tomi.ui.render.RenderModes
+import eu.shaffe.tomi.ui.viewer.ImageExport
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
@@ -69,7 +81,15 @@ class NotificationActionActivity : FragmentActivity() {
 
     private suspend fun perform(item: TomiItem, action: String?) {
         when (action) {
-            ACTION_COPY -> copy(item)
+            // A concealed item has no button (an older notification, or a forged intent, may still ask): the card is the only way in,
+            // where the biometric gate and the "after first read" rule live.
+            ACTION_COPY, ACTION_SAVE, ACTION_SHARE -> if (NotificationContent.isConcealed(item)) {
+                openCard(item.id)
+            } else when (action) {
+                ACTION_COPY -> copy(item)
+                ACTION_SAVE -> save(item)
+                else -> share(item)
+            }
             ACTION_VIEW_CARD -> openCard(item.id)
             else -> when (TapAction.forItem(item)) {
                 TapAction.OpenLink -> openLink(item)
@@ -132,15 +152,80 @@ class NotificationActionActivity : FragmentActivity() {
         markReadQuietly(item.id)
     }
 
-    private suspend fun openFile(item: TomiItem) {
-        val uri = try {
-            // The first attachment, by its SLOT (it is not 0 once the item lost an attachment).
-            item.attachments.takeIf { it.isNotEmpty() }?.let { container.core.attachmentUri(item.id, it.slotOf(0)) }?.let(Uri::parse)
-        } catch (e: CancellationException) {
-            throw e
-        } catch (_: Exception) {
-            null
+    /** The `content://` URI of the decrypted file of [slot] (the core decrypts it on demand), null when it is not available on this device. */
+    private suspend fun attachmentUriOrNull(itemId: String, slot: Int): String? = try {
+        container.core.attachmentUri(itemId, slot)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (_: Exception) {
+        null
+    }
+
+    /**
+     * "Save": every file of the item, on the explicit tap of the user, into the gallery (`Pictures/Tomi`) for an image item and into
+     * `Downloads/Tomi` for the others, like the buttons of the detail do. Never for a hidden item (see [FileDownloads]). Marks the item read.
+     */
+    private suspend fun save(item: TomiItem) {
+        if (!FileDownloads.canDownload(item)) {
+            openCard(item.id)
+            return
         }
+        val toGallery = item.kind() == ItemKind.Image
+        var saved = 0
+        var unavailable = false
+        var failed = false
+        for (index in item.attachments.indices) {
+            val result = FileDownloads.download(item, item.attachments.slotOf(index), ::attachmentUriOrNull) { uri, attachment ->
+                if (toGallery) ImageExport.saveToGallery(applicationContext, uri, attachment) else saveToDownloads(applicationContext, uri, attachment)
+            }
+            when (result) {
+                FileDownloadResult.Done -> saved++
+                FileDownloadResult.Unavailable -> unavailable = true
+                FileDownloadResult.Failed -> failed = true
+                FileDownloadResult.Forbidden -> Unit
+            }
+        }
+        val message = when {
+            saved > 0 && !failed && !unavailable -> if (toGallery) R.string.snackbar_image_saved else R.string.snackbar_file_downloaded
+            failed -> R.string.snackbar_file_download_failed
+            unavailable -> R.string.snackbar_file_unavailable
+            else -> null
+        }
+        message?.let { Toast.makeText(this, it, Toast.LENGTH_SHORT).show() }
+        if (saved > 0) markReadQuietly(item.id)
+    }
+
+    /**
+     * "Share": the files of the item (with its text as a caption) or its text and link go to the system share sheet, never for a hidden
+     * item. The share sheet reads the files through a temporary grant: Tomi writes no copy. Marks the item read once the sheet is open.
+     */
+    private suspend fun share(item: TomiItem) {
+        // Nothing to ask for: a hidden item never gets here (isConcealed), so the gate of the share rules is never reached.
+        val noGate: suspend () -> AuthOutcome = { AuthOutcome.Failed }
+        val chooserTitle = getString(R.string.share_chooser_title)
+        val opened = if (FileSharing.canShare(item)) {
+            when (val outcome = FileSharing.prepare(item, noGate, ::attachmentUriOrNull)) {
+                is FileShareOutcome.Ready -> launchFileShare(this, outcome.files, chooserTitle, outcome.text)
+                else -> {
+                    Toast.makeText(this, R.string.snackbar_file_unavailable, Toast.LENGTH_SHORT).show()
+                    return
+                }
+            }
+        } else {
+            when (val outcome = ItemSharing.prepare(item, noGate)) {
+                is ShareOutcome.Ready -> launchSystemShare(this, outcome.payload, chooserTitle, getString(R.string.share_hidden_preview_title))
+                else -> {
+                    Toast.makeText(this, R.string.snackbar_nothing_to_share, Toast.LENGTH_SHORT).show()
+                    return
+                }
+            }
+        }
+        if (opened) markReadQuietly(item.id) else Toast.makeText(this, R.string.share_no_app, Toast.LENGTH_SHORT).show()
+    }
+
+    private suspend fun openFile(item: TomiItem) {
+        // The first attachment, by its SLOT (it is not 0 once the item lost an attachment).
+        val uri = item.attachments.takeIf { it.isNotEmpty() }?.let { attachmentUriOrNull(item.id, it.slotOf(0)) }?.let(Uri::parse)
         if (uri == null) {
             openCard(item.id)
             return
@@ -172,6 +257,8 @@ class NotificationActionActivity : FragmentActivity() {
         const val ACTION_TAP = "eu.shaffe.tomi.action.TAP"
         const val ACTION_COPY = "eu.shaffe.tomi.action.COPY"
         const val ACTION_VIEW_CARD = "eu.shaffe.tomi.action.VIEW_CARD"
+        const val ACTION_SAVE = "eu.shaffe.tomi.action.SAVE"
+        const val ACTION_SHARE = "eu.shaffe.tomi.action.SHARE"
         private const val MAX_ID_LENGTH = 64
     }
 }

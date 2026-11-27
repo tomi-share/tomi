@@ -204,7 +204,13 @@ or an attacker who has root or can inject code into the app, can read what the a
 - On Windows the database key is sealed with DPAPI for your user account. Any process of the same user can unseal it, so the
   "entropy" label in the source is not a secret. Windows Hello only gates the interface.
 - Windows toasts and Android notifications for non-secret items carry a preview. Notification listeners, the notification
-  history and wearables can see it. Secret and unreadable items get a generic notification with no content.
+  history and wearables can see it. Secret and unreadable items get a generic notification with no content, and so does an
+  "after first read" item that is not hidden (the first copy, open or share deletes it everywhere: a preview or a button
+  would consume it unseen; applied on Android and Windows, see `docs/FEATURES.md` §6 for iOS). On Android the preview of
+  a non-secret item is richer (expanded text of 400 characters, a 450 px picture decoded in memory from the thumbnail, the
+  host of a link without its path or query); a concealed item is also kept on the phone (`setLocalOnly`, not bridged to a
+  watch). Where the lock screen shows previews is the user's system setting: `VISIBILITY_PRIVATE` only hides them when
+  the phone is set to hide sensitive content.
 
 Tomi does take measures that help against casual or partial access: the clipboard is marked sensitive and cleared after
 30 seconds if it still holds the value (on Windows, a secret left on the clipboard by a crash is emptied at the next start,
