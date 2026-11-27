@@ -37,7 +37,13 @@ as it is (or deleted) and never written to again.
 4. Each release states the protocol version it speaks and the minimum compatible relay or client version.
 5. Release notes contain no secret and no sensitive detail. For a relay release, keep the original description (binaries,
    pointer to `infra/`) and append the changelog. There is no moving `relay-latest` pointer: releases are immutable on this repository, so assets of a published release cannot be replaced. The deployment script looks up the newest `relay-v*` release itself.
-6. Relay release: bump the workspace version in `Cargo.toml`, push `relay-vX.Y.Z`, then check the optional deploy hook step
+6. **GitHub's "Latest" release is not used.** One repository ships several products, so a single "latest" badge says nothing
+   (it would point at whichever release was published last). Workflows create every release with `--latest=false`; do not
+   write `releases/latest` or `releases/latest/download/...` URLs anywhere (docs, apps, scripts). To find the newest release of a
+   product, filter by its tag prefix: `gh release list --json tagName,isDraft --jq '[.[] | select((.isDraft|not) and (.tagName|startswith("android-v")))][0].tagName'`
+   (this is what `infra/forge/deploy.sh` does for `relay-v`), or pin the tag. GitHub may still show the badge on a release that
+   was published before this rule (`android-v0.1.0`); it cannot be removed and nothing depends on it.
+7. Relay release: bump the workspace version in `Cargo.toml`, push `relay-vX.Y.Z`, then check the optional deploy hook step
    (see `infra/forge/` and the `FORGE_DEPLOY_URL` secret) without assuming the deployment has finished.
 
 ## Cutting a stable release
