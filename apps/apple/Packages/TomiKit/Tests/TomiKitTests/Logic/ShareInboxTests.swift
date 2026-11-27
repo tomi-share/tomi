@@ -6,11 +6,17 @@ import XCTest
 final class ShareInboxTests: XCTestCase {
     private var root: URL!
     private var inbox: ShareInbox!
+    private var keys: ShareSeal.KeyPair!
     private let start = Date(timeIntervalSince1970: 1_800_000_000)
 
+    /// The extension's view of the inbox (the public key only) and the app's (the private key only) are the same
+    /// directory: `inbox` has both, to deposit and to read in one test.
     override func setUpWithError() throws {
         root = FileManager.default.temporaryDirectory.appendingPathComponent("inbox-\(UUID().uuidString)", isDirectory: true)
-        inbox = ShareInbox(root: root.appendingPathComponent("share-inbox", isDirectory: true))
+        keys = ShareSeal.makeKeyPair()
+        inbox = ShareInbox(
+            root: root.appendingPathComponent("share-inbox", isDirectory: true), recipientKey: keys.publicKey, privateKey: keys.privateKey
+        )
     }
 
     override func tearDownWithError() throws {
@@ -39,7 +45,7 @@ final class ShareInboxTests: XCTestCase {
         let ready = inbox.ready(now: start.addingTimeInterval(5), maxWindow: 5)
         XCTAssertEqual(ready, [handoff])
         let claimed = try XCTUnwrap(inbox.claim(handoff))
-        let back = inbox.parsed(handoff, in: claimed)
+        let back = try inbox.parsed(handoff, in: claimed)
         XCTAssertEqual(back.title, "Article")
         XCTAssertEqual(back.url, "https://example.org/a")
         XCTAssertEqual(back.text?.markdown, "**gras**")
@@ -131,5 +137,112 @@ final class ShareInboxTests: XCTestCase {
     func testTheHandoffIsNeverPrinted() throws {
         let handoff = try inbox.deposit(parsed(), secret: false, expiry: .never, id: "p", now: start, window: 0)
         XCTAssertFalse(String(describing: handoff).contains("Article"))
+    }
+
+    // MARK: Sealed at rest
+
+    private func everyByte(under url: URL) throws -> [Data] {
+        let walker = try XCTUnwrap(FileManager.default.enumerator(at: url, includingPropertiesForKeys: [.isRegularFileKey]))
+        var all: [Data] = []
+        for case let file as URL in walker where (try? file.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true {
+            all.append(try Data(contentsOf: file))
+        }
+        return all
+    }
+
+    func testNothingInTheInboxIsPlaintext() throws {
+        let file = try sharedFile("la phrase du fichier", name: "note.txt")
+        let share = ParsedShare(
+            title: "Titre à cacher", text: RichText(plain: "le mot de passe est 1234", markdown: "le mot de passe est 1234"),
+            url: "https://example.org/secret-path", files: [file], looksSecret: true
+        )
+        _ = try inbox.deposit(share, secret: true, expiry: .never, id: "sealed", now: start, window: 0)
+        // What the extension copies to read the share goes when it closes (`ShareViewController`): only what stays counts.
+        try FileManager.default.removeItem(at: file.url.deletingLastPathComponent())
+        let contents = try everyByte(under: inbox.root)
+        XCTAssertGreaterThanOrEqual(contents.count, 2, "the manifest and the file")
+        for phrase in ["la phrase du fichier", "le mot de passe", "Titre à cacher", "secret-path", "note.txt"] {
+            for data in contents {
+                XCTAssertNil(data.range(of: Data(phrase.utf8)), "\"\(phrase)\" found in the inbox")
+            }
+        }
+    }
+
+    func testTheExtensionHasNoWayToReadWhatItDeposited() throws {
+        _ = try inbox.deposit(parsed(), secret: false, expiry: .never, id: "kept", now: start, window: 0)
+        let extensionOnly = ShareInbox(root: inbox.root, recipientKey: keys.publicKey)
+        XCTAssertTrue(extensionOnly.ready(now: start, maxWindow: 5).isEmpty)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: inbox.root.appendingPathComponent("kept").path),
+                      "an app that cannot read its key yet must not lose the share")
+        XCTAssertEqual(inbox.ready(now: start, maxWindow: 5).map(\.id), ["kept"], "the app opens it")
+    }
+
+    func testAShareSealedToAnotherKeyIsDropped() throws {
+        _ = try inbox.deposit(parsed(), secret: false, expiry: .never, id: "lost", now: start, window: 0)
+        let other = ShareInbox(root: inbox.root, privateKey: ShareSeal.makeKeyPair().privateKey)
+        XCTAssertTrue(other.ready(now: start, maxWindow: 5).isEmpty)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: inbox.root.appendingPathComponent("lost").path),
+                       "it can never be opened: dropped")
+    }
+
+    func testWithoutAKeyNothingIsWritten() throws {
+        let blind = ShareInbox(root: inbox.root)
+        XCTAssertThrowsError(try blind.deposit(parsed(), secret: false, expiry: .never, id: "none", now: start, window: 0)) {
+            XCTAssertEqual($0 as? ShareSealError, .noKey)
+        }
+        let names = (try? FileManager.default.contentsOfDirectory(atPath: inbox.root.path)) ?? []
+        XCTAssertTrue(names.isEmpty, "no half share, no plaintext")
+    }
+
+    func testAShareCopiedUnderAnotherIdDoesNotOpen() throws {
+        _ = try inbox.deposit(parsed(), secret: false, expiry: .never, id: "one", now: start, window: 0)
+        try FileManager.default.copyItem(at: inbox.root.appendingPathComponent("one"), to: inbox.root.appendingPathComponent("two"))
+        XCTAssertEqual(inbox.ready(now: start, maxWindow: 5).map(\.id), ["one"], "the id is part of what was sealed")
+    }
+
+    func testAnAlteredSealedFileIsRefusedWhenOpened() throws {
+        let file = try sharedFile("bonjour", name: "note.txt")
+        let handoff = try inbox.deposit(parsed(files: [file]), secret: false, expiry: .never, id: "bad", now: start, window: 0)
+        let claimed = try XCTUnwrap(inbox.claim(handoff))
+        let sealed = claimed.appendingPathComponent("files/0")
+        var data = try Data(contentsOf: sealed)
+        data[0] ^= 1
+        try data.write(to: sealed)
+        XCTAssertThrowsError(try inbox.parsed(handoff, in: claimed)) {
+            XCTAssertEqual($0 as? ShareSealError, .authentication)
+        }
+    }
+
+    func testTheOpenedFilesLiveInTheClaimedDirectoryAndGoWithIt() throws {
+        let file = try sharedFile("bonjour", name: "note.txt")
+        let handoff = try inbox.deposit(parsed(files: [file]), secret: false, expiry: .never, id: "go", now: start, window: 0)
+        let claimed = try XCTUnwrap(inbox.claim(handoff))
+        let back = try inbox.parsed(handoff, in: claimed)
+        XCTAssertTrue(back.files[0].url.path.hasPrefix(claimed.path), "never anywhere else")
+        XCTAssertEqual(try Data(contentsOf: back.files[0].url), Data("bonjour".utf8))
+        // A second look (a failed send, tried again) opens them again.
+        XCTAssertEqual(try inbox.parsed(handoff, in: claimed).files.count, 1)
+        inbox.finish(claimed)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: back.files[0].url.path))
+    }
+
+    func testAShareLeftByAnOlderBuildIsStillSent() throws {
+        let dir = inbox.root.appendingPathComponent("old1", isDirectory: true)
+        try FileManager.default.createDirectory(at: dir.appendingPathComponent("files"), withIntermediateDirectories: true)
+        try Data("ancien".utf8).write(to: dir.appendingPathComponent("files/0"))
+        let handoff = ShareHandoff(
+            version: ShareHandoff.currentVersion, id: "old1", createdAt: start, notBefore: start, title: "Ancien", url: nil,
+            plain: "texte", html: nil, markdown: nil, files: [ShareHandoff.File(name: "a.txt", mime: "text/plain", size: 6)],
+            looksSecret: false, secret: false, expiry: .never, sealed: nil
+        )
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .millisecondsSince1970
+        try encoder.encode(handoff).write(to: dir.appendingPathComponent(ShareInbox.manifestName))
+        let ready = inbox.ready(now: start, maxWindow: 5)
+        XCTAssertEqual(ready.map(\.id), ["old1"])
+        let claimed = try XCTUnwrap(inbox.claim(ready[0]))
+        let back = try inbox.parsed(ready[0], in: claimed)
+        XCTAssertEqual(back.title, "Ancien")
+        XCTAssertEqual(try Data(contentsOf: back.files[0].url), Data("ancien".utf8))
     }
 }

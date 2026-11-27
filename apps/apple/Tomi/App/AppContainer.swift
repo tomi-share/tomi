@@ -571,7 +571,12 @@ final class AppContainer {
             self.scheduler = scheduler
             self.coordinator = coordinator
             shareIntake?.stop()
-            if let inbox = ShareInbox.shared() {
+            // The key that opens the share inbox (the extension seals to its public half). A Keychain not readable yet
+            // (a background launch before the first unlock) is not "unreadable data": without the key the sealed shares
+            // are left where they are, and the next start reads them.
+            let shareKey = try? ShareInboxKey.loadOrCreate()
+            if let shareKey { AppGroup.defaults?.set(shareKey.publicKey, forKey: AppGroup.inboxPublicKeyKey) }
+            if let inbox = ShareInbox.shared(privateKey: shareKey?.privateKey) {
                 // Once per run: a later core (demo reopened) may follow an intake still finishing a claimed share.
                 if !inboxPurged {
                     inboxPurged = true

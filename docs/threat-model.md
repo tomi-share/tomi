@@ -242,13 +242,19 @@ or sharing it needs local authentication. The following are **accepted and docum
    - **iOS:** purged when the app goes to the background and at the next start; a temporary link is used for viewing.
 2. **Secrets in memory.** A decrypted secret is a normal string in the app's memory while it is shown, and, as above, in the
    decrypted feed state on some platforms. Strings cannot be reliably zeroized in Kotlin, Swift or JavaScript.
-3. **No other clear copy, with one exception on iOS.** Not in SQLite, in the write-ahead log or in other files; not in logs,
+3. **No other clear copy.** Not in SQLite, in the write-ahead log or in other files; not in logs,
    notifications or an unprotected clipboard. System sharing of a secret needs biometrics first, and the share sheet excludes
-   copy, save and print actions where the platform allows it. The exception is the **iOS share extension**: it cannot open the
-   core, so what you share to Tomi waits **unencrypted by Tomi** in the app group's inbox, secrets included, until the app is
-   next opened and sends it. The inbox is excluded from backups (iCloud, Finder) and a share that nothing sent within 7 days
-   is dropped (you are told once); the drop runs when the app, or a background task, next looks at the inbox. Until then the
-   copy sits under whatever file protection the system gives that directory, with no Tomi key.
+   copy, save and print actions where the platform allows it. The **iOS and macOS share extensions** cannot open the core, so what you share to Tomi waits in the app
+   group's inbox until the app is next opened and sends it. Nothing waits there in clear: the extension seals each share (its
+   manifest and every file, secrets included) to a public key the app published in the group (an ephemeral X25519 key, then
+   ChaCha20-Poly1305, one key per part, files in 64 KiB blocks), and only the app, which keeps the private key in its own
+   Keychain (this device only, no access group, so the extension never has it), can open it. The inbox is also excluded from
+   backups (iCloud, Finder) and a share that nothing sent within 7 days is dropped (you are told once). Limits: the seal
+   protects the **confidentiality** of what waits, not who put it there (whoever can write in the group and read its public key
+   can deposit a share, as before); the share is in clear again, in the app's own claimed directory, for the moment of the
+   sending (the core reads files by path), and the copies the extension makes to read what you share are removed when it
+   closes; a share sealed to a key the app lost (a reset Keychain) is dropped; an app not opened since the update has published
+   no key, so the extension asks you to open Tomi first.
 4. **Local deletion is stronger than before, and still not erasure.** The local database runs with `secure_delete` on for the
    life of the connection, and the write-ahead log is truncated (best effort: a checkpoint blocked by a reader is retried later) right after a deletion and
    periodically during maintenance, so a deleted or consumed record does not stay readable in a free page or in the log. This does not reach
@@ -351,7 +357,7 @@ means the code does it and a test covers the decision; it does not mean it was t
   "erase anyway"; the authentication window closed when the app goes to the background; the clear-text attachment cache purge
   backed by a WorkManager job; an alert when a device joins; autofill, accessibility and overlay hardening (not verified on a
   device); a deep link no longer discards a draft; the demo mode refused on a provisioned device.
-- **iOS:** the share inbox is excluded from backups and shares older than 7 days are dropped; a fresh Face ID / Touch ID /
+- **iOS:** the share inbox is sealed to a key only the app holds, excluded from backups, and shares older than 7 days are dropped; a fresh Face ID / Touch ID /
   passcode check before a device is added; an alert when a device joins; a notification's link is opened only if it is http(s);
   a content rule list blocks network loads in the HTML web view; the `Tomi Dev` scheme archives with `Release`; the demo mode
   is refused on a provisioned device.
@@ -383,9 +389,9 @@ Open at the time of writing. [`FEATURES.md`](FEATURES.md) (section "Open gaps") 
 - **The two notices are best-effort.** The `rotation_stalled` banner and the "removed by the relay" notice are shown by the
   three apps, but the core hands a revocation notice over only once and the apps keep it in memory: if the process dies
   before it is displayed, the notice is lost. Notices are built from unsigned relay events, so a hostile relay can fake one
-  (it can already block a device; the core ignores an unknown device or an unknown cause, so it cannot invent a notice about a device you never had), and the "new device added" alerts do not check that the device is verified.
-- **iOS:** revocation needs Face ID or Touch ID (the passcode is not accepted, unlike Android); the share inbox holds clear
-  text until the app next runs; HTML sanitization is hand-written.
+  (it can already block a device; the core ignores an unknown device or an unknown cause, so it cannot invent a notice about a device you never had). The "new device added" alerts are raised only for a device the space accepted (verified), so a relay cannot make one up by listing a device nobody added.
+- **iOS:** revocation needs Face ID or Touch ID (the passcode is not accepted, unlike Android); the share inbox is sealed
+  (confidentiality only) and the app's key is as safe as its Keychain; HTML sanitization is hand-written.
 - **Android:** the app exposes a share target that any app can call; it sends immediately and offers a 3-second undo.
 - **Windows:** the Hello fallback to the account password is weaker than Hello; the clear-text attachment cache is kept one
   minute after last use; the file types never launched on open are a deny list; the new-device toast misses a device that

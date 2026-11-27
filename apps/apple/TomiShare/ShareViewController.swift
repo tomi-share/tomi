@@ -16,8 +16,11 @@ final class ShareViewController: UIViewController {
         super.viewDidLoad()
         TomiFonts.register()
 
-        let paired = AppGroup.defaults?.bool(forKey: AppGroup.isPairedKey) ?? false
-        let inbox = ShareInbox.shared()
+        // Without the public key of the app the extension cannot seal a share, so it asks to open the app first (the key is
+        // published at each start of the app: only an app not opened since the update lacks it).
+        let publicKey = AppGroup.inboxPublicKey
+        let paired = (AppGroup.defaults?.bool(forKey: AppGroup.isPairedKey) ?? false) && publicKey != nil
+        let inbox = ShareInbox.shared(recipientKey: publicKey)
         let sender = InboxShareSender(inbox: inbox ?? ShareInbox(root: FileManager.default.temporaryDirectory))
         let unreadable = AppGroup.defaults?.bool(forKey: AppGroup.isUnreadableKey) ?? false
         let flow = ShareFlow(sender: sender, isPaired: paired, isUnreadable: unreadable)

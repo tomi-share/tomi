@@ -62,10 +62,25 @@ final class ShareIntake {
             }.value
             for handoff in ready {
                 guard !stopped, let claimed = inbox.claim(handoff) else { continue }
+                let parsed: ParsedShare
+                do {
+                    parsed = try inbox.parsed(handoff, in: claimed)
+                } catch let error as ShareSealError where error == .authentication || error == .malformed {
+                    // A sealed file that does not open (cut short, altered) never will: trying again would only fail
+                    // again, so the share goes, and the user is told like for any share that could not be sent.
+                    inbox.finish(claimed)
+                    onFailed?()
+                    continue
+                } catch {
+                    // Anything else (a file not readable right now): back to the inbox, tried again at the next look.
+                    if !inbox.unclaim(claimed, id: handoff.id) { inbox.finish(claimed) }
+                    onFailed?()
+                    return
+                }
                 do {
                     // The extension held the undo window: none is left.
                     let sent = try await coordinator.submit(
-                        inbox.parsed(handoff, in: claimed), secret: handoff.secret, expiry: handoff.expiry, undoWindowMs: 0
+                        parsed, secret: handoff.secret, expiry: handoff.expiry, undoWindowMs: 0
                     )
                     inbox.finish(claimed)
                     if sent.skippedFiles > 0 { onSkippedFiles?(sent.skippedFiles) }

@@ -311,7 +311,8 @@ final class MacShareInboxTests: XCTestCase {
         // app group and would take the share and really send it.
         let running = NSRunningApplication.runningApplications(withBundleIdentifier: Bundle.main.bundleIdentifier ?? "")
         try XCTSkipUnless(running.count <= 1, "another Tomi is running: its inbox is the same")
-        let inbox = try XCTUnwrap(ShareInbox.shared())
+        // What the extension does: seals to the public key the app published in the group.
+        let inbox = try XCTUnwrap(ShareInbox.shared(recipientKey: AppGroup.inboxPublicKey))
         let text = "Partagé depuis une autre app \(UUID().uuidString)"
         let parsed = SharePayloadParser.parse(ShareInput(text: text))
         // No undo window left: the app may send it at once.
