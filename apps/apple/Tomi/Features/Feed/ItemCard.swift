@@ -75,7 +75,7 @@ struct ItemCard: View {
             ItemMenu(item: item, model: model, onDetails: onOpenDetail, confirmDelete: $confirmDeleteEverywhere)
         })
         .accessibilityAction(named: Text(accessibilityTapLabel)) { handleTap() }
-        .deleteEverywhereConfirmation(isPresented: $confirmDeleteEverywhere, item: item, model: model)
+        .deleteConfirmation(isPresented: $confirmDeleteEverywhere, item: item, model: model)
     }
 
     // MARK: Tap

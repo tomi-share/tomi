@@ -202,6 +202,8 @@
     <string name="dialog_delete_everywhere_secret">Deze verborgen inhoud wordt gewist van al je apparaten en van je Tomi-server. Een apparaat dat de inhoud al heeft getoond, kan een kopie hebben bewaard. Deze actie is definitief.</string>
     <string name="dialog_delete_local_title">Verwijderen van dit apparaat?</string>
     <string name="dialog_delete_local_message">Het item wordt alleen van dit apparaat verwijderd. Je andere apparaten houden hun kopie. Deze actie is definitief.</string>
+    <string name="action_delete_ellipsis">Verwijderen…</string>
+    <string name="dialog_delete_item_title">Dit item verwijderen?</string>
     <string name="dialog_delete_image_everywhere_title">Afbeelding overal verwijderen?</string>
     <string name="dialog_delete_image_everywhere_message">Deze afbeelding wordt gewist van al je apparaten en van je Tomi-server. Apparaten die offline zijn, wissen haar zodra ze weer verbinding hebben. Deze actie is definitief.</string>
     <string name="dialog_delete_image_everywhere_secret">Deze verborgen afbeelding wordt gewist van al je apparaten en van je Tomi-server. Een apparaat dat haar al heeft getoond, kan een kopie hebben bewaard. Deze actie is definitief.</string>

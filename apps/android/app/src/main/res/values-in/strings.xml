@@ -193,6 +193,8 @@
     <string name="dialog_delete_everywhere_secret">Konten tersembunyi ini akan dihapus dari semua perangkat Anda dan dari server Tomi Anda. Perangkat yang sudah menampilkannya mungkin telah menyimpan salinannya. Tindakan ini permanen.</string>
     <string name="dialog_delete_local_title">Hapus dari perangkat ini?</string>
     <string name="dialog_delete_local_message">Item ini hanya akan dihapus dari perangkat ini. Perangkat Anda yang lain tetap menyimpan salinannya. Tindakan ini permanen.</string>
+    <string name="action_delete_ellipsis">Hapus…</string>
+    <string name="dialog_delete_item_title">Hapus item ini?</string>
     <string name="dialog_delete_image_everywhere_title">Hapus gambar di semua tempat?</string>
     <string name="dialog_delete_image_everywhere_message">Gambar ini akan dihapus dari semua perangkat Anda dan dari server Tomi Anda. Perangkat yang sedang offline akan menghapusnya saat tersambung kembali. Tindakan ini permanen.</string>
     <string name="dialog_delete_image_everywhere_secret">Gambar tersembunyi ini akan dihapus dari semua perangkat Anda dan dari server Tomi Anda. Perangkat yang sudah menampilkannya mungkin telah menyimpan salinannya. Tindakan ini permanen.</string>

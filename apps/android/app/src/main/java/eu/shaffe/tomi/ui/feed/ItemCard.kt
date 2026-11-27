@@ -27,7 +27,6 @@ import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.ContentCopy
-import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.DoneAll
 import androidx.compose.material.icons.outlined.ErrorOutline
@@ -75,7 +74,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -182,8 +183,7 @@ fun ItemCard(
     val outgoing = item.isOutgoing(localDeviceId)
     val unread = !item.read && !outgoing
     val textMode = item.text?.let { RenderModes.resolve(it, preferredMode) }
-    var confirmDeleteEverywhere by remember { mutableStateOf(false) }
-    var confirmDeleteLocal by remember { mutableStateOf(false) }
+    var confirmDelete by remember { mutableStateOf(false) }
     var menuOpen by remember { mutableStateOf(false) }
     val secretColor = TomiTheme.colors.secret
 
@@ -195,6 +195,24 @@ fun ItemCard(
     val tapAction = CardTap.actionFor(item, revealed, overflow)
     val showReadMore = !expanded && CardTap.showsReadMore(item, revealed, overflow)
     val tapLabel = tapAction.labelRes()?.let { stringResource(it) }
+    val hasInlineCopy = showMenu && CardTap.showsCopyButton(item)
+    val menuEntries = ItemMenuLogic.entries(
+        item,
+        revealed,
+        canArchive = ArchiveSwipe.canArchive(item, localDeviceId),
+        hasInlineCopy = hasInlineCopy,
+        canShare = ItemSharing.canShare(item) || FileSharing.canShare(item),
+    )
+    // TalkBack cannot reach the menu by a long press nor swipe: every entry is also a custom action of the card. The archive one is
+    // the swipe wrapper's own when the card swipes (the feed list), so it is not offered twice.
+    val a11yActions = if (showMenu && !expanded) {
+        cardAccessibilityActions(
+            item, menuEntries, hasInlineCopy, archiveIsSwipe = ArchiveSwipe.swipeAction(item, localDeviceId) != null,
+            textMode, actions, onDelete = { confirmDelete = true },
+        )
+    } else {
+        emptyList()
+    }
 
     Card(
         modifier = modifier
@@ -205,7 +223,7 @@ fun ItemCard(
                 if (expanded) {
                     Modifier
                 } else {
-                    Modifier.combinedClickable(
+                    Modifier.semantics { customActions = a11yActions }.combinedClickable(
                         onClickLabel = tapLabel,
                         onClick = { actions.handleTap(tapAction, singleSlot = if (item.attachments.isEmpty()) 0 else item.attachments.slotOf(0)) },
                         onLongClick = if (showMenu) {
@@ -227,7 +245,8 @@ fun ItemCard(
         // rounded card), not laid out: the content of a hidden card sits exactly where the one of a normal card does.
         Box(if (item.secret) Modifier.drawBehind { drawRect(secretColor, size = Size(SECRET_ACCENT_WIDTH.toPx(), size.height)) } else Modifier) {
             Column(
-                Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 16.dp),
+                // The header buttons are 48 dp tall touch targets and carry the top margin themselves.
+                Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = if (showMenu) 0.dp else 8.dp, bottom = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 // Header: type icon, source and time, pin, unread dot, menu.
@@ -275,7 +294,7 @@ fun ItemCard(
                     }
                     // Explicit copy icon on a text card (a tap on the text no longer copies). Same action as "Copier" of the menu.
                     if (showMenu && CardTap.showsCopyButton(item)) {
-                        IconButton(onClick = { actions.onCopy(textMode) }, modifier = Modifier.size(40.dp)) {
+                        IconButton(onClick = { actions.onCopy(textMode) }, modifier = Modifier.size(48.dp)) {
                             Icon(
                                 Icons.Outlined.ContentCopy,
                                 contentDescription = stringResource(R.string.action_copy),
@@ -286,7 +305,7 @@ fun ItemCard(
                     }
                     if (showMenu) {
                         Box {
-                            IconButton(onClick = { menuOpen = true }, modifier = Modifier.size(40.dp)) {
+                            IconButton(onClick = { menuOpen = true }, modifier = Modifier.size(48.dp)) {
                                 Icon(
                                     Icons.Outlined.MoreVert,
                                     contentDescription = stringResource(R.string.action_more),
@@ -297,12 +316,10 @@ fun ItemCard(
                                 expanded = menuOpen,
                                 onDismiss = { menuOpen = false },
                                 item = item,
-                                canArchive = ArchiveSwipe.canArchive(item, localDeviceId),
-                                revealed = revealed,
+                                entries = menuEntries,
                                 textMode = textMode,
                                 actions = actions,
-                                onConfirmDeleteLocal = { confirmDeleteLocal = true },
-                                onConfirmDeleteEverywhere = { confirmDeleteEverywhere = true },
+                                onConfirmDelete = { confirmDelete = true },
                             )
                         }
                     }
@@ -338,23 +355,18 @@ fun ItemCard(
         }
     }
 
-    if (confirmDeleteLocal) {
-        DeleteLocalDialog(
-            onConfirm = {
-                confirmDeleteLocal = false
+    if (confirmDelete) {
+        DeleteItemDialog(
+            secret = item.secret,
+            onDeleteLocal = {
+                confirmDelete = false
                 actions.onDeleteLocal()
             },
-            onDismiss = { confirmDeleteLocal = false },
-        )
-    }
-    if (confirmDeleteEverywhere) {
-        DeleteEverywhereDialog(
-            secret = item.secret,
-            onConfirm = {
-                confirmDeleteEverywhere = false
+            onDeleteEverywhere = {
+                confirmDelete = false
                 actions.onDeleteEverywhere()
             },
-            onDismiss = { confirmDeleteEverywhere = false },
+            onDismiss = { confirmDelete = false },
         )
     }
 }
@@ -379,121 +391,158 @@ fun DeleteLocalDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
     )
 }
 
+/**
+ * "Supprimer…" of an item (the card menu and the detail): ONE entry that asks where. Everywhere is the signed, irreversible deletion
+ * for every device; this device only forgets the item here for good (the others keep it). Both say so, in the words of the two
+ * earlier dialogs; the lesser one is not in the error colour.
+ */
 @Composable
-fun DeleteEverywhereDialog(secret: Boolean, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+fun DeleteItemDialog(secret: Boolean, onDeleteLocal: () -> Unit, onDeleteEverywhere: () -> Unit, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         shape = TomiTheme.shapes.menu,
-        title = { Text(stringResource(R.string.dialog_delete_everywhere_title)) },
+        title = { Text(stringResource(R.string.dialog_delete_item_title)) },
         text = {
-            Text(stringResource(if (secret) R.string.dialog_delete_everywhere_secret else R.string.dialog_delete_everywhere_message))
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(stringResource(if (secret) R.string.dialog_delete_everywhere_secret else R.string.dialog_delete_everywhere_message))
+                Text(stringResource(R.string.dialog_delete_local_message))
+            }
         },
         confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(stringResource(R.string.action_delete_everywhere), color = MaterialTheme.colorScheme.error)
+            Column(horizontalAlignment = Alignment.End) {
+                TextButton(onClick = onDeleteEverywhere) {
+                    Text(stringResource(R.string.action_delete_everywhere), color = MaterialTheme.colorScheme.error)
+                }
+                TextButton(onClick = onDeleteLocal) { Text(stringResource(R.string.action_delete_local)) }
             }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
 }
 
-/** Menu of an item: pin and archive first, then copy / open / share, then the two deletions. */
+/** The custom accessibility actions of a card (TalkBack's actions menu): the same entries as its "⋮" menu, plus its copy icon. */
+@Composable
+private fun cardAccessibilityActions(
+    item: TomiItem,
+    entries: List<ItemMenuEntry>,
+    hasInlineCopy: Boolean,
+    archiveIsSwipe: Boolean,
+    textMode: RenderMode?,
+    actions: CardActions,
+    onDelete: () -> Unit,
+): List<CustomAccessibilityAction> {
+    @Composable
+    fun action(label: Int, block: () -> Unit) = CustomAccessibilityAction(stringResource(label)) {
+        block()
+        true
+    }
+    val linkOnly = item.url != null && item.text == null
+    return buildList {
+        if (hasInlineCopy) add(action(if (linkOnly) R.string.action_copy_link else R.string.action_copy) { actions.onCopy(textMode) })
+        entries.forEach { entry ->
+            when (entry) {
+                ItemMenuEntry.Copy -> add(action(if (linkOnly) R.string.action_copy_link else R.string.action_copy) { actions.onCopy(textMode) })
+                ItemMenuEntry.OpenLink -> add(action(R.string.action_open, actions.onOpenLink))
+                ItemMenuEntry.CopyLink -> add(action(R.string.action_copy_link, actions.onCopyLink))
+                ItemMenuEntry.Share -> add(action(R.string.action_share, actions.onShare))
+                ItemMenuEntry.Pin -> add(action(if (item.pinned) R.string.action_unpin else R.string.action_pin, actions.onTogglePin))
+                ItemMenuEntry.Archive -> if (!archiveIsSwipe) {
+                    add(action(if (item.isShownAsArchived()) R.string.action_unarchive else R.string.action_archive, actions.onToggleArchive))
+                }
+                ItemMenuEntry.Details -> add(
+                    action(R.string.action_details) {
+                        actions.onCardOpened()
+                        actions.onOpenDetail()
+                    },
+                )
+                ItemMenuEntry.Delete -> add(action(R.string.action_delete_ellipsis, onDelete))
+            }
+        }
+    }
+}
+
+/** Menu of an item: the entries of [ItemMenuLogic] in order, then a divider and the single "Supprimer…". */
 @Composable
 private fun ItemMenu(
     expanded: Boolean,
     onDismiss: () -> Unit,
     item: TomiItem,
-    canArchive: Boolean,
-    revealed: Boolean,
+    entries: List<ItemMenuEntry>,
     textMode: RenderMode?,
     actions: CardActions,
-    onConfirmDeleteLocal: () -> Unit,
-    onConfirmDeleteEverywhere: () -> Unit,
+    onConfirmDelete: () -> Unit,
 ) {
     fun run(block: () -> Unit): () -> Unit = {
         onDismiss()
         block()
     }
-    val canCopy = item.text != null || item.url != null
-    // A link-only item copies its link with "Copy"; a text + link item offers both.
+    // A link-only item copies its link with "Copy".
     val linkOnly = item.url != null && item.text == null
-    val canOpen = item.url != null && (!item.secret || revealed)
     DropdownMenu(
         expanded = expanded,
         onDismissRequest = onDismiss,
         shape = TomiTheme.shapes.menu,
         containerColor = MaterialTheme.colorScheme.surface,
     ) {
-        DropdownMenuItem(
-            text = { Text(stringResource(if (item.pinned) R.string.action_unpin else R.string.action_pin)) },
-            leadingIcon = { Icon(if (item.pinned) Icons.Filled.PushPin else Icons.Outlined.PushPin, contentDescription = null) },
-            onClick = run(actions.onTogglePin),
-        )
-        if (canArchive) {
-            val archived = item.isShownAsArchived()
-            DropdownMenuItem(
-                text = { Text(stringResource(if (archived) R.string.action_unarchive else R.string.action_archive)) },
-                leadingIcon = { Icon(if (archived) Icons.Outlined.Unarchive else Icons.Outlined.Archive, contentDescription = null) },
-                onClick = run(actions.onToggleArchive),
-            )
+        entries.forEach { entry ->
+            when (entry) {
+                ItemMenuEntry.Copy -> DropdownMenuItem(
+                    text = { Text(stringResource(if (linkOnly) R.string.action_copy_link else R.string.action_copy)) },
+                    leadingIcon = { Icon(if (linkOnly) Icons.Outlined.Link else Icons.Outlined.ContentCopy, contentDescription = null) },
+                    onClick = run { actions.onCopy(textMode) },
+                )
+                ItemMenuEntry.OpenLink -> DropdownMenuItem(
+                    text = { Text(stringResource(R.string.action_open)) },
+                    leadingIcon = { Icon(Icons.AutoMirrored.Outlined.OpenInNew, contentDescription = null) },
+                    onClick = run(actions.onOpenLink),
+                )
+                ItemMenuEntry.CopyLink -> DropdownMenuItem(
+                    text = { Text(stringResource(R.string.action_copy_link)) },
+                    leadingIcon = { Icon(Icons.Outlined.Link, contentDescription = null) },
+                    onClick = run(actions.onCopyLink),
+                )
+                ItemMenuEntry.Share -> DropdownMenuItem(
+                    text = { Text(stringResource(R.string.action_share)) },
+                    leadingIcon = { Icon(Icons.Outlined.Share, contentDescription = null) },
+                    onClick = run(actions.onShare),
+                )
+                ItemMenuEntry.Pin -> DropdownMenuItem(
+                    text = { Text(stringResource(if (item.pinned) R.string.action_unpin else R.string.action_pin)) },
+                    leadingIcon = { Icon(if (item.pinned) Icons.Filled.PushPin else Icons.Outlined.PushPin, contentDescription = null) },
+                    onClick = run(actions.onTogglePin),
+                )
+                ItemMenuEntry.Archive -> {
+                    val archived = item.isShownAsArchived()
+                    DropdownMenuItem(
+                        text = { Text(stringResource(if (archived) R.string.action_unarchive else R.string.action_archive)) },
+                        leadingIcon = { Icon(if (archived) Icons.Outlined.Unarchive else Icons.Outlined.Archive, contentDescription = null) },
+                        onClick = run(actions.onToggleArchive),
+                    )
+                }
+                // The detail screen stays reachable for every item (full content, type, expiry, status), even when a tap on the
+                // card does something else.
+                ItemMenuEntry.Details -> DropdownMenuItem(
+                    text = { Text(stringResource(R.string.action_details)) },
+                    leadingIcon = { Icon(Icons.Outlined.Info, contentDescription = null) },
+                    onClick = run {
+                        actions.onCardOpened()
+                        actions.onOpenDetail()
+                    },
+                )
+                ItemMenuEntry.Delete -> {
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.action_delete_ellipsis)) },
+                        leadingIcon = { Icon(Icons.Outlined.DeleteOutline, contentDescription = null) },
+                        colors = MenuDefaults.itemColors(
+                            textColor = MaterialTheme.colorScheme.error,
+                            leadingIconColor = MaterialTheme.colorScheme.error,
+                        ),
+                        onClick = run(onConfirmDelete),
+                    )
+                }
+            }
         }
-        if (canCopy) {
-            DropdownMenuItem(
-                text = { Text(stringResource(if (linkOnly) R.string.action_copy_link else R.string.action_copy)) },
-                leadingIcon = { Icon(if (linkOnly) Icons.Outlined.Link else Icons.Outlined.ContentCopy, contentDescription = null) },
-                onClick = run { actions.onCopy(textMode) },
-            )
-        }
-        if (item.url != null && item.text != null && !item.secret) {
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.action_copy_link)) },
-                leadingIcon = { Icon(Icons.Outlined.Link, contentDescription = null) },
-                onClick = run(actions.onCopyLink),
-            )
-        }
-        if (canOpen) {
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.action_open)) },
-                leadingIcon = { Icon(Icons.AutoMirrored.Outlined.OpenInNew, contentDescription = null) },
-                onClick = run(actions.onOpenLink),
-            )
-        }
-        if (ItemSharing.canShare(item) || FileSharing.canShare(item)) {
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.action_share)) },
-                leadingIcon = { Icon(Icons.Outlined.Share, contentDescription = null) },
-                onClick = run(actions.onShare),
-            )
-        }
-        // The detail screen stays reachable for every item (full content, type, expiry, status), even when a tap on the
-        // card does something else.
-        DropdownMenuItem(
-            text = { Text(stringResource(R.string.action_details)) },
-            leadingIcon = { Icon(Icons.Outlined.Info, contentDescription = null) },
-            onClick = run {
-                actions.onCardOpened()
-                actions.onOpenDetail()
-            },
-        )
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        DropdownMenuItem(
-            text = { Text(stringResource(R.string.action_delete_local)) },
-            leadingIcon = { Icon(Icons.Outlined.DeleteOutline, contentDescription = null) },
-            colors = MenuDefaults.itemColors(
-                textColor = MaterialTheme.colorScheme.error,
-                leadingIconColor = MaterialTheme.colorScheme.error,
-            ),
-            onClick = run(onConfirmDeleteLocal),
-        )
-        DropdownMenuItem(
-            text = { Text(stringResource(R.string.action_delete_everywhere)) },
-            leadingIcon = { Icon(Icons.Outlined.DeleteForever, contentDescription = null) },
-            colors = MenuDefaults.itemColors(
-                textColor = MaterialTheme.colorScheme.error,
-                leadingIconColor = MaterialTheme.colorScheme.error,
-            ),
-            onClick = run(onConfirmDeleteEverywhere),
-        )
     }
 }
 

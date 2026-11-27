@@ -202,6 +202,8 @@
     <string name="dialog_delete_everywhere_secret">This hidden content will be erased from all your devices and from your Tomi server. A device that has already shown it may have kept a copy. This action is permanent.</string>
     <string name="dialog_delete_local_title">Delete from this device?</string>
     <string name="dialog_delete_local_message">The item will be removed from this device only. Your other devices keep their copy. This action is permanent.</string>
+    <string name="action_delete_ellipsis">Delete…</string>
+    <string name="dialog_delete_item_title">Delete this item?</string>
     <string name="dialog_delete_image_everywhere_title">Delete image everywhere?</string>
     <string name="dialog_delete_image_everywhere_message">This image will be erased from all your devices and from your Tomi server. Offline devices will erase it when they reconnect. This action is permanent.</string>
     <string name="dialog_delete_image_everywhere_secret">This hidden image will be erased from all your devices and from your Tomi server. A device that has already shown it may have kept a copy. This action is permanent.</string>

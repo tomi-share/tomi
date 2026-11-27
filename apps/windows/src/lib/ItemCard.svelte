@@ -45,7 +45,7 @@
 
   let titleCut = $state(false);
   let bodyCut = $state(false);
-  let confirmEverywhere = $state(false);
+  let confirmDelete = $state(false);
   let menu: Menu | undefined = $state();
   let el: HTMLElement | undefined = $state();
 
@@ -166,13 +166,14 @@
   const save = () => saveItem(item);
 
   async function removeLocal() {
+    confirmDelete = false;
     if (await deleteItem(item, "local")) {
       if (expanded) feed.closeDetail();
     }
   }
 
   async function removeEverywhere() {
-    confirmEverywhere = false;
+    confirmDelete = false;
     if (await deleteItem(item, "everywhere")) {
       if (expanded) feed.closeDetail();
     }
@@ -330,23 +331,11 @@
   const linkOnly = $derived(flags.linkOnly);
   const canCopy = $derived(flags.canCopy);
 
+  // Same entries and order as Android (`ItemMenuLogic`): what the card does with one tap (its copy icon, the tap that opens a link) is
+  // not repeated first, and the two deletions are ONE entry that asks where.
   const entries = $derived.by((): MenuEntry[] => {
-    const list: MenuEntry[] = [
-      {
-        label: item.pinned ? msg.card.unpin : msg.card.pin,
-        icon: item.pinned ? "push_pin_fill1" : "push_pin",
-        onselect: () => void feed.togglePin(item),
-      },
-    ];
-    // Right after "Épingler", like Android. A send still queued or failed stays visible: no entry.
-    if (canArchive(item)) {
-      list.push({
-        label: item.archived ? msg.card.unarchive : msg.card.archive,
-        icon: item.archived ? "unarchive" : "archive",
-        onselect: () => void feed.toggleArchive(item),
-      });
-    }
-    if (canCopy) {
+    const list: MenuEntry[] = [];
+    if (canCopy && !showsCopyButton(item)) {
       list.push({
         label: linkOnly ? msg.card.copyLink : msg.card.copy,
         icon: linkOnly ? "link" : "content_copy",
@@ -359,6 +348,19 @@
     if (flags.canSave) {
       list.push({ label: msg.card.save, icon: "download", onselect: () => void save() });
     }
+    list.push({
+      label: item.pinned ? msg.card.unpin : msg.card.pin,
+      icon: item.pinned ? "push_pin_fill1" : "push_pin",
+      onselect: () => void feed.togglePin(item),
+    });
+    // A send still queued or failed stays visible: no entry.
+    if (canArchive(item)) {
+      list.push({
+        label: item.archived ? msg.card.unarchive : msg.card.archive,
+        icon: item.archived ? "unarchive" : "archive",
+        onselect: () => void feed.toggleArchive(item),
+      });
+    }
     if (!expanded) {
       list.push({
         label: msg.card.details,
@@ -370,16 +372,11 @@
       });
     }
     list.push({
-      label: msg.card.deleteLocal,
+      label: msg.detail.deleteMenu,
       icon: "delete",
       separator: true,
-      onselect: () => void removeLocal(),
-    });
-    list.push({
-      label: msg.card.deleteEverywhere,
-      icon: "delete_forever",
       danger: true,
-      onselect: () => (confirmEverywhere = true),
+      onselect: () => (confirmDelete = true),
     });
     return list;
   });
@@ -727,13 +724,15 @@
   {/if}
 </article>
 
-{#if confirmEverywhere}
+{#if confirmDelete}
   <Dialog
-    title={msg.card.deleteTitle}
-    message={item.secret ? msg.card.deleteSecretMessage : msg.card.deleteMessage}
+    title={msg.detail.deleteTitle}
+    message={item.secret ? msg.detail.deleteSecretMessage : msg.detail.deleteMessage}
+    secondaryLabel={msg.card.deleteLocal}
+    onsecondary={removeLocal}
     confirmLabel={msg.card.deleteEverywhere}
     onconfirm={removeEverywhere}
-    oncancel={() => (confirmEverywhere = false)}
+    oncancel={() => (confirmDelete = false)}
   />
 {/if}
 

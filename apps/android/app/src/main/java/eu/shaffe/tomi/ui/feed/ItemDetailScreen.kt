@@ -18,7 +18,6 @@ import androidx.compose.material.icons.automirrored.outlined.OpenInNew
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.ContentCopy
-import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Link
@@ -183,8 +182,7 @@ private fun DetailToolbar(
     clearance: ToolbarClearanceState,
 ) {
     var moreMenu by remember { mutableStateOf(false) }
-    var confirmEverywhere by remember { mutableStateOf(false) }
-    var confirmLocal by remember { mutableStateOf(false) }
+    var confirmDelete by remember { mutableStateOf(false) }
     // A lone file has no row menu: its download is offered here.
     val soleFileSlot = FileDownloads.soleFileSlot(item)
     val canCopy = item.text != null || item.url != null
@@ -278,8 +276,9 @@ private fun DetailToolbar(
                         )
                     }
                     if (canOpen || canCopyLinkSeparately || soleFileSlot != null) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    // One entry, as in the menu of a card: the dialog asks where (this device only, or everywhere).
                     DropdownMenuItem(
-                        text = { Text(stringResource(R.string.action_delete_local)) },
+                        text = { Text(stringResource(R.string.action_delete_ellipsis)) },
                         leadingIcon = { Icon(Icons.Outlined.DeleteOutline, contentDescription = null) },
                         colors = MenuDefaults.itemColors(
                             textColor = MaterialTheme.colorScheme.error,
@@ -287,19 +286,7 @@ private fun DetailToolbar(
                         ),
                         onClick = {
                             moreMenu = false
-                            confirmLocal = true
-                        },
-                    )
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.action_delete_everywhere)) },
-                        leadingIcon = { Icon(Icons.Outlined.DeleteForever, contentDescription = null) },
-                        colors = MenuDefaults.itemColors(
-                            textColor = MaterialTheme.colorScheme.error,
-                            leadingIconColor = MaterialTheme.colorScheme.error,
-                        ),
-                        onClick = {
-                            moreMenu = false
-                            confirmEverywhere = true
+                            confirmDelete = true
                         },
                     )
                 }
@@ -307,23 +294,18 @@ private fun DetailToolbar(
         }
     }
 
-    if (confirmLocal) {
-        DeleteLocalDialog(
-            onConfirm = {
-                confirmLocal = false
+    if (confirmDelete) {
+        DeleteItemDialog(
+            secret = item.secret,
+            onDeleteLocal = {
+                confirmDelete = false
                 actions.onDeleteLocal()
             },
-            onDismiss = { confirmLocal = false },
-        )
-    }
-    if (confirmEverywhere) {
-        DeleteEverywhereDialog(
-            secret = item.secret,
-            onConfirm = {
-                confirmEverywhere = false
+            onDeleteEverywhere = {
+                confirmDelete = false
                 actions.onDeleteEverywhere()
             },
-            onDismiss = { confirmEverywhere = false },
+            onDismiss = { confirmDelete = false },
         )
     }
 }

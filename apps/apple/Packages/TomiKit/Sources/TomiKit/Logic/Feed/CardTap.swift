@@ -128,8 +128,9 @@ public enum CardTap {
         }
     }
 
-    /// The explicit copy icon of a text card (same action as "Copier" of the menu). Never for a hidden item, whose copy is gated.
-    public static func showsCopyButton(_ item: TomiItem) -> Bool { item.isReadable && !item.secret && item.text != nil }
+    /// The explicit copy icon of a text or link card (same action as "Copier" of the menu: the text, else the link). Never for a hidden
+    /// item, whose copy is gated.
+    public static func showsCopyButton(_ item: TomiItem) -> Bool { item.isReadable && !item.secret && (item.text != nil || item.url != nil) }
 
     /// Whether the card shows a "Lire la suite" affordance. True exactly when the tap opens the detail because the
     /// content is cut (not for the fallbacks "bad URL" or "several attachments").

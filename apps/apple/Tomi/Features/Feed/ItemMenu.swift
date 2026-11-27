@@ -2,8 +2,9 @@ import SwiftUI
 import TomiDesign
 import TomiKit
 
-/// The "⋮" menu of a card (and its long-press menu), in the order of Android: pin, archive, copy, copy the link, open,
-/// share, details, then the two deletions ("Supprimer partout" is destructive and asks for confirmation).
+/// The "⋮" menu of a card (and its long-press menu), in the order of Android (ItemMenuLogic): what the card does with one tap
+/// (its copy icon, the tap that opens a link) is not repeated first; copy (hidden items), open, copy the link, share, the files,
+/// pin, archive, details, then ONE "Supprimer…" that asks where (this device only, or everywhere).
 struct ItemMenu: View {
     let item: TomiItem
     let model: FeedViewModel
@@ -13,27 +14,10 @@ struct ItemMenu: View {
     private var revealed: Bool { model.isRevealed(item) }
 
     var body: some View {
-        Button { model.togglePin(item) } label: {
-            Label(L10n.text(item.pinned ? "action_unpin" : "action_pin"), systemImage: TomiIcon.pin.systemName)
-        }
-        if ArchiveSwipe.canArchive(item, localDeviceId: model.localDeviceId) {
-            let unarchive = ArchiveSwipe.menuAction(item) == .unarchive
-            Button { model.applyArchiveAction(item) } label: {
-                Label(
-                    L10n.text(unarchive ? "action_unarchive" : "action_archive"),
-                    systemImage: (unarchive ? TomiIcon.unarchive : TomiIcon.archive).systemName
-                )
-            }
-        }
-        if item.isReadable && (item.text != nil || item.url != nil) {
+        if item.isReadable && (item.text != nil || item.url != nil) && !CardTap.showsCopyButton(item) {
             let onlyLink = item.text == nil
             Button { model.copy(item) } label: {
                 Label(L10n.text(onlyLink ? "action_copy_link" : "action_copy"), systemImage: TomiIcon.copy.systemName)
-            }
-        }
-        if item.text != nil && item.url != nil && !item.secret {
-            Button { model.copyLink(item) } label: {
-                Label(L10n.text("action_copy_link"), systemImage: TomiIcon.link.systemName)
             }
         }
         if let url = item.url.flatMap(URL.init(string:)), !item.secret || revealed, LinkExtractor.isValidHTTPURL(url.absoluteString) {
@@ -42,6 +26,11 @@ struct ItemMenu: View {
                 SystemActions.open(url)
             } label: {
                 Label(L10n.text("action_open"), systemImage: TomiIcon.open.systemName)
+            }
+        }
+        if item.text != nil && item.url != nil && !item.secret {
+            Button { model.copyLink(item) } label: {
+                Label(L10n.text("action_copy_link"), systemImage: TomiIcon.link.systemName)
             }
         }
         if ItemSharing.canShare(item) {
@@ -68,27 +57,39 @@ struct ItemMenu: View {
                 }
             }
         }
+        Button { model.togglePin(item) } label: {
+            Label(L10n.text(item.pinned ? "action_unpin" : "action_pin"), systemImage: TomiIcon.pin.systemName)
+        }
+        if ArchiveSwipe.canArchive(item, localDeviceId: model.localDeviceId) {
+            let unarchive = ArchiveSwipe.menuAction(item) == .unarchive
+            Button { model.applyArchiveAction(item) } label: {
+                Label(
+                    L10n.text(unarchive ? "action_unarchive" : "action_archive"),
+                    systemImage: (unarchive ? TomiIcon.unarchive : TomiIcon.archive).systemName
+                )
+            }
+        }
         Button(action: onDetails) {
             Label(L10n.text("action_details"), systemImage: "info.circle")
         }
         Divider()
-        Button { model.deleteLocal(item) } label: {
-            Label(L10n.text("action_delete_local"), systemImage: TomiIcon.delete.systemName)
-        }
         Button(role: .destructive) { confirmDelete = true } label: {
-            Label(L10n.text("action_delete_everywhere"), systemImage: TomiIcon.delete.systemName)
+            Label(L10n.text("action_delete_ellipsis"), systemImage: TomiIcon.delete.systemName)
         }
     }
 }
 
 extension View {
-    /// "Supprimer partout ?" with the message of a hidden item when it is one (Android `DeleteEverywhereDialog`).
-    func deleteEverywhereConfirmation(isPresented: Binding<Bool>, item: TomiItem, model: FeedViewModel) -> some View {
-        alert(L10n.text("dialog_delete_everywhere_title"), isPresented: isPresented) {
+    /// "Supprimer cet élément ?": where to delete it, this device only or everywhere, with the message of a hidden item when it is
+    /// one (Android DeleteItemDialog).
+    func deleteConfirmation(isPresented: Binding<Bool>, item: TomiItem, model: FeedViewModel) -> some View {
+        alert(L10n.text("dialog_delete_item_title"), isPresented: isPresented) {
             Button(L10n.text("action_cancel"), role: .cancel) {}
+            Button(L10n.text("action_delete_local")) { model.deleteLocal(item) }
             Button(L10n.text("action_delete_everywhere"), role: .destructive) { model.deleteEverywhere(item) }
         } message: {
-            Text(L10n.text(item.secret ? "dialog_delete_everywhere_secret" : "dialog_delete_everywhere_message"))
+            Text(L10n.text(item.secret ? "dialog_delete_everywhere_secret" : "dialog_delete_everywhere_message")
+                + "\n\n" + L10n.text("dialog_delete_local_message"))
         }
     }
 }

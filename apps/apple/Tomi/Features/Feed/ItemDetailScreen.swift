@@ -45,7 +45,7 @@ struct ItemDetailScreen: View {
         } bar: { axis in
             if let item = model.item(id: itemId) {
                 toolbar(item, axis: axis)
-                    .deleteEverywhereConfirmation(isPresented: $confirmDeleteEverywhere, item: item, model: model)
+                    .deleteConfirmation(isPresented: $confirmDeleteEverywhere, item: item, model: model)
             }
         }
         .navigationTitle(Text("ios_detail_title"))
@@ -157,11 +157,9 @@ struct ItemDetailScreen: View {
                     Button { model.copyLink(item) } label: { Label(L10n.text("action_copy_link"), systemImage: TomiIcon.link.systemName) }
                 }
                 if url != nil || copyLink { Divider() }
-                Button { model.deleteLocal(item) } label: {
-                    Label(L10n.text("action_delete_local"), systemImage: TomiIcon.delete.systemName)
-                }
+                // One entry, as on Android: the dialog asks where (this device only, or everywhere).
                 Button(role: .destructive) { confirmDeleteEverywhere = true } label: {
-                    Label(L10n.text("action_delete_everywhere"), systemImage: TomiIcon.delete.systemName)
+                    Label(L10n.text("action_delete_ellipsis"), systemImage: TomiIcon.delete.systemName)
                 }
             } label: { FloatingBarIcon(icon: .more) }
             .accessibilityLabel(Text("action_more"))

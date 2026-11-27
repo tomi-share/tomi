@@ -46,7 +46,7 @@ struct FileViewerScreen: View {
         Group {
             if let item, item.attachments.indices.contains(request.attachmentIndex) {
                 screen(item, attachment: item.attachments[request.attachmentIndex])
-                    .deleteEverywhereConfirmation(isPresented: $confirmDeleteEverywhere, item: item, model: model)
+                    .deleteConfirmation(isPresented: $confirmDeleteEverywhere, item: item, model: model)
             } else {
                 // Gone before it showed (deleted elsewhere): nothing to show, the viewer closes.
                 ImageViewerScreen.background.ignoresSafeArea()
@@ -158,11 +158,9 @@ struct FileViewerScreen: View {
                 }
             }
             Menu {
-                Button { model.deleteLocal(item) } label: {
-                    Label(L10n.text("action_delete_local"), systemImage: TomiIcon.delete.systemName)
-                }
+                // One entry, as on Android: the dialog asks where (this device only, or everywhere).
                 Button(role: .destructive) { confirmDeleteEverywhere = true } label: {
-                    Label(L10n.text("action_delete_everywhere"), systemImage: "trash.slash")
+                    Label(L10n.text("action_delete_ellipsis"), systemImage: TomiIcon.delete.systemName)
                 }
             } label: { FloatingBarIcon(icon: .delete) }
             .accessibilityLabel(Text("action_delete"))

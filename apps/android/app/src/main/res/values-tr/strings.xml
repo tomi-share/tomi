@@ -202,6 +202,8 @@
     <string name="dialog_delete_everywhere_secret">Bu gizli içerik tüm cihazlarınızdan ve Tomi sunucunuzdan silinecek. Onu daha önce göstermiş bir cihaz bir kopyasını saklamış olabilir. Bu işlem kalıcıdır.</string>
     <string name="dialog_delete_local_title">Bu cihazdan silinsin mi?</string>
     <string name="dialog_delete_local_message">Öğe yalnızca bu cihazdan kaldırılacak. Diğer cihazlarınız kendi kopyasını saklar. Bu işlem kalıcıdır.</string>
+    <string name="action_delete_ellipsis">Sil…</string>
+    <string name="dialog_delete_item_title">Bu öğe silinsin mi?</string>
     <string name="dialog_delete_image_everywhere_title">Görsel her yerden silinsin mi?</string>
     <string name="dialog_delete_image_everywhere_message">Bu görsel tüm cihazlarınızdan ve Tomi sunucunuzdan silinecek. Çevrimdışı cihazlar yeniden bağlandıklarında onu silecek. Bu işlem kalıcıdır.</string>
     <string name="dialog_delete_image_everywhere_secret">Bu gizli görsel tüm cihazlarınızdan ve Tomi sunucunuzdan silinecek. Onu daha önce göstermiş bir cihaz bir kopyasını saklamış olabilir. Bu işlem kalıcıdır.</string>

@@ -116,8 +116,11 @@ object CardTap {
         }
     }
 
-    /** The explicit copy icon of a text card (same action as "Copier" of the menu). Never for a hidden item, whose copy is gated. */
-    fun showsCopyButton(item: TomiItem): Boolean = item.isReadable && !item.secret && item.text != null
+    /**
+     * The explicit copy icon of a text or link card (same action as "Copier" of the menu: the text, else the link). Never for a hidden
+     * item, whose copy is gated.
+     */
+    fun showsCopyButton(item: TomiItem): Boolean = item.isReadable && !item.secret && (item.text != null || item.url != null)
 
     /**
      * Whether the card shows a "Lire la suite" affordance. True exactly when the tap opens the detail because the

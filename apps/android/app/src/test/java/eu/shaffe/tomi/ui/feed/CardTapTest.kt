@@ -125,15 +125,17 @@ class CardTapTest {
         assertTrue(CardTap.showsCopyButton(item(text = RichText("a", markdown = "**a**"))))
         assertTrue(CardTap.showsCopyButton(item(text = RichText("a", html = "<b>a</b>"))))
         assertTrue(CardTap.showsCopyButton(item(title = "Titre", text = RichText("court"), url = "https://a.example")))
+        // A link-only card copies its link (the tap opens it).
+        assertTrue(CardTap.showsCopyButton(item(url = "https://a.example")))
     }
 
     @Test
-    fun noCopyButtonWithoutTextNorOnAHiddenItem() {
-        assertFalse(CardTap.showsCopyButton(item(url = "https://a.example")))
+    fun noCopyButtonWithoutTextNorLinkNorOnAHiddenItem() {
         assertFalse(CardTap.showsCopyButton(item(title = "Titre")))
         assertFalse(CardTap.showsCopyButton(item(attachments = listOf(pdf))))
         // A hidden item copies through its menu, behind the biometric gate and the sensitive clipboard.
         assertFalse(CardTap.showsCopyButton(item(text = RichText("Hx7!pQ2"), secret = true)))
+        assertFalse(CardTap.showsCopyButton(item(url = "https://a.example", secret = true)))
         val unreadable = TomiItem(
             id = "u", content = ItemContent.Unreadable(UnreadableReason.UpdateRequired), sourceDevice = source, createdAt = now,
         )

@@ -106,9 +106,9 @@ export function itemActionFlags(item: ItemView, revealed: boolean): ItemActionFl
   };
 }
 
-/** The explicit copy icon of a text card. Never for a hidden item, whose copy is gated. */
+/** The explicit copy icon of a text or link card (the text, else the link). Never for a hidden item, whose copy is gated. */
 export function showsCopyButton(item: ItemView): boolean {
-  return !item.unreadable && !item.secret && item.preview !== null;
+  return !item.unreadable && !item.secret && (item.preview !== null || item.url !== null);
 }
 
 // ---------------------------------------------------------------- attachments

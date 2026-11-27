@@ -202,6 +202,8 @@
     <string name="dialog_delete_everywhere_secret">Dieser verborgene Inhalt wird von allen deinen Geräten und von deinem Tomi-Server gelöscht. Ein Gerät, das ihn bereits angezeigt hat, hat möglicherweise eine Kopie behalten. Diese Aktion ist endgültig.</string>
     <string name="dialog_delete_local_title">Von diesem Gerät löschen?</string>
     <string name="dialog_delete_local_message">Der Eintrag wird nur von diesem Gerät entfernt. Deine anderen Geräte behalten ihre Kopie. Diese Aktion ist endgültig.</string>
+    <string name="action_delete_ellipsis">Löschen…</string>
+    <string name="dialog_delete_item_title">Diesen Eintrag löschen?</string>
     <string name="dialog_delete_image_everywhere_title">Bild überall löschen?</string>
     <string name="dialog_delete_image_everywhere_message">Dieses Bild wird von allen deinen Geräten und von deinem Tomi-Server gelöscht. Offline-Geräte löschen es, sobald sie wieder verbunden sind. Diese Aktion ist endgültig.</string>
     <string name="dialog_delete_image_everywhere_secret">Dieses verborgene Bild wird von allen deinen Geräten und von deinem Tomi-Server gelöscht. Ein Gerät, das es bereits angezeigt hat, hat möglicherweise eine Kopie behalten. Diese Aktion ist endgültig.</string>

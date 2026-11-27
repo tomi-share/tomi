@@ -104,14 +104,16 @@ final class CardTapTests: XCTestCase {
         XCTAssertTrue(CardTap.showsCopyButton(item(text: RichText(plain: "a", markdown: "**a**"))))
         XCTAssertTrue(CardTap.showsCopyButton(item(text: RichText(plain: "a", html: "<b>a</b>"))))
         XCTAssertTrue(CardTap.showsCopyButton(item(title: "Titre", text: RichText(plain: "court"), url: "https://a.example")))
+        // A link-only card copies its link (the tap opens it).
+        XCTAssertTrue(CardTap.showsCopyButton(item(url: "https://a.example")))
     }
 
-    func testNoCopyButtonWithoutTextNorOnAHiddenItem() {
-        XCTAssertFalse(CardTap.showsCopyButton(item(url: "https://a.example")))
+    func testNoCopyButtonWithoutTextNorLinkNorOnAHiddenItem() {
         XCTAssertFalse(CardTap.showsCopyButton(item(title: "Titre")))
         XCTAssertFalse(CardTap.showsCopyButton(item(attachments: [pdf])))
         // A hidden item copies through its menu, behind the biometric gate and the sensitive clipboard.
         XCTAssertFalse(CardTap.showsCopyButton(item(text: RichText(plain: "Hx7!pQ2"), secret: true)))
+        XCTAssertFalse(CardTap.showsCopyButton(item(url: "https://a.example", secret: true)))
         XCTAssertFalse(CardTap.showsCopyButton(unreadable))
     }
 

@@ -202,6 +202,8 @@
     <string name="dialog_delete_everywhere_secret">यह छिपा हुआ कॉन्टेंट आपके सभी डिवाइस और आपके Tomi सर्वर से मिटा दिया जाएगा। हो सकता है कि जिस डिवाइस पर इसे पहले ही दिखाया जा चुका है, उसने इसकी कॉपी रख ली हो। यह कार्रवाई स्थायी है।</string>
     <string name="dialog_delete_local_title">इस डिवाइस से डिलीट करें?</string>
     <string name="dialog_delete_local_message">यह आइटम सिर्फ़ इस डिवाइस से हटाया जाएगा। आपके दूसरे डिवाइस में इसकी कॉपी बनी रहेगी। यह कार्रवाई स्थायी है।</string>
+    <string name="action_delete_ellipsis">डिलीट करें…</string>
+    <string name="dialog_delete_item_title">इस आइटम को डिलीट करें?</string>
     <string name="dialog_delete_image_everywhere_title">इमेज को हर जगह से डिलीट करें?</string>
     <string name="dialog_delete_image_everywhere_message">यह इमेज आपके सभी डिवाइस और आपके Tomi सर्वर से मिटा दी जाएगी। ऑफ़लाइन डिवाइस फिर से कनेक्ट होने पर इसे मिटा देंगे। यह कार्रवाई स्थायी है।</string>
     <string name="dialog_delete_image_everywhere_secret">यह छिपी हुई इमेज आपके सभी डिवाइस और आपके Tomi सर्वर से मिटा दी जाएगी। हो सकता है कि जिस डिवाइस पर इसे पहले ही दिखाया जा चुका है, उसने इसकी कॉपी रख ली हो। यह कार्रवाई स्थायी है।</string>
