@@ -1,10 +1,10 @@
 //! Windows clipboard access (clipboard-win).
 //!
 //! Rules (docs/DEV.md invariants 2 and 4):
-//! - The app never reads clipboard *content* on its own. The only read helpers are
-//!   [`flagged_sensitive`] (format *presence* only, called from the explicit paste
-//!   handler) and the equality check used by the 30 s auto-clear of a secret the app
-//!   itself copied.
+//! - The app never reads clipboard *content* on its own. The only read helper in use is
+//!   the equality check of the 30 s auto-clear of a secret the app itself copied.
+//!   [`flagged_sensitive`] (format *presence* only) is reserved for the explicit paste
+//!   handler but is not called yet (see its doc comment).
 //! - Copying a secret, in any shape (text, link, rich text, files, image), marks the
 //!   clipboard as sensitive and schedules a clear (see clip_clears).
 
