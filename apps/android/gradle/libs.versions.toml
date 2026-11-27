@@ -1,17 +1,17 @@
 [versions]
-agp = "9.5.1"
+agp = "9.5.3"
 # Version of the Compose compiler plugin, which also sets the Kotlin Gradle plugin used to build (AGP 9 has built-in Kotlin: no separate kotlin-android plugin).
 kotlin = "2.4.21"
-composeBom = "2026.01.01"
+composeBom = "2026.11.01"
 # The floating toolbar (Material 3 Expressive) is not in material3 1.4.0 stable. Pinned at 1.5.0-alpha18, the last 1.5 alpha that built with AGP 8.13 / compileSdk 36; later alphas need AGP 9.1 and compileSdk 37, which the build now has, so bump it deliberately (the API moves between alphas).
-material3 = "1.5.0-alpha18"
+material3 = "1.6.0-alpha01"
 coreKtx = "1.17.0"
 activityCompose = "1.12.4"
 fragment = "1.9.1"
 lifecycle = "2.10.0"
 navigationCompose = "2.10.2"
 work = "2.12.0"
-camerax = "1.5.3"
+camerax = "1.7.0"
 biometric = "1.1.0"
 exifinterface = "1.4.2"
 materialIconsExtended = "1.7.8"
