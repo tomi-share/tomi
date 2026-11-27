@@ -151,7 +151,8 @@ jobs:
           ls -l
           # Each binary is checked against its digest before publishing.
           for sum in *.sha256; do sha256sum --check "$sum"; done
-          flags=()
+          # `--latest=false`: the repository's "Latest" release is the app release (release-apps.yml), never a relay one.
+          flags=(--latest=false)
           case "$TAG_NAME" in
             *-*) flags+=(--prerelease) ;;
           esac

@@ -1,19 +1,21 @@
 name: Release apps
 
-# Stable releases of the Android app and of the Windows installer, cut from a tag (docs/RELEASES.md, "Cutting a stable release"):
+# Stable releases of the apps built by CI, cut from a tag (docs/RELEASES.md, "Cutting a stable release"). One tag, one version
+# number, one GitHub release for all of them, and that release is the repository's "Latest":
 #
-#   android-vX.Y.Z   a signed, non-debuggable APK
-#   windows-vX.Y.Z   the NSIS installer
+#   vX.Y.Z   a signed, non-debuggable Android APK and the Windows NSIS installer
+#
+# macOS is set aside (it cannot be signed and notarised in CI yet) and iOS goes through the stores; neither is in the release.
 #
 # What the workflow does, in order, and what makes it stop:
-#   1. `prepare`: the tag is exactly android-vX.Y.Z or windows-vX.Y.Z; the versions stored in the repository match it (and
-#      go up from the previous release, versionCode included for Android); the tagged commit is on `main`; the repository is
+#   1. `prepare`: the tag is exactly vX.Y.Z; the versions stored in the repository (Android and Windows) match it and go up
+#      from the previous release, versionCode included for Android; the tagged commit is on `main`; the repository is
 #      public (the build provenance attestations that the release notes tell users to verify exist only for public ones);
-#      for Windows, the repository variable ALLOW_UNSIGNED_WINDOWS_RELEASE is "true" (the installer is not code-signed yet,
+#      the repository variable ALLOW_UNSIGNED_WINDOWS_RELEASE is "true" (the installer is not code-signed yet,
 #      see "Windows code signing" in docs/RELEASES.md: this is a conscious decision, not a default; it is not needed once the
 #      installer is signed through SignPath, which the repository variable SIGNPATH_ORGANIZATION_ID switches on).
 #   2. `build`: the very same jobs as build-apps.yml (signed + verified APK, installer, checksums, attestations), called as a
-#      reusable workflow. Nothing is published by it.
+#      reusable workflow. Nothing is published by it. Both must succeed: a release is all or nothing.
 #   3. `publish`: re-checks the files, names them with the version, writes the notes (.github/scripts/release-notes.sh),
 #      creates a DRAFT release, verifies the attestation of every file, then publishes. A stable release is created once
 #      and never touched again: no --clobber, and an existing release for the tag stops the run (a tag is never reused).
@@ -25,12 +27,11 @@ name: Release apps
 on:
   push:
     tags:
-      - "android-v[0-9]*.[0-9]*.[0-9]*"
-      - "windows-v[0-9]*.[0-9]*.[0-9]*"
+      - "v[0-9]*.[0-9]*.[0-9]*"
   workflow_dispatch:
     inputs:
       tag:
-        description: "Dry run: check and build as if this tag were pushed (android-vX.Y.Z or windows-vX.Y.Z). Publishes nothing."
+        description: "Dry run: check and build as if this tag were pushed (vX.Y.Z). Publishes nothing."
         type: string
         required: true
 
@@ -50,8 +51,6 @@ jobs:
     outputs:
       tag: ${{ steps.tag.outputs.tag }}
       version: ${{ steps.tag.outputs.version }}
-      android: ${{ steps.tag.outputs.android }}
-      windows: ${{ steps.tag.outputs.windows }}
     steps:
       # The whole history and every tag: the previous release is looked up, and the tagged commit is compared with main.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -70,13 +69,10 @@ jobs:
           if [ "$EVENT" = workflow_dispatch ]; then tag="$INPUT_TAG"; else tag="$PUSHED_TAG"; fi
           out="$(bash .github/scripts/check-release-version.sh "$tag")"
           echo "$out"
-          product="$(sed -n 's/^product=//p' <<<"$out")"
           version="$(sed -n 's/^version=//p' <<<"$out")"
           {
             echo "tag=$tag"
             echo "version=$version"
-            echo "android=$([ "$product" = android ] && echo true || echo false)"
-            echo "windows=$([ "$product" = windows ] && echo true || echo false)"
           } >> "$GITHUB_OUTPUT"
       - name: The tagged commit is on main
         if: github.event_name == 'push'
@@ -94,7 +90,7 @@ jobs:
       # Signing through SignPath is on when SIGNPATH_ORGANIZATION_ID is set (see build-apps.yml): the installer is then signed and
       # this decision is not needed.
       - name: Windows installer signing decision
-        if: github.event_name == 'push' && steps.tag.outputs.windows == 'true' && vars.SIGNPATH_ORGANIZATION_ID == ''
+        if: github.event_name == 'push' && vars.SIGNPATH_ORGANIZATION_ID == ''
         env:
           ALLOW: ${{ vars.ALLOW_UNSIGNED_WINDOWS_RELEASE }}
         run: |
@@ -116,9 +112,9 @@ jobs:
       attestations: write
     uses: ./.github/workflows/build-apps.yml
     with:
-      android: ${{ needs.prepare.outputs.android == 'true' }}
+      android: true
       android_variant: release
-      windows: ${{ needs.prepare.outputs.windows == 'true' }}
+      windows: true
       publish: false
     secrets: inherit
 
@@ -146,8 +142,6 @@ jobs:
         env:
           TAG: ${{ needs.prepare.outputs.tag }}
           VERSION: ${{ needs.prepare.outputs.version }}
-          ANDROID: ${{ needs.prepare.outputs.android }}
-          WINDOWS: ${{ needs.prepare.outputs.windows }}
           PUBLISHABLE: ${{ needs.build.outputs.android_publishable }}
           CERT: ${{ vars.ANDROID_RELEASE_CERT_SHA256 || needs.build.outputs.android_cert_sha256 }}
           # true when SignPath signed the Windows installer (the release notes then say so and name the certificate holder).
@@ -172,29 +166,28 @@ jobs:
           }
 
           mkdir -p assets
-          if [ "$ANDROID" = true ]; then
-            [ "$PUBLISHABLE" = true ] || { echo "::error title=Android::The APK is not a signed release build (are the ANDROID_RELEASE_* secrets set?)."; exit 1; }
-            apk="$(find dl -name tomi-android-release.apk | head -n 1)"
-            test -n "$apk"
-            # Second, independent run of the check, on the file that is about to be uploaded.
-            bash .github/scripts/verify-android-apk.sh "$apk" "$CERT"
-            export ASSET_APK="tomi-android-${VERSION}.apk"
-            stage "$apk" "$ASSET_APK"
-          fi
-          if [ "$WINDOWS" = true ]; then
-            exe="$(find dl -name tomi-windows-setup.exe | head -n 1)"
-            test -n "$exe"
-            export ASSET_EXE="tomi-windows-${VERSION}-setup.exe"
-            stage "$exe" "$ASSET_EXE"
-          fi
+          # Both files are required: a release is all or nothing, and once published it cannot be completed.
+          [ "$PUBLISHABLE" = true ] || { echo "::error title=Android::The APK is not a signed release build (are the ANDROID_RELEASE_* secrets set?)."; exit 1; }
+          apk="$(find dl -name tomi-android-release.apk | head -n 1)"
+          test -n "$apk"
+          # Second, independent run of the check, on the file that is about to be uploaded.
+          bash .github/scripts/verify-android-apk.sh "$apk" "$CERT"
+          export ASSET_APK="tomi-android-${VERSION}.apk"
+          stage "$apk" "$ASSET_APK"
+
+          exe="$(find dl -name tomi-windows-setup.exe | head -n 1)"
+          test -n "$exe"
+          export ASSET_EXE="tomi-windows-${VERSION}-setup.exe"
+          stage "$exe" "$ASSET_EXE"
           ls -l assets
 
           RELEASE_SHA="$SHA" RELEASE_RUN_URL="$RUN_URL" ANDROID_CERT_SHA256="$CERT" WINDOWS_SIGNED="$WINDOWS_SIGNED" bash .github/scripts/release-notes.sh "$TAG" > notes.md
           title="$(head -n 1 notes.md | sed 's/^# //')"
 
-          # Draft first: published assets cannot be added or changed once "immutable releases" is on. `--latest=false`: the
-          # repository's "latest" release is not meant to say which product is newest. `--verify-tag`: the tag must already exist.
-          gh release create "$TAG" --verify-tag --draft --latest=false --title "$title" --notes-file notes.md assets/*
+          # Draft first: published assets cannot be added or changed once "immutable releases" is on. `--latest`: this is the
+          # repository's "Latest" release (the relay and the development builds never are, they pass `--latest=false`).
+          # `--verify-tag`: the tag must already exist.
+          gh release create "$TAG" --verify-tag --draft --latest --title "$title" --notes-file notes.md assets/*
 
           # Never publish what a user could not verify: every file must carry an attestation made by this repository's workflow.
           for f in assets/*; do
@@ -202,5 +195,5 @@ jobs:
             gh attestation verify "$f" --repo "$GH_REPO"
           done
 
-          gh release edit "$TAG" --draft=false
+          gh release edit "$TAG" --draft=false --latest
           echo "Published ${TAG} from ${SHA}."

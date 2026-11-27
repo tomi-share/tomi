@@ -107,7 +107,7 @@ jobs:
     if: inputs.android
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    # The release signing secrets live in this environment, restricted to `main` and the android-v* / windows-v* tags, so that a
+    # The release signing secrets live in this environment, restricted to `main` and the `v*` release tags, so that a
     # workflow changed on another branch cannot read them (docs/RELEASES.md, "Android release signing"). A run from another branch
     # is refused here. In a fork the environment is created empty, and the APK is then built unsigned, as documented.
     environment: release
@@ -486,7 +486,7 @@ jobs:
           # Development builds: one immutable pre-release per run, tagged `android-dev-<run number>` / `windows-dev-<run number>`. Releases are immutable on
           # this repository, so a published release can never be changed and its tag can never be reused: no rolling `*-dev`
           # pointer, no --clobber (docs/RELEASES.md). Draft first (assets can only be added while it is a draft), then published.
-          # `--latest=false`: the repository's "latest" release is not meant to say which product is newest.
+          # `--latest=false`: a development build is never the repository's "Latest" release (the stable app release is, release-apps.yml).
           KEEP_DEV_BUILDS=3
           RUN_TAG="${GITHUB_RUN_NUMBER}"
           if [ "${GITHUB_RUN_ATTEMPT:-1}" != "1" ]; then RUN_TAG="${RUN_TAG}-r${GITHUB_RUN_ATTEMPT}"; fi

@@ -16,7 +16,7 @@ version and the frozen vectors in `spec/vectors/`, not by application versions.
 - Android: the application id can be overridden with `-PtomiApplicationId=...` (default unchanged: `eu.shaffe.tomi`).
 - Core: unified core, with a demo mode that is entered and left from the real core (Android, Windows, iOS).
 - Windows, iOS: delete a single attachment, on this device only or everywhere.
-- CI: stable releases of the Android app and the Windows installer from `android-vX.Y.Z` / `windows-vX.Y.Z` tags
+- CI: stable releases of the Android app and the Windows installer from `vX.Y.Z` tags, one release with both
   (`release-apps.yml`): the tag must match the version files (and `versionCode` must grow), the commit must be on `main`,
   every file is checked and attested before the release is published, and the notes state the protocol compatibility
   ([`docs/RELEASES.md`](docs/RELEASES.md)).

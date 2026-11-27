@@ -1,8 +1,10 @@
 # Releases
 
-Tomi is a monorepo with several independently shipped products. Each product has its own tag prefix and its own
-version; there is no global version number. Client/relay compatibility is carried by the **protocol version**
-(`format`, frozen vectors in `spec/vectors/vN/`), not by application versions.
+Tomi is a monorepo. The **apps built by CI (Android and Windows) share one version number and ship together in one GitHub
+release**, tagged `vX.Y.Z`; the relay has its own tag prefix and its own version. macOS is set aside (it cannot be signed and
+notarised in CI without a paid Apple Developer account), and iOS goes through the stores, so neither is in the GitHub release.
+Client/relay compatibility is carried by the **protocol version** (`format`, frozen vectors in `spec/vectors/vN/`), not by
+application versions.
 
 ## Tag scheme
 
@@ -11,8 +13,7 @@ version; there is no global version number. Client/relay compatibility is carrie
 | Relay | `relay-vX.Y.Z` | Linux binaries | push of the tag (`release-relay.yml`) | **in place** |
 | Android, development | `android-dev-<run>` | one immutable pre-release per run, release-signed APK `tomi-android-release.apk` (only when the release key is configured, see "Android release signing") | manual run of `build-apps.yml` | **in place** |
 | Windows, development | `windows-dev-<run>` | one immutable pre-release per run, `tomi-windows-setup.exe` (unsigned) with `.sha256` and a build provenance attestation | manual run of `build-apps.yml` | **in place** |
-| Android, stable | `android-vX.Y.Z` | non-prerelease: APK signed with the release key, `.sha256`, attestation, notes | push of the tag (`release-apps.yml`) | **in place**, not run yet ("Cutting a stable release") |
-| Windows, stable | `windows-vX.Y.Z` | non-prerelease: NSIS installer (not code-signed yet), `.sha256`, attestation, notes | push of the tag (`release-apps.yml`) | **in place**, not run yet; needs the repository variable `ALLOW_UNSIGNED_WINDOWS_RELEASE` until the installer is signed |
+| Android and Windows, stable | `vX.Y.Z` | non-prerelease, **the repository's "Latest"**: APK signed with the release key and NSIS installer (not code-signed yet), each with `.sha256` and attestation, one set of notes | push of the tag (`release-apps.yml`) | **in place**, not run yet ("Cutting a stable release"); needs the repository variable `ALLOW_UNSIGNED_WINDOWS_RELEASE` until the installer is signed |
 | CLI | `cli-vX.Y.Z` | binaries | push of the tag | planned |
 | iOS | none | distributed through TestFlight / App Store | | not applicable |
 
@@ -26,55 +27,61 @@ as it is (or deleted) and never written to again.
 
 ## Rules
 
-1. The tag must match the version stored in the component's own file. The relay workflow enforces this against the
+1. The tag must match the version stored in the component's own files. The relay workflow enforces this against the
    Cargo workspace version; `release-apps.yml` does the same for Android (`versionName` in Gradle, and `versionCode` must grow)
-   and Windows (`tauri.conf.json`, `package.json` and `src-tauri/Cargo.toml`), with `.github/scripts/check-release-version.sh`.
-   A pushed tag is never reused: fix forward with a new version.
-2. The Cargo workspace version covers the Rust crates (relay, core, CLI). Android and Windows have their own version numbers.
+   **and** Windows (`tauri.conf.json`, `package.json` and `src-tauri/Cargo.toml`) at once, with
+   `.github/scripts/check-release-version.sh`: both must equal the tag. A pushed tag is never reused: fix forward with a new version.
+2. The Cargo workspace version covers the Rust crates (relay, core, CLI). Android and Windows share the app version `X.Y.Z`
+   (version 0.1.0 was published as `android-v0.1.0` and `windows-v0.1.0`; the grouped releases start at the next version). The Apple
+   app's `MARKETING_VERSION` (`apps/apple/Config/Base.xcconfig`) is not checked: keep it at the same number by hand.
 3. Release notes are scoped by path, because `crates/core` is shared:
-   `git log <previous-tag>..<tag> --oneline -- apps/relay crates/core spec/` for the relay, and the matching app directory
-   plus `crates/core` for a client. A change in the core therefore shows up in every product it affects.
+   `git log <previous-tag>..<tag> --oneline -- apps/relay crates/core spec/` for the relay, and `apps/android`, `apps/windows`,
+   `crates/core` and `spec` for an app release. A change in the core therefore shows up in every product it affects.
 4. Each release states the protocol version it speaks and the minimum compatible relay or client version.
 5. Release notes contain no secret and no sensitive detail. For a relay release, keep the original description (binaries,
    pointer to `infra/`) and append the changelog. There is no moving `relay-latest` pointer: releases are immutable on this repository, so assets of a published release cannot be replaced. The deployment script looks up the newest `relay-v*` release itself.
-6. **GitHub's "Latest" release is not used.** One repository ships several products, so a single "latest" badge says nothing
-   (it would point at whichever release was published last). Workflows create every release with `--latest=false`; do not
-   write `releases/latest` or `releases/latest/download/...` URLs anywhere (docs, apps, scripts). To find the newest release of a
-   product, filter by its tag prefix: `gh release list --json tagName,isDraft --jq '[.[] | select((.isDraft|not) and (.tagName|startswith("android-v")))][0].tagName'`
-   (this is what `infra/forge/deploy.sh` does for `relay-v`), or pin the tag. GitHub may still show the badge on a release that
-   was published before this rule (`android-v0.1.0`); it cannot be removed and nothing depends on it.
+6. **GitHub's "Latest" release is the app release `vX.Y.Z`, and only that.** `release-apps.yml` creates it with `--latest`; the
+   relay releases and the development builds are created with `--latest=false`, so that "Latest" always means "the newest Tomi
+   app" and never a relay or a test build. (`releases/latest` is therefore usable for the apps, e.g.
+   `https://github.com/tomi-share/tomi/releases/latest`; it is not for the relay, which is found by its tag prefix:
+   `gh release list --json tagName,isDraft --jq '[.[] | select((.isDraft|not) and (.tagName|startswith("relay-v")))][0].tagName'`,
+   as `infra/forge/deploy.sh` does.) Until the first `vX.Y.Z` is published the badge stays on `android-v0.1.0`, which GitHub
+   cannot unset; the new release replaces it.
 7. Relay release: bump the workspace version in `Cargo.toml`, push `relay-vX.Y.Z`, then check the optional deploy hook step
    (see `infra/forge/` and the `FORGE_DEPLOY_URL` secret) without assuming the deployment has finished.
 
 ## Cutting a stable release
 
-Android and Windows, from `main` only. The repository must be public: the attestations that the release notes tell users to
-verify exist only for public repositories.
+Android and Windows together, from `main` only. The repository must be public: the attestations that the release notes tell users
+to verify exist only for public repositories.
 
-1. Choose the version `X.Y.Z` of the product. They are independent: `android-v0.2.0` says nothing about Windows.
+1. Choose the version `X.Y.Z`. It is the same for both apps, and a release always contains both, even if only one changed.
    - Android: set `versionName = "X.Y.Z"` **and raise `versionCode`** in `apps/android/app/build.gradle.kts`. Android refuses an
      update whose `versionCode` did not grow, so this is a one-way door: never lower it, never reuse it.
    - Windows: set the same `version` in `apps/windows/src-tauri/tauri.conf.json`, `apps/windows/package.json` and
      `apps/windows/src-tauri/Cargo.toml`.
+   - Apple: set `MARKETING_VERSION` to the same number in `apps/apple/Config/Base.xcconfig` (and raise `CURRENT_PROJECT_VERSION`).
+     Nothing checks it, since the release does not carry the Apple apps.
 2. Add the user-visible changes to `CHANGELOG.md`, commit, and get it onto `main` (rebase, never a merge commit).
 3. Optional dry run, no tag needed: **Actions > Release apps > Run workflow**, with the tag you are about to create (for example
-   `android-v0.2.0`). It runs every check and the build, and publishes nothing.
+   `v0.2.0`). It runs every check and both builds, and publishes nothing.
 4. Tag the commit on `main` and push the tag:
 
    ```sh
    git switch main && git pull --ff-only
-   git tag -a android-v0.2.0 -m "Tomi for Android 0.2.0"
-   git push origin android-v0.2.0
+   git tag -a v0.2.0 -m "Tomi 0.2.0"
+   git push origin v0.2.0
    ```
 
-5. The workflow stops, with a message, when: the tag is not `android-vX.Y.Z` or `windows-vX.Y.Z`; a version file disagrees with
-   the tag or did not go up; the commit is not on `main`; the repository is private; for Windows, `ALLOW_UNSIGNED_WINDOWS_RELEASE`
-   is not `true`; for Android, the release signing secrets are missing, or the APK is debuggable, debug-signed, unsigned or
-   signed by another certificate; a release already exists for the tag; or an attestation does not verify.
+5. The workflow stops, with a message, when: the tag is not `vX.Y.Z`; a version file (Android or Windows) disagrees with the tag
+   or did not go up; the commit is not on `main`; the repository is private; `ALLOW_UNSIGNED_WINDOWS_RELEASE` is not `true` (while
+   the installer is unsigned); the Android release signing secrets are missing, or the APK is debuggable, debug-signed, unsigned
+   or signed by another certificate; either build fails; a release already exists for the tag; or an attestation does not verify.
+   Nothing is published unless **both** files are good.
 6. Otherwise it creates a **draft** release with the files (`tomi-android-X.Y.Z.apk`, `tomi-windows-X.Y.Z-setup.exe`, each with its
    `.sha256`) and generated notes (protocol compatibility, path-scoped changes, verification commands, and for Android the
-   certificate fingerprint), verifies the attestation of each file, and publishes. Then check it: `gh release view android-v0.2.0`,
-   and run the verification commands of the notes on a downloaded copy.
+   certificate fingerprint), verifies the attestation of each file, and publishes it as the repository's "Latest". Then check it:
+   `gh release view v0.2.0`, and run the verification commands of the notes on a downloaded copy.
 
 A published tag is never reused, a stable release is never replaced with `--clobber`, and a mistake is fixed forward with the next
 version. When you only want a build to try, run a development build (`*-dev-<run>`) from **Actions > Build apps**.
@@ -149,7 +156,7 @@ updated (Android refuses an update signed by another key), and users would have 
 certificate fingerprint in the release notes so that users can compare it (see "Verifying a download" below).
 
 Hardening, applied: the four secrets are **environment secrets** of a GitHub Environment named `release`, restricted to the `main`
-branch and to the `android-v*` and `windows-v*` tags, and the `android` job of `build-apps.yml` uses `environment: release`
+branch and to the `v*` tags (the `android-v*` and `windows-v*` rules of the first release were replaced), and the `android` job of `build-apps.yml` uses `environment: release`
 (so does `sign-windows`, for the SignPath token). A workflow file changed on another branch cannot read them: anyone who can push a
 workflow to a branch of the repository could otherwise exfiltrate repository secrets. The consequence: a manual **Build apps** run
 must be started from `main` (a run from another branch is refused at the Android job). Set the secrets with
@@ -299,7 +306,7 @@ Account and project configuration need a SignPath account and cannot be done fro
 6. **Test:** run **Actions > Build apps** with only Windows ticked and *Publish* unticked, approve the request in SignPath, and
    check the artifact: the installer is signed (`Get-AuthenticodeSignature`, publisher *SignPath Foundation*).
 7. **Then** update [`CODE_SIGNING_POLICY.md`](CODE_SIGNING_POLICY.md) (status and the attribution line, see the comment in that
-   file) and the README, and cut a `windows-v*` release.
+   file) and the README, and cut a `vX.Y.Z` release.
 
 Even with a certificate, SmartScreen reputation builds up with downloads: a signed installer can still show a warning at first.
 If the SignPath route does not work out, the alternatives are Microsoft's Azure Trusted Signing (check current availability and
@@ -312,9 +319,9 @@ eligibility) or an EV/OV certificate, wired into the same job. Later: the Tauri 
       (see "Android release signing"). The certificate fingerprint is published in "Verifying a download" and in the notes of
       `android-v0.1.0`. Keep the keystore and its password backed up: they cannot be recovered from GitHub.
 - [ ] Code signing for the Windows installer (SmartScreen currently warns): the pipeline is ready and off by default; the SignPath
-      Foundation application and its configuration are owner tasks ("Windows code signing"). Until then a `windows-v*` release
+      Foundation application and its configuration are owner tasks ("Windows code signing"). Until then a `vX.Y.Z` release
       needs the repository variable `ALLOW_UNSIGNED_WINDOWS_RELEASE=true`, a conscious decision.
-- [x] Workflows for `android-v*` and `windows-v*` tags (`release-apps.yml`): version checks, build, draft, attestation
+- [x] Workflow for `vX.Y.Z` tags, Android and Windows in one release (`release-apps.yml`): version checks, build, draft, attestation
       check, publish, generated notes with the protocol compatibility. Written without a CI run available: the first dry run
       (Actions > Release apps > Run workflow) is its first test.
 - [ ] `cli-v*` workflow and binaries, if the CLI is to be distributed.

@@ -4,7 +4,7 @@ This page describes how Tomi's Windows installer is code-signed, who is allowed 
 your data. It follows the conditions of the [SignPath Foundation](https://signpath.org/) for open source projects.
 
 **Status:** the project is applying for free code signing from the SignPath Foundation and has not been accepted yet. Until it
-is, the Windows installer published on the [releases page](https://github.com/tomi-share/tomi/releases?q=windows-v) is **not
+is, the Windows installer published on the [releases page](https://github.com/tomi-share/tomi/releases/latest) is **not
 code-signed** and Windows SmartScreen may warn. Every release states which of the two situations applies, and you can always
 verify what you download as described in [`docs/RELEASES.md`](RELEASES.md#verifying-a-download).
 
@@ -28,7 +28,7 @@ status above:
 
 ## How a release is signed
 
-1. A maintainer pushes a release tag (`windows-vX.Y.Z`) on `main`.
+1. A maintainer pushes a release tag (`vX.Y.Z`) on `main`.
 2. The [`release-apps.yml`](../.github/workflows/release-apps.yml) workflow checks that the version files match the tag, builds
    the installer on a **GitHub-hosted** runner and uploads the unsigned file as a workflow artifact.
 3. The workflow submits that artifact to SignPath. SignPath verifies where it comes from (this repository, the commit and the
