@@ -20,6 +20,13 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    ignore:
+      # windows-future must stay on the windows-core of the `windows` crate (0.62.x, the latest
+      # release) and of Tauri; windows-future 0.100 pulls windows-core 0.100, which no `windows`
+      # release matches yet, so strong_auth.rs no longer compiles. Lift this once `windows`
+      # publishes a 0.100 and bump both together.
+      - dependency-name: windows-future
+        versions: [">=0.100.0"]
     groups:
       windows-rust-minor-patch:
         update-types: [minor, patch]
