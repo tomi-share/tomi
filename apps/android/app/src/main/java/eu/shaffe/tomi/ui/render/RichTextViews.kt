@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
+import android.view.View
 import android.view.ViewGroup
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
@@ -26,6 +27,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberUpdatedState
@@ -151,6 +153,7 @@ fun RichMarkdownView(
             plugins = MARKDOWN_PLUGINS,
             onLinkClick = { url -> openExternalLink(context, url.toUri()) },
             modifier = Modifier.fillMaxWidth(),
+            fallbackPlain = if (maxHeight != null) fallbackPlain else null,
         )
     }
 }
@@ -241,6 +244,8 @@ private fun TomiMarkdownText(
     plugins: List<MarkdownPlugin>,
     onLinkClick: (String) -> Unit,
     modifier: Modifier = Modifier,
+    /** Plain text shown when the rendering never lands (after the retries); null: keep waiting. */
+    fallbackPlain: String? = null,
     /** Keeps the bottom margin of the last block: true for a chunk followed by another one (spacing of the whole document). */
     allowTrailingMargin: Boolean = false,
 ) {
@@ -259,13 +264,33 @@ private fun TomiMarkdownText(
     // MAX_RENDER_RETRIES times. Leaving the screen cancels the wait.
     var attempt by remember(markdown) { mutableIntStateOf(0) }
     val landed = remember(markdown, attempt) { BooleanArray(1) }
+    // Set once the last attempt has waited in vain: the card then shows `fallbackPlain` instead of a blank area.
+    var gaveUp by remember(markdown) { mutableStateOf(false) }
+    // Bumped when the library adds or removes its rendered segments. Read in the layout block below, it makes Compose measure the
+    // node again even if the view's own requestLayout never reached Compose (a blank card at start-up, toggling the tab fixed it).
+    var segmentsTick by remember(markdown, attempt) { mutableIntStateOf(0) }
     LaunchedEffect(markdown, attempt) {
-        if (attempt >= MAX_RENDER_RETRIES) return@LaunchedEffect
         delay(RENDER_LANDING_TIMEOUT_MS)
-        if (!landed[0]) {
+        if (landed[0]) return@LaunchedEffect
+        if (attempt >= MAX_RENDER_RETRIES) {
+            if (fallbackPlain != null) {
+                Log.w(RENDER_TAG, "markdown view not rendered after ${MAX_RENDER_RETRIES} retries: shown as plain text")
+                gaveUp = true
+            }
+        } else {
             Log.w(RENDER_TAG, "markdown view not rendered after ${RENDER_LANDING_TIMEOUT_MS} ms (attempt ${attempt + 1}): recreated")
             attempt++
         }
+    }
+    if (gaveUp && fallbackPlain != null) {
+        Text(
+            fallbackPlain,
+            style = MaterialTheme.typography.bodyMedium,
+            maxLines = CARD_PLAIN_LINES,
+            overflow = TextOverflow.Ellipsis,
+            modifier = modifier,
+        )
+        return
     }
 
     key(attempt) {
@@ -274,6 +299,10 @@ private fun TomiMarkdownText(
             // Settings that never change (prepareForViewReuse puts the first three back to these same values), except the
             // trailing margin, set again in `update`.
             EnrichedMarkdown(ctx).apply {
+                setOnHierarchyChangeListener(object : ViewGroup.OnHierarchyChangeListener {
+                    override fun onChildViewAdded(parent: View?, child: View?) { segmentsTick++ }
+                    override fun onChildViewRemoved(parent: View?, child: View?) { segmentsTick++ }
+                })
                 setEnableTaskListItemToggle(true)
                 setSpoilerOverlay(SpoilerOverlay.Particles())
                 setAllowTrailingMargin(allowTrailingMargin)
@@ -289,7 +318,13 @@ private fun TomiMarkdownText(
                 setMarkdownContent(markdown)
             }
         },
-        modifier = modifier.reserveRenderedHeight(markdown, variant = if (allowTrailingMargin) 1 else 0) { landed[0] = true },
+        modifier = modifier
+            .layout { measurable, constraints ->
+                segmentsTick // read: a change measures this node again
+                val placeable = measurable.measure(constraints)
+                layout(placeable.width, placeable.height) { placeable.place(0, 0) }
+            }
+            .reserveRenderedHeight(markdown, variant = if (allowTrailingMargin) 1 else 0) { landed[0] = true },
         // Runs after attach and after every reuse (prepareForViewReuse clears the content). Each setter ignores an unchanged
         // value, so right after the factory it does nothing and a recomposition re-renders nothing.
         update = { view ->
