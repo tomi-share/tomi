@@ -7,7 +7,7 @@
 //! (invariant 3).
 
 use crate::detect::ContentKind;
-use crate::model::{Item, UnreadableReason};
+use crate::model::{Item, ReadPolicy, UnreadableReason};
 use crate::strings;
 use crate::view::item_kind;
 
@@ -31,6 +31,15 @@ fn short(s: &str, max: usize) -> String {
     }
 }
 
+/// A hidden item, or an item consumed by its first read: its toast says nothing of it and carries no
+/// button that reads it. The first copy or open of an "after first read" item DELETES it
+/// everywhere; the interface only lets the user choose that policy for a hidden item, but the core
+/// does not require it, so another client may send one that is not hidden. Same rule on Android
+/// (`NotificationContent.isConcealed`).
+fn is_concealed(item: &Item) -> bool {
+    item.secret || item.read_policy == ReadPolicy::AfterFirstRead
+}
+
 /// Content of the toast for one received item.
 pub fn single_toast(item: &Item) -> ToastContent {
     let from = strings::toast_from(&item.source_device.name);
@@ -51,7 +60,7 @@ pub fn single_toast(item: &Item) -> ToastContent {
             buttons: vec![(strings::toast_open(), "open")],
         };
     }
-    if item.secret {
+    if is_concealed(item) {
         // Nothing of the item shows (no title, no preview, no file name): the generic
         // label and the sender. Nothing is copied from the toast either: one click must not
         // hand over a hidden value. The only button opens the popover, where "Afficher" and
@@ -135,7 +144,7 @@ pub enum TapAction {
 const SHORT_TEXT_CHARS: usize = 280;
 
 pub fn tap_action(item: &Item) -> TapAction {
-    if item.secret || item.unreadable {
+    if is_concealed(item) || item.unreadable {
         return TapAction::ShowInPopover;
     }
     match item_kind(item) {
@@ -356,6 +365,27 @@ mod tests {
         assert!(t.body.contains("Pixel"));
         // Nothing is copied from a toast: the only button opens the popover (Windows Hello there).
         assert_eq!(t.buttons, vec![("Ouvrir", "open")]);
+    }
+
+    #[test]
+    fn an_after_first_read_toast_is_as_blind_as_a_hidden_one() {
+        // Not hidden, but its first copy or open deletes it everywhere: no preview, nothing to click that reads it.
+        let mut i = base();
+        i.read_policy = ReadPolicy::AfterFirstRead;
+        i.title = Some("Facture".into());
+        i.url = Some("https://example.org/facture".into());
+        i.text = Some(TextBody {
+            plain: "contenu".into(),
+            html: None,
+            markdown: None,
+        });
+        let t = single_toast(&i);
+        let all = format!("{} {}", t.title, t.body);
+        for leaked in ["Facture", "example.org", "contenu"] {
+            assert!(!all.contains(leaked), "{leaked} leaked: {all}");
+        }
+        assert_eq!(t.buttons, vec![("Ouvrir", "open")]);
+        assert_eq!(tap_action(&i), TapAction::ShowInPopover);
     }
 
     #[test]
