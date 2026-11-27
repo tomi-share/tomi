@@ -52,6 +52,13 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    ignore:
+      # material3 is pinned on an alpha for the floating toolbar and bumped by hand (see
+      # gradle/libs.versions.toml). The 1.6 alphas pull Compose 1.14 alphas, which need
+      # compileSdk 37.2 while the app compiles against 37.0, so checkDebugAarMetadata fails.
+      # Lift this when compileSdk moves to 37.2 and bump material3 in the same change.
+      - dependency-name: "androidx.compose.material3:material3"
+        versions: [">=1.6.0-alpha01"]
     groups:
       android-minor-patch:
         update-types: [minor, patch]
