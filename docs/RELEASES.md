@@ -196,8 +196,8 @@ file over, `releases/latest` always has both an APK and an installer.
 - **Immutable releases**: on. Keep it on.
 - **Environment `release`**: holds the Android signing secrets and the SignPath token. Its deployment rules allow `main` and tags.
   `release-apps.yml` runs from a `vX.Y.Z` tag, so the environment needs a **`v*` tag rule**; without it the Android job cannot read the
-  secrets. Add it once: `gh api -X POST repos/tomi-share/tomi/environments/release/deployment-branch-policies -f name='v*' -f type=tag`.
-  The former `android-v*` and `windows-v*` rules can be removed afterwards.
+  secrets. It was added on 2026-11-27 (`gh api -X POST repos/tomi-share/tomi/environments/release/deployment-branch-policies -f name='v*' -f type=tag`),
+  so the rules are now `main`, `v*`, `android-v*` and `windows-v*`. The two former tag rules can be removed.
 - **Variables**: `ANDROID_RELEASE_CERT_SHA256` (pins the APK certificate, also for a carried APK), `ALLOW_UNSIGNED_WINDOWS_RELEASE`
   (until the installer is signed), `SIGNPATH_*` (signing), `TOMI_RELAY_URL`.
 
@@ -282,8 +282,7 @@ updated (Android refuses an update signed by another key), and users would have 
 certificate fingerprint in the release notes so that users can compare it (see "Verifying a download" below).
 
 Hardening, applied: the four secrets are **environment secrets** of a GitHub Environment named `release`, restricted to the `main`
-branch and to release tags (`android-v*` and `windows-v*` today; a **`v*` rule is still to be added** for the grouped
-releases, see "GitHub settings this depends on"), and the `android` job of `build-apps.yml` uses `environment: release`
+branch and to release tags (`v*`, plus the former `android-v*` and `windows-v*`; see "GitHub settings this depends on"), and the `android` job of `build-apps.yml` uses `environment: release`
 (so does `sign-windows`, for the SignPath token). A workflow file changed on another branch cannot read them: anyone who can push a
 workflow to a branch of the repository could otherwise exfiltrate repository secrets. The consequence: a manual **Build apps** run
 must be started from `main` (a run from another branch is refused at the Android job). Set the secrets with
@@ -451,8 +450,7 @@ eligibility) or an EV/OV certificate, wired into the same job. Later: the Tauri 
 - [x] Workflow for `vX.Y.Z` tags, Android and Windows in one release (`release-apps.yml`): version checks, build, draft, attestation
       check, publish, generated notes with the protocol compatibility. Written without a CI run available: the first dry run
       (Actions > Release apps > Run workflow) is its first test.
-- [ ] Add the `v*` tag rule to the `release` environment (see "GitHub settings this depends on"); without it the first grouped
-      release cannot read the signing secrets.
+- [ ] Remove the now useless `android-v*` and `windows-v*` tag rules of the `release` environment (the `v*` rule is in place).
 - [ ] Dead tags `android-dev`, `windows-dev` (and `relay-latest`) remain from the rolling scheme: harmless, deletable, never reusable.
 - [ ] `cli-v*` workflow and binaries, if the CLI is to be distributed.
 - [ ] Minimum compatible versions in the notes (rule 4): the notes state the protocol and relay API version and the relay version at
