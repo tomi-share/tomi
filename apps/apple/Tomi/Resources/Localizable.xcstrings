@@ -20003,7 +20003,7 @@
             "value" : "doğrulanmadı"
           }
         },
-        "zh" : {
+        "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "未验证"
