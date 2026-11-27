@@ -120,6 +120,17 @@ Identifiers: application id `eu.shaffe.tomi`, URL scheme `tomi-share://`.
   exactly as the script would (keys sorted, `"extractionState" : "manual"`, `fr` unit `translated`; write `%1$@` in `ios_` keys,
   never `%1$s`), then check that `git diff` shows only that entry. Run this check before every push that touches those sources.
 - CI builds and release publishing: see `docs/DEV.md` and `.github/workflows/`.
+- **Releases** (details and the failure modes in `docs/RELEASES.md`, "How the release pipeline works"):
+  - GitHub's *immutable releases* setting is on: a published release can never gain, lose or change an asset, and its tag can
+    never be reused. So no `--clobber` and no rolling tag: create the release as a draft, attach everything, check it, then publish.
+    Development builds get a new tag per run (`android-dev-<run>`, `windows-dev-<run>`, the last three are kept).
+  - Android and Windows share **one version number and one release**, tagged `vX.Y.Z` (`release-apps.yml`); the relay is
+    `relay-vX.Y.Z`. A manual run can build only one app and carries the other file over from the previous release. macOS is not in
+    the release (it cannot be signed in CI yet); keep `MARKETING_VERSION` in `apps/apple/Config/Base.xcconfig` at the same number by hand.
+  - GitHub's "Latest" badge belongs to the stable app release only. Any other release workflow creates its releases with
+    `--latest=false`, and nothing in the repository links to `releases/latest` for something that is not the apps.
+  - Changing a release workflow or `.github/scripts/check-release-version.sh` / `release-notes.sh` means updating
+    `docs/RELEASES.md` in the same commit.
 
 ## Git hygiene
 

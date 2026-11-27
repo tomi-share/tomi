@@ -105,6 +105,113 @@ Leave **Publish** unticked for a dry run: the same checks and builds, nothing pu
 A published tag is never reused, a stable release is never replaced with `--clobber`, and a mistake is fixed forward with the next
 version. When you only want a build to try, run a development build (`*-dev-<run>`) from **Actions > Build apps**.
 
+## How the release pipeline works
+
+Technical reference for the three workflows and the scripts they use. The procedure for a person cutting a release is above.
+
+### Why it is built this way
+
+GitHub's *immutable releases* setting is on for this repository. Once a release is **published**, its assets cannot be added,
+removed or replaced, and its tag can never be reused, not even after the release is deleted (deleting is allowed, reusing the
+name is not). Everything below follows from that:
+
+- A release is always created as a **draft**, filled, checked, and only then **published** (`gh release create --draft`, then
+  `gh release edit --draft=false`). A draft is the only state in which assets can still be attached.
+- Nothing is overwritten: no `--clobber`, no rolling pointer (`relay-latest`, `android-dev` and `windows-dev` are dead names).
+  Development builds get a **new tag per run**; stable releases are created once and a mistake is fixed with the next version.
+- Because a published release cannot be completed, a release is **all or nothing**: every file is built, checked and attested
+  before the draft is published.
+
+### The workflows
+
+| Workflow | Starts on | Produces |
+|---|---|---|
+| `build-apps.yml` | manual run (**Build apps**), or called by `release-apps.yml` | the Android APK and the Windows installer as workflow artifacts (checksums, attestations, signing); when run by hand with *Publish* ticked, one development pre-release per app and per run |
+| `release-apps.yml` | push of a `vX.Y.Z` tag, or manual run (**Release apps**) | the stable release `vX.Y.Z` with the APK and the installer, marked "Latest" |
+| `release-relay.yml` | push of a `relay-vX.Y.Z` tag | the relay binaries, never "Latest" |
+
+`build-apps.yml` is a reusable workflow (`workflow_call`) with the inputs `android`, `android_variant`, `windows` and `publish`.
+`release-apps.yml` calls it with `publish: false`, so its development-release job never runs for a stable release; the called
+jobs need the `id-token` and `attestations` permissions that the caller grants.
+
+**Development builds** (`build-apps.yml`, `publish` job). One pre-release per run, tagged `android-dev-<run>` and
+`windows-dev-<run>` (`<run>` is the run number, with `-rN` on a re-run). The job refuses to publish a tag that already exists as
+a published release, deletes a leftover draft of the same tag, creates the pre-release as a draft with `--latest=false`, then
+publishes it, and finally **prunes**: the last `KEEP_DEV_BUILDS` (3) releases of each prefix are kept, the older ones are deleted
+with their tag (`gh release delete --cleanup-tag`). Pruning only matches the `<product>-dev-` prefix, so stable tags are never touched.
+
+**Stable releases** (`release-apps.yml`), three jobs:
+
+1. `prepare`: derives the tag, the apps to build (`android`, `windows`) and whether to publish. A pushed tag means both apps and
+   publish; a manual run takes the inputs. It runs `check-release-version.sh <tag> <apps>`, then, when publishing: the commit
+   must be on `main` (for a manual run the workflow must run *from* `main` and the tag must not exist yet), the repository must be
+   public, and for the installer `ALLOW_UNSIGNED_WINDOWS_RELEASE` must be `true` unless SignPath signing is on.
+2. `build`: calls `build-apps.yml` for the chosen apps (variant `release`).
+3. `publish` (only when publishing): stages the built files under their release names (`tomi-android-X.Y.Z.apk`,
+   `tomi-windows-X.Y.Z-setup.exe`) with a fresh `.sha256`; for an app that was **not** built, carries over its file from the
+   newest earlier stable release (see below); writes the notes; creates the draft; verifies the attestation of every file with
+   `gh attestation verify`; publishes with `--latest`. A pushed tag already exists (`--verify-tag`); after a manual run the
+   release creates it on the commit of the run (`--target <sha>`).
+
+### Carrying a file over (partial releases)
+
+`carry()` in the `publish` job walks `gh release list` (non-draft, non-prerelease, newest first) and takes the first release that
+has an asset named `tomi-android-X.Y.Z.apk` (or `tomi-windows-X.Y.Z-setup.exe`). Pre-releases are skipped, so a development
+build is never carried over. It downloads the file and its `.sha256`, checks the checksum, and copies both into the new release
+**under their original names**: the version in the file name is the version the file was built at, which is the honest statement
+of what it is. The carried APK goes through `verify-android-apk.sh` again; every file, carried or built, must pass
+`gh attestation verify --repo <this repository>` or the run stops before publishing. If no earlier release holds the file (the
+first release), the run fails with a message: the first release has to build both apps. The legacy `android-v0.1.0` and
+`windows-v0.1.0` releases are valid sources.
+
+The release notes get `BUILT`, `ANDROID_CARRIED` and `WINDOWS_CARRIED`, and say which file is carried over and from which release.
+For a carried installer the notes do not claim a signing status of their own; they point to the notes of the source release.
+
+### Version rules (`.github/scripts/check-release-version.sh <vX.Y.Z> [android,windows]`)
+
+The tag must be exactly `vX.Y.Z`. For each app **being built** the version files must equal the tag: Android `versionName`
+(and `versionCode` strictly greater than the previous release's), Windows `tauri.conf.json`, `package.json` and
+`src-tauri/Cargo.toml`. The version must also be greater than the app's previous version. The previous release of an app is the
+highest earlier `vX.Y.Z` tag or, for the first grouped release, the highest `android-vX.Y.Z` / `windows-vX.Y.Z` tag; its values are
+read from that tag's tree (`git show <tag>:<file>`). An app left out is not checked, which is what lets a partial release leave
+the other app's files at their old version. The script prints `version=` and `previous_tag=` for the workflow.
+
+`release-notes.sh <vX.Y.Z>` reads `RELEASE_SHA` (the range ends at the commit, not at the tag, which may not exist yet),
+`BUILT`, the `*_CARRIED` variables, `ANDROID_CERT_SHA256`, `ASSET_APK`/`ASSET_EXE` and `WINDOWS_SIGNED`; the change list is
+scoped by path (`apps/android` and/or `apps/windows`, always `crates/core` and `spec`).
+
+Both scripts can be run locally from the repository root (`git fetch --tags` first). To try the success path without touching
+the real repository, use a throwaway worktree (`git worktree add --detach`), bump the versions there, commit, tag locally, run
+the scripts, then delete the tag and the worktree.
+
+### "Latest"
+
+Exactly one kind of release is marked "Latest": the stable app release. `release-apps.yml` creates and publishes it with
+`--latest`; `release-relay.yml` and the development builds pass `--latest=false`. GitHub cannot unset the badge on a release, so
+`android-v0.1.0` keeps it until the first `vX.Y.Z` is published, which takes it over. Because a partial release carries the other
+file over, `releases/latest` always has both an APK and an installer.
+
+### GitHub settings this depends on (not in the repository)
+
+- **Immutable releases**: on. Keep it on.
+- **Environment `release`**: holds the Android signing secrets and the SignPath token. Its deployment rules allow `main` and tags.
+  `release-apps.yml` runs from a `vX.Y.Z` tag, so the environment needs a **`v*` tag rule**; without it the Android job cannot read the
+  secrets. Add it once: `gh api -X POST repos/tomi-share/tomi/environments/release/deployment-branch-policies -f name='v*' -f type=tag`.
+  The former `android-v*` and `windows-v*` rules can be removed afterwards.
+- **Variables**: `ANDROID_RELEASE_CERT_SHA256` (pins the APK certificate, also for a carried APK), `ALLOW_UNSIGNED_WINDOWS_RELEASE`
+  (until the installer is signed), `SIGNPATH_*` (signing), `TOMI_RELAY_URL`.
+
+### Failure modes worth knowing
+
+| Symptom | Cause | What to do |
+|---|---|---|
+| HTTP 422 "Cannot upload assets to an immutable release" | something tried to change a published release | never reuse a tag; create a new one (a new version for a stable release, a new run for a development build) |
+| Android job refused at start | the `release` environment has no rule for this ref | add the `v*` tag rule (above) or run from `main` |
+| `The tag ... already exists` | a manual publish for an existing tag | pick a new version; a pushed tag already builds both |
+| `No earlier release holds the ... file to carry over` | a partial release with nothing to carry | build both apps this time |
+| `gh attestation verify` fails on a carried file | the earlier release was built without an attestation (private repository at the time) | build that app in this release instead of carrying it |
+| A draft is left over | the run failed after `gh release create` | delete the draft (`gh release delete <tag>`); a draft holds no tag yet |
+
 ## Android release signing
 
 What CI publishes for Android is **only** a non-debuggable `release` build signed with the project's dedicated release key.
@@ -175,7 +282,8 @@ updated (Android refuses an update signed by another key), and users would have 
 certificate fingerprint in the release notes so that users can compare it (see "Verifying a download" below).
 
 Hardening, applied: the four secrets are **environment secrets** of a GitHub Environment named `release`, restricted to the `main`
-branch and to the `v*` tags (the `android-v*` and `windows-v*` rules of the first release were replaced), and the `android` job of `build-apps.yml` uses `environment: release`
+branch and to release tags (`android-v*` and `windows-v*` today; a **`v*` rule is still to be added** for the grouped
+releases, see "GitHub settings this depends on"), and the `android` job of `build-apps.yml` uses `environment: release`
 (so does `sign-windows`, for the SignPath token). A workflow file changed on another branch cannot read them: anyone who can push a
 workflow to a branch of the repository could otherwise exfiltrate repository secrets. The consequence: a manual **Build apps** run
 must be started from `main` (a run from another branch is refused at the Android job). Set the secrets with
@@ -343,6 +451,9 @@ eligibility) or an EV/OV certificate, wired into the same job. Later: the Tauri 
 - [x] Workflow for `vX.Y.Z` tags, Android and Windows in one release (`release-apps.yml`): version checks, build, draft, attestation
       check, publish, generated notes with the protocol compatibility. Written without a CI run available: the first dry run
       (Actions > Release apps > Run workflow) is its first test.
+- [ ] Add the `v*` tag rule to the `release` environment (see "GitHub settings this depends on"); without it the first grouped
+      release cannot read the signing secrets.
+- [ ] Dead tags `android-dev`, `windows-dev` (and `relay-latest`) remain from the rolling scheme: harmless, deletable, never reusable.
 - [ ] `cli-v*` workflow and binaries, if the CLI is to be distributed.
 - [ ] Minimum compatible versions in the notes (rule 4): the notes state the protocol and relay API version and the relay version at
       release time; a stricter "minimum relay version" needs a decision on what counts as incompatible.

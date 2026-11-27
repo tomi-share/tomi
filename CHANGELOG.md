@@ -19,9 +19,13 @@ version and the frozen vectors in `spec/vectors/`, not by application versions.
 - CI: stable releases of the Android app and the Windows installer from `vX.Y.Z` tags, one release with both
   (`release-apps.yml`): the tag must match the version files (and `versionCode` must grow), the commit must be on `main`,
   every file is checked and attested before the release is published, and the notes state the protocol compatibility
-  ([`docs/RELEASES.md`](docs/RELEASES.md)).
+  ([`docs/RELEASES.md`](docs/RELEASES.md)). Android and Windows share one version number and one release, which is the
+  repository's "Latest". A manual run can build only one app: the other file is carried over, unchanged, from the previous release.
 
 ### Changed
+- CI: development builds are immutable pre-releases, one per run (`android-dev-<run>`, `windows-dev-<run>`, the last three kept),
+  instead of the rolling `android-dev` / `windows-dev` that the repository's immutable releases refused to update.
+- CI: the relay releases are created with `--latest=false`; "Latest" is reserved for the app release.
 - iOS: long texts get bounded previews; String Catalog and generated design tokens cleaned up.
 
 ### Security
